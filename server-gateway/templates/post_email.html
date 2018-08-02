@@ -1,0 +1,88 @@
+
+<!-- Post Body -->
+<p style="font-size: 14px;width: 100%;word-break: break-word;word-wrap: break-word">{{ .Body }}</p>
+<!-- Attachments -->
+<div style="width: 100%;">
+{{ range .Attachments }}
+{{ if eq .Group "IMAGE" }}
+    <a href="{{.Url}}" style="display: table;text-decoration: none;height: 32px;width: 100%;border-radius: 8px;border: 1px solid rgba(0,0,0,.08);padding: 8px 4px;margin: 8px 0">
+        <div style="{{ if not .Src }}border: 2px solid #E6A117;{{ end }}width: 56px;color: #E6A117;vertical-align: middle;height: 100%;display: table-cell;text-align: center">
+        {{ if .Src }}
+            <img src="{{.Src}}" style="height: 48px; width: 100%;object-fit: cover;display: table-cell"/>
+        {{ else }}
+    {{.Ext}}
+  {{ end }}
+        </div>
+        <span style="font-size: 16px;line-height: 32px;vertical-align: middle;display: table-cell;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;color: black;padding-left: 8px">
+        {{.Info.Filename}}
+        </span>
+        <span style="font-size: 14px;line-height: 32px;display: table-cell;width: 80px;color: #999999;padding: 0">
+        {{.HumanSize}}
+        </span>
+    </a>
+{{ else if eq .Group "MULTIMEDIA" }}
+    <a href="{{.Url}}" style="display: table;text-decoration: none;height: 32px;width: 100%;border-radius: 8px;border: 1px solid rgba(0,0,0,.08);padding: 8px 4px;margin: 8px 0">
+        <div style="border: 2px solid #28CD96;color: #28CD96;vertical-align: middle;height: 100%;width: 56px;display: table-cell;text-align: center">
+        {{.Ext}}
+        </div>
+        <span style="font-size: 16px;line-height: 32px;display: table-cell;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;color: black;padding-left: 8px">
+        {{.Info.Filename}}
+        </span>
+        <span style="font-size: 14px;line-height: 32px;display: table-cell;width: 80px;color: #999999;padding: 0">
+        {{.HumanSize}}
+        </span>
+    </a>
+{{ else if eq .Group "ZIP" }}
+    <a href="{{.Url}}" style="display: table;text-decoration: none;height: 32px;width: 100%;border-radius: 8px;border: 1px solid rgba(0,0,0,.08);padding: 8px 4px;margin: 8px 0">
+        <div style="border: 2px solid #502D96;color: #502D96;vertical-align: middle;height: 100%;width: 56px;display: table-cell;text-align: center">
+        {{.Ext}}
+        </div>
+        <span style="font-size: 16px;line-height: 32px;display: table-cell;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;color: black;padding-left: 8px">
+        {{.Info.Filename}}
+        </span>
+        <span style="font-size: 14px;line-height: 32px;display: table-cell;width: 80px;color: #999999;padding: 0">
+        {{.HumanSize}}
+        </span>
+    </a>
+{{ else if eq .Group "PDF" }}
+    <a href="{{.Url}}" style="display: table;text-decoration: none;height: 32px;width: 100%;border-radius: 8px;border: 1px solid rgba(0,0,0,.08);padding: 8px 4px;margin: 8px 0">
+        <div style="border: 2px solid #CD2828;color: #CD2828;vertical-align: middle;height: 100%;width: 56px;display: table-cell;text-align: center">
+        {{.Ext}}
+        </div>
+        <span style="font-size: 16px;line-height: 32px;display: table-cell;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;color: black;padding-left: 8px">
+        {{.Info.Filename}}
+        </span>
+        <span style="font-size: 14px;line-height: 32px;display: table-cell;width: 80px;color: #999999;padding: 0">
+        {{.HumanSize}}
+        </span>
+    </a>
+{{ else if eq .Group "DOCUMENT" }}
+    <a href="{{.Url}}" style="display: table;text-decoration: none;height: 32px;width: 100%;border-radius: 8px;border: 1px solid rgba(0,0,0,.08);padding: 8px 4px;margin: 8px 0">
+        <div style="border: 2px solid #2878cd;color: #2878cd;vertical-align: middle;height: 100%;width: 56px;display: table-cell;text-align: center">
+        {{.Ext}}
+        </div>
+        <span style="font-size: 16px;line-height: 32px;display: table-cell;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;color: black;padding-left: 8px">
+        {{.Info.Filename}}
+        </span>
+        <span style="font-size: 14px;line-height: 32px;display: table-cell;width: 80px;color: #999999;padding: 0">
+        {{.HumanSize}}
+        </span>
+    </a>
+{{ else }}
+    <a href="{{.Url}}" style="display: table;text-decoration: none;height: 32px;width: 100%;border-radius: 8px;border: 1px solid rgba(0,0,0,.08);padding: 8px 4px;margin: 8px 0">
+        <div style="border: 2px solid #282828;color: #282828;vertical-align: middle;height: 100%;width: 56px;display: table-cell;text-align: center">
+        {{.Ext}}
+        </div>
+        <span style="font-size: 16px;line-height: 32px;display: table-cell;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;color: black;padding-left: 8px">
+        {{.Info.Filename}}
+        </span>
+        <span style="font-size: 14px;line-height: 32px;display: table-cell;width: 80px;color: #999999;padding: 0">
+        {{.HumanSize}}
+        </span>
+    </a>
+{{ end }}
+
+{{ end }}
+</div>
+<!-- FOOTER -->
+<p style="padding: 8px;font-size: 12px;background-color: #EDFAF3;width: 100%">This is a post shared with you and some other’s by {{ .SenderName }}.</p>

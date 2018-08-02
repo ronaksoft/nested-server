@@ -1,0 +1,8 @@
+1. Listen on these topics:
+    1.a.    NTFY.REGISTER.DEVICE
+    1.b.    NTFY.UNREGISTER.DEVICE
+    1.c.    NTFY.REGISTER.WEBSOCKET
+    1.d.    NTFY.UNREGISTER.WEBSOCKET
+    1.e.    NTFY.PUSH.INTERNAL
+    1.f.    NTFY.PUSH.EXTERNAL
+    1.g.    NTFY.CALL.EMAIL

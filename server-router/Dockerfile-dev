@@ -1,0 +1,10 @@
+FROM golang:1.7
+
+# Maintainer
+MAINTAINER Pouyan Heyratpour <pouyan@ronaksoft.com>
+
+RUN go get -v github.com/codeskyblue/fswatch
+CMD $GOPATH/bin/fswatch
+
+COPY . $GOPATH/src/git.ronaksoftware.com/nested/server-router
+WORKDIR $GOPATH/src/git.ronaksoftware.com/nested/server-router
