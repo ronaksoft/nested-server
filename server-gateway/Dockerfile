@@ -1,14 +1,11 @@
-FROM apline:latest
+FROM registry.ronaksoftware.com/base/alpine
 MAINTAINER Ehsan N. Moosa <ehsan@ronaksoft.com>
 
 # Install necessary utilities
 RUN apk upgrade -U \
-  && apk add -U ca-certificates ffmpeg imagemagick poppler-utils \
+  && apk add -U ffmpeg imagemagick poppler-utils \
   && rm -rf /var/cache/* \
   && mkdir -p /var/cache/apk/
-
-# Update ca-certificates
-RUN update-ca-certificates
 
 # Add local folders to container
 ADD ./_build/ /ronak/bin
