@@ -4,9 +4,8 @@ MAINTAINER Ehsan N. Moosa <ehsan@ronaksoft.com>
 RUN echo 'nameserver 8.8.8.8' >> /etc/resolv.conf
 
 # Install necessary utilities
-RUN apk upgrade -U
-RUN apk add -U ffmpeg imagemagick poppler-utils
-RUN rm -rf /var/cache/* \
+RUN apk add --update --no-cache ffmpeg imagemagick poppler-utils
+RUN rm -rf /var/cache/apk \
   && mkdir -p /var/cache/apk/
 
 # Add local folders to container
