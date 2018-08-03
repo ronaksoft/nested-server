@@ -20,7 +20,7 @@ import (
 var (
     exit_ch chan os.Signal
     _Config *onion.Onion
-    _Model              *nested.Manager
+    _Model  *nested.Manager
 )
 
 func init() {
