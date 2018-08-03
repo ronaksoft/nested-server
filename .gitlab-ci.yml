@@ -7,8 +7,7 @@ variables:
   GATEWAY_VER:  "4.0"
   MTA_VER: "2.0"
   NTFY_VER: "3.0"
-  GO_SOURCE_DIR: /go/src/git.ronaksoftware.com/$CI_PROJECT_PATH   # CI_PROJECT_PATH: nested/server-router
-  BUILD_DIR: $CI_PROJECT_DIR/build
+  GO_SOURCE_DIR: /go/src/git.ronaksoftware.com/$CI_PROJECT_PATH   # CI_PROJECT_PATH: nested/server
 
 build:compile:
   stage: build
@@ -16,10 +15,15 @@ build:compile:
   script:
   - go get github.com/kardianos/govendor
   - mkdir -p $GO_SOURCE_DIR
-  - mkdir -p $BUILD_DIR
   - cp -r $CI_PROJECT_DIR/* $GO_SOURCE_DIR
   - cd $GO_SOURCE_DIR
-  - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $BUILD_DIR/$CI_PROJECT_NAME .
+  - mkdir -p $GO_SOURCE_DIR/server-gateway/_build
+  - mkdir -p $GO_SOURCE_DIR/server-ntfy/_build
+  - mkdir -p $GO_SOURCE_DIR/server-mta/_build
+  - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $CI_PROJECT_DIR/server-gateway/_build/server-gateway ./server-gateway
+  - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $CI_PROJECT_DIR/server-ntfy/_build/server-ntfy ./server-ntfy
+  - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $CI_PROJECT_DIR/server-mta/_build/mail-client-store ./server-mta/mail-client-store
+  - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $CI_PROJECT_DIR/server-mta/_build/mail-map ./server-mta/mail-map
   artifacts:
     untracked: true
     expire_in: 1 hour
@@ -34,5 +38,12 @@ deploy:production:
   - docker:dind
   script:
   - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
-  - docker build --pull -t $CI_REGISTRY_IMAGE:$IMAGE_TAG .
-  - docker push $CI_REGISTRY_IMAGE:$IMAGE_TAG
+  - cd ./server-gateway
+  - docker build --pull -t $CI_REGISTRY_IMAGE/gateway:$GATEWAY_VER .
+  - docker push $CI_REGISTRY_IMAGE/gateway:$GATEWAY_VER
+  - cd ../server-ntfy
+  - docker build --pull -t $CI_REGISTRY_IMAGE/ntfy:$NTFY_VER .
+  - docker push $CI_REGISTRY_IMAGE/ntfy:$NTFY_VER
+  - cd ../server-mta
+  - docker build --pull -t $CI_REGISTRY_IMAGE/mta:$MTA_VER .
+  - docker push $CI_REGISTRY_IMAGE/mta:$MTA_VER
