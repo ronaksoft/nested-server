@@ -102,7 +102,9 @@ func (n *Notification) incrementCounter() {
 // If only_unread is set to TRUE then this function returns only unread notifications otherwise returns read or unread
 // notifications.
 // This function supports pagination
-func (nm *NotificationManager) GetByAccountID(accountID string, pg Pagination, only_unread bool, subject string) []Notification {
+func (nm *NotificationManager) GetByAccountID(
+    accountID string, pg Pagination, only_unread bool, subject string,
+) []Notification {
     _funcName := "NotificationManager::GetByAccountID"
     _Log.FunctionStarted(_funcName, accountID, only_unread)
     defer _Log.FunctionFinished(_funcName)
@@ -135,7 +137,9 @@ func (nm *NotificationManager) GetByAccountID(accountID string, pg Pagination, o
     if only_unread {
         query["read"] = false
     }
-    if err := db.C(COLLECTION_NOTIFICATIONS).Find(query).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&n); err != nil {
+    if err := db.C(COLLECTION_NOTIFICATIONS).Find(query).
+        Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit()).
+        All(&n); err != nil {
         _Log.Error(_funcName, err.Error())
     }
     return n
@@ -509,7 +513,9 @@ func (nm *NotificationManager) NewSession(accountID, clientID string) *Notificat
     return n
 }
 
-func (nm *NotificationManager) LabelRequestApproved(accountID, labelID, deciderID string, labelRequestID bson.ObjectId) *Notification {
+func (nm *NotificationManager) LabelRequestApproved(
+    accountID, labelID, deciderID string, labelRequestID bson.ObjectId,
+) *Notification {
     _funcName := "NotificationManager::LabelRequestApproved"
     _Log.FunctionStarted(_funcName, accountID, labelID, deciderID)
     defer _Log.FunctionFinished(_funcName)
@@ -540,7 +546,9 @@ func (nm *NotificationManager) LabelRequestApproved(accountID, labelID, deciderI
 
 }
 
-func (nm *NotificationManager) LabelRequestRejected(accountID, labelID, deciderID string, labelRequestID bson.ObjectId) *Notification {
+func (nm *NotificationManager) LabelRequestRejected(
+    accountID, labelID, deciderID string, labelRequestID bson.ObjectId,
+) *Notification {
     _funcName := "NotificationManager::LabelRequestRejected"
     _Log.FunctionStarted(_funcName, accountID, labelID, deciderID, labelRequestID.Hex())
     defer _Log.FunctionFinished(_funcName)
@@ -802,7 +810,9 @@ func (nm *NotificationManager) TaskAssigneeChanged(accountID, newAssigneeID, act
     return n
 }
 
-func (nm *NotificationManager) TaskUpdated(accountID string, changerID string, task *Task, newTitle, newDesc string) *Notification {
+func (nm *NotificationManager) TaskUpdated(
+    accountID string, changerID string, task *Task, newTitle, newDesc string,
+) *Notification {
     _funcName := "NotificationManager::TaskUpdated"
     _Log.FunctionStarted(_funcName, changerID, task.ID.Hex(), newTitle, newDesc)
     defer _Log.FunctionFinished(_funcName)
@@ -1080,7 +1090,9 @@ func (nm *NotificationManager) TaskFailed(accountID, actorID string, task *Task)
     return n
 }
 
-func (nm *NotificationManager) TaskCommentMentioned(mentionedID, actorID string, task *Task, activityID bson.ObjectId) *Notification {
+func (nm *NotificationManager) TaskCommentMentioned(
+    mentionedID, actorID string, task *Task, activityID bson.ObjectId,
+) *Notification {
     _funcName := "NotificationManager::AddMention"
     _Log.FunctionStarted(_funcName, actorID, mentionedID, task.ID.Hex(), activityID.Hex())
     defer _Log.FunctionFinished(_funcName)
