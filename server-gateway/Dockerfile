@@ -1,4 +1,4 @@
-FROM registry.ronaksoftware.com/base/alpine
+FROM apline:latest
 MAINTAINER Ehsan N. Moosa <ehsan@ronaksoft.com>
 
 # Install necessary utilities
