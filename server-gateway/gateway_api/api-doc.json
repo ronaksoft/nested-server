@@ -1,0 +1,4043 @@
+
+{
+
+"account":
+	[
+		{
+			"cmd": "account/available",
+			"args": [
+				{
+					"name": "account_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "account/trust_email",
+			"args": [
+				{
+					"name": "email_addr",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "domain",
+					"type": "bool",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "account/change_phone",
+			"args": [
+				{
+					"name": "vid",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "pass",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "phone",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "account/get",
+			"args": [
+				{
+					"name": "account_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "account/get_many",
+			"args": [
+				{
+					"name": "account_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "account/get_by_token",
+			"args": [
+				{
+					"name": "token",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "account/get_posts",
+			"args": [
+				{
+					"name": "by_update",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "account/get_pinned_posts",
+			"args": [
+				
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "account/get_favorite_posts",
+			"args": [
+				{
+					"name": "by_update",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "account/get_sent_posts",
+			"args": [
+				
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "account/get_all_places",
+			"args": [
+				{
+					"name": "with_children",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				},{
+					"name": "filter",
+					"type": "string",
+					"comment": "(creator | key_holder | all)",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "account/get_favorite_places",
+			"args": [
+				
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "account/set_password",
+			"args": [
+				{
+					"name": "old_pass",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "new_pass",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "account/set_password_by_token",
+			"args": [
+				{
+					"name": "token",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "new_pass",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "account/set_picture",
+			"args": [
+				{
+					"name": "universal_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "account/remove_picture",
+			"args": [
+				
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "account/untrust_email",
+			"args": [
+				{
+					"name": "email_addr",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "account/register_device",
+			"args": [
+				{
+					"name": "_dt",
+					"type": "string",
+					"comment": "(device token)",
+					"required": true
+				},{
+					"name": "_did",
+					"type": "string",
+					"comment": "(device id)",
+					"required": true
+				},{
+					"name": "_os",
+					"type": "string",
+					"comment": "(android | ios | chrome | firefox | safari | opera | edge)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "account/unregister_device",
+			"args": [
+				{
+					"name": "_dt",
+					"type": "string",
+					"comment": "(device token)",
+					"required": true
+				},{
+					"name": "_did",
+					"type": "string",
+					"comment": "(device id)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "account/update",
+			"args": [
+				{
+					"name": "fname",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "lname",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "gender",
+					"type": "string",
+					"comment": "(m | f | o | x)",
+					"required": false
+				},{
+					"name": "dob",
+					"type": "string",
+					"comment": "(YYYY-MM-DD)",
+					"required": false
+				},{
+					"name": "email",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "searchable",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "account/update_email",
+			"args": [
+				{
+					"name": "host",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "port",
+					"type": "int",
+					"comment": "",
+					"required": false
+				},{
+					"name": "username",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "password",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "status",
+					"type": "bool",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		}
+	],
+"admin":
+	[
+		{
+			"cmd": "admin/set_message_template",
+			"args": [
+				{
+					"name": "msg_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "msg_body",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "msg_subject",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/get_message_templates",
+			"args": [
+				
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/remove_message_template",
+			"args": [
+				{
+					"name": "msg_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/health_check",
+			"args": [
+				{
+					"name": "check_state",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/create_post",
+			"args": [
+				{
+					"name": "subject",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "trequest,",
+					"type": "responseets",
+					"comment": "&#43; (comma separated)",
+					"required": false
+				},{
+					"name": "attaches",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": false
+				},{
+					"name": "content_type",
+					"type": "string",
+					"comment": "(text/plain | text/html)",
+					"required": false
+				},{
+					"name": "iframe_url",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/add_comment",
+			"args": [
+				{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "txt",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "attachment_id",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/promote",
+			"args": [
+				{
+					"name": "account_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/demote",
+			"args": [
+				{
+					"name": "account_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/create_grand_place",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "place_name",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "place_description",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "privacy.receptive",
+					"type": "string",
+					"comment": "(external | off)",
+					"required": true
+				},{
+					"name": "privacy.search",
+					"type": "bool",
+					"comment": "",
+					"required": true
+				},{
+					"name": "policy.add_member",
+					"type": "string",
+					"comment": "(creators | everyone)",
+					"required": true
+				},{
+					"name": "policy.add_post",
+					"type": "string",
+					"comment": "(creators | everyone)",
+					"required": true
+				},{
+					"name": "policy.add_place",
+					"type": "string",
+					"comment": "(creators | everyone)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/create_place",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "place_name",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "place_description",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "privacy.receptive",
+					"type": "string",
+					"comment": "(external | internal | off)",
+					"required": true
+				},{
+					"name": "privacy.search",
+					"type": "bool",
+					"comment": "",
+					"required": true
+				},{
+					"name": "policy.add_member",
+					"type": "string",
+					"comment": "(creators | everyone)",
+					"required": true
+				},{
+					"name": "policy.add_post",
+					"type": "string",
+					"comment": "(creators | everyone)",
+					"required": true
+				},{
+					"name": "policy.add_place",
+					"type": "string",
+					"comment": "(creators | everyone)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/place_update",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "place_description",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "place_name",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "limits.key_holders",
+					"type": "int",
+					"comment": "",
+					"required": false
+				},{
+					"name": "limits.creators",
+					"type": "int",
+					"comment": "",
+					"required": false
+				},{
+					"name": "limits.size",
+					"type": "int",
+					"comment": "",
+					"required": false
+				},{
+					"name": "limits.childs",
+					"type": "int",
+					"comment": "",
+					"required": false
+				},{
+					"name": "privacy.search",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				},{
+					"name": "privacy.receptive",
+					"type": "string",
+					"comment": "(external | internal | off)",
+					"required": false
+				},{
+					"name": "policy.add_post",
+					"type": "string",
+					"comment": "(creators | everyone)",
+					"required": false
+				},{
+					"name": "policy.add_member",
+					"type": "string",
+					"comment": "(creators | everyone)",
+					"required": false
+				},{
+					"name": "policy.add_place",
+					"type": "string",
+					"comment": "(creators | everyone)",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/place_list",
+			"args": [
+				{
+					"name": "filter",
+					"type": "string",
+					"comment": "(grand_places | locked_places | unlocked_places | personal_places | all)",
+					"required": false
+				},{
+					"name": "keyword",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "grand_parent_id",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "sort",
+					"type": "string",
+					"comment": "(key_holders | creators | children | place_type)",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/place_remove",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/place_add_member",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "account_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/place_promote_member",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "account_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/place_demote_member",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "account_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/place_remove_member",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "account_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/place_list_members",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/place_set_picture",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "universal_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/account_register",
+			"args": [
+				{
+					"name": "uid",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "pass",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "fname",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "lname",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "gender",
+					"type": "string",
+					"comment": "(m | f | o | x)",
+					"required": false
+				},{
+					"name": "dob",
+					"type": "string",
+					"comment": "(YYYY-MM-DD)",
+					"required": false
+				},{
+					"name": "country",
+					"type": "string",
+					"comment": "(2 character)",
+					"required": false
+				},{
+					"name": "email",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "phone",
+					"type": "string",
+					"comment": "(format example: 98912345678)",
+					"required": true
+				},{
+					"name": "send_sms",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/account_list",
+			"args": [
+				{
+					"name": "keyword",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "filter",
+					"type": "string",
+					"comment": "(users_enabled | users_disabled | users | devices | all)",
+					"required": false
+				},{
+					"name": "sort",
+					"type": "string",
+					"comment": "(joined_on | birthday | user_id | email)",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/account_disable",
+			"args": [
+				{
+					"name": "account_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/account_enable",
+			"args": [
+				{
+					"name": "account_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/account_set_pass",
+			"args": [
+				{
+					"name": "account_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "new_pass",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/account_list_places",
+			"args": [
+				{
+					"name": "account_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/account_update",
+			"args": [
+				{
+					"name": "account_id:",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "fname:",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "lname:",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "gender:",
+					"type": "string",
+					"comment": "(m | f)",
+					"required": false
+				},{
+					"name": "dob:",
+					"type": "string",
+					"comment": "(YYYY-MM-DD)",
+					"required": false
+				},{
+					"name": "email:",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "phone:",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "searchable:",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				},{
+					"name": "change_profile:",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				},{
+					"name": "change_picture:",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				},{
+					"name": "force_password",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				},{
+					"name": "limits.grand_places",
+					"type": "int",
+					"comment": "",
+					"required": false
+				},{
+					"name": "authority.label_editor",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/account_set_picture",
+			"args": [
+				{
+					"name": "account_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "universal_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/account_remove_picture",
+			"args": [
+				{
+					"name": "account_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		}
+	],
+"app":
+	[
+		{
+			"cmd": "app/exists",
+			"args": [
+				{
+					"name": "app_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "app/create_token",
+			"args": [
+				{
+					"name": "app_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "app/revoke_token",
+			"args": [
+				{
+					"name": "token",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "app/get_tokens",
+			"args": [
+				
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "app/get_app",
+			"args": [
+				
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "app/get_many",
+			"args": [
+				{
+					"name": "app_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "app/register",
+			"args": [
+				{
+					"name": "app_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "app_name",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "homepage",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "developer",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "icon_large_url",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "icon_small_url",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "app/remove",
+			"args": [
+				{
+					"name": "app_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "app/has_token",
+			"args": [
+				{
+					"name": "app_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		}
+	],
+"auth":
+	[
+		{
+			"cmd": "auth/get_verification",
+			"args": [
+				{
+					"name": "phone",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "uid",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "auth/get_email_verification",
+			"args": [
+				{
+					"name": "email",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "auth/verify_code",
+			"args": [
+				{
+					"name": "code",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "vid",
+					"type": "string",
+					"comment": "&#34;Verification ID&#34;",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "auth/send_text",
+			"args": [
+				{
+					"name": "vid",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "auth/call_phone",
+			"args": [
+				{
+					"name": "vid",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "auth/send_email",
+			"args": [
+				{
+					"name": "vid",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "auth/recover_pass",
+			"args": [
+				{
+					"name": "vid",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "new_pass",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "auth/recover_username",
+			"args": [
+				{
+					"name": "vid",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "auth/phone_available",
+			"args": [
+				{
+					"name": "phone",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "auth/register_user",
+			"args": [
+				{
+					"name": "uid",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "pass",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "fname",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "lname",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "gender",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "dob",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "country",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "email",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "phone",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "vid",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "auth/authorize_app",
+			"args": [
+				{
+					"name": "app_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "app_name",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "app_homepage",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "app_callback_url",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		}
+	],
+"client":
+	[
+		{
+			"cmd": "client/get_server_details",
+			"args": [
+				
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "client/upload_contacts",
+			"args": [
+				{
+					"name": "contacts",
+					"type": "string",
+					"comment": "(json)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "client/save_key",
+			"args": [
+				{
+					"name": "key_name",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "key_value",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "client/read_key",
+			"args": [
+				{
+					"name": "key_name",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "client/get_all_keys",
+			"args": [
+				
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "client/remove_key",
+			"args": [
+				{
+					"name": "key_name",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		}
+	],
+"contact":
+	[
+		{
+			"cmd": "contact/add",
+			"args": [
+				{
+					"name": "contact_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "contact/add_favorite",
+			"args": [
+				{
+					"name": "contact_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "contact/get",
+			"args": [
+				{
+					"name": "contact_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "contact/get_all",
+			"args": [
+				{
+					"name": "hash",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "contact/remove_contact",
+			"args": [
+				{
+					"name": "contact_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "contact/remove_favorite",
+			"args": [
+				{
+					"name": "contact_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		}
+	],
+"file":
+	[
+		{
+			"cmd": "file/get_download_token",
+			"args": [
+				{
+					"name": "universal_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "task_id",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "file/get_upload_token",
+			"args": [
+				
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "file/get",
+			"args": [
+				{
+					"name": "universal_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "file/get_recent_files",
+			"args": [
+				
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "file/get_by_token",
+			"args": [
+				{
+					"name": "token",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		}
+	],
+"hook":
+	[
+		{
+			"cmd": "hook/add_place_hook",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "hook_name",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "event_type",
+					"type": "int",
+					"comment": "",
+					"required": true
+				},{
+					"name": "url",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "hook/add_account_hook",
+			"args": [
+				{
+					"name": "account_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "hook_name",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "event_type",
+					"type": "int",
+					"comment": "(0x201)",
+					"required": true
+				},{
+					"name": "url",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "hook/remove",
+			"args": [
+				{
+					"name": "hook_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "hook/list",
+			"args": [
+				
+			],
+			"pagination": false
+		}
+	],
+"label":
+	[
+		{
+			"cmd": "label/add_member",
+			"args": [
+				{
+					"name": "account_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": true
+				},{
+					"name": "label_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "label/create",
+			"args": [
+				{
+					"name": "title",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "code",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "is_public",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "label/request",
+			"args": [
+				{
+					"name": "label_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "title",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "code",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "label/get_members",
+			"args": [
+				{
+					"name": "label_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "label/get_many",
+			"args": [
+				{
+					"name": "label_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "label/get_requests",
+			"args": [
+				
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "label/remove_request",
+			"args": [
+				{
+					"name": "request_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "label/remove",
+			"args": [
+				{
+					"name": "label_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "label/remove_member",
+			"args": [
+				{
+					"name": "label_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "account_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "label/update",
+			"args": [
+				{
+					"name": "label_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "code",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "title",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "label/update_request",
+			"args": [
+				{
+					"name": "request_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "status",
+					"type": "string",
+					"comment": "(approve | reject)",
+					"required": true
+				}
+			],
+			"pagination": false
+		}
+	],
+"notification":
+	[
+		{
+			"cmd": "notification/get",
+			"args": [
+				{
+					"name": "notification_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "notification/get_all",
+			"args": [
+				{
+					"name": "only_unread",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				},{
+					"name": "details",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				},{
+					"name": "subject",
+					"type": "string",
+					"comment": "‌(&#34;all&#34;, &#34;task&#34;, &#34;post&#34;)",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "notification/mark_as_read",
+			"args": [
+				{
+					"name": "notification_id",
+					"type": "string",
+					"comment": "(all | ID)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "notification/mark_as_read_by_post",
+			"args": [
+				{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "notification/remove",
+			"args": [
+				{
+					"name": "notification_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "notification/reset_counter",
+			"args": [
+				
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "notification/get_counter",
+			"args": [
+				
+			],
+			"pagination": false
+		}
+	],
+"place":
+	[
+		{
+			"cmd": "place/add_member",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "member_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/count_unread_posts",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "subs",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/add_grand_place",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "place_name",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "place_description",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "privacy.receptive",
+					"type": "string",
+					"comment": "(external | off)",
+					"required": true
+				},{
+					"name": "privacy.search",
+					"type": "bool",
+					"comment": "",
+					"required": true
+				},{
+					"name": "policy.add_member",
+					"type": "string",
+					"comment": "(creators | everyone)",
+					"required": true
+				},{
+					"name": "policy.add_post",
+					"type": "string",
+					"comment": "(creators | everyone)",
+					"required": true
+				},{
+					"name": "policy.add_place",
+					"type": "string",
+					"comment": "(creators | everyone)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/add_locked_place",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "place_name",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "place_description",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "privacy.receptive",
+					"type": "string",
+					"comment": "(external | internal | off)",
+					"required": true
+				},{
+					"name": "privacy.search",
+					"type": "bool",
+					"comment": "",
+					"required": true
+				},{
+					"name": "policy.add_member",
+					"type": "string",
+					"comment": "(creators | everyone)",
+					"required": true
+				},{
+					"name": "policy.add_post",
+					"type": "string",
+					"comment": "(creators | everyone)",
+					"required": true
+				},{
+					"name": "policy.add_place",
+					"type": "string",
+					"comment": "(creators | everyone)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/add_unlocked_place",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "place_name",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "place_description",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/demote_member",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "member_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/get_access",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/get",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/get_many",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": true
+				},{
+					"name": "member_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/get_activities",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "details",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/get_files",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "filter",
+					"type": "string",
+					"comment": "AUD | DOC | IMG | VID | OTH | all",
+					"required": false
+				},{
+					"name": "filename",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/get_unread_posts",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "subs",
+					"type": "bool",
+					"comment": "(default: FALSE)",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/get_notification",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/get_creators",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/get_key_holders",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/get_members",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/get_sub_places",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/get_mutual_places",
+			"args": [
+				{
+					"name": "account_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/get_posts",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "by_update",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/invite_member",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "member_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/leave",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/mark_all_read",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/available",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/promote_member",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "member_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/pin_post",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/remove",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/remove_favorite",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/remove_member",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "member_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/remove_picture",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/add_favorite",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/set_notification",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "state",
+					"type": "bool",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/set_picture",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "universal_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/update",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "place_name",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "place_desc",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "privacy.search",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				},{
+					"name": "privacy.receptive",
+					"type": "string",
+					"comment": "(external | internal | off)",
+					"required": false
+				},{
+					"name": "policy.add_post",
+					"type": "string",
+					"comment": "(creators | everyone)",
+					"required": false
+				},{
+					"name": "policy.add_member",
+					"type": "string",
+					"comment": "(creators | everyone)",
+					"required": false
+				},{
+					"name": "policy.add_place",
+					"type": "string",
+					"comment": "(creators | everyone)",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/unpin_post",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		}
+	],
+"post":
+	[
+		{
+			"cmd": "post/add_label",
+			"args": [
+				{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "label_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "post/add_comment",
+			"args": [
+				{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "txt",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "attachment_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "post/attach_place",
+			"args": [
+				{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "place_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "post/add",
+			"args": [
+				{
+					"name": "subject",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "targets",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": false
+				},{
+					"name": "attaches",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": false
+				},{
+					"name": "label_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": false
+				},{
+					"name": "content_type",
+					"type": "string",
+					"comment": "(text/plain | text/html)",
+					"required": false
+				},{
+					"name": "reply_to",
+					"type": "string",
+					"comment": "(post_id)",
+					"required": false
+				},{
+					"name": "forward_from",
+					"type": "string",
+					"comment": "(post_id)",
+					"required": false
+				},{
+					"name": "body",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "no_comment",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "post/get",
+			"args": [
+				{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "mark_as_read",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "post/edit",
+			"args": [
+				{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "subject",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "body",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "post/get_many",
+			"args": [
+				{
+					"name": "post_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "post/get_chain",
+			"args": [
+				{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "post/get_counters",
+			"args": [
+				{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "post/get_activities",
+			"args": [
+				{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "details",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "post/get_comments",
+			"args": [
+				{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "post/get_comment",
+			"args": [
+				{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "comment_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "post/get_many_comments",
+			"args": [
+				{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "comment_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "post/mark_as_read",
+			"args": [
+				{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "post/add_to_bookmarks",
+			"args": [
+				{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "post/remove_comment",
+			"args": [
+				{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "comment_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "post/set_notification",
+			"args": [
+				{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "state",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "post/remove",
+			"args": [
+				{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "post/remove_label",
+			"args": [
+				{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "label_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "post/move",
+			"args": [
+				{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "old_place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "new_place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "post/retract",
+			"args": [
+				{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "post/remove_from_bookmarks",
+			"args": [
+				{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "post/who_read",
+			"args": [
+				{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		}
+	],
+"report":
+	[
+		{
+			"cmd": "report/get_ts_single_val",
+			"args": [
+				{
+					"name": "from",
+					"type": "string",
+					"comment": "(YYYY-MM-DD:HH)",
+					"required": false
+				},{
+					"name": "to",
+					"type": "string",
+					"comment": "(YYYY-MM-DD:HH)",
+					"required": false
+				},{
+					"name": "res",
+					"type": "string",
+					"comment": "(h | d | m)",
+					"required": false
+				},{
+					"name": "key",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		}
+	],
+"search":
+	[
+		{
+			"cmd": "search/places_for_compose",
+			"args": [
+				{
+					"name": "keyword",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "search/places_for_search",
+			"args": [
+				{
+					"name": "keyword",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "search/accounts",
+			"args": [
+				{
+					"name": "keyword",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "search/accounts_for_admin",
+			"args": [
+				{
+					"name": "keyword",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "search/accounts_for_invite",
+			"args": [
+				{
+					"name": "keyword",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "search/accounts_for_add",
+			"args": [
+				{
+					"name": "keyword",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "search/accounts_for_mention",
+			"args": [
+				{
+					"name": "keyword",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "post_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "search/accounts_for_task_mention",
+			"args": [
+				{
+					"name": "keyword",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "task_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "search/accounts_for_search",
+			"args": [
+				{
+					"name": "keyword",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "search/labels",
+			"args": [
+				{
+					"name": "keyword",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "filter",
+					"type": "string",
+					"comment": "(my_privates | privates | public | all)",
+					"required": false
+				},{
+					"name": "details",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "search/posts",
+			"args": [
+				{
+					"name": "keyword",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "place_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": false
+				},{
+					"name": "sender_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": false
+				},{
+					"name": "label_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": false
+				},{
+					"name": "label_title",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": false
+				},{
+					"name": "has_attachment",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "search/tasks",
+			"args": [
+				{
+					"name": "keyword",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "assigner_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": false
+				},{
+					"name": "assignee_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": false
+				},{
+					"name": "label_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": false
+				},{
+					"name": "label_title",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": false
+				},{
+					"name": "has_attachment",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "search/apps",
+			"args": [
+				{
+					"name": "keyword",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "search/posts_conversation",
+			"args": [
+				{
+					"name": "account_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "keyword",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "search/suggestions",
+			"args": [
+				{
+					"name": "keyword",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		}
+	],
+"session":
+	[
+		{
+			"cmd": "session/close",
+			"args": [
+				
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "session/recall",
+			"args": [
+				{
+					"name": "_sk",
+					"type": "string",
+					"comment": "(session key)",
+					"required": true
+				},{
+					"name": "_ss",
+					"type": "string",
+					"comment": "(session secret)",
+					"required": true
+				},{
+					"name": "_did",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "_dt",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "_os",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "session/register",
+			"args": [
+				{
+					"name": "uid",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "pass",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "_did",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "_dt",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "_os",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "session/get_actives",
+			"args": [
+				
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "session/close_active",
+			"args": [
+				{
+					"name": "_sk",
+					"type": "string",
+					"comment": "(session key)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "session/close_all_actives",
+			"args": [
+				
+			],
+			"pagination": false
+		}
+	],
+"system":
+	[
+		{
+			"cmd": "system/get_counters",
+			"args": [
+				
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "system/get_int_constants",
+			"args": [
+				
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "system/get_string_constants",
+			"args": [
+				
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "system/set_int_constants",
+			"args": [
+				{
+					"name": "cache_lifetime",
+					"type": "int",
+					"comment": "",
+					"required": false
+				},{
+					"name": "post_max_targets",
+					"type": "int",
+					"comment": "",
+					"required": false
+				},{
+					"name": "post_max_attachments",
+					"type": "int",
+					"comment": "",
+					"required": false
+				},{
+					"name": "post_retract_time",
+					"type": "int",
+					"comment": "",
+					"required": false
+				},{
+					"name": "post_max_labels",
+					"type": "int",
+					"comment": "",
+					"required": false
+				},{
+					"name": "account_grandplaces_limit",
+					"type": "int",
+					"comment": "",
+					"required": false
+				},{
+					"name": "label_max_members",
+					"type": "int",
+					"comment": "",
+					"required": false
+				},{
+					"name": "place_max_children",
+					"type": "int",
+					"comment": "",
+					"required": false
+				},{
+					"name": "place_max_creators",
+					"type": "int",
+					"comment": "",
+					"required": false
+				},{
+					"name": "place_max_keyholders",
+					"type": "int",
+					"comment": "",
+					"required": false
+				},{
+					"name": "register_mode",
+					"type": "int",
+					"comment": "(1: everyone, 2: admin_only)",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "system/set_string_constants",
+			"args": [
+				{
+					"name": "company_name",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "company_desc",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "company_logo",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "system_lang",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "magic_number",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "license_key",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "system/mon_enable",
+			"args": [
+				
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "system/mon_disable",
+			"args": [
+				
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "system/stats",
+			"args": [
+				
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "system/mon_activity",
+			"args": [
+				{
+					"name": "mon_access_token",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "system/online_users",
+			"args": [
+				
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "system/set_license",
+			"args": [
+				{
+					"name": "license_key",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "system/get_license",
+			"args": [
+				
+			],
+			"pagination": false
+		}
+	],
+"task":
+	[
+		{
+			"cmd": "task/create",
+			"args": [
+				{
+					"name": "title",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "desc",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "assignee_id",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "candidate_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": false
+				},{
+					"name": "attachment_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": false
+				},{
+					"name": "related_to",
+					"type": "string",
+					"comment": "(task_id of parent)",
+					"required": false
+				},{
+					"name": "related_post",
+					"type": "string",
+					"comment": "(post_id of the post this task is related to)",
+					"required": false
+				},{
+					"name": "watcher_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": false
+				},{
+					"name": "editor_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": false
+				},{
+					"name": "label_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": false
+				},{
+					"name": "todos",
+					"type": "string",
+					"comment": "(base64(txt);weight[1-10],...)",
+					"required": false
+				},{
+					"name": "due_date",
+					"type": "int",
+					"comment": "(timestamp milli-seconds)",
+					"required": false
+				},{
+					"name": "due_date_has_clock",
+					"type": "bool",
+					"comment": "(compulsory if due_date is set)",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/add_comment",
+			"args": [
+				{
+					"name": "task_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "txt",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/add_attachment",
+			"args": [
+				{
+					"name": "task_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "universal_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/add_label",
+			"args": [
+				{
+					"name": "task_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "label_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/add_todo",
+			"args": [
+				{
+					"name": "task_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "txt",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "weight",
+					"type": "int",
+					"comment": "(between 1 - 10)",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/add_watcher",
+			"args": [
+				{
+					"name": "task_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "watcher_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/add_editor",
+			"args": [
+				{
+					"name": "task_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "editor_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/update_assignee",
+			"args": [
+				{
+					"name": "task_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "account_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/add_candidate",
+			"args": [
+				{
+					"name": "task_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "candidate_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/get_by_filter",
+			"args": [
+				{
+					"name": "filter",
+					"type": "string",
+					"comment": "(&#34;assigned_to_me&#34; | &#34;created_by_me&#34; | &#34;watched&#34; | &#34;candidate&#34; | &#34;upcoming&#34;)",
+					"required": true
+				},{
+					"name": "status_filter",
+					"type": "int",
+					"comment": "(comma separated)[Max. 10 TASK_STATE]",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/get_by_custom_filter",
+			"args": [
+				{
+					"name": "assignee_id",
+					"type": "string",
+					"comment": "separated)",
+					"required": false
+				},{
+					"name": "assignor_id",
+					"type": "string",
+					"comment": "separated)",
+					"required": false
+				},{
+					"name": "label.logic",
+					"type": "string",
+					"comment": "| &#34;or&#34;)",
+					"required": false
+				},{
+					"name": "label_id",
+					"type": "string",
+					"comment": "separated)",
+					"required": false
+				},{
+					"name": "label_title",
+					"type": "string",
+					"comment": "separated)",
+					"required": false
+				},{
+					"name": "status_filter",
+					"type": "int",
+					"comment": "",
+					"required": false
+				},{
+					"name": "keyword",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "due_date",
+					"type": "string",
+					"comment": "timestamp)",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/get_activities",
+			"args": [
+				{
+					"name": "task_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "only_comments",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				},{
+					"name": "details",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/get_many",
+			"args": [
+				{
+					"name": "task_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/get_many_activities",
+			"args": [
+				{
+					"name": "activity_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": true
+				},{
+					"name": "details",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/remove_attachment",
+			"args": [
+				{
+					"name": "task_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "universal_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/remove",
+			"args": [
+				{
+					"name": "task_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/remove_comment",
+			"args": [
+				{
+					"name": "task_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "activity_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/remove_label",
+			"args": [
+				{
+					"name": "task_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "label_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/remove_todo",
+			"args": [
+				{
+					"name": "task_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "todo_id",
+					"type": "int",
+					"comment": "(comma separated)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/remove_watcher",
+			"args": [
+				{
+					"name": "task_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "watcher_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/remove_editor",
+			"args": [
+				{
+					"name": "task_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "editor_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/remove_candidate",
+			"args": [
+				{
+					"name": "task_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "candidate_id",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/respond",
+			"args": [
+				{
+					"name": "task_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "response",
+					"type": "string",
+					"comment": "(accept | reject | resign)",
+					"required": true
+				},{
+					"name": "reason",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/set_status",
+			"args": [
+				{
+					"name": "task_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "status",
+					"type": "int",
+					"comment": "(TASK_STATUS_COMPLETED | TASK_STATUS_HOLD | TASK_STATUS_CANCELED | TASK_STATUS_FAILED)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/set_state",
+			"args": [
+				{
+					"name": "task_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "state",
+					"type": "string",
+					"comment": "(&#34;complete&#34; | &#34;hold&#34; | &#34;in_progress&#34; | &#34;failed&#34;)",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/update",
+			"args": [
+				{
+					"name": "task_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "title",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "desc",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "due_date",
+					"type": "int",
+					"comment": "(timestamp milli-seconds)",
+					"required": false
+				},{
+					"name": "due_date_has_clock",
+					"type": "bool",
+					"comment": "(compulsory if due_date is set)",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "task/update_todo",
+			"args": [
+				{
+					"name": "task_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "todo_id",
+					"type": "int",
+					"comment": "",
+					"required": true
+				},{
+					"name": "txt",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "weight",
+					"type": "int",
+					"comment": "(between 1 - 10)",
+					"required": false
+				},{
+					"name": "done",
+					"type": "bool",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		}
+	]
+}
+

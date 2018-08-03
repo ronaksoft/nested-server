@@ -1,0 +1,39 @@
+stages:
+  - test
+  - build
+  - deploy
+
+variables:
+  GO_SOURCE_DIR: /go/src/git.ronaksoftware.com/$CI_PROJECT_PATH   # CI_PROJECT_PATH: nested/server-userapi
+  BUILD_DIR: $CI_PROJECT_DIR/build
+
+build:compile:
+  stage: build
+  image: golang:latest
+  script:
+    - go get github.com/kardianos/govendor
+    - mkdir -p $GO_SOURCE_DIR
+    - mkdir -p $BUILD_DIR
+    - cp -r $CI_PROJECT_DIR/* $GO_SOURCE_DIR
+    - cd $GO_SOURCE_DIR/mail-store-cli
+    - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $BUILD_DIR/mail-store-cli .
+    - cd ..
+    - cd $GO_SOURCE_DIR/mail-map
+    - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $BUILD_DIR/mail-map .
+  artifacts:
+    untracked: true
+    expire_in: 1 hour
+
+deploy:production:
+  stage: deploy
+  only:
+    - master
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    IMAGE_TAG:  "1.0"
+  script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
+    - docker build --pull -t $CI_REGISTRY_IMAGE:$IMAGE_TAG .
+    - docker push $CI_REGISTRY_IMAGE:$IMAGE_TAG

@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<!DOCTYPE tsung SYSTEM "/usr/local/Cellar/tsung/1.7.0/share/tsung/tsung-1.0.dtd" [] >
+<tsung loglevel="error" backend="fullstats">
+    <clients>
+        <client host="localhost" use_controller_vm="true" maxusers="5000"/>
+    </clients>
+    <servers>
+        <server host="webapp.ronaksoftware.com" port="81" type="ssl"/>
+    </servers>
+    <load duration="5" unit="minute">
+        <arrivalphase phase="1" duration="5" unit="minute">
+            <users arrivalrate="20" unit="second" maxnumber="10"/>
+        </arrivalphase>
+    </load>
+    <sessions>
+        <session name="websocket-create-place" probability="100" type="ts_websocket">
+            <setdynvars sourcetype="random_string" length="13">
+                <var name="reqid"/>
+            </setdynvars>
+            <setdynvars sourcetype="random_number" start="1" end="10">
+                <var name="randint"/>
+            </setdynvars>
+
+            <!-- Connect To Websocket Server -->
+            <request>
+                <match/>
+                <websocket type="connect" path="/api" frame="text"/>
+            </request>
+            <thinktime value="3"/>
+            <!-- Session Register -->
+            <request subst="true">
+                <match />
+                <dyn_variable name="sk" jsonpath="data._sk"/>
+                <dyn_variable name="ss" jsonpath="data._ss"/>
+                <websocket type="message" frame="text" path="/api">
+                    {
+                        "cmd":"session/register",
+                        "data":{
+                            "uid":"ehsan",
+                            "pass":"de222843a127a42dfbbc9b7afb57a71a"
+                        },
+                        "_sk":"",
+                        "_ss":"",
+                        "_reqid":"%%_reqid%%"
+                    }
+                </websocket>
+            </request>
+            <thinktime value="5"/>
+            <!-- Send Requests -->
+            <request subst="true">
+                <match do="dump"/>
+                <websocket type="message" frame="text" path="/api">
+                    {
+                        "cmd":"place/add_grand_place",
+                        "data":{
+                            "place_id": "tsung-place-%%_randint%%",
+                            "place_name": "TSUNG PLACE %%_randint%%",
+                            "privacy.receptive": "external",
+                            "privacy.search": true,
+                            "policy.add_member": "everyone",
+                            "policy.add_place": "everyone",
+                            "policy.add_post": "everyone"
+                        },
+                        "_sk":"%%_sk%%",
+                        "_ss":"%%_ss%%",
+                        "_reqid":"%%_reqid%%"
+                    }
+                </websocket>
+            </request>
+            <thinktime value="5"/>
+            <!-- Disconnect -->
+            <request>
+                <websocket type="close" path="/api"/>
+            </request>
+
+        </session>
+    </sessions>
+</tsung>

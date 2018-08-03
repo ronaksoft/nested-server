@@ -1,0 +1,37 @@
+stages:
+  - test
+  - build
+  - deploy
+
+variables:
+  IMAGE_TAG:  "3.0"
+  GO_SOURCE_DIR: /go/src/git.ronaksoftware.com/$CI_PROJECT_PATH   # CI_PROJECT_PATH: nested/server-ntfy
+  BUILD_DIR: $CI_PROJECT_DIR/build
+
+build:compile:
+  stage: build
+  image: golang:latest
+  script:
+    - go get github.com/kardianos/govendor
+    - mkdir -p $GO_SOURCE_DIR
+    - mkdir -p $BUILD_DIR
+    - cp -r $CI_PROJECT_DIR/* $GO_SOURCE_DIR
+    - cd $GO_SOURCE_DIR
+    - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $BUILD_DIR/$CI_PROJECT_NAME .
+  artifacts:
+    untracked: true
+    expire_in: 1 hour
+
+deploy:production:
+  stage: deploy
+  only:
+    - master
+    - v3
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
+    - docker build --pull -t $CI_REGISTRY_IMAGE:$IMAGE_TAG .
+    - docker push $CI_REGISTRY_IMAGE:$IMAGE_TAG
+

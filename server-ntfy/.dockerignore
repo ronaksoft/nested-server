@@ -1,0 +1,8 @@
+Dockerfile
+docker-compose.yml
+Dockerfile-dev
+docker-compose.dev.yml
+.gitlab-ci.yml
+.editorconfig
+.gitignore
+.idea

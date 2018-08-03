@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<!DOCTYPE tsung SYSTEM "/usr/local/Cellar/tsung/1.7.0/share/tsung/tsung-1.0.dtd" [] >
+<tsung loglevel="error" backend="fullstats">
+    <clients>
+        <client host="localhost" use_controller_vm="true" maxusers="5000"/>
+    </clients>
+    <servers>
+        <server host="webapp.ronaksoftware.com" port="81" type="ssl"/>
+    </servers>
+    <load duration="5" unit="minute">
+        <arrivalphase phase="1" duration="5" unit="minute">
+            <users arrivalrate="20" unit="second" maxnumber="1000"/>
+        </arrivalphase>
+    </load>
+    <options>
+        <option name="file_server" id='usersdb' value="users.csv"/>
+        <option name="global_ack_timeout" value="2000"/>
+    </options>
+    <sessions>
+        <session name="websocket-test-1" probability="100" type="ts_websocket">
+            <setdynvars sourcetype="random_string" length="13">
+                <var name="reqid"/>
+            </setdynvars>
+            <setdynvars sourcetype="random_number" start="1" end="10">
+                <var name="randint"/>
+            </setdynvars>
+            <setdynvars sourcetype="file" fileid="usersdb" delimiter="," order="random">
+                <var name="username"/>
+                <var name="password"/>
+            </setdynvars>
+            <!-- Connect To Websocket Server -->
+            <request>
+                <match/>
+                <websocket type="connect" path="/api" frame="text"/>
+            </request>
+            <thinktime value="3"/>
+            <!-- Session Register -->
+            <request subst="true">
+                <dyn_variable name="sk" jsonpath="data._sk"/>
+                <dyn_variable name="ss" jsonpath="data._ss"/>
+                <websocket type="message" frame="text" path="/api">
+                    {"cmd":"session/register","data":{"uid":"%%_username%%","pass":"e10adc3949ba59abbe56e057f20f883e"},"_sk":"","_ss":"","_reqid":"%%_reqid%%"}
+                </websocket>
+            </request>
+
+            <!-- Send Requests -->
+            <for from="1" to="50" var="counter">
+                <request subst="true">
+                    <match do="dump">.*"status": "ok".*</match>
+                    <websocket type="message" frame="text" path="/api">
+                        {"cmd":"post/add","data":{"subject":"Hi %%_counter%%","targets":"tsung-place-%%_randint%%,tsung-place-%%_randint%%"},"_sk":"%%_sk%%","_ss":"%%_ss%%"}
+                    </websocket>
+                </request>
+                <thinktime value="5" random="true"/>
+                <request>
+                    <websocket type="message" frame="text" path="/api">
+                        {"cmd":"account/get_posts","data":{},"_sk":"%%_sk%%","_ss":"%%_ss%%"}
+                    </websocket>
+                </request>
+                <thinktime value="10" random="true"/>
+            </for>
+
+
+            <!-- Disconnect -->
+            <request>
+                <websocket type="close" path="/api"/>
+            </request>
+
+        </session>
+    </sessions>
+</tsung>
