@@ -3,7 +3,7 @@ package nestedServiceFile
 import (
     "git.ronaksoftware.com/nested/server/model"
     "github.com/globalsign/mgo/bson"
-    "git.ronaksoftware.com/nested/server-gateway/client"
+    "git.ronaksoftware.com/nested/server/server-gateway/client"
 )
 
 // @Command: file/get_download_token

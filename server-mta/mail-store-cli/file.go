@@ -5,7 +5,7 @@ import (
     "os"
     "time"
     "errors"
-    "git.ronaksoftware.com/nested/server-gateway/client"
+    "git.ronaksoftware.com/nested/server/server-gateway/client"
     "git.ronaksoftware.com/nested/server/model"
 )
 

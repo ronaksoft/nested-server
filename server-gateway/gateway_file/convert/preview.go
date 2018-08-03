@@ -22,8 +22,6 @@ type PreviewMeta struct {
 }
 
 func (c Preview) Thumbnail(r io.Reader, mimeType string, maxWidth, maxHeight uint) (io.Reader, *PreviewMeta, error) {
-    _funcName := "Preview::Thumbnail"
-
     maxDim := uint(math.Max(float64(maxWidth), float64(maxHeight)))
     iFilename := "-" // STDIN
     filename := "-"  // STDOUT
@@ -62,19 +60,19 @@ func (c Preview) Thumbnail(r io.Reader, mimeType string, maxWidth, maxHeight uin
 
     case "video":
         if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_preview_"); err != nil {
-            _Log.Error(_funcName,  err.Error())
+            _Log.Warn(err.Error())
             return nil, nil, protocol.NewUnknownError(err)
 
         } else if s, err := f.Stat(); err != nil {
-            _Log.Error(_funcName,  err.Error())
+            _Log.Warn(err.Error())
             return nil, nil, protocol.NewUnknownError(err)
 
         } else if n, err := io.Copy(f, r); err != nil {
-            _Log.Error(_funcName,  err.Error())
+            _Log.Warn(err.Error())
             return nil, nil, protocol.NewUnknownError(err)
 
         } else if 0 == n {
-            _Log.Error(_funcName, "Nothing was written into temp file")
+            _Log.Warn(err.Error())
             return nil, nil, protocol.NewUnknownError(nil)
 
         } else {
@@ -158,7 +156,7 @@ func (c Preview) Thumbnail(r io.Reader, mimeType string, maxWidth, maxHeight uin
     // Command Stdout: Output io.Reader
     var output io.ReadCloser
     if pOut, err := cmd.StdoutPipe(); err != nil {
-        _Log.Error(_funcName,  err.Error())
+        _Log.Warn(err.Error())
         return nil, nil, err
 
     } else {
@@ -167,7 +165,7 @@ func (c Preview) Thumbnail(r io.Reader, mimeType string, maxWidth, maxHeight uin
 
     // Start Command
     if err := cmd.Start(); err != nil {
-        _Log.Error(_funcName,  err.Error())
+        _Log.Warn(err.Error())
         return nil, nil, err
     }
 
@@ -178,9 +176,6 @@ func (c Preview) Thumbnail(r io.Reader, mimeType string, maxWidth, maxHeight uin
 
 // Resize the input picture
 func (c Preview) Resized(r io.Reader, mimeType string, maxWidth, maxHeight uint) (io.Reader, *PreviewMeta, error) {
-    _funcName := "Preview::Resized"
-
-
     maxDim := uint(math.Max(float64(maxWidth), float64(maxHeight)))
     iFilename := "-" // STDIN
     filename := "-"  // STDOUT
@@ -230,19 +225,19 @@ func (c Preview) Resized(r io.Reader, mimeType string, maxWidth, maxHeight uint)
 
     case "video":
         if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_preview_"); err != nil {
-            _Log.Error(_funcName,  err.Error())
+            _Log.Warn(err.Error())
             return nil, nil, protocol.NewUnknownError(err)
 
         } else if s, err := f.Stat(); err != nil {
-            _Log.Error(_funcName,  err.Error())
+            _Log.Warn(err.Error())
             return nil, nil, protocol.NewUnknownError(err)
 
         } else if n, err := io.Copy(f, r); err != nil {
-            _Log.Error(_funcName,  err.Error())
+            _Log.Warn(err.Error())
             return nil, nil, protocol.NewUnknownError(err)
 
         } else if 0 == n {
-            _Log.Error(_funcName, "Nothing was written into temp file")
+            _Log.Warn( "Nothing was written into temp file")
             return nil, nil, protocol.NewUnknownError(nil)
 
         } else {
@@ -329,7 +324,7 @@ func (c Preview) Resized(r io.Reader, mimeType string, maxWidth, maxHeight uint)
     // Command Stdout: Output io.Reader
     var output io.ReadCloser
     if pOut, err := cmd.StdoutPipe(); err != nil {
-        _Log.Error(_funcName,  err.Error())
+        _Log.Warn(err.Error())
         return nil, nil, err
 
     } else {
@@ -338,7 +333,7 @@ func (c Preview) Resized(r io.Reader, mimeType string, maxWidth, maxHeight uint)
 
     // Start Command
     if err := cmd.Start(); err != nil {
-        _Log.Error(_funcName,  err.Error())
+        _Log.Warn(err.Error())
         return nil, nil, err
     }
 

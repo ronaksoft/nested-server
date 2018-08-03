@@ -10,6 +10,7 @@ import (
     "io/ioutil"
     "encoding/json"
     "git.ronaksoftware.com/common/server-protocol"
+    "go.uber.org/zap"
 )
 
 type Audio struct{}
@@ -20,8 +21,6 @@ type AudioMeta struct {
 }
 
 func (c Audio) Meta(r io.Reader) (*AudioMeta, error) {
-    _funcName := "Audio::Meta"
-
     type stream struct {
         Duration  string `json:"duration"`
         CodecType string `json:"codec_type"`
@@ -36,19 +35,19 @@ func (c Audio) Meta(r io.Reader) (*AudioMeta, error) {
     inputFilename := "pipe:" // STDIN
 
     if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_audio_"); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
 
         return nil, protocol.NewUnknownError(err)
     } else if s, err := f.Stat(); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil, protocol.NewUnknownError(err)
 
     } else if n, err := io.Copy(f, r); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil, protocol.NewUnknownError(err)
 
     } else if 0 == n {
-        _Log.Error(_funcName, "Nothing was written into temp file")
+        _Log.Warn("Nothing was written into temp file")
         return nil, protocol.NewUnknownError(nil)
 
     } else {
@@ -66,7 +65,9 @@ func (c Audio) Meta(r io.Reader) (*AudioMeta, error) {
 
     var decoder *json.Decoder
     if pout, err := cmdMain.StdoutPipe(); err != nil {
-        _Log.Error(_funcName, err.Error(), cmdMain.Path)
+        _Log.Warn(err.Error(),
+            zap.String("PATH", cmdMain.Path),
+        )
         return nil, err
     } else {
         decoder = json.NewDecoder(pout)
@@ -74,13 +75,15 @@ func (c Audio) Meta(r io.Reader) (*AudioMeta, error) {
     }
 
     if err := cmdMain.Start(); err != nil {
-        _Log.Error(_funcName, err.Error(), cmdMain.Path)
+        _Log.Warn(err.Error(),
+            zap.String("PATH", cmdMain.Path),
+        )
         return nil, err
     }
 
     result := streams{}
     if err := decoder.Decode(&result); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil, err
     }
 
@@ -101,25 +104,23 @@ func (c Audio) Meta(r io.Reader) (*AudioMeta, error) {
 }
 
 func (c Audio) ToMp3(r io.Reader, aQuality uint) (io.Reader, error) {
-    _funcName := "Audio::ToMp3"
-
     iFilename := "pipe:" // STDIN
     oFilename := "-"     // STDIN
 
     if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_audio_"); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
 
         return nil, protocol.NewUnknownError(err)
     } else if s, err := f.Stat(); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil, protocol.NewUnknownError(err)
 
     } else if n, err := io.Copy(f, r); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil, protocol.NewUnknownError(err)
 
     } else if 0 == n {
-        _Log.Error(_funcName, "nothing was written into temp file")
+        _Log.Warn("nothing was written into temp file")
         return nil, protocol.NewUnknownError(nil)
 
     } else {
@@ -146,7 +147,9 @@ func (c Audio) ToMp3(r io.Reader, aQuality uint) (io.Reader, error) {
 
     var or io.Reader
     if pout, err := cmdMain.StdoutPipe(); err != nil {
-        _Log.Error(_funcName, err.Error(), cmdMain.Path)
+        _Log.Warn(err.Error(),
+            zap.String("PATH", cmdMain.Path),
+        )
         return nil, err
 
     } else {
@@ -154,7 +157,9 @@ func (c Audio) ToMp3(r io.Reader, aQuality uint) (io.Reader, error) {
     }
 
     if err := cmdMain.Start(); err != nil {
-        _Log.Error(_funcName, err.Error(), cmdMain.Path)
+        _Log.Warn(err.Error(),
+            zap.String("PATH", cmdMain.Path),
+        )
         return nil, err
 
     }

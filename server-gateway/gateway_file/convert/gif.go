@@ -21,8 +21,6 @@ type GifMeta struct {
 }
 
 func (c Gif) Meta(r io.Reader) (*GifMeta, error) {
-    _funcName := "Gif::Meta"
-
     output := &GifMeta{}
     iFilename := "-[-1]" // STDIN
 
@@ -35,11 +33,11 @@ func (c Gif) Meta(r io.Reader) (*GifMeta, error) {
     // --Start Commands
 
     if b, err := cmdMain.Output(); err != nil {
-        _Log.Error(_funcName, err.Error())
-
+        _Log.Warn(err.Error())
         return nil, err
+
     } else if _, err := fmt.Sscanf(string(b), "%dx%dx%d", &output.Frames, &output.Width, &output.Height); err != nil {
-        _Log.Error(_funcName, err.Error(), string(b))
+        _Log.Warn(err.Error())
 
         return nil, err
     }
@@ -48,25 +46,23 @@ func (c Gif) Meta(r io.Reader) (*GifMeta, error) {
 }
 
 func (c Gif) ToMp4(r io.Reader, vQuality, maxWidth, maxHeight uint) (io.Reader, error) {
-    _funcName := "Gif::ToMp4"
-
     iFilename := "pipe:" // STDIN
     oFilename := "pipe:" // STDIN
 
     if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_gif_"); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil, protocol.NewUnknownError(err)
 
     } else if s, err := f.Stat(); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil, protocol.NewUnknownError(err)
 
     } else if n, err := io.Copy(f, r); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil, protocol.NewUnknownError(err)
 
     } else if 0 == n {
-        _Log.Error(_funcName, "Gif::ToMp4 Nothing was written into temp file")
+        _Log.Warn("Gif::ToMp4 Nothing was written into temp file")
         return nil, protocol.NewUnknownError(nil)
 
     } else {
@@ -75,11 +71,11 @@ func (c Gif) ToMp4(r io.Reader, vQuality, maxWidth, maxHeight uint) (io.Reader, 
     }
 
     if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_gif_out_"); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil, protocol.NewUnknownError(err)
 
     } else if s, err := f.Stat(); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil, protocol.NewUnknownError(err)
 
     } else {
@@ -115,18 +111,18 @@ func (c Gif) ToMp4(r io.Reader, vQuality, maxWidth, maxHeight uint) (io.Reader, 
     cmdMain := exec.Command(_Commands.Ffmpeg, args...)
     cmdMain.Stdin = r // Command Stdin: Input io.Reader
 
-    if b, err := cmdMain.CombinedOutput(); err != nil {
-        _Log.Error(_funcName, err.Error(), cmdMain.Path, b)
+    if _, err := cmdMain.CombinedOutput(); err != nil {
+        _Log.Warn(err.Error())
         return nil, err
 
     }
 
     if err := os.Remove(iFilename); err != nil {
-        _Log.Error(_funcName,  err.Error())
+        _Log.Warn(err.Error())
     }
 
     if f, err := os.Open(oFilename); err != nil {
-        _Log.Error(_funcName,  err.Error())
+        _Log.Warn(err.Error())
         return nil, err
 
     } else {

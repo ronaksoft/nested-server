@@ -5,7 +5,7 @@ import (
     "encoding/json"
     "strings"
     "log"
-    "git.ronaksoftware.com/nested/server-gateway/client"
+    "git.ronaksoftware.com/nested/server/server-gateway/client"
 )
 
 type ClientSettings struct {

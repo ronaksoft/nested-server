@@ -9,7 +9,7 @@ import (
     "time"
     "github.com/globalsign/mgo/bson"
     "mime/multipart"
-    "git.ronaksoftware.com/nested/server-gateway/client"
+    "git.ronaksoftware.com/nested/server/server-gateway/client"
     "io"
     "path"
     "git.ronaksoftware.com/common/server-protocol"

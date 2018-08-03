@@ -5,7 +5,7 @@ import (
     "runtime"
     "encoding/json"
     "strings"
-    "git.ronaksoftware.com/nested/server-gateway/client"
+    "git.ronaksoftware.com/nested/server/server-gateway/client"
 )
 
 // @Command: system/get_counters

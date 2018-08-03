@@ -3,7 +3,7 @@ package nestedServiceNotification
 import (
     "git.ronaksoftware.com/nested/server/model"
     "strings"
-    "git.ronaksoftware.com/nested/server-gateway/client"
+    "git.ronaksoftware.com/nested/server/server-gateway/client"
 )
 
 // @Command:	notification/get

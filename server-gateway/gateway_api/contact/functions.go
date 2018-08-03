@@ -2,7 +2,7 @@ package nestedServiceContact
 
 import (
 	"git.ronaksoftware.com/nested/server/model"
-	"git.ronaksoftware.com/nested/server-gateway/client"
+	"git.ronaksoftware.com/nested/server/server-gateway/client"
 )
 
 // @Command:	contact/add

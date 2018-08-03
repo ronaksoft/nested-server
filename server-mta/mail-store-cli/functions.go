@@ -16,7 +16,7 @@ import (
 	"io/ioutil"
 	"encoding/base64"
 	"github.com/globalsign/mgo/bson"
-	"git.ronaksoftware.com/nested/server-gateway/client"
+	"git.ronaksoftware.com/nested/server/server-gateway/client"
 )
 
 func Dispatch(sender string, recipients []string, body io.Reader) error {

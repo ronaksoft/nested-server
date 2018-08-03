@@ -2,7 +2,7 @@ package nestedServiceAccount
 
 import (
 	"fmt"
-	"git.ronaksoftware.com/nested/server-gateway/client"
+	"git.ronaksoftware.com/nested/server/server-gateway/client"
 	"git.ronaksoftware.com/nested/server/model"
 	"regexp"
 	"strings"

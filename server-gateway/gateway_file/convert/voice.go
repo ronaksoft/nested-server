@@ -20,8 +20,6 @@ type VoiceMeta struct {
 }
 
 func (c Voice) Meta(r io.Reader) (*VoiceMeta, error) {
-	_funcName := "Voice::Meta"
-
     type stream struct {
         Duration  string `json:"duration"`
         CodecType string `json:"codec_type"`
@@ -44,7 +42,7 @@ func (c Voice) Meta(r io.Reader) (*VoiceMeta, error) {
     // --Read command output
     var decoder *json.Decoder
     if pout, err := cmdMain.StdoutPipe(); err != nil {
-        _Log.Error(_funcName, err.Error(), cmdMain.Path)
+        _Log.Warn(err.Error())
         return nil, err
 
     } else {
@@ -53,13 +51,13 @@ func (c Voice) Meta(r io.Reader) (*VoiceMeta, error) {
     }
 
     if err := cmdMain.Start(); err != nil {
-        _Log.Error(_funcName,  err.Error(), cmdMain.Path)
+        _Log.Warn(err.Error())
         return nil, err
     }
 
     result := streams{}
     if err := decoder.Decode(&result); err != nil {
-        _Log.Error(_funcName,  err.Error())
+        _Log.Warn(err.Error())
         return nil, err
     }
     // --Create output
@@ -78,25 +76,24 @@ func (c Voice) Meta(r io.Reader) (*VoiceMeta, error) {
 }
 
 func (c Voice) ToMp3(r io.Reader, aQuality uint) (io.Reader, error) {
-    _funcName := "Voice::ToMp3"
 
     iFilename := "pipe:" // STDIN
     oFilename := "-"     // STDIN
 
     if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_voice_"); err != nil {
-        _Log.Error(_funcName,  err.Error())
+        _Log.Warn(err.Error())
         return nil, protocol.NewUnknownError(err)
 
     } else if s, err := f.Stat(); err != nil {
-        _Log.Error(_funcName,  err.Error())
+        _Log.Warn(err.Error())
         return nil, protocol.NewUnknownError(err)
 
     } else if n, err := io.Copy(f, r); err != nil {
-        _Log.Error(_funcName,  err.Error())
+        _Log.Warn(err.Error())
         return nil, protocol.NewUnknownError(err)
 
     } else if 0 == n {
-        _Log.Error(_funcName, "Voice::ToMp3 Nothing was written into temp file")
+        _Log.Warn("Voice::ToMp3 Nothing was written into temp file")
         return nil, protocol.NewUnknownError(nil)
 
     } else {
@@ -123,15 +120,15 @@ func (c Voice) ToMp3(r io.Reader, aQuality uint) (io.Reader, error) {
 
     var or io.Reader
     if pout, err := cmdMain.StdoutPipe(); err != nil {
-        _Log.Error(_funcName, err.Error(), cmdMain.Path)
-
+        _Log.Warn(err.Error())
         return nil, err
+
     } else {
         or = pout
     }
 
     if err := cmdMain.Start(); err != nil {
-        _Log.Error(_funcName,  err.Error(), cmdMain.Path)
+        _Log.Warn(err.Error())
         return nil, err
     }
 

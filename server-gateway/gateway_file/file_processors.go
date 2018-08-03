@@ -6,7 +6,7 @@ import (
     "git.ronaksoftware.com/nested/server/model"
     "git.ronaksoftware.com/common/server-protocol"
     "sync"
-    "git.ronaksoftware.com/nested/server-gateway/gateway_file/convert"
+    "git.ronaksoftware.com/nested/server/server-gateway/gateway_file/convert"
     "fmt"
     "errors"
 )

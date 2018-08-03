@@ -5,7 +5,7 @@ import (
     "time"
     "strings"
     "gopkg.in/fzerorubigd/onion.v3"
-    "git.ronaksoftware.com/nested/server-gateway/client"
+    "git.ronaksoftware.com/nested/server/server-gateway/client"
     "github.com/globalsign/mgo/bson"
     "strconv"
 )

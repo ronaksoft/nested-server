@@ -4,7 +4,7 @@ import (
     "git.ronaksoftware.com/nested/server/model"
     "strconv"
     "github.com/globalsign/mgo/bson"
-    "git.ronaksoftware.com/nested/server-gateway/client"
+    "git.ronaksoftware.com/nested/server/server-gateway/client"
 )
 
 // @Command:	hook/add_place_hook

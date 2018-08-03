@@ -6,12 +6,14 @@ import (
     "os/exec"
     "reflect"
     "strings"
-    "git.ronaksoftware.com/ronak/toolbox/logger"
+    "go.uber.org/zap"
+    "os"
 )
 
 var (
     _Commands ExecPath
-    _Log      *log.Logger
+    _Log      *zap.Logger
+    _LogLevel zap.AtomicLevel
 )
 
 type FileConverter struct {
@@ -49,7 +51,7 @@ func (ep *ExecPath) init() error {
         cmdPath := fmt.Sprintf("%s/%s", path.Dir(vField.String()), cmd)
 
         if execPath, err := exec.LookPath(cmd); err != nil {
-            _Log.Fatal("init", err.Error())
+            _Log.Fatal(err.Error())
             return err
         } else {
             cmdPath = execPath
@@ -63,7 +65,16 @@ func (ep *ExecPath) init() error {
 
 func NewFileConverter() (*FileConverter, error) {
     if nil == _Log {
-        _Log = log.NewTerminalLogger(log.LEVEL_ERROR)
+        _LogLevel = zap.NewAtomicLevelAt(zap.DebugLevel)
+        zap.NewProductionConfig()
+        config := zap.NewProductionConfig()
+        config.Encoding = "console"
+        config.Level = _LogLevel
+        if v, err := config.Build(); err != nil {
+            os.Exit(1)
+        } else {
+            _Log = v
+        }
     }
 
     if err := _Commands.init(); err != nil {

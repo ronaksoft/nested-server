@@ -12,8 +12,8 @@ import (
     "strconv"
     "bytes"
     "html/template"
-    "git.ronaksoftware.com/nested/server-gateway/client"
-    "git.ronaksoftware.com/nested/server-gateway/gateway_api"
+    "git.ronaksoftware.com/nested/server/server-gateway/client"
+    "git.ronaksoftware.com/nested/server/server-gateway/gateway_api"
 )
 
 // @Command: admin/set_message_template

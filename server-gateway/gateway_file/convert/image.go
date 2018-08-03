@@ -19,8 +19,6 @@ type ImageMeta struct {
 }
 
 func (c Image) Meta(r io.Reader) (*ImageMeta, error) {
-    _funcName := "Image::Meta"
-
     output := &ImageMeta{}
     iFilename := "-" // STDIN
 
@@ -34,15 +32,15 @@ func (c Image) Meta(r io.Reader) (*ImageMeta, error) {
 
     var a int
     if b, err := cmdMain.Output(); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil, err
 
     } else if _, err := fmt.Sscanf(string(b), "%dx%d", &output.Width, &output.Height); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil, err
 
     } else if _, err := fmt.Sscanf(string(b), "%vx%v:%d", &a, &a, &output.Orientation); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
 
     switch output.Orientation {
@@ -59,8 +57,6 @@ func (c Image) Meta(r io.Reader) (*ImageMeta, error) {
 }
 
 func (c Image) ToJpeg(r io.Reader, maxWidth, maxHeight uint) (io.Reader, error) {
-    _funcName := "Image::ToJpeg"
-
     iFilename := "-" // STDIN
     oFilename := "-" // STDOUT
 
@@ -95,7 +91,7 @@ func (c Image) ToJpeg(r io.Reader, maxWidth, maxHeight uint) (io.Reader, error) 
 
     var or io.Reader
     if pout, err := cmdMain.StdoutPipe(); err != nil {
-        _Log.Error(_funcName, err.Error(), cmdMain.Path)
+        _Log.Warn(err.Error())
 
         return nil, err
     } else {
@@ -103,7 +99,7 @@ func (c Image) ToJpeg(r io.Reader, maxWidth, maxHeight uint) (io.Reader, error) 
     }
 
     if err := cmdMain.Start(); err != nil {
-        _Log.Error(_funcName, err.Error(), cmdMain.Path)
+        _Log.Warn(err.Error())
         return nil, err
     }
 

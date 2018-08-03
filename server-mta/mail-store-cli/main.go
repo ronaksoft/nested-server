@@ -9,7 +9,7 @@ import (
 	"git.ronaksoftware.com/nested/server/model"
 	"log"
 	"git.ronaksoftware.com/nested/server/server-ntfy/client"
-	"git.ronaksoftware.com/nested/server-gateway/client"
+	"git.ronaksoftware.com/nested/server/server-gateway/client"
 )
 
 const LOG_PREFIX string = "nested/mailbox-store"

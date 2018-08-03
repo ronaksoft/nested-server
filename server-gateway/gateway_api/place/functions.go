@@ -5,7 +5,7 @@ import (
     "strings"
     "regexp"
     "log"
-    "git.ronaksoftware.com/nested/server-gateway/client"
+    "git.ronaksoftware.com/nested/server/server-gateway/client"
 )
 
 // @Command: place/add_member

@@ -25,8 +25,6 @@ type VideoMeta struct {
 }
 
 func (c Video) Meta(r io.Reader) (*VideoMeta, error) {
-    _funcName := "Video::Meta"
-
     type stream struct {
         Width     int    `json:"width"`
         Height    int    `json:"height"`
@@ -52,7 +50,7 @@ func (c Video) Meta(r io.Reader) (*VideoMeta, error) {
 
     var decoder *json.Decoder
     if pout, err := cmdMain.StdoutPipe(); err != nil {
-        _Log.Error(_funcName, err.Error(), cmdMain.Path)
+        _Log.Warn(err.Error())
         return nil, err
 
     } else {
@@ -61,13 +59,13 @@ func (c Video) Meta(r io.Reader) (*VideoMeta, error) {
     }
 
     if err := cmdMain.Start(); err != nil {
-        _Log.Error(_funcName, err.Error(), cmdMain.Path)
+        _Log.Warn(err.Error())
         return nil, err
     }
 
     result := streams{}
     if err := decoder.Decode(&result); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil, err
 
     }
@@ -93,25 +91,23 @@ func (c Video) Meta(r io.Reader) (*VideoMeta, error) {
 }
 
 func (c Video) ToMp4(r io.Reader, vQuality, maxWidth, maxHeight, aBitRate uint) (io.Reader, error) {
-    _funcName := "Video::ToMp4"
-
     iFilename := "pipe:" // STDIN
     oFilename := "pipe:" // STDIN
 
     if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_video_"); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil, protocol.NewUnknownError(err)
 
     } else if s, err := f.Stat(); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil, protocol.NewUnknownError(err)
 
     } else if n, err := io.Copy(f, r); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil, protocol.NewUnknownError(err)
 
     } else if 0 == n {
-        _Log.Error(_funcName, "Video::ToMp4 Nothing was written into temp file")
+        _Log.Warn("Video::ToMp4 Nothing was written into temp file")
         return nil, protocol.NewUnknownError(nil)
 
     } else {
@@ -120,11 +116,11 @@ func (c Video) ToMp4(r io.Reader, vQuality, maxWidth, maxHeight, aBitRate uint) 
     }
 
     if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_video_out_"); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil, protocol.NewUnknownError(err)
 
     } else if s, err := f.Stat(); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil, protocol.NewUnknownError(err)
 
     } else {
@@ -165,16 +161,16 @@ func (c Video) ToMp4(r io.Reader, vQuality, maxWidth, maxHeight, aBitRate uint) 
     cmdMain.Stdin = r // Command Stdin: Input io.Reader
 
     if b, err := cmdMain.CombinedOutput(); err != nil {
-        _Log.Error(_funcName, err.Error(), cmdMain.Path, b)
+        _Log.Warn(err.Error())
         return nil, err
     }
 
     if err := os.Remove(iFilename); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
 
     if f, err := os.Open(oFilename); err != nil {
-        _Log.Error(_funcName, err.Error(), cmdMain.Path)
+        _Log.Warn(err.Error())
         return nil, err
 
     } else {

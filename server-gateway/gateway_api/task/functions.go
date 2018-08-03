@@ -6,7 +6,7 @@ import (
     "github.com/globalsign/mgo/bson"
     "strconv"
     "encoding/base64"
-    "git.ronaksoftware.com/nested/server-gateway/client"
+    "git.ronaksoftware.com/nested/server/server-gateway/client"
 )
 
 // @Command:	task/create
