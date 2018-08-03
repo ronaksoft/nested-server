@@ -1,7 +1,6 @@
 FROM registry.ronaksoftware.com/base/alpine
 MAINTAINER Ehsan N. Moosa <ehsan@ronaksoft.com>
 
-RUN echo 'nameserver 8.8.8.8' >> /etc/resolv.conf
 
 # Install necessary utilities
 RUN apk add --update --no-cache ffmpeg imagemagick poppler-utils
