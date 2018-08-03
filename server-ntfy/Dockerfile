@@ -2,7 +2,7 @@ FROM registry.ronaksoftware.com/base/alpine
 MAINTAINER Ehsan N. Moosa <ehsan@ronaksoft.com>
 
 # Add contents from root directory to the docker
-ADD ./build/ /ronak/bin
+ADD ./_build/ /ronak/bin
 ADD ./certs/ /ronak/certs
 
 # Change working directory

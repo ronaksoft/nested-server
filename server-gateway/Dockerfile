@@ -1,5 +1,4 @@
-#FROM registry.ronaksoftware.com/base/alpine
-FROM alpine:latest
+FROM registry.ronaksoftware.com/base/alpine
 MAINTAINER Ehsan N. Moosa <ehsan@ronaksoft.com>
 
 # Install necessary utilities
@@ -12,7 +11,7 @@ RUN apk upgrade -U \
 RUN update-ca-certificates
 
 # Add local folders to container
-ADD ./build/ /ronak/bin
+ADD ./_build/ /ronak/bin
 ADD ./templates/ /ronak/templates
 RUN mkdir -p /ronak/temp/
 
