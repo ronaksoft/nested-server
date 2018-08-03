@@ -2,13 +2,15 @@ package file
 
 import (
     "git.ronaksoftware.com/nested/server/model"
-    "git.ronaksoftware.com/nested/server-gateway/gateway_file/convert"
-    "git.ronaksoftware.com/ronak/toolbox/logger"
+    "git.ronaksoftware.com/nested/server/server-gateway/gateway_file/convert"
     "gopkg.in/fzerorubigd/onion.v3"
+    "go.uber.org/zap"
+    "os"
 )
 
 var (
-    _Log           *log.Logger
+    _Log           *zap.Logger
+    _LogLevel      zap.AtomicLevel
     _FileConverter *convert.FileConverter
     _NestedModel   *nested.Manager
 )
@@ -23,7 +25,17 @@ func NewServer(config *onion.Onion, model *nested.Manager) *Server {
     s.apiKey = config.GetString("FILE_SYSTEM_KEY")
     s.compressed = false
     _NestedModel = model
-    _Log = log.NewTerminalLogger(log.LEVEL_DEBUG)
+
+    _LogLevel = zap.NewAtomicLevelAt(zap.InfoLevel)
+    zap.NewProductionConfig()
+    logConfig := zap.NewProductionConfig()
+    logConfig.Encoding = "console"
+    logConfig.Level = _LogLevel
+    if v, err := logConfig.Build(); err != nil {
+        os.Exit(1)
+    } else {
+        _Log = v
+    }
     _FileConverter, _ = convert.NewFileConverter()
 
     return s

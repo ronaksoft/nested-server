@@ -9,6 +9,7 @@ import (
     "git.ronaksoftware.com/nested/server/server-gateway/gateway_file/convert"
     "fmt"
     "errors"
+    "go.uber.org/zap"
 )
 
 const (
@@ -44,13 +45,12 @@ type thumbGenerator struct {
 }
 
 func (p *thumbGenerator) Process(r io.Reader) error {
-    _funcName := "thumbGenerator::Process"
     defer p.WaitGroup.Done()
 
     var rThumb io.Reader
     var metaPreview *convert.PreviewMeta
     if rOut, m, err := _FileConverter.Preview.Thumbnail(r, p.MimeType, p.MaxDimension, p.MaxDimension); err != nil {
-        _Log.Error(_funcName, err.Error(), p.Filename, p.ThumbName)
+        _Log.Warn(err.Error())
         return err
 
     } else {
@@ -74,7 +74,7 @@ func (p *thumbGenerator) Process(r io.Reader) error {
     // Save File in Files Model
     if thumb := _NestedModel.Store.Save(rThumb, fileInfo); thumb == nil {
         err := errors.New("nested model save failed")
-        _Log.Error(_funcName, err.Error(), fileInfo.Name, fileInfo.ID)
+        _Log.Warn(err.Error())
         return err
 
     } else {
@@ -93,7 +93,7 @@ func (p *thumbGenerator) Process(r io.Reader) error {
 
         // Save File in Nested Model
         if _NestedModel.File.AddFile(thumbInfo) != true {
-            _Log.Error(_funcName, "File info submit failed", thumbInfo.Filename, thumbInfo.ID)
+            _Log.Warn("File info submit failed")
             return protocol.NewUnknownError(nil)
 
         } else {
@@ -120,14 +120,16 @@ type previewGenerator struct {
 }
 
 func (p *previewGenerator) Process(r io.Reader) error {
-    _funcName := "previewGenerator::Process"
     defer p.WaitGroup.Done()
-
 
     var rPreview io.Reader
     var metaPreview *convert.PreviewMeta
     if rOut, m, err := _FileConverter.Preview.Resized(r, p.MimeType, p.MaxWidth, 0); err != nil {
-        _Log.Error(_funcName, err.Error(), p.Filename, p.ThumbName)
+        _Log.Warn(err.Error(),
+            zap.String("FILENAME", p.Filename),
+            zap.String("ThumbName", p.ThumbName),
+        )
+
         return err
 
     } else {
@@ -151,7 +153,10 @@ func (p *previewGenerator) Process(r io.Reader) error {
     // Save File in Files Model
     if thumb := _NestedModel.Store.Save(rPreview, finfo); thumb == nil {
         err := errors.New("file content submit failed")
-        _Log.Error(_funcName, err.Error(), finfo.Name, finfo.ID)
+        _Log.Warn(err.Error(),
+            zap.String("FILENAME", finfo.Name),
+            zap.String("ThumbName", string(finfo.ID)),
+        )
         return err
     } else {
         meta := thumb.Metadata.Meta.(nested.MetaImage)
@@ -168,7 +173,6 @@ func (p *previewGenerator) Process(r io.Reader) error {
         }
 
         if _NestedModel.File.AddFile(thumbInfo) != true {
-            _Log.Error(_funcName, "File info submit failed for `%s`: %s", thumbInfo.Filename, thumbInfo.ID)
             return protocol.NewUnknownError(nil)
 
         } else {
@@ -189,11 +193,10 @@ type imageMetaReader struct {
 }
 
 func (p *imageMetaReader) Process(r io.Reader) error {
-    _funcName := "ImageMetaReader::Process"
     defer p.WaitGroup.Done()
 
     if m, err := _FileConverter.Image.Meta(r); err != nil {
-        _Log.Error(_funcName,  err.Error())
+        _Log.Warn(err.Error())
         return err
 
     } else {
@@ -224,11 +227,10 @@ type videoMetaReader struct {
 }
 
 func (p *videoMetaReader) Process(r io.Reader) error {
-    _funcName := "VideMetaReader::Process"
     defer p.WaitGroup.Done()
 
     if m, err := _FileConverter.Video.Meta(r); err != nil {
-        _Log.Error(_funcName,  err.Error())
+        _Log.Warn(err.Error())
         return err
 
     } else {
@@ -259,11 +261,10 @@ type audioMetaReader struct {
 }
 
 func (p *audioMetaReader) Process(r io.Reader) error {
-    _funcName := "AudioMetaReader::Process"
     defer p.WaitGroup.Done()
 
     if m, err := _FileConverter.Audio.Meta(r); err != nil {
-        _Log.Error(_funcName,  err.Error())
+        _Log.Warn(err.Error())
         return err
 
     } else {
@@ -291,11 +292,10 @@ type voiceMetaReader struct {
 }
 
 func (p *voiceMetaReader) Process(r io.Reader) error {
-    _funcName := "VoiceMetaReader::Process"
     defer p.WaitGroup.Done()
 
     if m, err := _FileConverter.Voice.Meta(r); err != nil {
-        _Log.Error(_funcName,  err.Error())
+        _Log.Warn(err.Error())
         return err
 
     } else {
@@ -324,13 +324,12 @@ type documentMetaReader struct {
 }
 
 func (p *documentMetaReader) Process(r io.Reader) error {
-    _funcName := "DocumentMetaReader::Process"
     defer p.WaitGroup.Done()
 
     switch p.MimeType {
     case "application/pdf":
         if m, err := _FileConverter.Pdf.Meta(r); err != nil {
-            _Log.Error(_funcName,  err.Error())
+            _Log.Warn(err.Error())
             return err
 
         } else {
@@ -355,11 +354,10 @@ type gifMetaReader struct {
 }
 
 func (p *gifMetaReader) Process(r io.Reader) error {
-    _funcName := "GifMetaReader::Process"
     defer p.WaitGroup.Done()
 
     if m, err := _FileConverter.Gif.Meta(r); err != nil {
-        _Log.Error(_funcName,  err.Error())
+        _Log.Warn(err.Error())
         return err
 
     } else {

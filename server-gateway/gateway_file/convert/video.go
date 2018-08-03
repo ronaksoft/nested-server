@@ -160,7 +160,7 @@ func (c Video) ToMp4(r io.Reader, vQuality, maxWidth, maxHeight, aBitRate uint) 
     cmdMain := exec.Command(_Commands.Ffmpeg, args...)
     cmdMain.Stdin = r // Command Stdin: Input io.Reader
 
-    if b, err := cmdMain.CombinedOutput(); err != nil {
+    if _, err := cmdMain.CombinedOutput(); err != nil {
         _Log.Warn(err.Error())
         return nil, err
     }

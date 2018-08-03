@@ -65,7 +65,7 @@ func (ep *ExecPath) init() error {
 
 func NewFileConverter() (*FileConverter, error) {
     if nil == _Log {
-        _LogLevel = zap.NewAtomicLevelAt(zap.DebugLevel)
+        _LogLevel = zap.NewAtomicLevelAt(zap.InfoLevel)
         zap.NewProductionConfig()
         config := zap.NewProductionConfig()
         config.Encoding = "console"
