@@ -16,8 +16,6 @@ import (
 const (
     ACCOUNT_TYPE_USER     string = "USER"
     ACCOUNT_TYPE_DEVICE   string = "DEVICE"
-    ACCOUNT_TYPE_EXTERNAL string = "EXTERNAL"
-    ACCOUNT_TYPE_EMAIL    string = "EMAIL"
 )
 
 type AccountUpdateRequest struct {

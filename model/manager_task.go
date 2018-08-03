@@ -325,7 +325,10 @@ func (tm *TaskManager) GetByCandidateID(accountID string, pg Pagination, filter 
 // 1. Assignee
 // 2. Assignor
 // 3. Labels
-func (tm *TaskManager) GetByCustomFilter(accountID string, assignorIDs, assigneeIDs, labelIDs []string, labelLogic, keyword string, pg Pagination, filter []TaskStatus, dueDate uint64) []Task {
+func (tm *TaskManager) GetByCustomFilter(
+    accountID string, assignorIDs, assigneeIDs, labelIDs []string, labelLogic, keyword string,
+    pg Pagination, filter []TaskStatus, dueDate uint64,
+) []Task {
     _funcName := "TaskManager::GetByCustomFilter"
     _Log.FunctionStarted(_funcName, accountID)
     defer _Log.FunctionFinished(_funcName)

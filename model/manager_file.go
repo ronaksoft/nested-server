@@ -51,12 +51,6 @@ const (
     TOKEN_SEED_SALT string = "NREGS431DTED#$!!"
 )
 
-// File Sort
-const (
-    FILE_SORT_UPLOAD_TIME string = "upload_time"
-    FILE_SORT_TIMESTAMP   string = "timestamp"
-)
-
 type SortedFilesWithPost struct {
     PostId bson.ObjectId
     File   FileInfo

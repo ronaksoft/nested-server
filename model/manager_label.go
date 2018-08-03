@@ -15,7 +15,6 @@ const (
     LABEL_COLOUR_CODE_E = "E"
     LABEL_COLOUR_CODE_F = "F"
     LABEL_COLOUR_CODE_G = "G"
-    LABEL_COLOUR_CODE_H = "H"
 )
 const (
     LABEL_FILTER_MY_LABELS   = "my_labels"

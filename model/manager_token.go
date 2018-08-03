@@ -12,8 +12,6 @@ import (
 
 const (
     TOKEN_TYPE_FILE  string = "file"
-    TOKEN_TYPE_POST  string = "post"
-    TOKEN_TYPE_LOGIN string = "login"
     TOKEN_TYPE_APP   string = "app"
 )
 
