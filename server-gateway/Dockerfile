@@ -1,10 +1,12 @@
 FROM registry.ronaksoftware.com/base/alpine
 MAINTAINER Ehsan N. Moosa <ehsan@ronaksoft.com>
 
+RUN echo 'nameserver 8.8.8.8' >> /etc/resolv.conf
+
 # Install necessary utilities
-RUN apk upgrade -U \
-  && apk add -U ffmpeg imagemagick poppler-utils \
-  && rm -rf /var/cache/* \
+RUN apk upgrade -U
+RUN apk add -U ffmpeg imagemagick poppler-utils
+RUN rm -rf /var/cache/* \
   && mkdir -p /var/cache/apk/
 
 # Add local folders to container
