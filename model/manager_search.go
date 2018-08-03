@@ -576,7 +576,7 @@ func (sm *SearchManager) Posts(keyword, accountID string, placeIDs, senderIDs, l
     case 1:
         q["labels"] = labelIDs[0]
     default:
-        v := []bson.M{}
+        v := make([]bson.M, 0)
         for _, labelID := range labelIDs {
             v = append(v, bson.M{"labels": labelID})
         }

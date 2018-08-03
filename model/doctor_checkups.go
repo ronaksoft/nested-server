@@ -218,7 +218,7 @@ func SyncFileRefCounters() {
     iter3.Close()
 }
 
-// SyncSystemCounter
+// SyncSystemCounters
 // This routines counts all the accounts (active, de-active), places (grand places, locked places, unlocked places)
 func SyncSystemCounters() {
     log.Println("--> Routine:: SyncSystemCounters")
@@ -267,14 +267,14 @@ func FixCompanyLogo() {
     )
 }
 
-// Cleanup Sessions
+// CleanupSessions
 func CleanupSessions() {
     log.Println("--> Routine:: CleanupSessions")
     defer log.Println("<-- Routine:: CleanupSessions")
     _MongoDB.C(COLLECTION_SESSIONS).RemoveAll(bson.M{"expired": true})
 }
 
-// Cleanup Tasks
+// CleanupTasks
 func CleanupTasks() {
     log.Println("--> Routine:: CleanupTasks")
     defer log.Println("<-- Routine:: CleanupTasks")
@@ -291,7 +291,7 @@ func CleanupTasks() {
     _MongoDB.C(COLLECTION_TASKS).RemoveAll(bson.M{"_removed": true})
 }
 
-// Cleanup Posts
+// CleanupPosts
 func CleanupPosts() {
     log.Println("--> Routine:: CleanupPosts")
     defer log.Println("<-- Routine:: CleanupPosts")
@@ -310,6 +310,7 @@ func CleanupPosts() {
     _MongoDB.C(COLLECTION_POSTS).RemoveAll(bson.M{"_removed": true})
 }
 
+// CleanupTempFiles
 // Cleanup Temporary Files
 func CleanupTempFiles() {
     log.Println("--> Routine:: CleanupTempFiles")

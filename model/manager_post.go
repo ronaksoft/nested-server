@@ -887,7 +887,7 @@ func (pm *PostManager) GetCommentsByPostID(postID bson.ObjectId, pg Pagination) 
 
     Q := db.C(COLLECTION_POSTS_COMMENTS).Find(q).Sort(sortItem).Skip(pg.GetSkip()).Limit(pg.GetLimit())
     _Log.ExplainQuery(_funcName, Q)
-    res := []Comment{}
+    res := make([]Comment, 0)
     Q.All(&res)
     return res
 }

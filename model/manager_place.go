@@ -974,7 +974,7 @@ func (pm *PlaceManager) Update(placeID string, placeUpdateRequest M) bool {
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
 
-    for k, _ := range placeUpdateRequest {
+    for k := range placeUpdateRequest {
         switch k {
         case "name", "description", "privacy.search", "privacy.receptive",
             "policy.add_post", "policy.add_member", "policy.add_place":
@@ -1317,7 +1317,7 @@ func (p *Place) GetAccess(accountID string) MB {
 
 func (p *Place) GetAccessArray(accountID string) []string {
     access := p.GetAccess(accountID)
-    array := []string{}
+    array := make([]string, 0)
     for k, v := range access {
         if v {
             array = append(array, k)

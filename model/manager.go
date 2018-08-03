@@ -110,7 +110,7 @@ func NewManager(instanceID, mongoDSN, redisDSN string, debug int) (*Manager, err
 
     // Set connection pool limit
     DB_NAME = fmt.Sprintf("nested-%s", instanceID)
-	STORE_NAME = fmt.Sprintf("nested_store-%s", instanceID)
+    STORE_NAME = fmt.Sprintf("nested_store-%s", instanceID)
     _MongoDB = _MongoSession.DB(DB_NAME)
     _MongoStore = _MongoSession.DB(STORE_NAME).GridFS("fs")
 

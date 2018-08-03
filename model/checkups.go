@@ -148,7 +148,7 @@ func StartupCheckups() {
                 },
             },
         ); err != nil {
-            log.Println("StatupChecks::", err.Error())
+            log.Println("StartupChecks::", err.Error())
         }
     }
 

@@ -69,7 +69,7 @@ type DownloadToken struct {
     ExpireTime  uint64        `json:"et" bson:"et"`
 }
 
-// File Manager Functions
+// FileManager
 type FileManager struct{}
 
 func NewFileManager() *FileManager {
@@ -202,7 +202,7 @@ func (fm *FileManager) AddTaskAsOwner(uniID UniversalID, taskID bson.ObjectId) {
 
 }
 
-// Description:
+// Exists
 // check if universalID exists
 func (fm *FileManager) Exists(uniID UniversalID) bool {
     _funcName := "FileManager::Exists"
@@ -218,7 +218,7 @@ func (fm *FileManager) Exists(uniID UniversalID) bool {
     return n > 0
 }
 
-// Description:
+// SetStatus
 // Updates the status of the universalID
 func (fm *FileManager) SetStatus(uniID UniversalID, fileStatus string) bool {
     _funcName := "FileManager::SetStatus"

@@ -37,7 +37,8 @@ func (e NewPostEvent) IncreaseTries() {
     e.retries++
 }
 
-// NewPostCommentEvent holds information which will be sent to the hook url on each comment on
+// NewPostCommentEvent
+// Holds information which will be sent to the hook url on each comment on
 // posts of a place
 type NewPostCommentEvent struct {
     PlaceID   string        `json:"place_id"`
@@ -54,7 +55,8 @@ func (e NewPostCommentEvent) IncreaseTries() {
     e.retries++
 }
 
-// NewMemberEvent holds information which will be sent to the hook url every time a user joins
+// NewMemberEvent
+// Holds information which will be sent to the hook url every time a user joins
 // a place
 type NewMemberEvent struct {
     PlaceID         string `json:"place_id"`
@@ -72,7 +74,8 @@ func (e NewMemberEvent) IncreaseTries() {
     e.retries++
 }
 
-// AccountTaskAssignedEvent holds information which will be sent to the hook url every time a task
+// AccountTaskAssignedEvent
+// Holds information which will be sent to the hook url every time a task
 // is assigned to a user
 type AccountTaskAssignedEvent struct {
     AccountID    string        `json:"account_id"`

@@ -113,7 +113,7 @@ const (
     COLLECTION_TIME_BUCKETS            = "time_buckets"
 )
 
-// ERROR CODES
+// ErrorCode
 type ErrorCode int
 
 const (
