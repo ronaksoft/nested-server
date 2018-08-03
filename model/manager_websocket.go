@@ -2,8 +2,8 @@ package nested
 
 import (
     "fmt"
-    "strings"
     "github.com/gomodule/redigo/redis"
+    "strings"
 )
 
 type Websocket struct {

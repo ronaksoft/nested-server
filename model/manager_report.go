@@ -2,11 +2,11 @@ package nested
 
 import (
     "fmt"
+    "github.com/gomodule/redigo/redis"
     "github.com/globalsign/mgo/bson"
     "log"
     "strconv"
     "time"
-    "github.com/gomodule/redigo/redis"
 )
 
 const (

@@ -4,11 +4,11 @@ import (
     "bytes"
     "encoding/gob"
     "fmt"
+    "github.com/gomodule/redigo/redis"
     "github.com/globalsign/mgo/bson"
     "path/filepath"
     "strings"
     "time"
-    "github.com/gomodule/redigo/redis"
 )
 
 // File Status
@@ -57,6 +57,10 @@ const (
     FILE_SORT_TIMESTAMP   string = "timestamp"
 )
 
+type SortedFilesWithPost struct {
+	PostId bson.ObjectId
+	File FileInfo
+}
 
 type DownloadToken struct {
     SessionKey  bson.ObjectId `json:"_sk" bson:"_sk"`
@@ -323,63 +327,68 @@ func (fm *FileManager) GetFilesByIDs(uniIDs []UniversalID) (files []FileInfo) {
 // Description:
 // Get files by placeID and types are filtered by "filter" and name is filtered by "filename"
 // "pg" is also used for pagination
-func (fm *FileManager) GetFilesByPlace(placeID, filter, filename string, pg Pagination) map[bson.ObjectId][]FileInfo {
-    _funcName := "FileManager::GetFilesByPlace"
-    _Log.FunctionStarted(_funcName, placeID, filter, filename)
-    defer _Log.FunctionFinished(_funcName)
+func (fm *FileManager) GetFilesByPlace(placeID, filter, filename string, pg Pagination) (sortedList []SortedFilesWithPost) {
+	_funcName := "FileManager::GetFilesByPlace"
+	_Log.FunctionStarted(_funcName, placeID, filter, filename)
+	defer _Log.FunctionFinished(_funcName)
 
-    dbSession := _MongoSession.Copy()
-    db := dbSession.DB(DB_NAME)
-    defer dbSession.Close()
+	dbSession := _MongoSession.Copy()
+	db := dbSession.DB(DB_NAME)
+	defer dbSession.Close()
 
-    q := []bson.M{
-        {"$unwind": bson.M{
-            "path": "$attaches",
-        }},
-        {"$match": bson.M{"places": placeID, "counters.attaches": bson.M{"$gt": 0}}},
-        {"$lookup": bson.M{
-            "from":         COLLECTION_FILES,
-            "localField":   "attaches",
-            "foreignField": "_id",
-            "as":           "file",
-        }},
-        {"$match": bson.M{
-            "file": bson.M{
-                "$elemMatch": bson.M{
-                    "filename": bson.M{"$regex": fmt.Sprintf("%s", filename), "$options": "i"},
-                },
-            },
-        }},
-        {"$sort": bson.M{"timestamp": -1}},
-        {"$skip": pg.GetSkip()},
-        {"$limit": pg.GetLimit()},
-    }
-    iter := db.C(COLLECTION_POSTS).Pipe(q).Iter()
-    defer iter.Close()
-    fetchedDoc := struct {
-        PostID bson.ObjectId `bson:"_id"`
-        Files  []FileInfo    `bson:"file"`
-    }{}
-    totalAttachments := 0
-    files := make(map[bson.ObjectId][]FileInfo)
-    for iter.Next(&fetchedDoc) {
-        for _, file := range fetchedDoc.Files {
-            switch filter {
-            case FILE_TYPE_AUDIO, FILE_TYPE_DOCUMENT, FILE_TYPE_IMAGE, FILE_TYPE_VIDEO, FILE_TYPE_OTHER:
-                if strings.HasPrefix(string(file.ID), filter) {
-                    totalAttachments++
-                    files[fetchedDoc.PostID] = append(files[fetchedDoc.PostID], file)
-                }
-            default:
-                totalAttachments++
-                files[fetchedDoc.PostID] = append(files[fetchedDoc.PostID], file)
-            }
-        }
-        if totalAttachments >= pg.GetLimit() {
-            break
-        }
-    }
-    return files
+	q := []bson.M{
+		{"$unwind": bson.M{
+			"path": "$attaches",
+		}},
+		{"$match": bson.M{"places": placeID, "counters.attaches": bson.M{"$gt": 0}}},
+		{"$lookup": bson.M{
+			"from":         COLLECTION_FILES,
+			"localField":   "attaches",
+			"foreignField": "_id",
+			"as":           "file",
+		}},
+		{"$match": bson.M{
+			"file": bson.M{
+				"$elemMatch": bson.M{
+					"filename": bson.M{"$regex": fmt.Sprintf("%s", filename), "$options": "i"},
+				},
+			},
+		}},
+		{"$sort": bson.M{"timestamp": -1}},
+		{"$skip": pg.GetSkip()},
+		{"$limit": pg.GetLimit()},
+	}
+	iter := db.C(COLLECTION_POSTS).Pipe(q).Iter()
+	defer iter.Close()
+	fetchedDoc := struct {
+		PostID bson.ObjectId `bson:"_id"`
+		Files  []FileInfo    `bson:"file"`
+	}{}
+	totalAttachments := 0
+	for iter.Next(&fetchedDoc) {
+		for _, file := range fetchedDoc.Files {
+			switch filter {
+			case FILE_TYPE_AUDIO, FILE_TYPE_DOCUMENT, FILE_TYPE_IMAGE, FILE_TYPE_VIDEO, FILE_TYPE_OTHER:
+				if strings.HasPrefix(string(file.ID), filter) {
+					totalAttachments++
+					sortedList = append(sortedList, SortedFilesWithPost{
+						PostId: fetchedDoc.PostID,
+						File: file,
+					})
+				}
+			default:
+				totalAttachments++
+				sortedList = append(sortedList, SortedFilesWithPost{
+					PostId: fetchedDoc.PostID,
+					File: file,
+				})
+			}
+		}
+		if totalAttachments >= pg.GetLimit() {
+			break
+		}
+	}
+	return
 }
 
 // Description:

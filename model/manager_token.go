@@ -4,10 +4,10 @@ import (
     "bytes"
     "encoding/gob"
     "fmt"
+    "github.com/gomodule/redigo/redis"
     "github.com/globalsign/mgo/bson"
     "log"
     "time"
-    "github.com/gomodule/redigo/redis"
 )
 
 const (
@@ -36,6 +36,7 @@ type AppToken struct {
     AccountID string `bson:"account_id" json:"account_id"`
     AppID     string `bson:"app_id" json:"app_id"`
     Expired   bool   `bson:"expired" json:"-"`
+    Favorite  bool	 `bson:"favorite" json:"-"`
 }
 
 type TokenManager struct{}
@@ -136,6 +137,7 @@ func (tm *TokenManager) CreateAppToken(accountID, appID string) string {
         AccountID: accountID,
         AppID:     appID,
         Expired:   false,
+        Favorite:  false,
     }
     if err := db.C(COLLECTION_TOKENS_APPS).Find(bson.M{
         "account_id": accountID,
@@ -346,3 +348,22 @@ func (tm *TokenManager) RevokeAppToken(accountID, token string) bool {
     return true
 }
 
+// SetAppFavoriteStatus sets favorite status of an app for user
+func (tm *TokenManager) SetAppFavoriteStatus(accountID, appID string, state bool) bool {
+	_funcName := "TokenManager::SetAppFavoriteStatus"
+	_Log.FunctionStarted(_funcName, accountID, appID)
+	defer _Log.FunctionFinished(_funcName)
+
+	dbSession := _MongoSession.Clone()
+	db := dbSession.DB(DB_NAME)
+	defer dbSession.Close()
+
+	if err := db.C(COLLECTION_TOKENS_APPS).Update(
+		bson.M{"account_id": accountID, "app_id": appID,},
+		bson.M{"$set": bson.M{"favorite": state}},
+		); err != nil {
+		log.Println(_funcName, err.Error())
+		return false
+	}
+	return true
+}

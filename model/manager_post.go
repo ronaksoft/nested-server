@@ -3,13 +3,13 @@ package nested
 import (
     "bytes"
     "encoding/gob"
+    "github.com/gomodule/redigo/redis"
     "github.com/globalsign/mgo"
     "github.com/globalsign/mgo/bson"
     "github.com/microcosm-cc/bluemonday"
     "io"
     "fmt"
     "strings"
-    "github.com/gomodule/redigo/redis"
 )
 
 const (

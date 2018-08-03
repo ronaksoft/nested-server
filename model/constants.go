@@ -1,7 +1,5 @@
 package nested
 
-import "fmt"
-
 // Unchangeable Default Parameters
 const (
     DEFAULT_MAX_VERIFICATION_ATTEMPTS = 3
@@ -64,8 +62,8 @@ var (
     DEFAULT_MAGIC_NUMBER string = "989121228718"
     DEFAULT_SYSTEM_LANG  string = "en"
 
-    DB_NAME                     = fmt.Sprintf("nested-%s", _InstanceID)
-    STORE_NAME                  = fmt.Sprintf("nested-store-%s", _InstanceID)
+    DB_NAME                     string
+    STORE_NAME                  string
 )
 
 // MONGODB COLLECTIONS

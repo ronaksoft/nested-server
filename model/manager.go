@@ -8,10 +8,10 @@ import (
     "log"
     "net"
     "time"
+    "fmt"
 )
 
 var (
-    _InstanceID string
     __Debug       int
     _Log          *Logger
     _Manager      *Manager
@@ -109,7 +109,8 @@ func NewManager(instanceID, mongoDSN, redisDSN string, debug int) (*Manager, err
     }
 
     // Set connection pool limit
-    _InstanceID = instanceID
+    DB_NAME = fmt.Sprintf("nested-%s", instanceID)
+	STORE_NAME = fmt.Sprintf("nested_store-%s", instanceID)
     _MongoDB = _MongoSession.DB(DB_NAME)
     _MongoStore = _MongoSession.DB(STORE_NAME).GridFS("fs")
 
