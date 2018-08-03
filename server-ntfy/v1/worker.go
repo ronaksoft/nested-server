@@ -2,15 +2,17 @@ package v1
 
 import (
     "git.ronaksoftware.com/ronak/toolbox/rpc"
-    "git.ronaksoftware.com/ronak/toolbox/logger"
     "git.ronaksoftware.com/nested/server/model"
     "github.com/nats-io/go-nats"
     "firebase.google.com/go"
     "git.ronaksoftware.com/ronak/toolbox"
+    "go.uber.org/zap"
+    "os"
 )
 
 var (
-    _Log      *log.Logger
+    _Log      *zap.Logger
+    _LogLevel zap.AtomicLevel
     _Model    *nested.Manager
     _BundleID string
     _FCM      *firebase.App
@@ -18,10 +20,19 @@ var (
 )
 
 func init() {
-    _Log = log.NewTerminalLogger(log.LEVEL_DEBUG)
+    _LogLevel = zap.NewAtomicLevelAt(zap.InfoLevel)
+    zap.NewProductionConfig()
+    logConfig := zap.NewProductionConfig()
+    logConfig.Encoding = "console"
+    logConfig.Level = _LogLevel
+    if v, err := logConfig.Build(); err != nil {
+        os.Exit(1)
+    } else {
+        _Log = v
+    }
 }
 
-func NewWorker(rateLimiter ronak.RateLimiter, model *nested.Manager, natsConn *nats.Conn,  fcmClient *firebase.App,
+func NewWorker(rateLimiter ronak.RateLimiter, model *nested.Manager, natsConn *nats.Conn, fcmClient *firebase.App,
     bundleID string) *rpc.SimpleWorker {
     worker := rpc.NewSimpleRPCWorker(rateLimiter)
     worker.AddHandler("NTFY.REGISTER.DEVICE", registerDevice)
@@ -35,8 +46,6 @@ func NewWorker(rateLimiter ronak.RateLimiter, model *nested.Manager, natsConn *n
     _BundleID = bundleID
     _NatsConn = natsConn
     _FCM = fcmClient
-
-
 
     return worker
 }

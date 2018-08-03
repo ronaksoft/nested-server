@@ -1,9 +1,9 @@
 package main
 
 import (
-    "git.ronaksoftware.com/ronak/toolbox/logger"
     "gopkg.in/fzerorubigd/onion.v3"
     "gopkg.in/fzerorubigd/onion.v3/extraenv"
+    "go.uber.org/zap"
 )
 
 func readConfig() *onion.Onion {
@@ -19,7 +19,7 @@ func readConfig() *onion.Onion {
     // Storage Settings
     // dl.SetDefault("QUEUE_STORAGE_PATH", "/ronak/store/q")
     dl.SetDefault("BUNDLE_ID", "")
-    dl.SetDefault("LOG_LEVEL", log.LEVEL_DEBUG)
+    dl.SetDefault("LOG_LEVEL", zap.DebugLevel)
 
     // External Services
     dl.SetDefault("JOB_ADDRESS", "nats://qm.nst:4222")

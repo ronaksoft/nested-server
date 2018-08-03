@@ -1,7 +1,7 @@
 package v1
 
 import (
-    "git.ronaksoftware.com/nested/server/server-ntfyer-ntfy/client"
+    "git.ronaksoftware.com/nested/server/server-ntfy/client"
     "encoding/json"
     "fmt"
     "git.ronaksoftware.com/nested/server/model"
