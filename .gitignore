@@ -1,4 +1,4 @@
 .idea
 *.iml
 _*
-./server-gateway/build.sh
+server-gateway/build.sh
