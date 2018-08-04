@@ -7,7 +7,6 @@ import (
 	"git.ronaksoftware.com/nested/server/model"
 	"github.com/globalsign/mgo/bson"
 	"strings"
-	"log"
 )
 
 // @Command:	post/add_label
@@ -370,7 +369,6 @@ func (s *PostService) createPost(requester *nested.Account, request *nestedGatew
 			mailReq.Port = requester.Mail.OutgoingSMTPPort
 			mailReq.Username = requester.Mail.OutgoingSMTPUser
 			mailReq.Password = nested.Decrypt(nested.EMAIL_ENCRYPT_KEY, requester.Mail.OutgoingSMTPPass)
-			log.Println("mailReq.Password-----------",mailReq.Password)
 			mailReq.PostID = post.ID
 		} else {
 			mailReq.Host = ""
