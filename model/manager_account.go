@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	EMAIL_ENCRYPT_KEY     string = "1547B39B64AD9167V7BQ5NRSZLX79BEK"
     ACCOUNT_TYPE_USER     string = "USER"
     ACCOUNT_TYPE_DEVICE   string = "DEVICE"
 )
@@ -1110,6 +1111,7 @@ func (am *AccountManager) UpdateEmail(accountID string, email AccountMail) bool 
     _Log.FunctionStarted(_funcName, accountID)
     defer _Log.FunctionFinished(_funcName)
     defer _Manager.Account.removeCache(accountID)
+    email.OutgoingSMTPPass = Encrypt(EMAIL_ENCRYPT_KEY, email.OutgoingSMTPPass)
     if err := _MongoDB.C(COLLECTION_ACCOUNTS).UpdateId(
         accountID,
         bson.M{"$set": bson.M{"mail": email}},

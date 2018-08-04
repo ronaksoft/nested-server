@@ -368,7 +368,7 @@ func (s *PostService) createPost(requester *nested.Account, request *nestedGatew
 			mailReq.Host = requester.Mail.OutgoingSMTPHost
 			mailReq.Port = requester.Mail.OutgoingSMTPPort
 			mailReq.Username = requester.Mail.OutgoingSMTPUser
-			mailReq.Password = requester.Mail.OutgoingSMTPPass
+			mailReq.Password = nested.Decrypt(nested.EMAIL_ENCRYPT_KEY, requester.Mail.OutgoingSMTPPass)
 			mailReq.PostID = post.ID
 		} else {
 			mailReq.Host = ""
