@@ -18,6 +18,7 @@ const (
     CMD_REVOKE_TOKEN = "app/revoke_token"
     CMD_GET_TOKENS   = "app/get_tokens"
     CMD_HAS_TOKEN    = "app/has_token"
+    CMD_SET_FAV_STATUS    = "app/set_fav_status"
 )
 
 type AppService struct {
@@ -31,6 +32,7 @@ func NewAppService(worker *api.Worker) *AppService {
 
     s.serviceCommands = api.ServiceCommands{
         CMD_CREATE_TOKEN: {api.AUTH_LEVEL_USER, s.generateAppToken},
+		CMD_SET_FAV_STATUS: {api.AUTH_LEVEL_USER, s.setFavStatus},
         CMD_REVOKE_TOKEN: {api.AUTH_LEVEL_USER, s.revokeAppToken},
         CMD_GET_TOKENS:   {api.AUTH_LEVEL_USER, s.getTokensByAccountID},
         CMD_REMOVE_APP:   {api.AUTH_LEVEL_APP_L3, s.remove},

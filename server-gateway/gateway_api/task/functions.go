@@ -7,6 +7,7 @@ import (
     "strconv"
     "encoding/base64"
     "git.ronaksoftware.com/nested/server/server-gateway/client"
+	"github.com/MiCHiLU/go_appengine/log"
 )
 
 // @Command:	task/create
@@ -92,6 +93,14 @@ func (s *TaskService) create(requester *nested.Account, request *nestedGateway.R
             tcr.EditorIDs = append(tcr.EditorIDs, editor.ID)
         }
     }
+    for _,editor := range tcr.EditorIDs {
+    	for _, watcher := range tcr.WatcherIDs {
+    		if editor == watcher {
+				response.Error(nested.ERR_INVALID, []string{"editor_id", "watcher_id"})
+				return
+			}
+		}
+	}
     if v, ok := request.Data["attachment_id"].(string); ok {
         attachmentIDs := []nested.UniversalID{}
         for _, attachmentID := range strings.SplitN(v, ",", nested.DEFAULT_MAX_RESULT_LIMIT) {
@@ -141,7 +150,7 @@ func (s *TaskService) create(requester *nested.Account, request *nestedGateway.R
         response.Error(nested.ERR_UNKNOWN, []string{"could not create task"})
         return
     }
-
+	log.Printf("%+v\n", task)
     switch task.Status {
     case nested.TASK_STATUS_ASSIGNED:
         go s.Worker().Pusher().TaskAssigned(task)
@@ -447,6 +456,8 @@ func (s *TaskService) getByFilter(requester *nested.Account, request *nestedGate
             }
         }
     }
+    log.Println("filter", filter)
+    log.Println("status-filter", statusFilter)
     switch filter {
     case "assigned_to_me":
         tasks = s.Worker().Model().Task.GetByAssigneeID(

@@ -165,3 +165,23 @@ func (s *AppService) hasToken(requester *nested.Account, request *nestedGateway.
         response.Error(nested.ERR_INVALID, []string{})
     }
 }
+
+// @Command: app/set_fav_status
+// @Input:  app_id      string      *
+func (s *AppService) setFavStatus(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+	var status bool
+	var appID string
+	if v, ok := request.Data["status"].(bool); ok {
+		status = v
+	}
+	if v, ok := request.Data["app_id"].(string); ok {
+		appID = v
+	}
+
+	if s.Worker().Model().Token.SetAppFavoriteStatus(requester.ID, appID, status)  {
+		response.Ok()
+	} else {
+		response.Error(nested.ERR_UNKNOWN, []string{"internal_error"})
+	}
+}
+
