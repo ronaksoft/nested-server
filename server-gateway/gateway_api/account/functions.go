@@ -570,7 +570,7 @@ func (s *AccountService) updateAccount(requester *nested.Account, request *neste
 	return
 }
 
-// @Command: account/updateEmail
+// @Command: account/update_email
 // @Input:	host			string			+
 // @Input:	port			int				+
 // @Input:	username		string			*
@@ -650,7 +650,7 @@ func (s *AccountService) updateEmail(requester *nested.Account, request *nestedG
 	}
 }
 
-// @Command: account/removeEmailAccount
+// @Command: account/remove_email
 func (s *AccountService) removeEmail(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	accountMail := nested.AccountMail{
 		Active:           false,
