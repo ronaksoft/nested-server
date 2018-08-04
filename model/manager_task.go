@@ -134,7 +134,9 @@ func (tm *TaskManager) CreateTask(tcr TaskCreateRequest) *Task {
     // Set Task Members
     task.MemberIDs = append(task.MemberIDs, task.WatcherIDs...)
     task.MemberIDs = append(task.MemberIDs, task.EditorIDs ...)
+    task.MemberIDs = append(task.MemberIDs, task.CandidateIDs ...)
     task.MemberIDs = append(task.MemberIDs, task.AssigneeID, task.AssignorID)
+
 
     // Set counters
     task.Counters.Labels = len(tcr.LabelIDs)
