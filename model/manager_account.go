@@ -50,7 +50,7 @@ type Account struct {
     Limits             AccountLimits    `json:"limits" bson:"limits"`
     Privacy            AccountPrivacy   `json:"privacy" bson:"privacy"`
     Flags              AccountFlags     `json:"flags" bson:"flags"`
-    Mail               AccountMail      `json:"mail"`
+    Mail               AccountMail      `json:"mail" bson:"mail"`
     JoinedOn           uint64           `json:"joined_on" bson:"joined_on"`
 }
 type AccountCounters struct {
