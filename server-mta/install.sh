@@ -86,6 +86,7 @@ postconf -e virtual_gid_maps=static:5000
 postconf -e virtual_transport=nested_mail
 postconf -e export_environment="\
 NST_CYRUS_URL=${NST_CYRUS_URL} \
+NST_INSTANCE_ID=${NST_INSTANCE_ID} \
 NST_DOMAIN=${NST_DOMAIN} \
 NST_MONGO_DSN=${NST_MONGO_DSN} \
 NST_REDIS_CACHE=${NST_REDIS_CACHE} \
