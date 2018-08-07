@@ -38,7 +38,7 @@ func main() {
 	//logWriters := flag.String("log", "syslog", "Log writer (:= syslog)")
 	flag.Parse()
 	recipients := flag.Args()
-	initLogger("file", 3) //(*logWriters, _Verbosity)
+	initLogger("file,syslog", 3) //(*logWriters, _Verbosity)
 
 	if 0 == len(strings.TrimSpace(*sender)) {
 		_Log.Fatal("Invalid Input: Sender is necessary")
@@ -118,7 +118,7 @@ func initLogger(writers string, verbosity int) {
 			case "std":
 				backend = logging.NewLogBackend(os.Stdout, "", 0)
 			case "file":
-				if fh, err := os.OpenFile("/var/log/mailbox-store.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666); nil == err {
+				if fh, err := os.OpenFile("/tmp/mailbox-store.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666); nil == err {
 					backend = logging.NewLogBackend(fh, "", 0)
 				}
 			case "syslog":
