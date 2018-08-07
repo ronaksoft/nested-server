@@ -23,7 +23,7 @@ func readConfig() *onion.Onion {
 	// HTTP Server
 	dl.SetDefault("CYRUS_URL", "http://storage.xerxes.nst")
 	dl.SetDefault("CYRUS_FILE_SYSTEM_KEY", "5b47e841ee52a16bc797f6bcc06c41d68546fb4620709227f8911fd969e0ed26")
-	dl.SetDefault("CYRUS_INSECURE_HTTPS", false)
+	dl.SetDefault("CYRUS_INSECURE_HTTPS", true)
 
 	// Job Server
 	dl.SetDefault("JOB_ADDRESS", "nats://job.cyrus.nst:4222")
