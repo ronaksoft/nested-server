@@ -9,6 +9,9 @@ import (
 func readConfig() *onion.Onion {
 	dl := onion.NewDefaultLayer()
 
+	// InstanceID
+	dl.SetDefault("INSTANCE_ID", "")
+
 	// Model
 	dl.SetDefault("MONGO_DSN", "mongodb://db-mongo.nst:27001")
 	dl.SetDefault("REDIS_DSN", "cache-redis.nst:6379")
