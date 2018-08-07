@@ -35,7 +35,7 @@ func main() {
 	// --Configurations
 	sender := flag.String("s", "", "Sender Address")
 	flag.IntVar(&_Verbosity, "v", 1, "Verbosity level [0, 3]")
-	logWriters := flag.String("log", "syslog", "Log writer (:= syslog)")
+	//logWriters := flag.String("log", "syslog", "Log writer (:= syslog)")
 	flag.Parse()
 	recipients := flag.Args()
 	initLogger("std", 3) //(*logWriters, _Verbosity)
