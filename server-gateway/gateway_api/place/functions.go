@@ -655,6 +655,7 @@ func (s *PlaceService) getPlaceActivities(requester *nested.Account, request *ne
     for _, v := range ta {
         d = append(d, s.Worker().Map().PlaceActivity(requester, v, details))
     }
+    log.Println("------------------Gateway::Place::PlaceActivity", d)
     response.OkWithData(nested.M{
         "skip":       pg.GetSkip(),
         "limit":      pg.GetLimit(),
