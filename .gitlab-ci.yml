@@ -49,10 +49,10 @@ deploy:production:
   - docker build --pull -t $CI_REGISTRY_IMAGE/mta:$MTA_VER .
   - docker push $CI_REGISTRY_IMAGE/mta:$MTA_VER
 
-deploy:production:
+deploy:staging:
   stage: deploy
   only:
-  - mta
+  - behrooz
   image: docker:latest
   services:
   - docker:dind

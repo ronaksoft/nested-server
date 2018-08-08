@@ -592,6 +592,10 @@ func (s *AccountService) updateEmail(requester *nested.Account, request *nestedG
 				return
 			} else {
 				username = u
+				if !nested.IsValidEmail(username) {
+					response.Error(nested.ERR_INVALID, []string{"user-name"})
+					return
+				}
 				switch u[index+1:] {
 				case "gmail.com":
 					host = "smtp.gmail.com"
