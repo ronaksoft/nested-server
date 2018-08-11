@@ -22,6 +22,7 @@ func StartupCheckups() {
     _MongoDB.C(COLLECTION_ACCOUNTS_RECIPIENTS).EnsureIndex(mgo.Index{Key: []string{"account_id", "recipient"}, Background: true})
     _MongoDB.C(COLLECTION_ACCOUNTS_DEVICES).EnsureIndex(mgo.Index{Key: []string{"uid"}, Background: true})
     _MongoDB.C(COLLECTION_ACCOUNTS_LABELS).EnsureIndex(mgo.Index{Key: []string{"labels"}, Background: true})
+    _MongoDB.C(COLLECTION_ACCOUNTS_TRUSTED).EnsureIndex(mgo.Index{Key: []string{"_id"}, Background: true})
 
     // PLACES & PLACES.INVITATIONS
     _MongoDB.C(COLLECTION_PLACES).EnsureIndex(mgo.Index{Key: []string{"grand_parent_id"}, Background: true})
