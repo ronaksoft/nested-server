@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"log"
 )
 
 // @Command: account/available
@@ -238,6 +239,7 @@ func (s *AccountService) getAccountFavoritePosts(requester *nested.Account, requ
 	for _, post := range posts {
 		r = append(r, s.Worker().Map().Post(requester, post, true))
 	}
+	log.Println()
 	response.OkWithData(nested.M{
 		"skip":  pg.GetSkip(),
 		"limit": pg.GetLimit(),

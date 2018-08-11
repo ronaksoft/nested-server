@@ -35,10 +35,10 @@ func main() {
 	// --Configurations
 	sender := flag.String("s", "", "Sender Address")
 	flag.IntVar(&_Verbosity, "v", 1, "Verbosity level [0, 3]")
-	//logWriters := flag.String("log", "syslog", "Log writer (:= syslog)")
+	logWriters := flag.String("log", "syslog", "Log writer (:= syslog)")
 	flag.Parse()
 	recipients := flag.Args()
-	initLogger("file,syslog", 3) //*logWriters, _Verbosity
+	initLogger(*logWriters, _Verbosity)
 
 	if 0 == len(strings.TrimSpace(*sender)) {
 		_Log.Fatal("Invalid Input: Sender is necessary")

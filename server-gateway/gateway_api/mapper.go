@@ -415,7 +415,6 @@ func (m *Mapper) Post(requester *nested.Account, post nested.Post, preview bool)
     if !post.Internal {
         if !m.worker.Model().Account.IsRecipientTrusted(requester.ID, post.SenderID) {
             isTrusted = false
-			log.Println("--------------gateway:mapper:post::isTrusted?",isTrusted)
         }
     }
     s := new(nested.Account)
