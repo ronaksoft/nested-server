@@ -407,7 +407,6 @@ func store(sender string, recipients []string, mailEnvelop *enmime.Envelope, raw
         for recipient := range mapEmails {
             postCreateReq.Recipients = append(postCreateReq.Recipients, recipient)
         }
-        _Log.Debug("post", postCreateReq.Body, postCreateReq.AttachmentIDs)
         if post := _Model.Post.AddPost(postCreateReq); post == nil {
             _Log.Error("Post add error:")
             return fmt.Errorf("could not create post")
