@@ -118,7 +118,7 @@ func initLogger(writers string, verbosity int) {
 			case "std":
 				backend = logging.NewLogBackend(os.Stdout, "", 0)
 			case "file":
-				if fh, err := os.OpenFile("/var/log/mailbox-store.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666); nil == err {
+				if fh, err := os.OpenFile("/tmp/mailbox-store.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666); nil == err {
 					backend = logging.NewLogBackend(fh, "", 0)
 				}
 			case "syslog":
