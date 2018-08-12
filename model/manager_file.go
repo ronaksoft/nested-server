@@ -439,9 +439,9 @@ func (fm *FileManager) RemoveTaskAsOwner(uniID UniversalID, taskID bson.ObjectId
     return
 }
 
-// RemoveTaskAsOwner removes the connection between uniID and fileID
+// RemovePostAsOwner removes the file from post
 func (fm *FileManager) RemovePostAsOwner(uniID UniversalID, postID bson.ObjectId) {
-    _funcName := "FileManager::RemoveTaskAsOwner"
+    _funcName := "FileManager::RemovePostAsOwner"
     _Log.FunctionStarted(_funcName, uniID, postID.Hex())
     defer _Log.FunctionFinished(_funcName)
 

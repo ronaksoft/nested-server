@@ -241,6 +241,7 @@ func (pm *PostManager) AddComment(postID bson.ObjectId, senderID string, body st
                         "timestamp":     c.Timestamp,
                     },
                 },
+                "$sort": bson.M{"timestamp": 1},
                 "$slice": -3,
             },
         },
