@@ -34,11 +34,13 @@ var (
 func main() {
 	// --Configurations
 	sender := flag.String("s", "", "Sender Address")
-	flag.IntVar(&_Verbosity, "v", 1, "Verbosity level [0, 3]")
-	logWriters := flag.String("log", "syslog", "Log writer (:= syslog)")
+	//flag.IntVar(&_Verbosity, "v", 1, "Verbosity level [0, 3]")
+	//logWriters := flag.String("log", "syslog", "Log writer (:= syslog)")
+	logWriters := _Config.GetString("LOG_WRITER")
+	_Verbosity = _Config.GetInt("LOG_LEVEL")
 	flag.Parse()
 	recipients := flag.Args()
-	initLogger(*logWriters, _Verbosity)
+	initLogger(logWriters, _Verbosity)
 
 	if 0 == len(strings.TrimSpace(*sender)) {
 		_Log.Fatal("Invalid Input: Sender is necessary")
@@ -118,7 +120,7 @@ func initLogger(writers string, verbosity int) {
 			case "std":
 				backend = logging.NewLogBackend(os.Stdout, "", 0)
 			case "file":
-				if fh, err := os.OpenFile("/var/log/mailbox-store.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666); nil == err {
+				if fh, err := os.OpenFile("/tmp/mailbox-store.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666); nil == err {
 					backend = logging.NewLogBackend(fh, "", 0)
 				}
 			case "syslog":
