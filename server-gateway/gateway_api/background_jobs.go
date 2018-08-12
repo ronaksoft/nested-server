@@ -85,7 +85,7 @@ func JobOverdueTasks(b *BackgroundJob) {
             switch task.Status {
             case nested.TASK_STATUS_COMPLETED, nested.TASK_STATUS_FAILED, nested.TASK_STATUS_HOLD, nested.TASK_STATUS_CANCELED:
 				b.Model().TimeBucket.Remove(bucket.ID)
-            	continue
+				continue
             default:
                 task.UpdateStatus("nested", nested.TASK_STATUS_OVERDUE)
             }
