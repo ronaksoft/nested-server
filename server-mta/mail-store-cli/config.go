@@ -9,10 +9,6 @@ import (
 func readConfig() *onion.Onion {
 	dl := onion.NewDefaultLayer()
 
-	// Debug
-	dl.SetDefault("LOG_LEVEL", "")
-	dl.SetDefault("LOG_WRITER", "")
-
 	// InstanceID
 	dl.SetDefault("INSTANCE_ID", "")
 
