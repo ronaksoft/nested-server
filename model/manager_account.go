@@ -1057,7 +1057,7 @@ func (am AccountManager) UnTrustRecipient(accountID string, recipients []string)
     defer _Log.FunctionFinished(_funcName)
     if err := _MongoDB.C(COLLECTION_ACCOUNTS_TRUSTED).UpdateId(
         accountID,
-        bson.M{"$pull": bson.M{"recipients": recipients}},
+        bson.M{"$pull": bson.M{"recipients": bson.M{"$in": recipients}}},
     ); err != nil {
         _Log.Error(_funcName, err.Error())
         return false
