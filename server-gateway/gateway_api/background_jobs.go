@@ -84,18 +84,19 @@ func JobOverdueTasks(b *BackgroundJob) {
             // Set task's status to overdue
             switch task.Status {
             case nested.TASK_STATUS_COMPLETED, nested.TASK_STATUS_FAILED, nested.TASK_STATUS_HOLD, nested.TASK_STATUS_CANCELED:
-                // Do nothing
+				b.Model().TimeBucket.Remove(bucket.ID)
+            	continue
             default:
                 task.UpdateStatus("nested", nested.TASK_STATUS_OVERDUE)
             }
 
-            // Notify Assignee of the task
+            // Notify Assignor of the task
             if len(task.AssigneeID) > 0 {
                 n1 := b.Model().Notification.TaskOverdue(task.AssignorID, &overdueTasks[i])
                 ntfyClient.ExternalPushNotification(n1)
                 ntfyClient.InternalNotificationSyncPush([]string{task.AssigneeID}, nested.NOTIFICATION_TYPE_TASK_OVER_DUE)
             }
-            // Notify Assignor of the task
+            // Notify Assignee of the task
             if len(task.AssignorID) > 0 && task.AssignorID != task.AssigneeID {
                 n2 := b.Model().Notification.TaskOverdue(task.AssigneeID, &overdueTasks[i])
                 ntfyClient.ExternalPushNotification(n2)
