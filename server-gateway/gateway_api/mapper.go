@@ -49,6 +49,7 @@ func (m *Mapper) Account(account nested.Account, details bool) nested.M {
         r["authority"] = account.Authority
         r["searchable"] = account.Privacy.Searchable
         r["bookmarked_places"] = account.BookmarkedPlaceIDs
+		r["mail"] = account.Mail.OutgoingSMTPUser
     }
     return r
 }
