@@ -625,7 +625,7 @@ func (s *AccountService) updateEmail(requester *nested.Account, request *nestedG
 	}
 	if p, ok := request.Data["password"].(string); ok {
 		if p == "" {
-			password = requester.Mail.OutgoingSMTPPass
+			password = nested.Decrypt(nested.EMAIL_ENCRYPT_KEY, requester.Mail.OutgoingSMTPPass)
 		} else {
 			password = p
 		}

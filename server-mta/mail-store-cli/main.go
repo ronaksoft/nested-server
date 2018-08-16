@@ -38,7 +38,7 @@ func main() {
 	//logWriters := flag.String("log", "syslog", "Log writer (:= syslog)")
 	flag.Parse()
 	recipients := flag.Args()
-	initLogger("file,syslog", 3)
+	initLogger("file", 3)
 
 	if 0 == len(strings.TrimSpace(*sender)) {
 		_Log.Fatal("Invalid Input: Sender is necessary")
