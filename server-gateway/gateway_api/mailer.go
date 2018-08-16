@@ -103,7 +103,6 @@ func (m *Mailer) Run() {
         }
 
         if msg := m.createMessage(req.PostID); msg != nil {
-			log.Println("++++++++++",msg)
             if err := d.DialAndSend(msg); err != nil {
                 log.Println("Mailer::Run", err.Error(), req.Host, req.Port, req.Username, req.Password)
             }

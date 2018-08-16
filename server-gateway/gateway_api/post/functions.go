@@ -7,7 +7,6 @@ import (
 	"git.ronaksoftware.com/nested/server/model"
 	"github.com/globalsign/mgo/bson"
 	"strings"
-	"log"
 )
 
 // @Command:	post/add_label
@@ -375,7 +374,6 @@ func (s *PostService) createPost(requester *nested.Account, request *nestedGatew
 			mailReq.Host = ""
 			mailReq.PostID = post.ID
 		}
-		log.Println("-----------", mailReq)
 		s.Worker().Mailer().SendRequest(mailReq)
 	}
 
