@@ -1600,6 +1600,9 @@ func (s *AdminService) prepareWelcome(accountID string) {
         Body:        body.String(),
         ContentType: nested.CONTENT_TYPE_TEXT_HTML,
         PlaceIDs:    []string{accountID},
+		SystemData: nested.PostSystemData{
+			NoComment: true,
+		},
     }
 
     s.Worker().Model().Post.AddPost(pcr)
