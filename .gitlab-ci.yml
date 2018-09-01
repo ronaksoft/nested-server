@@ -53,6 +53,7 @@ deploy:staging:
   stage: deploy
   only:
   - behrooz
+  - fix
   image: docker:latest
   services:
   - docker:dind
