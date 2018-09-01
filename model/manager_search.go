@@ -808,3 +808,45 @@ func (sm *SearchManager) GetSearchHistory(accountID, keyword string) []string {
     }}).One(&searchHistory)
     return searchHistory.History
 }
+
+// 	AccountIDs searches through  ACCOUNTS collection and apply keyword, filter on it query
+// 	filter:			ACCOUNT_SEARCH_FILTER_USERS_ENABLED
+// 					ACCOUNT_SEARCH_FILTER_USERS_DISABLED
+// 					ACCOUNT_SEARCH_FILTER_USERS
+// 					ACCOUNT_SEARCH_FILTER_DEVICES
+// 					ACCOUNT_SEARCH_FILTER_ALL
+func (sm *SearchManager) AccountIDs(filter string) []string {
+    _funcName := "SearchManager::AccountIDs"
+    _Log.FunctionStarted(_funcName, filter)
+    defer _Log.FunctionFinished(_funcName)
+
+    dbSession := _MongoSession.Copy()
+    db := dbSession.DB(DB_NAME)
+    defer dbSession.Close()
+
+    q := bson.M{}
+
+    switch filter {
+    case ACCOUNT_SEARCH_FILTER_USERS_ENABLED:
+        q["acc_type"] = ACCOUNT_TYPE_USER
+        q["disabled"] = false
+    case ACCOUNT_SEARCH_FILTER_USERS_DISABLED:
+        q["acc_type"] = ACCOUNT_TYPE_USER
+        q["disabled"] = true
+    case ACCOUNT_SEARCH_FILTER_USERS:
+        q["acc_type"] = ACCOUNT_TYPE_USER
+    case ACCOUNT_SEARCH_FILTER_DEVICES:
+        q["acc_type"] = ACCOUNT_TYPE_DEVICE
+    case ACCOUNT_SEARCH_FILTER_ALL:
+    default:
+
+    }
+    Q := db.C(COLLECTION_ACCOUNTS).Find(q)
+
+	var accountIDs []string
+    if err := Q.Select(bson.M{"_id":1}).All(&accountIDs); err != nil {
+        _Log.Error(_funcName, err.Error())
+    }
+
+    return accountIDs
+}

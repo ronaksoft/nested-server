@@ -127,7 +127,6 @@ func (tm *TaskManager) CreateTask(tcr TaskCreateRequest) *Task {
     task.LabelIDs = tcr.LabelIDs
     task.ToDos = tcr.Todos
     task.AttachmentIDs = tcr.AttachmentIDs
-    task.Status = tcr.Status
     task.RelatedTo = tcr.RelatedTo
     task.RelatedPost = tcr.RelatedPost
 
@@ -524,7 +523,6 @@ type TaskCreateRequest struct {
     Title           string
     Description     string
     Todos           []TaskToDo
-    Status          TaskStatus
     RelatedTo       bson.ObjectId
     RelatedPost     bson.ObjectId
     DueDate         uint64
