@@ -1606,5 +1606,4 @@ func (s *AdminService) prepareWelcome(accountID string) {
     }
 
     s.Worker().Model().Post.AddPost(pcr)
-
 }

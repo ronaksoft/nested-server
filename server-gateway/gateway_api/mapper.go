@@ -55,6 +55,7 @@ func (m *Mapper) Account(account nested.Account, details bool) nested.M {
 			OutgoingSMTPUser: account.Mail.OutgoingSMTPUser,
 			OutgoingSMTPPort: account.Mail.OutgoingSMTPPort,
 		}
+		r["access_place_ids"] = account.AccessPlaceIDs
     }
     return r
 }
