@@ -333,7 +333,7 @@ func CleanupTempFiles() {
 }
 
 // Fix file status of task attached files
-func FixReferedTmpFiles() {
+func FixReferredTmpFiles() {
 	log.Println("--> Routine:: FixReferedTmpFiles")
 	defer log.Println("<-- Routine:: FixReferedTmpFiles")
 	iter := _MongoDB.C(COLLECTION_FILES).Find(bson.M{"ref_count": bson.M{"$gt": 0}}).Iter()
