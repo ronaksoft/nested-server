@@ -3,17 +3,15 @@ package nested
 import (
     "crypto/tls"
     "encoding/gob"
+    "fmt"
+    "net"
     "os"
+    "time"
 
     "github.com/globalsign/mgo"
     "github.com/globalsign/mgo/bson"
     "go.uber.org/zap"
     "go.uber.org/zap/zapcore"
-
-    "log"
-    "net"
-    "time"
-    "fmt"
 )
 
 var (
@@ -87,7 +85,7 @@ func NewManager(instanceID, mongoDSN, redisDSN string, debug int) (*Manager, err
     tlsConfig := new(tls.Config)
     tlsConfig.InsecureSkipVerify = true
     if dialInfo, err := mgo.ParseURL(mongoDSN); err != nil {
-        log.Println("Model::NewManager::MongoDB URL Parse Failed::", err.Error())
+        _Log.Warn(err.Error())
         return nil, err
     } else {
         dialInfo.Timeout = 5 * time.Second
@@ -99,16 +97,16 @@ func NewManager(instanceID, mongoDSN, redisDSN string, debug int) (*Manager, err
             }
         }
         if mongoSession, err := mgo.DialWithInfo(dialInfo); err != nil {
-            log.Println("Model::NewManager::DialWithInfo Failed::", err.Error())
+            _Log.Warn(err.Error())
             if mongoSession, err = mgo.Dial(mongoDSN); err != nil {
-                log.Println("Model::NewManager::Dial Failed::", err.Error())
+                _Log.Warn(err.Error())
                 return nil, err
             } else {
-                log.Println("Model::NewManager::MongoDB Connected")
+                _Log.Info("Model::NewManager::MongoDB Connected")
                 _MongoSession = mongoSession
             }
         } else {
-            log.Println("Model::NewManager::MongoDB(TLS) Connected")
+            _Log.Info("Model::NewManager::MongoDB(TLS) Connected")
             _MongoSession = mongoSession
         }
     }
@@ -121,7 +119,7 @@ func NewManager(instanceID, mongoDSN, redisDSN string, debug int) (*Manager, err
 
     // Initialize Cache Redis
     if c, err := NewCacheManager(redisDSN); err != nil {
-        log.Println("Redis Pool Connection Error")
+        _Log.Info("Redis Pool Connection Error")
         return nil, err
     } else {
         _Cache = c

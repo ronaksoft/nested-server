@@ -360,7 +360,7 @@ func (tm *TokenManager) SetAppFavoriteStatus(accountID, appID string, state bool
         bson.M{"account_id": accountID, "app_id": appID,},
         bson.M{"$set": bson.M{"favorite": state}},
     ); err != nil {
-        log.Println(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true

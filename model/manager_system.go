@@ -163,7 +163,7 @@ func (sm *SystemManager) GetCounters() MI {
 
     m := MI{}
     if err := db.C(COLLECTION_SYSTEM_INTERNAL).FindId("counters").One(m); err != nil {
-        log.Println("Model::SystemManager::GetCounters::Error 1::", err.Error())
+        _Log.Warn(err.Error())
     }
     return m
 }

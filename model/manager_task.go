@@ -1308,9 +1308,6 @@ func (t *Task) HasAttachment(attachmentID UniversalID) bool {
 }
 
 func (t *Task) Accept(accountID string) bool {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -1337,9 +1334,6 @@ func (t *Task) Accept(accountID string) bool {
 }
 
 func (t *Task) Reject(accountID, reason string) bool {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -1389,9 +1383,6 @@ func (t *Task) Reject(accountID, reason string) bool {
 }
 
 func (t *Task) Resign(accountID, reason string) bool {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()

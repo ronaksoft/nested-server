@@ -64,7 +64,7 @@ func Encrypt(keyText, text string) string {
 
     block, err := aes.NewCipher(key)
     if err != nil {
-        log.Println(err)
+        _Log.Warn(err.Error())
         return ""
     }
 
@@ -73,7 +73,7 @@ func Encrypt(keyText, text string) string {
     ciphertext := make([]byte, aes.BlockSize+len(plaintext))
     iv := ciphertext[:aes.BlockSize]
     if _, err := rand.Read(iv); err != nil {
-        log.Panicln(err.Error())
+        log.Println(err.Error())
         return ""
     }
 
@@ -90,14 +90,14 @@ func Decrypt(keyText, cryptoText string) string {
 
     block, err := aes.NewCipher(key)
     if err != nil {
-        log.Println("Decrypt::", err.Error())
+        _Log.Warn(err.Error())
         return ""
     }
 
     // The IV needs to be unique, but not secure. Therefore it's common to
     // include it at the beginning of the cipher-text.
     if len(ciphertext) < aes.BlockSize {
-        log.Println("ciphertext too short")
+        _Log.Warn("ciphertext too short")
         return ""
     }
     iv := ciphertext[:aes.BlockSize]
@@ -171,7 +171,7 @@ func UseDownloadToken(token string) (bool, UniversalID) {
 
     if len(p) > 3 {
         if et, err := strconv.Atoi(p[3]); err != nil {
-            log.Println("Model::Statics::UseDownloadToken::Error::", err.Error())
+            _Log.Warn(err.Error())
 
             return false, ""
         } else if Timestamp() > uint64(et) {
@@ -196,7 +196,7 @@ func UseUploadToken(token string, sk bson.ObjectId) (bool, string) {
 
     if len(p) > 2 {
         if et, err := strconv.Atoi(p[2]); err != nil {
-            log.Println("Model::FileManager::UseUploadToken::Error 1::", err.Error())
+            _Log.Warn(err.Error())
 
             return false, ""
         } else if Timestamp() > uint64(et) {

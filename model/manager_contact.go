@@ -17,10 +17,6 @@ type ContactManager struct{}
 func NewContactManager() *ContactManager { return new(ContactManager) }
 
 func (cm *ContactManager) AddContact(accountID, contactID string) bool {
-    // _funcName
-
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -46,10 +42,6 @@ func (cm *ContactManager) AddContact(accountID, contactID string) bool {
 }
 
 func (cm *ContactManager) AddMutualContact(accountID1, accountID2 string) bool {
-    // _funcName
-
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -76,10 +68,6 @@ func (cm *ContactManager) AddMutualContact(accountID1, accountID2 string) bool {
 }
 
 func (cm *ContactManager) AddContactToFavorite(accountID, contactID string) bool {
-    // _funcName
-
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -117,10 +105,6 @@ func (cm *ContactManager) IsContact(accountID, contactID string) bool {
 }
 
 func (cm *ContactManager) RemoveContact(accountID, contactID string) bool {
-    // _funcName
-
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -147,10 +131,6 @@ func (cm *ContactManager) RemoveContact(accountID, contactID string) bool {
 }
 
 func (cm *ContactManager) RemoveContactFromFavorite(accountID, contactID string) bool {
-    // _funcName
-
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()

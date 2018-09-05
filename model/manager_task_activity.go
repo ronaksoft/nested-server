@@ -38,10 +38,6 @@ func NewTaskActivityManager() *TaskActivityManager {
     return new(TaskActivityManager)
 }
 func (tm *TaskActivityManager) Remove(activityID bson.ObjectId) bool {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -56,10 +52,6 @@ func (tm *TaskActivityManager) Remove(activityID bson.ObjectId) bool {
     return true
 }
 func (tm *TaskActivityManager) GetActivityByID(activityID bson.ObjectId) *TaskActivity {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -72,10 +64,6 @@ func (tm *TaskActivityManager) GetActivityByID(activityID bson.ObjectId) *TaskAc
     return taskActivity
 }
 func (tm *TaskActivityManager) GetActivitiesByIDs(activityIDs []bson.ObjectId) []TaskActivity {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -90,10 +78,6 @@ func (tm *TaskActivityManager) GetActivitiesByIDs(activityIDs []bson.ObjectId) [
     return taskActivities
 }
 func (tm *TaskActivityManager) GetActivitiesByTaskID(taskID bson.ObjectId, pg Pagination, filter []TaskAction) []TaskActivity {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -126,10 +110,6 @@ func (tm *TaskActivityManager) GetActivitiesByTaskID(taskID bson.ObjectId, pg Pa
 }
 
 func (tm *TaskActivityManager) Created(taskID bson.ObjectId, actorID string) {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -147,10 +127,6 @@ func (tm *TaskActivityManager) Created(taskID bson.ObjectId, actorID string) {
     return
 }
 func (tm *TaskActivityManager) WatcherAdded(taskID bson.ObjectId, actorID string, watcherIDs []string) {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -169,10 +145,6 @@ func (tm *TaskActivityManager) WatcherAdded(taskID bson.ObjectId, actorID string
     return
 }
 func (tm *TaskActivityManager) WatcherRemoved(taskID bson.ObjectId, actorID string, watcherIDs []string) {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -191,10 +163,6 @@ func (tm *TaskActivityManager) WatcherRemoved(taskID bson.ObjectId, actorID stri
     return
 }
 func (tm *TaskActivityManager) EditorAdded(taskID bson.ObjectId, actorID string, editorIDs []string) {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -213,10 +181,6 @@ func (tm *TaskActivityManager) EditorAdded(taskID bson.ObjectId, actorID string,
     return
 }
 func (tm *TaskActivityManager) EditorRemoved(taskID bson.ObjectId, actorID string, editorIDs []string) {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -235,10 +199,6 @@ func (tm *TaskActivityManager) EditorRemoved(taskID bson.ObjectId, actorID strin
     return
 }
 func (tm *TaskActivityManager) AttachmentAdded(taskID bson.ObjectId, actorID string, attachmentIDs []UniversalID) *TaskActivity {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -258,10 +218,6 @@ func (tm *TaskActivityManager) AttachmentAdded(taskID bson.ObjectId, actorID str
     return &v
 }
 func (tm *TaskActivityManager) AttachmentRemoved(taskID bson.ObjectId, actorID string, attachmentIDs []UniversalID) {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -280,10 +236,6 @@ func (tm *TaskActivityManager) AttachmentRemoved(taskID bson.ObjectId, actorID s
     return
 }
 func (tm *TaskActivityManager) TaskTitleChanged(taskID bson.ObjectId, actorID, title string) {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -302,10 +254,6 @@ func (tm *TaskActivityManager) TaskTitleChanged(taskID bson.ObjectId, actorID, t
     return
 }
 func (tm *TaskActivityManager) TaskDescriptionChanged(taskID bson.ObjectId, actorID, desc string) {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -324,10 +272,6 @@ func (tm *TaskActivityManager) TaskDescriptionChanged(taskID bson.ObjectId, acto
     return
 }
 func (tm *TaskActivityManager) CandidateAdded(taskID bson.ObjectId, actorID string, candidateIDs []string) {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -346,10 +290,6 @@ func (tm *TaskActivityManager) CandidateAdded(taskID bson.ObjectId, actorID stri
     return
 }
 func (tm *TaskActivityManager) CandidateRemoved(taskID bson.ObjectId, actorID string, candidateIDs []string) {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -368,10 +308,6 @@ func (tm *TaskActivityManager) CandidateRemoved(taskID bson.ObjectId, actorID st
     return
 }
 func (tm *TaskActivityManager) StatusChanged(taskID bson.ObjectId, actorID string, newStatus TaskStatus) {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -390,10 +326,6 @@ func (tm *TaskActivityManager) StatusChanged(taskID bson.ObjectId, actorID strin
     return
 }
 func (tm *TaskActivityManager) ToDoAdded(taskID bson.ObjectId, actorID, todoText string) {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -412,10 +344,6 @@ func (tm *TaskActivityManager) ToDoAdded(taskID bson.ObjectId, actorID, todoText
     return
 }
 func (tm *TaskActivityManager) ToDoRemoved(taskID bson.ObjectId, actorID, todoText string) {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -434,10 +362,6 @@ func (tm *TaskActivityManager) ToDoRemoved(taskID bson.ObjectId, actorID, todoTe
     return
 }
 func (tm *TaskActivityManager) ToDoChanged(taskID bson.ObjectId, actorID, todoText string) {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -456,10 +380,6 @@ func (tm *TaskActivityManager) ToDoChanged(taskID bson.ObjectId, actorID, todoTe
     return
 }
 func (tm *TaskActivityManager) ToDoDone(taskID bson.ObjectId, actorID, todoText string) {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -478,10 +398,6 @@ func (tm *TaskActivityManager) ToDoDone(taskID bson.ObjectId, actorID, todoText 
     return
 }
 func (tm *TaskActivityManager) ToDoUndone(taskID bson.ObjectId, actorID, todoText string) {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -500,10 +416,6 @@ func (tm *TaskActivityManager) ToDoUndone(taskID bson.ObjectId, actorID, todoTex
     return
 }
 func (tm *TaskActivityManager) AssigneeChanged(taskID bson.ObjectId, actorID, assigneeID string) {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -522,10 +434,6 @@ func (tm *TaskActivityManager) AssigneeChanged(taskID bson.ObjectId, actorID, as
     return
 }
 func (tm *TaskActivityManager) Comment(taskID bson.ObjectId, actorID string, commentText string) *TaskActivity {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -555,10 +463,6 @@ func (tm *TaskActivityManager) Comment(taskID bson.ObjectId, actorID string, com
     return &v
 }
 func (tm *TaskActivityManager) LabelAdded(taskID bson.ObjectId, actorID string, labelIDs []string) *TaskActivity {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -578,10 +482,6 @@ func (tm *TaskActivityManager) LabelAdded(taskID bson.ObjectId, actorID string, 
     return &v
 }
 func (tm *TaskActivityManager) LabelRemoved(taskID bson.ObjectId, actorID string, labelIDs []string) {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -600,10 +500,6 @@ func (tm *TaskActivityManager) LabelRemoved(taskID bson.ObjectId, actorID string
     return
 }
 func (tm *TaskActivityManager) DueDateUpdated(taskID bson.ObjectId, actorID string, dueDate uint64, dueDateHasClock bool) {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -623,10 +519,6 @@ func (tm *TaskActivityManager) DueDateUpdated(taskID bson.ObjectId, actorID stri
     return
 }
 func (tm *TaskActivityManager) DueDateRemoved(taskID bson.ObjectId, actorID string) {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()

@@ -12,7 +12,7 @@ type CacheManager struct {
 func NewCacheManager(redisDSN string) (*CacheManager, error) {
     cm := new(CacheManager)
     if _, err := redis.Dial("tcp", redisDSN); err != nil {
-        log.Println("Redis Pool Connection Error", err.Error())
+        _Log.Warn(err.Error())
         return nil, err
     } else {
         cm.Pool = &redis.Pool{
@@ -32,7 +32,6 @@ func NewCacheManager(redisDSN string) (*CacheManager, error) {
 
 func (cm *CacheManager) getConn() redis.Conn {
     c := cm.Pool.Get()
-    // c.Query("SELECT", 1001)
     return c
 }
 
