@@ -200,7 +200,6 @@ func (sm *SearchManager) PlacesForSearch(keyword, accountID string, pg Paginatio
         {"$limit": limit},
     }
     Q := db.C(COLLECTION_ACCOUNTS_PLACES).Pipe(q)
-    _Log.ExplainPipe(_funcName, Q)
 
     iter := Q.Iter()
     defer iter.Close()
@@ -405,7 +404,6 @@ func (sm *SearchManager) AccountsForSearch(accountID string, keyword string, pg 
         {"$limit": limit},
     }
     Q := db.C(COLLECTION_ACCOUNTS_ACCOUNTS).Pipe(q)
-    _Log.ExplainPipe(_funcName, Q)
     iter1 := Q.Iter()
     fetchedDoc := struct {
         AccountID string    `bson:"account_id"`
