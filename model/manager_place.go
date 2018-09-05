@@ -893,7 +893,7 @@ func (pm *PlaceManager) RemoveKeyHolder(placeID, accountID, actorID string) *Pla
     ); err != nil {
         _Log.Warn(err.Error())
     }
-    if ci, err := db.C(COLLECTION_POSTS_READS).UpdateAll(
+    if _, err := db.C(COLLECTION_POSTS_READS).UpdateAll(
         bson.M{
             "account_id": accountID,
             "place_id":   placeID,

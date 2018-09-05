@@ -427,12 +427,9 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
                 Timestamp: ts,
             })
         }
-        if r, err := bulk.Run(); err != nil {
+        if _, err := bulk.Run(); err != nil {
             _Log.Warn(err.Error())
         }
-
-        //// Clear the slice
-        //memberIDs = memberIDs[:0]
 
         // Update unread counters
         if place.Privacy.Locked {
