@@ -193,7 +193,7 @@ func (m *Manager) RegisterBundle(bundleID string) {
         bson.M{"_id": "bundles"},
         bson.M{"$addToSet": bson.M{"bundle_ids": bundleID}},
     ); err != nil {
-        _Log.Error(err.Error())
+        _Log.Warn(err.Error())
     }
 }
 
@@ -203,7 +203,7 @@ func (m *Manager) GetBundles() []string {
         BundleIDs []string `bson:"bundle_ids"`
     }{}
     if err := _MongoDB.C(COLLECTION_SYSTEM_INTERNAL).FindId("bundles").One(&r); err != nil {
-        _Log.Error(err.Error())
+        _Log.Warn(err.Error())
         return []string{}
     } else {
         return r.BundleIDs

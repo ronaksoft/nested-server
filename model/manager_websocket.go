@@ -40,7 +40,7 @@ func (wm *WebsocketManager) Register(websocketID, bundleID, deviceID, accountID 
     c := _Cache.Pool.Get()
     defer c.Close()
     if c == nil {
-        _Log.Error(_funcName, "Cannot get redis connection")
+        _Log.Warn("Cannot get redis connection")
         return false
     }
 
@@ -71,7 +71,7 @@ func (wm *WebsocketManager) GetWebsocketsByAccountID(accountID, bundleID string)
     c := _Cache.Pool.Get()
     defer c.Close()
     if c == nil {
-        _Log.Error(_funcName, "Cannot get redis connection")
+        _Log.Warn("Cannot get redis connection")
         return []Websocket{}
     }
     websockets := make([]Websocket, 0)
@@ -106,7 +106,7 @@ func (wm *WebsocketManager) GetAccountsByBundleID(bundleID string) []string {
     c := _Cache.Pool.Get()
     defer c.Close()
     if c == nil {
-        _Log.Error(_funcName, "Cannot get redis connection")
+        _Log.Warn( "Cannot get redis connection")
         return []string{}
     }
     setKeyID := fmt.Sprintf("ws:bundle:%s", bundleID)
@@ -128,7 +128,7 @@ func (wm *WebsocketManager) Remove(websocketID, bundleID string) *Websocket {
     c := _Cache.Pool.Get()
     defer c.Close()
     if c == nil {
-        _Log.Error(_funcName, "Cannot get redis connection")
+        _Log.Warn( "Cannot get redis connection")
         return nil
     }
 
@@ -174,7 +174,7 @@ func (wm *WebsocketManager) RemoveByBundleID(bundleID string) {
     c := _Cache.Pool.Get()
     defer c.Close()
     if c == nil {
-        _Log.Error(_funcName, "Cannot get redis connection")
+        _Log.Warn( "Cannot get redis connection")
         return
     }
 
@@ -204,7 +204,7 @@ func (wm *WebsocketManager) IsConnected(accountIDs []string) MB {
     c := _Cache.Pool.Get()
     defer c.Close()
     if c == nil {
-        _Log.Error(_funcName, "cannot get redis connection")
+        _Log.Warn( "cannot get redis connection")
         return nil
     }
     for _, accountID := range accountIDs {

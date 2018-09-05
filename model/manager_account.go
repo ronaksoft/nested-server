@@ -182,7 +182,6 @@ func (am *AccountManager) removeMultiFromCache(accountIDs []string) bool {
 // Adds the place to the bookmarked list
 func (am *AccountManager) AddPlaceToBookmarks(accountID, placeID string) {
     defer _Manager.Account.removeCache(accountID)
-
     if err := _MongoDB.C(COLLECTION_ACCOUNTS).UpdateId(
         accountID,
         bson.M{
@@ -201,8 +200,6 @@ func (am *AccountManager) AddPlaceToBookmarks(accountID, placeID string) {
 
 // Available returns true if account can be created on system otherwise returns false
 func (am *AccountManager) Available(accountID string) bool {
-    //
-    // removed LOG Function
     if matched, err := regexp.MatchString(DEFAULT_REGEX_ACCOUNT_ID, accountID); err != nil {
         return false
     } else if !matched {
@@ -222,8 +219,6 @@ func (am *AccountManager) Available(accountID string) bool {
 
 // ClearRecentlyVisited clears the recently visited list of the accountID
 func (am *AccountManager) ClearRecentlyVisited(accountID string) {
-    //
-    // removed LOG Function
     if err := _MongoDB.C(COLLECTION_ACCOUNTS).UpdateId(
         accountID,
         bson.M{"$set": bson.M{"recently_visited": []string{}}},
@@ -236,9 +231,6 @@ func (am *AccountManager) ClearRecentlyVisited(accountID string) {
 // CreateUser initially nested-tools-cli user, but the created user is disabled until CompleteUserRegister is called.
 // It return TRUE if everything was going through with no problem otherwise return false
 func (am *AccountManager) CreateUser(uid, pass, phone, country, fname, lname, email, dob, gender string) bool {
-    //
-    // removed LOG Function
-
     y, _ := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.MinCost)
     acc := Account{
         ID:       strings.ToLower(uid),
@@ -304,8 +296,6 @@ func (am *AccountManager) CreateUser(uid, pass, phone, country, fname, lname, em
 
 // Disable disables the account. Disabled accounts cannot login to the systemm
 func (am *AccountManager) Disable(accountID string) bool {
-    //
-    // removed LOG Function
     defer _Manager.Account.removeCache(accountID)
     if err := _MongoDB.C(COLLECTION_ACCOUNTS).Update(
         bson.M{"_id": accountID, "disabled": false},
@@ -324,8 +314,6 @@ func (am *AccountManager) Disable(accountID string) bool {
 
 // EmailExists checks if email already exists
 func (am *AccountManager) EmailExists(email string) bool {
-    //
-    // removed LOG Function
     n, _ := _MongoDB.C(COLLECTION_ACCOUNTS).Find(bson.M{"email": email}).Count()
 
     return n > 0
@@ -333,8 +321,6 @@ func (am *AccountManager) EmailExists(email string) bool {
 
 // Enables make the accountID enabled
 func (am *AccountManager) Enable(accountID string) bool {
-    //
-    // removed LOG Function
     defer _Manager.Account.removeCache(accountID)
     if err := _MongoDB.C(COLLECTION_ACCOUNTS).Update(
         bson.M{"_id": accountID, "disabled": true},
@@ -358,16 +344,12 @@ func (am *AccountManager) Enable(accountID string) bool {
 // This function just check if the account id has been already created. it returns true
 // even if the account is disabled or not completely registered.
 func (am *AccountManager) Exists(accountID string) bool {
-    //
-    // removed LOG Function
     n, _ := _MongoDB.C(COLLECTION_ACCOUNTS).FindId(accountID).Count()
 
     return n > 0
 }
 
 func (am *AccountManager) ForcePasswordChange(accountID string, state bool) bool {
-    //
-    // removed LOG Function
     defer _Manager.Account.removeCache(accountID)
     if err := _MongoDB.C(COLLECTION_ACCOUNTS).UpdateId(
         accountID,
@@ -381,9 +363,6 @@ func (am *AccountManager) ForcePasswordChange(accountID string, state bool) bool
 
 // GetAccessPlaceIDs returns an array of the place ids which the user has access to
 func (am *AccountManager) GetAccessPlaceIDs(accountID string) []string {
-    //
-    // removed LOG Function
-
     acc := _Manager.Account.GetByID(accountID, nil)
     if acc != nil {
         return acc.AccessPlaceIDs
@@ -393,24 +372,16 @@ func (am *AccountManager) GetAccessPlaceIDs(accountID string) []string {
 
 // GetAccountsByIDs returns an array of accounts identified by accountIDs, it returns an empty slice if nothing was found
 func (am *AccountManager) GetAccountsByIDs(accountIDs []string) []Account {
-    //
-    // removed LOG Function
     return _Manager.Account.readMultiFromCache(accountIDs)
 }
 
 // GetByID returns the account by giving the ID of the account
 func (am *AccountManager) GetByID(accountID string, pj M) *Account {
-    //
-    // removed LOG Function
     return _Manager.Account.readFromCache(accountID)
 }
 
 // GetAccountByLoginToken returns account by giving a login token
 func (am *AccountManager) GetAccountByLoginToken(token string) *Account {
-    // _funcName
-    //
-    // removed LOG Function
-
     loginToken := _Manager.Token.GetLoginToken(token)
     if loginToken != nil {
         account := _Manager.Account.GetByID(loginToken.AccountID, nil)
@@ -422,10 +393,6 @@ func (am *AccountManager) GetAccountByLoginToken(token string) *Account {
 // GetByPhone
 // Return the account by giving the phone number of the account
 func (am *AccountManager) GetByPhone(phone string, pj M) *Account {
-    // _funcName
-    //
-    // removed LOG Function
-
     acc := new(Account)
     if pj == nil {
         pj = M{
@@ -443,10 +410,6 @@ func (am *AccountManager) GetByPhone(phone string, pj M) *Account {
 
 // GetByEmail returns the account by giving the email address of the account
 func (am *AccountManager) GetByEmail(email string, pj M) *Account {
-    // _funcName
-    //
-    // removed LOG Function
-
     acc := new(Account)
     if pj == nil {
         pj = M{
@@ -463,10 +426,6 @@ func (am *AccountManager) GetByEmail(email string, pj M) *Account {
 
 // GetBookmarkedPlaceIDs return an array of the place ids which the user has marked them as favorite
 func (am *AccountManager) GetBookmarkedPlaceIDs(accountID string) []string {
-    // _funcName
-    //
-    // removed LOG Function
-
     acc := _Manager.Account.GetByID(accountID, nil)
     if acc != nil {
         return acc.BookmarkedPlaceIDs
@@ -476,9 +435,6 @@ func (am *AccountManager) GetBookmarkedPlaceIDs(accountID string) []string {
 
 // GetKey get the value of the keyName for accountID
 func (am *AccountManager) GetKey(accountID, keyName string) string {
-    // _funcName
-    //
-    // removed LOG Function
     keyID := fmt.Sprintf("%s.%s", accountID, keyName)
     keyValue := am.readKeyFromCache(keyID)
     return keyValue
@@ -486,10 +442,6 @@ func (am *AccountManager) GetKey(accountID, keyName string) string {
 
 // GetAllKeys returns a map of [keyName, keyValue] for accountID
 func (am *AccountManager) GetAllKeys(accountID string) []MS {
-    // _funcName
-    //
-    // removed LOG Function
-
     docs := make([]MS, 0)
     _MongoDB.C(COLLECTION_ACCOUNTS_DATA).Find(bson.M{
         "_id": bson.M{
@@ -502,10 +454,6 @@ func (am *AccountManager) GetAllKeys(accountID string) []MS {
 
 // GetMutualPlaceIDs returns an array of placeIDs which both accounts are member of
 func (am *AccountManager) GetMutualPlaceIDs(accountID1, accountID2 string) []string {
-    // _funcName
-    //
-    // removed LOG Function
-
     placeIDs1 := _Manager.Account.GetAccessPlaceIDs(accountID1)
     placeIDs2 := _Manager.Account.GetAccessPlaceIDs(accountID2)
     if len(placeIDs2) < len(placeIDs1) {
@@ -533,9 +481,6 @@ func (am *AccountManager) GetMutualPlaceIDs(accountID1, accountID2 string) []str
 
 // IncreaseLogins increases the login counter for user "accountID"
 func (am *AccountManager) IncreaseLogins(accountID string) {
-    // _funcName
-    //
-    // removed LOG Function
     defer _Manager.Account.removeCache(accountID)
     _MongoDB.C(COLLECTION_ACCOUNTS).UpdateId(
         accountID,
@@ -547,10 +492,6 @@ func (am *AccountManager) IncreaseLogins(accountID string) {
 // IncrementLimit Increase or Decrease Limit identified by limitKey
 // Supported Limit Keys: grand_places
 func (am *AccountManager) IncrementLimit(accountID, limitKey string, n int) bool {
-    // _funcName
-    //
-    // removed LOG Function
-
     switch limitKey {
     case "grand_places":
         _MongoDB.C(COLLECTION_ACCOUNTS).UpdateId(
@@ -567,19 +508,12 @@ func (am *AccountManager) IncrementLimit(accountID, limitKey string, n int) bool
 // IsEnabled checks if account is registered and also not disabled
 // This function must be used if you want to make sure the account exists and is active
 func (am *AccountManager) IsEnabled(accountID string) bool {
-    // _funcName
-    //
-    // removed LOG Function
     n, _ := _MongoDB.C(COLLECTION_ACCOUNTS).Find(bson.M{"disabled": false}).Count()
     return n > 0
 }
 
 // PhoneExists checks if phone already exists
 func (am *AccountManager) PhoneExists(phone string) bool {
-    // _funcName
-    //
-    // removed LOG Function
-
     n, _ := _MongoDB.C(COLLECTION_ACCOUNTS).Find(bson.M{"phone": phone}).Count()
 
     return n > 0
@@ -588,9 +522,6 @@ func (am *AccountManager) PhoneExists(phone string) bool {
 // RemovePlaceConnection removes 'Account <--> Place' relation points
 // Then placeIDs will not be searched in SEARCH::PLACES_FOR_COMPOSE
 func (am *AccountManager) RemovePlaceConnection(accountID string, placeIDs []string) bool {
-    // _funcName
-    //
-    // removed LOG Function
     if err := _MongoDB.C(COLLECTION_ACCOUNTS_PLACES).Remove(bson.M{
         "account_id": accountID,
         "place_id":   bson.M{"$in": placeIDs},
@@ -603,9 +534,6 @@ func (am *AccountManager) RemovePlaceConnection(accountID string, placeIDs []str
 
 // RemovePlaceFromBookmarks removes the place identified by "placeID" from the bookmarked list of the "accountID"
 func (am *AccountManager) RemovePlaceFromBookmarks(accountID, placeID string) {
-    // _funcName
-    //
-    // removed LOG Function
     defer _Manager.Account.removeCache(accountID)
     if err := _MongoDB.C(COLLECTION_ACCOUNTS).UpdateId(
         accountID,
@@ -618,9 +546,6 @@ func (am *AccountManager) RemovePlaceFromBookmarks(accountID, placeID string) {
 
 // RemoveRecipientConnection removes 'Account <--> Email Address' relation points
 func (am *AccountManager) RemoveRecipientConnection(accountID string, recipients []string) {
-    // _funcName
-    //
-    // removed LOG Function
     if err := _MongoDB.C(COLLECTION_ACCOUNTS_RECIPIENTS).Remove(bson.M{
         "account_id": accountID,
         "recipient":  bson.M{"$in": recipients},
@@ -632,9 +557,6 @@ func (am *AccountManager) RemoveRecipientConnection(accountID string, recipients
 
 // ResetLoginAttempts reset the login attempts
 func (am *AccountManager) ResetLoginAttempts(accountID string) {
-    // _funcName
-    //
-    // removed LOG Function
     defer _Manager.Account.removeCache(accountID)
     _MongoDB.C(COLLECTION_ACCOUNTS).UpdateId(
         accountID,
@@ -644,9 +566,6 @@ func (am *AccountManager) ResetLoginAttempts(accountID string) {
 
 // ResetUnreadNotificationCounter reset the notification counter for user "accountID"
 func (am *AccountManager) ResetUnreadNotificationCounter(accountID string) {
-    // _funcName
-    //
-    // removed LOG Function
     defer _Manager.Account.removeCache(accountID)
     _MongoDB.C(COLLECTION_ACCOUNTS).UpdateId(
         accountID,
@@ -658,9 +577,6 @@ func (am *AccountManager) ResetUnreadNotificationCounter(accountID string) {
 // RemoveKey removes the key from database, if the keyName existed then it return true, otherwise
 // returns false.
 func (am *AccountManager) RemoveKey(accountID, keyName string) bool {
-    // _funcName
-    //
-    // removed LOG Function
     change := mgo.Change{
         Remove: true,
     }
@@ -683,10 +599,6 @@ func (am *AccountManager) RemoveKey(accountID, keyName string) bool {
 // or serialized version of the object. This is clients responsibilities to encode/decode
 // their data before saving them on the server.
 func (am *AccountManager) SaveKey(accountID, keyName, keyValue string) bool {
-    // _funcName
-    //
-    // removed LOG Function
-
     // Get the account's object
     account := am.GetByID(accountID, nil)
     if account.Counters.Keys >= account.Limits.Keys {
@@ -719,9 +631,6 @@ func (am *AccountManager) SaveKey(accountID, keyName, keyValue string) bool {
 
 // SetAdmin sets or resets the  accountID as admin
 func (am *AccountManager) SetAdmin(accountID string, b bool) {
-    // _funcName
-    //
-    // removed LOG Function
     defer _Manager.Account.removeCache(accountID)
     if err := _MongoDB.C(COLLECTION_ACCOUNTS).UpdateId(
         accountID,
@@ -734,9 +643,6 @@ func (am *AccountManager) SetAdmin(accountID string, b bool) {
 
 // SetPhone set the phone number of accountID with new 'phone' number
 func (am *AccountManager) SetPhone(accountID, phone string) bool {
-    // _funcName
-    //
-    // removed LOG Function
     defer _Manager.Account.removeCache(accountID)
     if err := _MongoDB.C(COLLECTION_ACCOUNTS).UpdateId(
         accountID,
@@ -751,9 +657,6 @@ func (am *AccountManager) SetPhone(accountID, phone string) bool {
 // SetLimit updates account limits
 // 	Available keys: grand_places
 func (am *AccountManager) SetLimit(accountID, limitKey string, n int) bool {
-    // _funcName
-    //
-    // removed LOG Function
     defer _Manager.Account.removeCache(accountID)
     switch limitKey {
     case "grand_places":
@@ -770,10 +673,6 @@ func (am *AccountManager) SetLimit(accountID, limitKey string, n int) bool {
 // SetPrivacy updates the account's privacy properties
 // 	Available privacy keys: searchable | change_picture | change_profile
 func (am *AccountManager) SetPrivacy(accountID, privacyKey string, privacyValue interface{}) {
-    // _funcName
-    //
-    // removed LOG Function
-
     // Remove the old document from cache
     defer _Manager.Account.removeCache(accountID)
     ok := false
@@ -796,9 +695,6 @@ func (am *AccountManager) SetPrivacy(accountID, privacyKey string, privacyValue 
 
 // SetPicture set the picture structure as the profile picture of the user and his/her personal place
 func (am *AccountManager) SetPicture(accountID string, p Picture) {
-    // _funcName
-    //
-    // removed LOG Function
     defer _Manager.Account.removeCache(accountID)
     defer _Manager.Place.removeCache(accountID)
     if err := _MongoDB.C(COLLECTION_ACCOUNTS).UpdateId(
@@ -817,9 +713,6 @@ func (am *AccountManager) SetPicture(accountID string, p Picture) {
 
 // SetPlaceNotification set on/off notification of placeID for accountID
 func (am *AccountManager) SetPlaceNotification(accountID, placeID string, on bool) *AccountManager {
-    // _funcName
-    //
-    // removed LOG Function
     if p := _Manager.Place.GetByID(placeID, nil); p == nil {
         return am
     } else {
@@ -835,9 +728,6 @@ func (am *AccountManager) SetPlaceNotification(accountID, placeID string, on boo
 // SetPassword set the password for "accountID" if everything was going through with no problem it returns true
 // otherwise returns false
 func (am *AccountManager) SetPassword(accountID, newPass string) bool {
-    // _funcName
-    //
-    // removed LOG Function
     defer _Manager.Account.removeCache(accountID)
     if hashed_pass, err := bcrypt.GenerateFromPassword([]byte(newPass), bcrypt.DefaultCost); err != nil {
         log.Println("Model::AccountManager::SetPassword::Error 1::", err.Error())
@@ -972,10 +862,6 @@ func (am *AccountManager) UpdateLimits(accountID string, limits MI) bool {
 
 // UpdatePlaceConnection updates 'Account <---> Place' relations points by 'c'
 func (am *AccountManager) UpdatePlaceConnection(accountID string, placeIDs []string, c int) {
-    // _funcName
-    //
-    // removed LOG Function
-
     bulk := _MongoDB.C(COLLECTION_ACCOUNTS_PLACES).Bulk()
     bulk.Unordered()
     for _, pid := range placeIDs {
@@ -996,10 +882,6 @@ func (am *AccountManager) UpdatePlaceConnection(accountID string, placeIDs []str
 
 // UpdateAccountConnection updates 'Account <---> Account' relations points by 'c'
 func (am *AccountManager) UpdateAccountConnection(accountID string, otherAccountIDs []string, c int) {
-    // _funcName
-    //
-    // removed LOG Function
-
     bulk := _MongoDB.C(COLLECTION_ACCOUNTS_ACCOUNTS).Bulk()
     bulk.Unordered()
     for _, aid := range otherAccountIDs {
@@ -1027,9 +909,6 @@ func (am *AccountManager) UpdateAccountConnection(accountID string, otherAccount
 
 // UpdateRecipientConnection updates 'Account <---> Recipients(Emails) relation points by 'c'
 func (am *AccountManager) UpdateRecipientConnection(accountID string, recipients []string, c int) {
-    // _funcName
-    //
-    // removed LOG Function
     for _, r := range recipients {
         if _, err := _MongoDB.C(COLLECTION_ACCOUNTS_RECIPIENTS).Upsert(
             bson.M{
@@ -1045,9 +924,6 @@ func (am *AccountManager) UpdateRecipientConnection(accountID string, recipients
 
 // UnTrustRecipient removes the email address from the trusted lists for the accountID
 func (am AccountManager) UnTrustRecipient(accountID string, recipients []string) bool {
-    // _funcName
-    //
-    // removed LOG Function
     if err := _MongoDB.C(COLLECTION_ACCOUNTS_TRUSTED).UpdateId(
         accountID,
         bson.M{"$pull": bson.M{"recipients": bson.M{"$in": recipients}}},
@@ -1060,9 +936,6 @@ func (am AccountManager) UnTrustRecipient(accountID string, recipients []string)
 
 // TrustRecipient adds the email address to the trusted lists for accountID
 func (am AccountManager) TrustRecipient(accountID string, recipients []string) bool {
-    // _funcName
-    //
-    // removed LOG Function
     if _, err := _MongoDB.C(COLLECTION_ACCOUNTS_TRUSTED).UpsertId(
         accountID,
         bson.M{
@@ -1077,9 +950,6 @@ func (am AccountManager) TrustRecipient(accountID string, recipients []string) b
 
 // IsRecipientTrusted returns TRUE is recipient or its domain is trusted, otherwise returns FALSE
 func (am AccountManager) IsRecipientTrusted(accountID string, recipient string) bool {
-    // _funcName
-    //
-    // removed LOG Function
     in := []string{recipient}
     emailParts := strings.SplitAfter(recipient, "@")
     if len(emailParts) == 2 {
@@ -1100,9 +970,6 @@ func (am AccountManager) IsRecipientTrusted(accountID string, recipient string) 
 
 // UpdateEmail sets the user's email SMTP settings for out going emails
 func (am *AccountManager) UpdateEmail(accountID string, email AccountMail) bool {
-    // _funcName
-    //
-    // removed LOG Function
     defer _Manager.Account.removeCache(accountID)
     email.OutgoingSMTPPass = Encrypt(EMAIL_ENCRYPT_KEY, email.OutgoingSMTPPass)
     if err := _MongoDB.C(COLLECTION_ACCOUNTS).UpdateId(

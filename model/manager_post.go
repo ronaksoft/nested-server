@@ -1272,7 +1272,7 @@ func (pm *PostManager) Remove(accountID string, postID bson.ObjectId, placeID st
         return false
     }
     if !post.IsInPlace(placeID) {
-        _Log.Error(_funcName, "Incorrect Call to PostManager::Remove")
+        _Log.Warn("Incorrect Call to PostManager::Remove")
         return false
     }
 

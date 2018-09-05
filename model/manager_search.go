@@ -116,7 +116,6 @@ func (sm *SearchManager) PlacesForCompose(keyword, accountID string, pg Paginati
         {"$limit": limit},
     }
     Q := db.C(COLLECTION_ACCOUNTS_PLACES).Pipe(q)
-    _Log.ExplainPipe(_funcName, Q)
     iter := Q.Iter()
     defer iter.Close()
     fetchedDoc := struct {
@@ -338,7 +337,6 @@ func (sm *SearchManager) AccountsForAddToGrandPlace(inviterID, placeID string, k
         {"$limit": limit},
     }
     Q := db.C(COLLECTION_ACCOUNTS_ACCOUNTS).Pipe(q)
-    _Log.ExplainPipe(_funcName, Q)
     iter := Q.Iter()
     defer iter.Close()
     fetchedDoc := struct {

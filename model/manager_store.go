@@ -3,6 +3,7 @@ package nested
 import (
     "github.com/globalsign/mgo"
     "github.com/globalsign/mgo/bson"
+    "fmt"
     "io"
     "time"
 )
@@ -138,7 +139,7 @@ func (fm *StoreManager) Save(r io.Reader, info StoredFileInfo) *StoredFileInfo {
         gFile.Abort()
         return nil
     } else if 0 == n {
-        _Log.Error(_funcName, "save empty file", info.ID)
+        _Log.Warn( fmt.Sprintf("save empty file %s", info.ID))
         gFile.Abort()
         return nil
     } else {
