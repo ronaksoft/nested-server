@@ -111,10 +111,6 @@ func GenerateFileInfo(filename, uploader string, fileType string, thumbnails Thu
 
 // Save inserts file into database
 func (fm *StoreManager) Save(r io.Reader, info StoredFileInfo) *StoredFileInfo {
-    // _funcName
-
-    // removed LOG Function
-
     dbSession := _MongoSession.Copy()
     store := dbSession.DB(STORE_NAME).GridFS("fs")
     defer dbSession.Close()
@@ -153,10 +149,6 @@ func (fm *StoreManager) Save(r io.Reader, info StoredFileInfo) *StoredFileInfo {
 
 // SetThumbnails sets a file's thumbnails map in file info
 func (fm *StoreManager) SetThumbnails(uniID UniversalID, thumbnails Thumbnails) error {
-    // _funcName
-
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     store := dbSession.DB(STORE_NAME).GridFS("fs")
     defer dbSession.Close()
@@ -170,10 +162,6 @@ func (fm *StoreManager) SetThumbnails(uniID UniversalID, thumbnails Thumbnails) 
 
 // SetMeta sets a file's meta object in file info
 func (fm *StoreManager) SetMeta(uniID UniversalID, meta interface{}) error {
-    // _funcName
-
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     store := dbSession.DB(STORE_NAME).GridFS("fs")
     defer dbSession.Close()
@@ -187,10 +175,6 @@ func (fm *StoreManager) SetMeta(uniID UniversalID, meta interface{}) error {
 
 // Exists checks if file exists
 func (fm *StoreManager) Exists(uniID UniversalID) bool {
-    // _funcName
-
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     store := dbSession.DB(STORE_NAME).GridFS("fs")
     defer dbSession.Close()
