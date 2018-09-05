@@ -331,7 +331,7 @@ func CleanupTempFiles() {
 	}
 }
 
-
+// Fix file status of task attached files
 func FixReferedTmpFiles() {
 	log.Println("--> Routine:: FixReferedTmpFiles")
 	defer log.Println("<-- Routine:: FixReferedTmpFiles")
