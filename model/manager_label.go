@@ -70,9 +70,9 @@ func NewLabelManager() *LabelManager {
 //	AddMembers adds memberIDs to the collaborators of the labelID. The accounts who are in members list
 //	of a label have the right access to add or remove the label of posts.
 func (lm *LabelManager) AddMembers(labelID string, memberIDs []string) bool {
-    _funcName := "LabelManager::AddMembers"
-    _Log.FunctionStarted(_funcName, labelID, memberIDs)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -86,7 +86,7 @@ func (lm *LabelManager) AddMembers(labelID string, memberIDs []string) bool {
             "$inc":      bson.M{"counters.members": len(memberIDs)},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error(), 1)
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -103,7 +103,7 @@ func (lm *LabelManager) AddMembers(labelID string, memberIDs []string) bool {
         )
     }
     if _, err := bulk.Run(); err != nil {
-        _Log.Error(_funcName, err.Error(), 2)
+        _Log.Warn(err.Error())
         return false
     }
     return true
@@ -112,9 +112,9 @@ func (lm *LabelManager) AddMembers(labelID string, memberIDs []string) bool {
 //	CreatePrivate creates a new private label object in LABELS collection. Private labels can only be assigned
 //	or removed by their members (collaborators) but labels are visible to everyone who access the labeled posts.
 func (lm *LabelManager) CreatePrivate(id, title, code, creatorID string) bool {
-    _funcName := "LabelManager::CreatePrivate"
-    _Log.FunctionStarted(_funcName, id, title, code, creatorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -133,7 +133,7 @@ func (lm *LabelManager) CreatePrivate(id, title, code, creatorID string) bool {
         Public:     false,
     }
     if err := db.C(COLLECTION_LABELS).Insert(label); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
@@ -141,9 +141,9 @@ func (lm *LabelManager) CreatePrivate(id, title, code, creatorID string) bool {
 
 //	CreatePublic creates a new public label object in LABELS collection. Public labels can be used by all the users.
 func (lm *LabelManager) CreatePublic(id, title, code, creatorID string) bool {
-    _funcName := "LabelManager::CreatePublic"
-    _Log.FunctionStarted(_funcName, id, title, code, creatorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -159,7 +159,7 @@ func (lm *LabelManager) CreatePublic(id, title, code, creatorID string) bool {
         Public:     true,
     }
     if err := db.C(COLLECTION_LABELS).Insert(label); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -175,7 +175,7 @@ func (lm *LabelManager) CreatePublic(id, title, code, creatorID string) bool {
             "$inc":      bson.M{"qty": 1},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
 
     return true
@@ -183,9 +183,9 @@ func (lm *LabelManager) CreatePublic(id, title, code, creatorID string) bool {
 
 // CreateRequest creates a request object to be accepted/rejected by one of label managers
 func (lm *LabelManager) CreateRequest(requesterID, labelID, title, colourCode string) bool {
-    _funcName := "LabelManager::CreateRequest"
-    _Log.FunctionStarted(_funcName, requesterID, labelID, title, colourCode)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -203,7 +203,7 @@ func (lm *LabelManager) CreateRequest(requesterID, labelID, title, colourCode st
         Status:      LABEL_REQUEST_STATUS_PENDING,
     }
     if err := db.C(COLLECTION_LABELS_REQUESTS).Insert(labelRequest); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
@@ -211,9 +211,9 @@ func (lm *LabelManager) CreateRequest(requesterID, labelID, title, colourCode st
 
 // GetByID returns a Label object identified by 'id'
 func (lm *LabelManager) GetByID(id string) *Label {
-    _funcName := "LabelManager::GetByID"
-    _Log.FunctionStarted(_funcName, id)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -221,7 +221,7 @@ func (lm *LabelManager) GetByID(id string) *Label {
 
     label := new(Label)
     if err := db.C(COLLECTION_LABELS).FindId(id).One(label); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     return label
@@ -229,9 +229,9 @@ func (lm *LabelManager) GetByID(id string) *Label {
 
 // GetByIDs returns an array of Labels identified by []ids
 func (lm *LabelManager) GetByIDs(ids []string) []Label {
-    _funcName := "LabelManager::GetByIDs"
-    _Log.FunctionStarted(_funcName, ids)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -239,7 +239,7 @@ func (lm *LabelManager) GetByIDs(ids []string) []Label {
 
     var labels []Label
     if err := db.C(COLLECTION_LABELS).Find(bson.M{"_id": bson.M{"$in": ids}}).All(&labels); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return []Label{}
     }
     return labels
@@ -247,9 +247,9 @@ func (lm *LabelManager) GetByIDs(ids []string) []Label {
 
 // GetByTitles returns an array of labels identified by title
 func (lm *LabelManager) GetByTitles(titles []string) []Label {
-    _funcName := "LabelManager::GetByTitles"
-    _Log.FunctionStarted(_funcName, titles)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -257,7 +257,7 @@ func (lm *LabelManager) GetByTitles(titles []string) []Label {
 
     var labels []Label
     if err := db.C(COLLECTION_LABELS).Find(bson.M{"title": bson.M{"$in": titles}}).All(&labels); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return []Label{}
     }
     return labels
@@ -265,9 +265,9 @@ func (lm *LabelManager) GetByTitles(titles []string) []Label {
 
 // GetRequestByID returns the request object if request exists or return nil
 func (lm *LabelManager) GetRequestByID(requestID bson.ObjectId) *LabelRequest {
-    _funcName := "LabelManager::GetRequestByID"
-    _Log.FunctionStarted(_funcName, requestID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -275,7 +275,7 @@ func (lm *LabelManager) GetRequestByID(requestID bson.ObjectId) *LabelRequest {
 
     labelRequest := new(LabelRequest)
     if err := db.C(COLLECTION_LABELS_REQUESTS).FindId(requestID).One(labelRequest); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     return labelRequest
@@ -284,9 +284,9 @@ func (lm *LabelManager) GetRequestByID(requestID bson.ObjectId) *LabelRequest {
 // GetRequests returns an array of LabelRequests filtered by status
 // Pagination Supported (skip, limit)
 func (lm *LabelManager) GetRequests(status string, pg Pagination) []LabelRequest {
-    _funcName := "LabelManager::GetRequests"
-    _Log.FunctionStarted(_funcName, status)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -296,7 +296,7 @@ func (lm *LabelManager) GetRequests(status string, pg Pagination) []LabelRequest
     if err := db.C(COLLECTION_LABELS_REQUESTS).Find(
         bson.M{"status": status},
     ).Sort("-timestamp").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&labelRequests); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return labelRequests
 }
@@ -304,9 +304,9 @@ func (lm *LabelManager) GetRequests(status string, pg Pagination) []LabelRequest
 // GetRequestsByAccountID returns an array of LabelRequests sent by accountID and their status
 // is still 'pending'
 func (lm *LabelManager) GetRequestsByAccountID(accountID string, pg Pagination) []LabelRequest {
-    _funcName := "LabelManager::GetRequestsByAccountID"
-    _Log.FunctionStarted(_funcName, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -319,7 +319,7 @@ func (lm *LabelManager) GetRequestsByAccountID(accountID string, pg Pagination) 
             "requester_id": accountID,
         },
     ).Sort("-timestamp").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&labelRequests); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return labelRequests
 }
@@ -329,9 +329,9 @@ func (lm *LabelManager) GetRequestsByAccountID(accountID string, pg Pagination) 
 //	2. tasks
 //	3. members
 func (lm *LabelManager) IncrementCounter(labelID string, counterName string, value int) bool {
-    _funcName := "LabelManager::IncrementCounter"
-    _Log.FunctionStarted(_funcName, labelID, counterName, value)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -343,7 +343,7 @@ func (lm *LabelManager) IncrementCounter(labelID string, counterName string, val
             "$inc": bson.M{fmt.Sprintf("counters.%s", counterName): value},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error(), 1)
+        _Log.Warn(err.Error())
         return false
     }
     return true
@@ -351,9 +351,9 @@ func (lm *LabelManager) IncrementCounter(labelID string, counterName string, val
 
 // Remove removes the label from the POSTS.LABELS collection
 func (lm *LabelManager) Remove(labelID string) bool {
-    _funcName := "LabelManager::Remove"
-    _Log.FunctionStarted(_funcName, labelID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -381,7 +381,7 @@ func (lm *LabelManager) Remove(labelID string) bool {
             "$inc":  bson.M{"qty": -1},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
@@ -389,9 +389,9 @@ func (lm *LabelManager) Remove(labelID string) bool {
 
 // RemoveMember removes memberID from the collaborators list of the labelID
 func (lm *LabelManager) RemoveMember(labelID, memberID string) bool {
-    _funcName := "LabelManager::RemoveMember"
-    _Log.FunctionStarted(_funcName, labelID, memberID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -404,7 +404,7 @@ func (lm *LabelManager) RemoveMember(labelID, memberID string) bool {
             "$inc":  bson.M{"counters.members": -1},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     if err := db.C(COLLECTION_ACCOUNTS_LABELS).Update(
@@ -414,16 +414,16 @@ func (lm *LabelManager) RemoveMember(labelID, memberID string) bool {
             "$inc":  bson.M{"qty": -1},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return true
 }
 
 // SanitizeLabelCode if input code is not a valid code then it returns the default colour code
 func (lm *LabelManager) SanitizeLabelCode(code string) string {
-    _funcName := "LabelManager::SanitizeLabelCode"
-    _Log.FunctionStarted(_funcName, code)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     switch code {
     case LABEL_COLOUR_CODE_A, LABEL_COLOUR_CODE_B, LABEL_COLOUR_CODE_C,
@@ -437,9 +437,9 @@ func (lm *LabelManager) SanitizeLabelCode(code string) string {
 
 // TitleExists check if title is already used or not
 func (lm *LabelManager) TitleExists(title string) bool {
-    _funcName := "LabelManager::TitleExists"
-    _Log.FunctionStarted(_funcName, title)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -454,9 +454,9 @@ func (lm *LabelManager) TitleExists(title string) bool {
 
 // UpdateRequestStatus updates the status of the request
 func (lm *LabelManager) UpdateRequestStatus(updaterAccountID string, requestID bson.ObjectId, status string) bool {
-    _funcName := "LabelManager::UpdateRequestStatus"
-    _Log.FunctionStarted(_funcName, updaterAccountID, requestID.Hex(), status)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -470,7 +470,7 @@ func (lm *LabelManager) UpdateRequestStatus(updaterAccountID string, requestID b
             "responder_id": updaterAccountID,
         }},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
@@ -479,9 +479,9 @@ func (lm *LabelManager) UpdateRequestStatus(updaterAccountID string, requestID b
 // Update updates labelID by values in LabelUpdateRequest
 // labelID must exists and if colourCode and title are not empty strings then they will be applied
 func (lm *LabelManager) Update(labelID, colourCode, title string) bool {
-    _funcName := "LabelManager::Update"
-    _Log.FunctionStarted(_funcName, labelID, colourCode, title)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -496,7 +496,7 @@ func (lm *LabelManager) Update(labelID, colourCode, title string) bool {
         q["title"] = title
     }
     if err := db.C(COLLECTION_LABELS).UpdateId(labelID, bson.M{"$set": q}); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true

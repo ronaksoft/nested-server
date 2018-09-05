@@ -38,9 +38,9 @@ func NewTaskActivityManager() *TaskActivityManager {
     return new(TaskActivityManager)
 }
 func (tm *TaskActivityManager) Remove(activityID bson.ObjectId) bool {
-    _funcName := "TaskActivityManager::Remove"
-    _Log.FunctionStarted(_funcName, activityID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -50,15 +50,15 @@ func (tm *TaskActivityManager) Remove(activityID bson.ObjectId) bool {
         activityID,
         bson.M{"$set": bson.M{"_removed": true}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
 }
 func (tm *TaskActivityManager) GetActivityByID(activityID bson.ObjectId) *TaskActivity {
-    _funcName := "TaskActivityManager::GetActivityByID"
-    _Log.FunctionStarted(_funcName, activityID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -66,15 +66,15 @@ func (tm *TaskActivityManager) GetActivityByID(activityID bson.ObjectId) *TaskAc
 
     taskActivity := new(TaskActivity)
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).FindId(activityID).One(taskActivity); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     return taskActivity
 }
 func (tm *TaskActivityManager) GetActivitiesByIDs(activityIDs []bson.ObjectId) []TaskActivity {
-    _funcName := "TaskActivityManager::GetActivitiesByIDs"
-    _Log.FunctionStarted(_funcName)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -84,15 +84,15 @@ func (tm *TaskActivityManager) GetActivitiesByIDs(activityIDs []bson.ObjectId) [
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).Find(
         bson.M{"_id": bson.M{"$in": activityIDs}},
     ).All(&taskActivities); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     return taskActivities
 }
 func (tm *TaskActivityManager) GetActivitiesByTaskID(taskID bson.ObjectId, pg Pagination, filter []TaskAction) []TaskActivity {
-    _funcName := "TaskActivityManager::GetActivitiesByTaskID"
-    _Log.FunctionStarted(_funcName, taskID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -116,19 +116,19 @@ func (tm *TaskActivityManager) GetActivitiesByTaskID(taskID bson.ObjectId, pg Pa
     }
 
     Q := db.C(COLLECTION_TASKS_ACTIVITIES).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
-    _Log.ExplainQuery(_funcName, Q)
+    // Log Explain Query
 
     if err := Q.All(&taskActivities); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return []TaskActivity{}
     }
     return taskActivities
 }
 
 func (tm *TaskActivityManager) Created(taskID bson.ObjectId, actorID string) {
-    _funcName := "TaskActivityManager::Created"
-    _Log.FunctionStarted(_funcName, taskID.Hex(), actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -142,14 +142,14 @@ func (tm *TaskActivityManager) Created(taskID bson.ObjectId, actorID string) {
         ActorID:   actorID,
     }
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error(), taskID, actorID)
+        _Log.Warn(err.Error())
     }
     return
 }
 func (tm *TaskActivityManager) WatcherAdded(taskID bson.ObjectId, actorID string, watcherIDs []string) {
-    _funcName := "TaskActivityManager::WatcherAdded"
-    _Log.FunctionStarted(_funcName, taskID.Hex(), actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -164,14 +164,14 @@ func (tm *TaskActivityManager) WatcherAdded(taskID bson.ObjectId, actorID string
         WatcherIDs: watcherIDs,
     }
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error(), taskID, actorID, watcherIDs)
+        _Log.Warn(err.Error())
     }
     return
 }
 func (tm *TaskActivityManager) WatcherRemoved(taskID bson.ObjectId, actorID string, watcherIDs []string) {
-    _funcName := "TaskActivityManager::WatcherRemoved"
-    _Log.FunctionStarted(_funcName, taskID.Hex(), actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -186,14 +186,14 @@ func (tm *TaskActivityManager) WatcherRemoved(taskID bson.ObjectId, actorID stri
         WatcherIDs: watcherIDs,
     }
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error(), taskID, actorID, watcherIDs)
+        _Log.Warn(err.Error())
     }
     return
 }
 func (tm *TaskActivityManager) EditorAdded(taskID bson.ObjectId, actorID string, editorIDs []string) {
-    _funcName := "TaskActivityManager::EditorAdded"
-    _Log.FunctionStarted(_funcName, taskID.Hex(), actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -208,14 +208,14 @@ func (tm *TaskActivityManager) EditorAdded(taskID bson.ObjectId, actorID string,
         EditorIDs: editorIDs,
     }
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error(), taskID, actorID, editorIDs)
+        _Log.Warn(err.Error())
     }
     return
 }
 func (tm *TaskActivityManager) EditorRemoved(taskID bson.ObjectId, actorID string, editorIDs []string) {
-    _funcName := "TaskActivityManager::EditorRemoved"
-    _Log.FunctionStarted(_funcName, taskID.Hex(), actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -230,14 +230,14 @@ func (tm *TaskActivityManager) EditorRemoved(taskID bson.ObjectId, actorID strin
         EditorIDs: editorIDs,
     }
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error(), taskID, actorID, editorIDs)
+        _Log.Warn(err.Error())
     }
     return
 }
 func (tm *TaskActivityManager) AttachmentAdded(taskID bson.ObjectId, actorID string, attachmentIDs []UniversalID) *TaskActivity {
-    _funcName := "TaskActivityManager::AttachmentAdded"
-    _Log.FunctionStarted(_funcName, taskID.Hex(), actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -252,15 +252,15 @@ func (tm *TaskActivityManager) AttachmentAdded(taskID bson.ObjectId, actorID str
         AttachmentIDs: attachmentIDs,
     }
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error(), taskID, actorID, attachmentIDs)
+        _Log.Warn(err.Error())
         return nil
     }
     return &v
 }
 func (tm *TaskActivityManager) AttachmentRemoved(taskID bson.ObjectId, actorID string, attachmentIDs []UniversalID) {
-    _funcName := "TaskActivityManager::AttachmentRemoved"
-    _Log.FunctionStarted(_funcName, taskID.Hex(), actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -275,14 +275,14 @@ func (tm *TaskActivityManager) AttachmentRemoved(taskID bson.ObjectId, actorID s
         AttachmentIDs: attachmentIDs,
     }
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error(), taskID, actorID, attachmentIDs)
+        _Log.Warn(err.Error())
     }
     return
 }
 func (tm *TaskActivityManager) TaskTitleChanged(taskID bson.ObjectId, actorID, title string) {
-    _funcName := "TaskActivityManager::TaskTitleChanged"
-    _Log.FunctionStarted(_funcName, taskID.Hex(), actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -297,14 +297,14 @@ func (tm *TaskActivityManager) TaskTitleChanged(taskID bson.ObjectId, actorID, t
         Title:     title,
     }
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error(), taskID, actorID, title)
+        _Log.Warn(err.Error())
     }
     return
 }
 func (tm *TaskActivityManager) TaskDescriptionChanged(taskID bson.ObjectId, actorID, desc string) {
-    _funcName := "TaskActivityManager::TaskDescriptionChanged"
-    _Log.FunctionStarted(_funcName, taskID.Hex(), actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -319,14 +319,14 @@ func (tm *TaskActivityManager) TaskDescriptionChanged(taskID bson.ObjectId, acto
         Title:     desc,
     }
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error(), taskID, actorID, desc)
+        _Log.Warn(err.Error())
     }
     return
 }
 func (tm *TaskActivityManager) CandidateAdded(taskID bson.ObjectId, actorID string, candidateIDs []string) {
-    _funcName := "TaskActivityManager::CandidateAdded"
-    _Log.FunctionStarted(_funcName, taskID.Hex(), actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -341,14 +341,14 @@ func (tm *TaskActivityManager) CandidateAdded(taskID bson.ObjectId, actorID stri
         CandidateIDs: candidateIDs,
     }
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error(), taskID, actorID, candidateIDs)
+        _Log.Warn(err.Error())
     }
     return
 }
 func (tm *TaskActivityManager) CandidateRemoved(taskID bson.ObjectId, actorID string, candidateIDs []string) {
-    _funcName := "TaskActivityManager::CandidateRemoved"
-    _Log.FunctionStarted(_funcName, taskID.Hex(), actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -363,14 +363,14 @@ func (tm *TaskActivityManager) CandidateRemoved(taskID bson.ObjectId, actorID st
         CandidateIDs: candidateIDs,
     }
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error(), taskID, actorID, candidateIDs)
+        _Log.Warn(err.Error())
     }
     return
 }
 func (tm *TaskActivityManager) StatusChanged(taskID bson.ObjectId, actorID string, newStatus TaskStatus) {
-    _funcName := "TaskActivityManager::StatusChanged"
-    _Log.FunctionStarted(_funcName, taskID.Hex(), actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -385,14 +385,14 @@ func (tm *TaskActivityManager) StatusChanged(taskID bson.ObjectId, actorID strin
         Status:    newStatus,
     }
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error(), taskID, actorID, newStatus)
+        _Log.Warn(err.Error())
     }
     return
 }
 func (tm *TaskActivityManager) ToDoAdded(taskID bson.ObjectId, actorID, todoText string) {
-    _funcName := "TaskActivityManager::ToDoAdded"
-    _Log.FunctionStarted(_funcName, taskID.Hex(), actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -407,14 +407,14 @@ func (tm *TaskActivityManager) ToDoAdded(taskID bson.ObjectId, actorID, todoText
         ToDoText:  todoText,
     }
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error(), taskID, actorID, todoText)
+        _Log.Warn(err.Error())
     }
     return
 }
 func (tm *TaskActivityManager) ToDoRemoved(taskID bson.ObjectId, actorID, todoText string) {
-    _funcName := "TaskActivityManager::ToDoRemoved"
-    _Log.FunctionStarted(_funcName, taskID.Hex(), actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -429,14 +429,14 @@ func (tm *TaskActivityManager) ToDoRemoved(taskID bson.ObjectId, actorID, todoTe
         ToDoText:  todoText,
     }
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error(), taskID, actorID, todoText)
+        _Log.Warn(err.Error())
     }
     return
 }
 func (tm *TaskActivityManager) ToDoChanged(taskID bson.ObjectId, actorID, todoText string) {
-    _funcName := "TaskActivityManager::ToDoChanged"
-    _Log.FunctionStarted(_funcName, taskID.Hex(), actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -451,14 +451,14 @@ func (tm *TaskActivityManager) ToDoChanged(taskID bson.ObjectId, actorID, todoTe
         ToDoText:  todoText,
     }
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error(), taskID, actorID, todoText)
+        _Log.Warn(err.Error())
     }
     return
 }
 func (tm *TaskActivityManager) ToDoDone(taskID bson.ObjectId, actorID, todoText string) {
-    _funcName := "TaskActivityManager::ToDoDone"
-    _Log.FunctionStarted(_funcName, taskID.Hex(), actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -473,14 +473,14 @@ func (tm *TaskActivityManager) ToDoDone(taskID bson.ObjectId, actorID, todoText 
         ToDoText:  todoText,
     }
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error(), taskID, actorID, todoText)
+        _Log.Warn(err.Error())
     }
     return
 }
 func (tm *TaskActivityManager) ToDoUndone(taskID bson.ObjectId, actorID, todoText string) {
-    _funcName := "TaskActivityManager::ToDoUndone"
-    _Log.FunctionStarted(_funcName, taskID.Hex(), actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -495,14 +495,14 @@ func (tm *TaskActivityManager) ToDoUndone(taskID bson.ObjectId, actorID, todoTex
         ToDoText:  todoText,
     }
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error(), taskID, actorID, todoText)
+        _Log.Warn(err.Error())
     }
     return
 }
 func (tm *TaskActivityManager) AssigneeChanged(taskID bson.ObjectId, actorID, assigneeID string) {
-    _funcName := "TaskActivityManager::AssigneeChanged"
-    _Log.FunctionStarted(_funcName, taskID.Hex(), actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -517,14 +517,14 @@ func (tm *TaskActivityManager) AssigneeChanged(taskID bson.ObjectId, actorID, as
         AssigneeID: assigneeID,
     }
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error(), taskID, actorID, assigneeID)
+        _Log.Warn(err.Error())
     }
     return
 }
 func (tm *TaskActivityManager) Comment(taskID bson.ObjectId, actorID string, commentText string) *TaskActivity {
-    _funcName := "TaskActivityManager::Comment"
-    _Log.FunctionStarted(_funcName, taskID.Hex(), actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -540,7 +540,7 @@ func (tm *TaskActivityManager) Comment(taskID bson.ObjectId, actorID string, com
     }
 
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error(), taskID, actorID, commentText)
+        _Log.Warn(err.Error())
         return nil
     }
 
@@ -550,14 +550,14 @@ func (tm *TaskActivityManager) Comment(taskID bson.ObjectId, actorID string, com
             "$inc": bson.M{"counters.comments": 1},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error(), taskID)
+        _Log.Warn(err.Error())
     }
     return &v
 }
 func (tm *TaskActivityManager) LabelAdded(taskID bson.ObjectId, actorID string, labelIDs []string) *TaskActivity {
-    _funcName := "TaskActivityManager::LabelAdded"
-    _Log.FunctionStarted(_funcName, taskID.Hex(), actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -572,15 +572,15 @@ func (tm *TaskActivityManager) LabelAdded(taskID bson.ObjectId, actorID string, 
         LabelIDs:  labelIDs,
     }
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error(), taskID, actorID, labelIDs)
+        _Log.Warn(err.Error())
         return nil
     }
     return &v
 }
 func (tm *TaskActivityManager) LabelRemoved(taskID bson.ObjectId, actorID string, labelIDs []string) {
-    _funcName := "TaskActivityManager::LabelRemoved"
-    _Log.FunctionStarted(_funcName, taskID.Hex(), actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -595,14 +595,14 @@ func (tm *TaskActivityManager) LabelRemoved(taskID bson.ObjectId, actorID string
         LabelIDs:  labelIDs,
     }
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error(), taskID, actorID, labelIDs)
+        _Log.Warn(err.Error())
     }
     return
 }
 func (tm *TaskActivityManager) DueDateUpdated(taskID bson.ObjectId, actorID string, dueDate uint64, dueDateHasClock bool) {
-    _funcName := "TaskActivityManager::DueDateUpdated"
-    _Log.FunctionStarted(_funcName, taskID.Hex(), actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -618,14 +618,14 @@ func (tm *TaskActivityManager) DueDateUpdated(taskID bson.ObjectId, actorID stri
         DueDateHasClock: dueDateHasClock,
     }
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error(), taskID, actorID, dueDate)
+        _Log.Warn(err.Error())
     }
     return
 }
 func (tm *TaskActivityManager) DueDateRemoved(taskID bson.ObjectId, actorID string) {
-    _funcName := "TaskActivityManager::DueDateUpdated"
-    _Log.FunctionStarted(_funcName, taskID.Hex(), actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -639,7 +639,7 @@ func (tm *TaskActivityManager) DueDateRemoved(taskID bson.ObjectId, actorID stri
         ActorID:   actorID,
     }
     if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error(), taskID, actorID)
+        _Log.Warn(err.Error())
     }
     return
 }

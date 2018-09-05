@@ -38,9 +38,9 @@ func NewPostManager() *PostManager {
 }
 
 func (pm *PostManager) readFromCache(postID bson.ObjectId) *Post {
-    _funcName := "PostManager::readFromCache"
-    _Log.FunctionStarted(_funcName, postID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     post := new(Post)
     c := _Cache.Pool.Get()
@@ -48,7 +48,7 @@ func (pm *PostManager) readFromCache(postID bson.ObjectId) *Post {
     keyID := fmt.Sprintf("post:gob:%s", postID.Hex())
     if gobPost, err := redis.Bytes(c.Do("GET", keyID)); err != nil {
         if err := _MongoDB.C(COLLECTION_POSTS).FindId(postID).One(post); err != nil {
-            _Log.Error(_funcName, err.Error(), postID.Hex())
+            _Log.Warn(err.Error())
             return nil
         }
         gobPost := new(bytes.Buffer)
@@ -63,9 +63,9 @@ func (pm *PostManager) readFromCache(postID bson.ObjectId) *Post {
 }
 
 func (pm *PostManager) readCommentFromCache(commentID bson.ObjectId) *Comment {
-    _funcName := "PostManager::readCommentFromCache"
-    _Log.FunctionStarted(_funcName, commentID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     comment := new(Comment)
     c := _Cache.Pool.Get()
@@ -73,7 +73,7 @@ func (pm *PostManager) readCommentFromCache(commentID bson.ObjectId) *Comment {
     keyID := fmt.Sprintf("comment:gob:%s", commentID.Hex())
     if gobComment, err := redis.Bytes(c.Do("GET", keyID)); err != nil {
         if err := _MongoDB.C(COLLECTION_POSTS_COMMENTS).FindId(commentID).One(comment); err != nil {
-            _Log.Error(_funcName, err.Error(), commentID.Hex())
+            _Log.Warn(err.Error())
             return nil
         }
         gobComment := new(bytes.Buffer)
@@ -189,9 +189,9 @@ func (pm *PostManager) sanitizePreview(input io.Reader) *bytes.Buffer {
 
 // AddComment adds new comment to post identified by postID and returns the comment object.
 func (pm *PostManager) AddComment(postID bson.ObjectId, senderID string, body string, attachmentID UniversalID) *Comment {
-    _funcName := "PostManager::AddComment"
-    _Log.FunctionStarted(_funcName, postID.Hex(), senderID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Post.removeCache(postID)
 
     dbSession := _MongoSession.Clone()
@@ -220,7 +220,7 @@ func (pm *PostManager) AddComment(postID bson.ObjectId, senderID string, body st
 
     // Insert the new comment
     if err := db.C(COLLECTION_POSTS_COMMENTS).Insert(c); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
 
@@ -246,7 +246,7 @@ func (pm *PostManager) AddComment(postID bson.ObjectId, senderID string, body st
             },
         },
     }); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
 
@@ -282,9 +282,9 @@ func (pm *PostManager) AddComment(postID bson.ObjectId, senderID string, body st
 
 // AddPost creates a new post according with data provided by 'pcr'
 func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
-    _funcName := "PostManager::AddPost"
-    _Log.FunctionStarted(_funcName)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -378,7 +378,7 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 
 
     if err := db.C(COLLECTION_POSTS).Insert(post); err != nil {
-        _Log.Error(_funcName, err.Error(), post)
+        _Log.Warn(err.Error())
         return nil
     }
 
@@ -428,7 +428,7 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
             })
         }
         if r, err := bulk.Run(); err != nil {
-            _Log.Error(_funcName, err.Error(), r)
+            _Log.Warn(err.Error())
         }
 
         //// Clear the slice
@@ -477,9 +477,9 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 
 // Adds accountID to postID's watcher list of placeID
 func (pm *PostManager) AddAccountToWatcherList(postID bson.ObjectId, accountID string) bool {
-    _funcName := "PostManager::AddAccountToWatcherList"
-    _Log.FunctionStarted(_funcName, accountID, postID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -489,7 +489,7 @@ func (pm *PostManager) AddAccountToWatcherList(postID bson.ObjectId, accountID s
         bson.M{"_id": postID},
         bson.M{"$addToSet": bson.M{"accounts": accountID}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
@@ -497,9 +497,9 @@ func (pm *PostManager) AddAccountToWatcherList(postID bson.ObjectId, accountID s
 
 // AttachPlace adds a new place to the post, and changes the last_update of the post
 func (pm *PostManager) AttachPlace(postID bson.ObjectId, placeID, accountID string) bool {
-    _funcName := "PostManager::AttachPlace"
-    _Log.FunctionStarted(_funcName, postID.Hex(), placeID, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -522,7 +522,7 @@ func (pm *PostManager) AttachPlace(postID bson.ObjectId, placeID, accountID stri
             },
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error(), "POSTS UPDATE")
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -543,9 +543,9 @@ func (pm *PostManager) AttachPlace(postID bson.ObjectId, placeID, accountID stri
 
 // AddRelatedTask adds a task to post
 func (pm *PostManager) AddRelatedTask(postID, taskID bson.ObjectId) {
-    _funcName := "PostManager::AddRelatedTask"
-    _Log.FunctionStarted(_funcName, postID.Hex(), postID.Hex(), taskID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -556,22 +556,22 @@ func (pm *PostManager) AddRelatedTask(postID, taskID bson.ObjectId) {
         bson.M{"_id": postID},
         bson.M{"$addToSet": bson.M{"related_tasks": taskID}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error(), "POSTS update")
+        _Log.Warn(err.Error())
     }
     if err := db.C(COLLECTION_TASKS).Update(
         bson.M{"_id": taskID},
         bson.M{"$set": bson.M{"related_post": postID}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error(), "TASKS update")
+        _Log.Warn(err.Error())
     }
 
 }
 
 // RemoveRelatedTask removes the task from the post
 func (pm *PostManager) RemoveRelatedTask(postID, taskID bson.ObjectId) {
-    _funcName := "PostManager::RemoveRelatedTask"
-    _Log.FunctionStarted(_funcName, postID.Hex(), postID.Hex(), taskID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Post.removeCache(postID)
 
     dbSession := _MongoSession.Clone()
@@ -582,21 +582,21 @@ func (pm *PostManager) RemoveRelatedTask(postID, taskID bson.ObjectId) {
         bson.M{"_id": postID, "related_tasks": taskID},
         bson.M{"$pull": bson.M{"related_tasks": taskID}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error(), "POSTS update")
+        _Log.Warn(err.Error())
     }
     if err := db.C(COLLECTION_TASKS).Update(
         bson.M{"_id": taskID},
         bson.M{"$unset": bson.M{"related_post": postID}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error(), "TASKS update")
+        _Log.Warn(err.Error())
     }
 }
 
 // CommentHasAccess if accountID has READ ACCESS to the postID of the commentID it returns TRUE
 func (pm *PostManager) CommentHasAccess(commentID bson.ObjectId, accountID string) bool {
-    _funcName := "PostManager::CommentHasAccess"
-    _Log.FunctionStarted(_funcName, commentID.Hex(), accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     if comment := pm.GetCommentByID(commentID); comment != nil {
         if pm.HasAccess(comment.PostID, accountID) {
@@ -608,9 +608,9 @@ func (pm *PostManager) CommentHasAccess(commentID bson.ObjectId, accountID strin
 
 // Exists returns true if post exists and it is not deleted
 func (pm *PostManager) Exists(postID bson.ObjectId) bool {
-    _funcName := "PostManager::Exists"
-    _Log.FunctionStarted(_funcName, postID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -625,18 +625,18 @@ func (pm *PostManager) Exists(postID bson.ObjectId) bool {
 
 // GetPostByID returns Post by postID, if postID does not exists it returns nil
 func (pm *PostManager) GetPostByID(postID bson.ObjectId) *Post {
-    _funcName := "PostManager::GetPostByID"
-    _Log.FunctionStarted(_funcName, postID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     return _Manager.Post.readFromCache(postID)
 }
 
 // GetPostsByIDs returns an array of posts identified by postIDs, it returns an empty slice if nothing was found
 func (pm *PostManager) GetPostsByIDs(postIDs []bson.ObjectId) []Post {
-    _funcName := "PostManager::GetPostsByIDs"
-    _Log.FunctionStarted(_funcName)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     return _Manager.Post.readMultiFromCache(postIDs)
 }
 
@@ -646,9 +646,9 @@ func (pm *PostManager) GetPostsByIDs(postIDs []bson.ObjectId) []Post {
 //		POST_SORT_TIMESTAMP
 // this function is preferred to be called instead of GetPostsOfPlaces
 func (pm *PostManager) GetPostsByPlace(placeID, sortItem string, pg Pagination) []Post {
-    _funcName := "PostManager::GetPostsByPlace"
-    _Log.FunctionStarted(_funcName, placeID, sortItem)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -670,10 +670,10 @@ func (pm *PostManager) GetPostsByPlace(placeID, sortItem string, pg Pagination) 
     }
     q["places"] = placeID
     Q := db.C(COLLECTION_POSTS).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
-    _Log.ExplainQuery(_funcName, Q)
+    // Log Explain Query
 
     if err := Q.All(&posts); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return posts
 }
@@ -683,9 +683,9 @@ func (pm *PostManager) GetPostsByPlace(placeID, sortItem string, pg Pagination) 
 //		POST_SORT_LAST_UPDATE
 //		POST_SORT_TIMESTAMP
 func (pm *PostManager) GetPostsBySender(accountID, sortItem string, pg Pagination) []Post {
-    _funcName := "PostManager::GetPostsBySender"
-    _Log.FunctionStarted(_funcName, accountID, sortItem)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -710,7 +710,7 @@ func (pm *PostManager) GetPostsBySender(accountID, sortItem string, pg Paginatio
     }
     q["sender"] = accountID
     Q := db.C(COLLECTION_POSTS).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
-    _Log.ExplainQuery(_funcName, Q)
+    // Log Explain Query
     posts := make([]Post, 0, pg.GetLimit())
     Q.All(&posts)
     return posts
@@ -721,9 +721,9 @@ func (pm *PostManager) GetPostsBySender(accountID, sortItem string, pg Paginatio
 //		POST_SORT_LAST_UPDATE
 //		POST_SORT_TIMESTAMP
 func (pm *PostManager) GetPostsOfPlaces(places []string, sortItem string, pg Pagination) []Post {
-    _funcName := "PostManager::GetPostsOfPLaces"
-    _Log.FunctionStarted(_funcName, places, sortItem)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -746,7 +746,7 @@ func (pm *PostManager) GetPostsOfPlaces(places []string, sortItem string, pg Pag
     }
     q["places"] = bson.M{"$in": places}
     Q := db.C(COLLECTION_POSTS).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
-    _Log.ExplainQuery(_funcName, Q)
+    // Log Explain Query
 
     Q.All(&posts)
     return posts
@@ -754,9 +754,9 @@ func (pm *PostManager) GetPostsOfPlaces(places []string, sortItem string, pg Pag
 
 // GetPostWatchers returns an array of accountIDs who listen to post notifications
 func (pm *PostManager) GetPostWatchers(postID bson.ObjectId) []string {
-    _funcName := "PostManager::GetPostWatchers"
-    _Log.FunctionStarted(_funcName, postID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -767,7 +767,7 @@ func (pm *PostManager) GetPostWatchers(postID bson.ObjectId) []string {
         Accounts []string      `bson:"accounts"`
     }{}
     if err := db.C(COLLECTION_POSTS_WATCHERS).Find(bson.M{"_id": postID}).One(&watchers); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return []string{}
     }
     return watchers.Accounts
@@ -778,9 +778,9 @@ func (pm *PostManager) GetPostWatchers(postID bson.ObjectId) []string {
 // that accountID is member of.
 // return an empty slice if there is no unseen/unread post
 func (pm *PostManager) GetUnreadPostsByPlace(placeID, accountID string, subPlaces bool, pg Pagination) []Post {
-    _funcName := "PostManager::GetUnreadPostsByPlace"
-    _Log.FunctionStarted(_funcName, placeID, accountID, subPlaces)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -806,7 +806,7 @@ func (pm *PostManager) GetUnreadPostsByPlace(placeID, accountID string, subPlace
     }
 
     Q := db.C(COLLECTION_POSTS_READS).Find(mq).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
-    _Log.ExplainQuery(_funcName, Q)
+    // Log Explain Query
     iter := Q.Iter()
     defer iter.Close()
     readItem := M{}
@@ -821,9 +821,9 @@ func (pm *PostManager) GetUnreadPostsByPlace(placeID, accountID string, subPlace
 
 // GetAccountsWhoReadThis returns a list of members who have read this post
 func (pm *PostManager) GetAccountsWhoReadThis(postID bson.ObjectId, pg Pagination) []PostRead {
-    _funcName := "PostManager::GetAccountsWhoReadThis"
-    _Log.FunctionStarted(_funcName, postID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -831,18 +831,18 @@ func (pm *PostManager) GetAccountsWhoReadThis(postID bson.ObjectId, pg Paginatio
 
     pr := make([]PostRead, 0, pg.GetLimit())
     Q := db.C(COLLECTION_POSTS_READS_ACCOUNTS).Find(bson.M{"post_id": postID}).Skip(pg.GetSkip()).Limit(pg.GetLimit())
-    _Log.ExplainQuery(_funcName, Q)
+    // Log Explain Query
     if err := Q.All(&pr); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return pr
 }
 
 // GetCommentByID returns Comment by the given commentID and return nil if commentID does not exists
 func (pm *PostManager) GetCommentByID(commentID bson.ObjectId) *Comment {
-    _funcName := "PostManager::GetCommentByID"
-    _Log.FunctionStarted(_funcName, commentID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     comment := _Manager.Post.readCommentFromCache(commentID)
     if comment != nil {
@@ -855,9 +855,9 @@ func (pm *PostManager) GetCommentByID(commentID bson.ObjectId) *Comment {
 //	found then they will be ignored silently. Caller may compare the length of result with length of
 //	input to detect if any comment was missing
 func (pm *PostManager) GetCommentsByIDs(commentIDs []bson.ObjectId) []Comment {
-    _funcName := "PostManager::GetCommentsByIDs"
-    _Log.FunctionStarted(_funcName)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     comments := _Manager.Post.readMultiCommentsFromCache(commentIDs)
     return comments
@@ -866,9 +866,9 @@ func (pm *PostManager) GetCommentsByIDs(commentIDs []bson.ObjectId) []Comment {
 
 // GetCommentsByPostID returns an array of Comments of postID, if postID has no comments then it returns an empty slice.
 func (pm *PostManager) GetCommentsByPostID(postID bson.ObjectId, pg Pagination) []Comment {
-    _funcName := "PostManager::GetCommentsByPostID"
-    _Log.FunctionStarted(_funcName, postID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -887,7 +887,7 @@ func (pm *PostManager) GetCommentsByPostID(postID bson.ObjectId, pg Pagination) 
     }
 
     Q := db.C(COLLECTION_POSTS_COMMENTS).Find(q).Sort(sortItem).Skip(pg.GetSkip()).Limit(pg.GetLimit())
-    _Log.ExplainQuery(_funcName, Q)
+    // Log Explain Query
     res := make([]Comment, 0)
     Q.All(&res)
     return res
@@ -895,9 +895,9 @@ func (pm *PostManager) GetCommentsByPostID(postID bson.ObjectId, pg Pagination) 
 
 // GetPinnedPosts returns an array of Posts which are pinned by accountID
 func (pm *PostManager) GetPinnedPosts(accountID string, pg Pagination) []Post {
-    _funcName := "PostManager::GetPinnedPosts"
-    _Log.FunctionStarted(_funcName, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -915,7 +915,7 @@ func (pm *PostManager) GetPinnedPosts(accountID string, pg Pagination) []Post {
         q[sortItem] = bson.M{"$lt": pg.Before}
     }
     Q := db.C(COLLECTION_ACCOUNTS_POSTS).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
-    _Log.ExplainQuery(_funcName, Q)
+    // Log Explain Query
     iter := Q.Iter()
     item := M{}
     posts := make([]Post, 0, pg.GetLimit())
@@ -935,9 +935,9 @@ func (pm *PostManager) GetPinnedPosts(accountID string, pg Pagination) []Post {
 
 // HasBeenReadBy returns TRUE if postID has been seen/read by accountID
 func (pm *PostManager) HasBeenReadBy(postID bson.ObjectId, accountID string) bool {
-    _funcName := "PostManager::HasBeenReadBy"
-    _Log.FunctionStarted(_funcName, postID.Hex(), accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -949,7 +949,7 @@ func (pm *PostManager) HasBeenReadBy(postID bson.ObjectId, accountID string) boo
         "read":       false,
     }
     Q := db.C(COLLECTION_POSTS_READS).Find(q)
-    _Log.ExplainQuery(_funcName, Q)
+    // Log Explain Query
     if n, _ := Q.Count(); n > 0 {
         return false
     }
@@ -958,9 +958,9 @@ func (pm *PostManager) HasBeenReadBy(postID bson.ObjectId, accountID string) boo
 
 // HasBeenWatchedBy returns TRUE if postID has accountID in its watchers list
 func (pm *PostManager) HasBeenWatchedBy(postID bson.ObjectId, accountID string) bool {
-    _funcName := "PostManager::HasBeenWatchedBy"
-    _Log.FunctionStarted(_funcName, postID.Hex(), accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -971,7 +971,7 @@ func (pm *PostManager) HasBeenWatchedBy(postID bson.ObjectId, accountID string) 
         "accounts": accountID,
     }
     Q := db.C(COLLECTION_POSTS_WATCHERS).Find(q)
-    _Log.ExplainQuery(_funcName, Q)
+    // Log Explain Query
     if n, _ := Q.Count(); n > 0 {
         return true
     }
@@ -981,9 +981,9 @@ func (pm *PostManager) HasBeenWatchedBy(postID bson.ObjectId, accountID string) 
 // HasAccess checks if accountID has READ ACCESS to any of the postID places then it return TRUE otherwise
 // it return FALSE
 func (pm *PostManager) HasAccess(postID bson.ObjectId, accountID string) bool {
-    _funcName := "PostManager::HasAccess"
-    _Log.FunctionStarted(_funcName, postID.Hex(), accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     if post := pm.GetPostByID(postID); post != nil {
         for _, placeID := range post.PlaceIDs {
             if placeID == "*" {
@@ -1002,9 +1002,9 @@ func (pm *PostManager) HasAccess(postID bson.ObjectId, accountID string) bool {
 // it does not remove the time-line activity of the post, only hides the comments and
 // identifies accountID as the remover of the commentID
 func (pm *PostManager) HideComment(commentID bson.ObjectId, accountID string) bool {
-    _funcName := "PostManager::HidComment"
-    _Log.FunctionStarted(_funcName, commentID.Hex(), accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -1027,7 +1027,7 @@ func (pm *PostManager) HideComment(commentID bson.ObjectId, accountID string) bo
             },
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -1061,9 +1061,9 @@ func (pm *PostManager) HideComment(commentID bson.ObjectId, accountID string) bo
 
 // MarkAsRead marks the postID as seen/read by accountID
 func (pm *PostManager) MarkAsRead(postID bson.ObjectId, accountID string) bool {
-    _funcName := "PostManager::MarkAsRead"
-    _Log.FunctionStarted(_funcName, postID.Hex(), accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -1079,7 +1079,7 @@ func (pm *PostManager) MarkAsRead(postID bson.ObjectId, accountID string) bool {
             "read":       false,
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     } else {
         // Add the accountID to the list of readers if he/she is not already exists
@@ -1116,9 +1116,9 @@ func (pm *PostManager) MarkAsRead(postID bson.ObjectId, accountID string) bool {
 
 // MarsAsReadByPlace marks all the posts in the placeID as seen/read by accountID
 func (pm *PostManager) MarkAsReadByPlace(placeID, accountID string) bool {
-    _funcName := "PostManager::MarkAsReadByPlace"
-    _Log.FunctionStarted(_funcName, placeID, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -1146,9 +1146,9 @@ func (pm *PostManager) MarkAsReadByPlace(placeID, accountID string) bool {
 
 // Move moves post from one place to another place
 func (pm *PostManager) Move(postID bson.ObjectId, oldPlaceID, newPlaceID, accountID string) bool {
-    _funcName := "PostManager::Move"
-    _Log.FunctionStarted(_funcName, postID.Hex(), oldPlaceID, newPlaceID, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Post.removeCache(postID)
     defer _Manager.Place.removeCache(oldPlaceID)
     defer _Manager.Place.removeCache(newPlaceID)
@@ -1169,7 +1169,7 @@ func (pm *PostManager) Move(postID bson.ObjectId, oldPlaceID, newPlaceID, accoun
             },
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     if err := db.C(COLLECTION_POSTS).UpdateId(
@@ -1179,7 +1179,7 @@ func (pm *PostManager) Move(postID bson.ObjectId, oldPlaceID, newPlaceID, accoun
             "$addToSet": bson.M{"removed_places": oldPlaceID},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -1188,14 +1188,14 @@ func (pm *PostManager) Move(postID bson.ObjectId, oldPlaceID, newPlaceID, accoun
         bson.M{"_id": newPlaceID},
         bson.M{"$inc": bson.M{"counters.posts": 1}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     if err := db.C(COLLECTION_PLACES).Update(
         bson.M{"_id": oldPlaceID},
         bson.M{"$inc": bson.M{"counters.posts": -1}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -1231,9 +1231,9 @@ func (pm *PostManager) Move(postID bson.ObjectId, oldPlaceID, newPlaceID, accoun
 
 // BookmarkPost adds postID to the pinned posts list of the accountID
 func (pm *PostManager) BookmarkPost(accountID string, postID bson.ObjectId) {
-    _funcName := "PostManager::BookmarkPost"
-    _Log.FunctionStarted(_funcName, accountID, postID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -1246,7 +1246,7 @@ func (pm *PostManager) BookmarkPost(accountID string, postID bson.ObjectId) {
                 "pin_time": Timestamp(),
             }},
         ); err != nil {
-            _Log.Error(_funcName, err.Error())
+            _Log.Warn(err.Error())
         }
     }
 }
@@ -1254,9 +1254,9 @@ func (pm *PostManager) BookmarkPost(accountID string, postID bson.ObjectId) {
 // Removes removes the postID from the placeID.
 // if placeID is the last place that postID are in, then removes the comments of the postID too.
 func (pm *PostManager) Remove(accountID string, postID bson.ObjectId, placeID string) bool {
-    _funcName := "PostManager::Remove"
-    _Log.FunctionStarted(_funcName, postID.Hex(), placeID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Post.removeCache(postID)
     defer _Manager.Place.removeCache(placeID)
 
@@ -1287,7 +1287,7 @@ func (pm *PostManager) Remove(accountID string, postID bson.ObjectId, placeID st
                 "$set":      bson.M{"_removed": true},
             },
         ); err != nil {
-            _Log.Error(_funcName, err.Error())
+            _Log.Warn(err.Error())
         }
     } else {
         if err := db.C(COLLECTION_POSTS).Update(
@@ -1297,7 +1297,7 @@ func (pm *PostManager) Remove(accountID string, postID bson.ObjectId, placeID st
                 "$addToSet": bson.M{"removed_places": placeID},
             },
         ); err != nil {
-            _Log.Error(_funcName, err.Error())
+            _Log.Warn(err.Error())
         }
     }
 
@@ -1336,9 +1336,9 @@ func (pm *PostManager) Remove(accountID string, postID bson.ObjectId, placeID st
 // RemoveComment removes the commentID from its post.
 // also removes the time-line activity of the comment
 func (pm *PostManager) RemoveComment(accountID string, commentID bson.ObjectId) bool {
-    _funcName := "PostManager::RemoveComment"
-    _Log.FunctionStarted(_funcName, commentID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -1349,7 +1349,7 @@ func (pm *PostManager) RemoveComment(accountID string, commentID bson.ObjectId) 
     }
     c := new(Comment)
     if ci, err := db.C(COLLECTION_POSTS_COMMENTS).FindId(commentID).Apply(ch, c); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     } else {
         if ci.Updated == 0 {
@@ -1396,9 +1396,9 @@ func (pm *PostManager) RemoveComment(accountID string, commentID bson.ObjectId) 
 
 // RemoveAccountFromWatcherList removes accountID from postID's watchers list of the placeID
 func (pm *PostManager) RemoveAccountFromWatcherList(postID bson.ObjectId, accountID string) bool {
-    _funcName := "PostManager::RemoveAccountFromWatcherList"
-    _Log.FunctionStarted(_funcName, postID.Hex(), accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -1408,7 +1408,7 @@ func (pm *PostManager) RemoveAccountFromWatcherList(postID bson.ObjectId, accoun
         bson.M{"_id": postID},
         bson.M{"$pull": bson.M{"accounts": accountID}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
@@ -1416,9 +1416,9 @@ func (pm *PostManager) RemoveAccountFromWatcherList(postID bson.ObjectId, accoun
 
 // SetEmailMessageID set MessageID for the post, this function will be used by Gobryas service
 func (pm *PostManager) SetEmailMessageID(postID bson.ObjectId, messageID string) bool {
-    _funcName := "PostManager::SetEmailMessageID"
-    _Log.FunctionStarted(_funcName, postID.Hex(), messageID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -1430,16 +1430,16 @@ func (pm *PostManager) SetEmailMessageID(postID bson.ObjectId, messageID string)
             "$set": bson.M{"email_meta.message_id": messageID},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return true
 }
 
 // UnpinPost removes the postID from accountID's pinned posts list
 func (pm *PostManager) UnpinPost(accountID string, postID bson.ObjectId) {
-    _funcName := "PostManager::UnpinPost"
-    _Log.FunctionStarted(_funcName, accountID, postID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -1449,15 +1449,15 @@ func (pm *PostManager) UnpinPost(accountID string, postID bson.ObjectId) {
         "post_id":    postID,
         "account_id": accountID,
     }); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
 }
 
 // IsPinned returns true if postID has been pinned by accountID
 func (pm *PostManager) IsPinned(accountID string, postID bson.ObjectId) bool {
-    _funcName := "PostManager::IsPinned"
-    _Log.FunctionStarted(_funcName, accountID, postID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -1466,7 +1466,7 @@ func (pm *PostManager) IsPinned(accountID string, postID bson.ObjectId) bool {
     if n, err := db.C(COLLECTION_ACCOUNTS_POSTS).Find(bson.M{
         "account_id": accountID, "post_id": postID,
     }).Count(); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     } else if n > 0 {
         return true
     }
@@ -1574,9 +1574,9 @@ func (p *Post) IsInPlace(placeID string) bool {
 
 // HasAccess checks if accountID has access to the post, if he/she has access it returns TRUE otherwise FALSE
 func (p *Post) HasAccess(accountID string) bool {
-    _funcName := "Post::HasAccess"
-    _Log.FunctionStarted(_funcName, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     for _, placeID := range p.PlaceIDs {
         if placeID == "*" {
@@ -1593,9 +1593,9 @@ func (p *Post) HasAccess(accountID string) bool {
 
 // AddLabel add new label to the post
 func (p *Post) AddLabel(accountID, labelID string) bool {
-    _funcName := "Post::AddLabel"
-    _Log.FunctionStarted(_funcName, accountID, labelID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Post.removeCache(p.ID)
 
     dbSession := _MongoSession.Clone()
@@ -1609,7 +1609,7 @@ func (p *Post) AddLabel(accountID, labelID string) bool {
             "$inc":      bson.M{"counters.labels": 1},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error(), 1)
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -1624,9 +1624,9 @@ func (p *Post) AddLabel(accountID, labelID string) bool {
 
 // LabelRemoved removes label off the post
 func (p *Post) RemoveLabel(accountID, labelID string) bool {
-    _funcName := "Post::RemoveLabel"
-    _Log.FunctionStarted(_funcName, accountID, labelID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Post.removeCache(p.ID)
 
     dbSession := _MongoSession.Clone()
@@ -1640,7 +1640,7 @@ func (p *Post) RemoveLabel(accountID, labelID string) bool {
             "$inc":  bson.M{"counters.labels": -1},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error(), 1)
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -1654,9 +1654,9 @@ func (p *Post) RemoveLabel(accountID, labelID string) bool {
 
 // MarkAsRead marks the postID as seen/read by accountID
 func (p *Post) MarkAsRead(accountID string) bool {
-    _funcName := "PostManager::MarkAsRead"
-    _Log.FunctionStarted(_funcName, p.ID.Hex(), accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -1673,7 +1673,7 @@ func (p *Post) MarkAsRead(accountID string) bool {
             "read":       false,
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error(), "RemoveAll")
+        _Log.Warn(err.Error())
         return false
     } else {
         // Add the accountID to the list of readers if he/she is not already exists
@@ -1710,9 +1710,9 @@ func (p *Post) MarkAsRead(accountID string) bool {
 
 // Update updates the post
 func (p *Post) Update(postSubject, postBody string) bool {
-    _funcName := "PostManager::AddPost"
-    _Log.FunctionStarted(_funcName)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -1756,7 +1756,7 @@ func (p *Post) Update(postSubject, postBody string) bool {
             },
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
 

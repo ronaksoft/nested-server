@@ -159,9 +159,9 @@ func IsValidEmail(email string) bool {
 // UseDownloadToken validates token and returns TRUE and the universalID of the file, otherwise
 // returns FALSE
 func UseDownloadToken(token string) (bool, UniversalID) {
-    _funcName := "UseUploadToken"
-    _Log.FunctionStarted(_funcName, token)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     // Remove the expire timestamp from the token
     token = string(token[:strings.LastIndex(token, "-")])
@@ -186,9 +186,9 @@ func UseDownloadToken(token string) (bool, UniversalID) {
 
 // UseUploadToken validates upload token and returns the maximum upload size
 func UseUploadToken(token string, sk bson.ObjectId) (bool, string) {
-    _funcName := "UseUploadToken"
-    _Log.FunctionStarted(_funcName, token, sk.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     token = string(token[:strings.LastIndex(token, "-")])
     ct := Decrypt(TOKEN_SEED_SALT, token)
@@ -215,9 +215,9 @@ func UseUploadToken(token string, sk bson.ObjectId) (bool, string) {
 // 2. Maximum Upload Size
 // 3. Expiry time
 func GenerateUploadToken(sk bson.ObjectId) (string, error) {
-    _funcName := "FileManager::GetUploadToken"
-    _Log.FunctionStarted(_funcName, sk.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     et := Timestamp() + TOKEN_LIFETIME
     tv := fmt.Sprintf("%s/%s/%s", sk.String(), DEFAULT_MAX_UPLOAD_SIZE, strconv.Itoa(int(et)))
@@ -232,9 +232,9 @@ func GenerateUploadToken(sk bson.ObjectId) (string, error) {
 // 3. Session DHKey
 // 4. Expiry Time
 func GenerateDownloadToken(uniID UniversalID, sk bson.ObjectId, accountID string) (string, error) {
-    _funcName := "FileManager::GetDownloadToken"
-    _Log.FunctionStarted(_funcName, uniID, sk.Hex(), accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     et := Timestamp() + TOKEN_LIFETIME
     tv := fmt.Sprintf("%s/%s/%s/%s", accountID, string(uniID), sk.String(), strconv.Itoa(int(et)))

@@ -3,8 +3,13 @@ package nested
 import (
     "crypto/tls"
     "encoding/gob"
+    "os"
+
     "github.com/globalsign/mgo"
     "github.com/globalsign/mgo/bson"
+    "go.uber.org/zap"
+    "go.uber.org/zap/zapcore"
+
     "log"
     "net"
     "time"
@@ -13,7 +18,7 @@ import (
 
 var (
     __Debug       int
-    _Log          *Logger
+    _Log          *zap.Logger
     _Manager      *Manager
     _MongoSession *mgo.Session
     _MongoDB      *mgo.Database
@@ -151,10 +156,16 @@ func NewManager(instanceID, mongoDSN, redisDSN string, debug int) (*Manager, err
     _Manager.Verification = NewVerificationManager()
     _Manager.Websocket = NewWebsocketManager()
 
-    _Log = NewLogger()
-    if __Debug >= DEBUG_LEVEL_2 {
-        _Log.EnableLevel(LOG_LEVEL_FUNCTION, LOG_LEVEL_QUERY, LOG_LEVEL_ERROR)
+
+    logConfig := zap.NewProductionConfig()
+    logConfig.Encoding = "json"
+    logConfig.Level = zap.NewAtomicLevelAt(zapcore.Level(__Debug))
+    if v, err := logConfig.Build(); err != nil {
+        os.Exit(1)
+    } else {
+        _Log = v
     }
+
 
     // Load the system constants
     _Manager.System.LoadIntegerConstants()
@@ -170,7 +181,7 @@ func (m *Manager) RefreshDbConnection() {
 
 func (m *Manager) Shutdown() {
     _MongoSession.Close()
-    _Log.Shutdown()
+    _Log.Sync()
 }
 
 func (m *Manager) SetDebugLevel(level int) {
@@ -178,23 +189,21 @@ func (m *Manager) SetDebugLevel(level int) {
 }
 
 func (m *Manager) RegisterBundle(bundleID string) {
-    _funcName := "Manager::RegisterBundle"
     if _, err := _MongoDB.C(COLLECTION_SYSTEM_INTERNAL).Upsert(
         bson.M{"_id": "bundles"},
         bson.M{"$addToSet": bson.M{"bundle_ids": bundleID}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Error(err.Error())
     }
 }
 
 func (m *Manager) GetBundles() []string {
-    _funcName := "Manager::GetBundles"
     r := struct {
         ID        string   `bson:"_id"`
         BundleIDs []string `bson:"bundle_ids"`
     }{}
     if err := _MongoDB.C(COLLECTION_SYSTEM_INTERNAL).FindId("bundles").One(&r); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Error(err.Error())
         return []string{}
     } else {
         return r.BundleIDs

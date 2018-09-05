@@ -129,9 +129,9 @@ func NewHookManager() *HookManager {
 //      2. account_id
 //      3. task_id
 func (m *HookManager) AddHook(setterID, hookName string, anchorID interface{}, hookType int, url string) bool {
-    _funcName := "HookManager::AddHook"
-    _Log.FunctionStarted(_funcName, setterID, anchorID, hookType, url)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -146,23 +146,23 @@ func (m *HookManager) AddHook(setterID, hookName string, anchorID interface{}, h
     hook.Url = url
 
     if err := db.C(COLLECTION_HOOKS).Insert(hook); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
 }
 
 func (m *HookManager) RemoveHook(hookID bson.ObjectId) bool {
-    _funcName := "HookManager::RemoveHook"
-    _Log.FunctionStarted(_funcName, hookID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
 
     if err := db.C(COLLECTION_HOOKS).RemoveId(hookID); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
@@ -170,9 +170,9 @@ func (m *HookManager) RemoveHook(hookID bson.ObjectId) bool {
 }
 
 func (m *HookManager) GetHooksBySetterID(setterID string, pg Pagination) []Hook {
-    _funcName := "HookManager::GetAccountHooks"
-    _Log.FunctionStarted(_funcName, setterID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -182,7 +182,7 @@ func (m *HookManager) GetHooksBySetterID(setterID string, pg Pagination) []Hook 
     if err := db.C(COLLECTION_HOOKS).Find(
         bson.M{"set_by": setterID},
     ).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&hooks); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return hooks
 }
@@ -190,9 +190,9 @@ func (m *HookManager) GetHooksBySetterID(setterID string, pg Pagination) []Hook 
 // hooker will be run in background and listens to chEvents channel and run the appropriate function
 // according with the incoming hook event it receives from the channel
 func (m *HookManager) hooker() {
-    _funcName := "HookManager::hooker"
-    _Log.FunctionStarted(_funcName)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     for event := range m.chEvents {
         m.chLimit <- true
@@ -202,9 +202,9 @@ func (m *HookManager) hooker() {
 }
 
 func (m *HookManager) hHook(e HookEvent) {
-    _funcName := "HookManager::hHook"
-    _Log.FunctionStarted(_funcName)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -229,7 +229,7 @@ func (m *HookManager) hHook(e HookEvent) {
     defer iter.Close()
 
     if b, err := json.Marshal(e); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     } else {
         postBody := new(bytes.Buffer)
         hook := new(Hook)

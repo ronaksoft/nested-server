@@ -17,9 +17,9 @@ type ContactManager struct{}
 func NewContactManager() *ContactManager { return new(ContactManager) }
 
 func (cm *ContactManager) AddContact(accountID, contactID string) bool {
-    _funcName := "ContactManager::AddContact"
-    _Log.FunctionStarted(_funcName, accountID, contactID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -37,7 +37,7 @@ func (cm *ContactManager) AddContact(accountID, contactID string) bool {
             "$set":      bson.M{"hash": RandomID(8)},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
 
     _Manager.Account.UpdateAccountConnection(accountID, []string{contactID}, 1)
@@ -46,9 +46,9 @@ func (cm *ContactManager) AddContact(accountID, contactID string) bool {
 }
 
 func (cm *ContactManager) AddMutualContact(accountID1, accountID2 string) bool {
-    _funcName := "ContactManager::AddMutualContact"
-    _Log.FunctionStarted(_funcName, accountID1, accountID2)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -69,16 +69,16 @@ func (cm *ContactManager) AddMutualContact(accountID1, accountID2 string) bool {
         },
     )
     if _, err := bulk.Run(); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
 }
 
 func (cm *ContactManager) AddContactToFavorite(accountID, contactID string) bool {
-    _funcName := "ContactManager::AddContactToFavorite"
-    _Log.FunctionStarted(_funcName, accountID, contactID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -91,7 +91,7 @@ func (cm *ContactManager) AddContactToFavorite(accountID, contactID string) bool
             "$set":      bson.M{"hash": RandomID(8)},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -100,9 +100,9 @@ func (cm *ContactManager) AddContactToFavorite(accountID, contactID string) bool
 }
 
 func (cm *ContactManager) IsContact(accountID, contactID string) bool {
-    _funcName := "ContactManager::IsContact"
-    _Log.FunctionStarted(_funcName, accountID, contactID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -117,9 +117,9 @@ func (cm *ContactManager) IsContact(accountID, contactID string) bool {
 }
 
 func (cm *ContactManager) RemoveContact(accountID, contactID string) bool {
-    _funcName := "ContactManager::RemoveContact"
-    _Log.FunctionStarted(_funcName, accountID, contactID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -139,7 +139,7 @@ func (cm *ContactManager) RemoveContact(accountID, contactID string) bool {
         },
     )
     if _, err := bulk.Run(); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     _Manager.Account.UpdateAccountConnection(accountID, []string{contactID}, -1)
@@ -147,9 +147,9 @@ func (cm *ContactManager) RemoveContact(accountID, contactID string) bool {
 }
 
 func (cm *ContactManager) RemoveContactFromFavorite(accountID, contactID string) bool {
-    _funcName := "ContactManager::RemoveContactFromFavorite"
-    _Log.FunctionStarted(_funcName, accountID, contactID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -162,7 +162,7 @@ func (cm *ContactManager) RemoveContactFromFavorite(accountID, contactID string)
             "$set":  bson.M{"hash": RandomID(8)},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     _Manager.Account.UpdateAccountConnection(accountID, []string{contactID}, -5)
@@ -170,9 +170,9 @@ func (cm *ContactManager) RemoveContactFromFavorite(accountID, contactID string)
 }
 
 func (cm *ContactManager) GetContacts(accountID string) Contacts {
-    _funcName := "ContactManager::GetContacts"
-    _Log.FunctionStarted(_funcName, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -180,7 +180,7 @@ func (cm *ContactManager) GetContacts(accountID string) Contacts {
 
     c := Contacts{}
     if err := db.C(COLLECTION_CONTACTS).FindId(accountID).One(&c); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return c
 }

@@ -30,9 +30,9 @@ type DeviceManager struct{}
 func NewDeviceManager() *DeviceManager { return new(DeviceManager) }
 
 func (dm *DeviceManager) GetByAccountID(accountID string) []Device {
-    _funcName := "DeviceManager::GetAccountByID"
-    _Log.FunctionStarted(_funcName, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -40,15 +40,15 @@ func (dm *DeviceManager) GetByAccountID(accountID string) []Device {
 
     var devices []Device
     if err := db.C(COLLECTION_ACCOUNTS_DEVICES).Find(bson.M{"uid": accountID}).Limit(DEFAULT_MAX_RESULT_LIMIT).All(&devices); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return devices
 }
 
 func (dm *DeviceManager) IncrementBadge(accountID string) {
-    _funcName := "DeviceManager::IncrementBadge"
-    _Log.FunctionStarted(_funcName, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -58,14 +58,14 @@ func (dm *DeviceManager) IncrementBadge(accountID string) {
         bson.M{"uid": accountID},
         bson.M{"$inc": bson.M{"badge": 1}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
 }
 
 func (dm *DeviceManager) Register(deviceID, deviceToken, deviceOS, accountID string) bool {
-    _funcName := "DeviceManager::Register"
-    _Log.FunctionStarted(_funcName, deviceID, deviceToken, deviceOS, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -90,7 +90,7 @@ func (dm *DeviceManager) Register(deviceID, deviceToken, deviceOS, accountID str
         TotalUpdates: 0,
     }
     if err := db.C(COLLECTION_ACCOUNTS_DEVICES).Insert(d); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -98,25 +98,25 @@ func (dm *DeviceManager) Register(deviceID, deviceToken, deviceOS, accountID str
 }
 
 func (dm *DeviceManager) Remove(deviceID string) bool {
-    _funcName := "DeviceManager::Remove"
-    _Log.FunctionStarted(_funcName, deviceID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
 
     if err := db.C(COLLECTION_ACCOUNTS_DEVICES).Remove(bson.M{"_id": deviceID}); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
 }
 
 func (dm *DeviceManager) SetAsConnected(deviceID, accountID string) bool {
-    _funcName := "DeviceManager::SetAsConnected"
-    _Log.FunctionStarted(_funcName, deviceID, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -132,16 +132,16 @@ func (dm *DeviceManager) SetAsConnected(deviceID, accountID string) bool {
         bson.M{"$set": bson.M{"connected": true}},
     )
     if _, err := bulk.Run(); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
 }
 
 func (dm *DeviceManager) SetAsDisconnected(deviceID string) bool {
-    _funcName := "DeviceManager::SetAsDisconnected"
-    _Log.FunctionStarted(_funcName, deviceID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -151,16 +151,16 @@ func (dm *DeviceManager) SetAsDisconnected(deviceID string) bool {
         bson.M{"_id": deviceID},
         bson.M{"$set": bson.M{"connected": false}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error(), deviceID)
+        _Log.Warn(err.Error())
         return false
     }
     return true
 }
 
 func (dm *DeviceManager) Update(deviceID, deviceToken, deviceOS, accountID string) bool {
-    _funcName := "DeviceManager::Update"
-    _Log.FunctionStarted(_funcName, deviceID, deviceToken, deviceOS, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)

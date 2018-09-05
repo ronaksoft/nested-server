@@ -372,7 +372,7 @@ func (sm *SystemManager) LoadStringConstants() {
 }
 
 func (sm *SystemManager) SetMessageTemplate(msgID, msgSubject, msgBody string) bool {
-    _funcName := "SystemManager::SetMessageTemplate"
+    // _funcName
     if _, err := _MongoDB.C(COLLECTION_SYSTEM_INTERNAL).UpsertId(
         "message_templates",
         bson.M{"$set": bson.M{
@@ -381,14 +381,14 @@ func (sm *SystemManager) SetMessageTemplate(msgID, msgSubject, msgBody string) b
                 "body":    msgBody,
             }}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error(), msgID)
+        _Log.Warn(err.Error())
         return false
     }
     return true
 }
 
 func (sm *SystemManager) GetMessageTemplates() map[string]MessageTemplate {
-    _funcName := "SystemManager::GetMessageTemplate"
+    // _funcName
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -396,13 +396,13 @@ func (sm *SystemManager) GetMessageTemplates() map[string]MessageTemplate {
 
     templates := make(map[string]MessageTemplate)
     if err := db.C(COLLECTION_SYSTEM_INTERNAL).FindId("message_templates").One(&templates); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return templates
 }
 
 func (sm *SystemManager) RemoveMessageTemplate(msgID string) {
-    _funcName := "SystemManager::RemoveMessageTemplate"
+    // _funcName
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -413,13 +413,13 @@ func (sm *SystemManager) RemoveMessageTemplate(msgID string) {
         bson.M{
             "$unset": bson.M{msgID: ""},
         }); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
 
 }
 
 func (sm *SystemManager) SetSystemInfo(key, bundleID string, info M) bool {
-    _funcName := "SystemManager::SetSystemInfo"
+    // _funcName
     switch key {
     case SYS_INFO_GATEWAY, SYS_INFO_MSGAPI, SYS_INFO_ROUTER,
         SYS_INFO_STORAGE, SYS_INFO_USERAPI:
@@ -430,7 +430,7 @@ func (sm *SystemManager) SetSystemInfo(key, bundleID string, info M) bool {
     c := _Cache.getConn()
     defer c.Close()
     if jsonInfo, err := json.Marshal(info); err != nil {
-        _Log.Error(_funcName, err.Error(), key, bundleID)
+        _Log.Warn(err.Error())
     } else {
         c.Do("HSET", keyID, bundleID, jsonInfo)
     }
@@ -438,14 +438,14 @@ func (sm *SystemManager) SetSystemInfo(key, bundleID string, info M) bool {
 }
 
 func (sm *SystemManager) GetSystemInfo(key string) MS {
-    _funcName := "SystemManager::GetSystemInfo"
+    // _funcName
 
     keyID := fmt.Sprintf("sysinfo.%s", key)
     c := _Cache.getConn()
     defer c.Close()
     info := MS{}
     if m, err := redis.StringMap(c.Do("HGETALL", keyID)); err != nil {
-        _Log.Error(_funcName, err.Error(), key)
+        _Log.Warn(err.Error())
         return nil
     } else {
         for k, v := range m {

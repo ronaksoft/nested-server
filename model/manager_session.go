@@ -43,7 +43,7 @@ func (sm *SessionManager) readFromCache(sessionID bson.ObjectId) *Session {
     keyID := fmt.Sprintf("session:gob:%s", sessionID.Hex())
     if gobSession, err := redis.Bytes(c.Do("GET", keyID)); err != nil {
         if err := _MongoDB.C(COLLECTION_SESSIONS).FindId(sessionID).One(session); err != nil {
-            _Log.Error("SessionManager::readFromCache", err.Error())
+            _Log.Warn(err.Error())
             return nil
         }
         gobSession := new(bytes.Buffer)
@@ -63,7 +63,7 @@ func (sm *SessionManager) updateCache(sessionID bson.ObjectId) bool {
     defer c.Close()
     keyID := fmt.Sprintf("session:gob:%s", sessionID.Hex())
     if err := _MongoDB.C(COLLECTION_SESSIONS).FindId(sessionID).One(session); err != nil {
-        _Log.Error("SessionManager::updateCache", err.Error(), sessionID)
+        _Log.Warn(err.Error())
         c.Do("DEL", keyID)
         return false
     }
@@ -80,9 +80,9 @@ func (sm *SessionManager) updateCache(sessionID bson.ObjectId) bool {
 // creates a new session object in database and returns its session key
 // if anything wrong happens error will be set appropriately
 func (sm *SessionManager) Create(in MS) (bson.ObjectId, error) {
-    _funcName := "Session:Manager::Create"
-    _Log.FunctionStarted(_funcName, in)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -110,7 +110,7 @@ func (sm *SessionManager) Create(in MS) (bson.ObjectId, error) {
             Expired: false,
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return "", err
     }
     return sk, nil
@@ -118,8 +118,8 @@ func (sm *SessionManager) Create(in MS) (bson.ObjectId, error) {
 
 // Expire expires the session and this session identified by sk will not be valid any more
 func (sm *SessionManager) Expire(sk bson.ObjectId) {
-    _Log.FunctionStarted("SessionManager::Expire", sk.Hex())
-    defer _Log.FunctionFinished("SessionManager::Expire")
+    //
+    // removed LOG Function
     defer _Manager.Session.updateCache(sk)
 
     dbSession := _MongoSession.Clone()
@@ -131,8 +131,8 @@ func (sm *SessionManager) Expire(sk bson.ObjectId) {
 
 // GetByID return Session by sessionID
 func (sm *SessionManager) GetByID(sessionID bson.ObjectId) (s *Session) {
-    _Log.FunctionStarted("SessionManager::GetByID", sessionID.Hex())
-    defer _Log.FunctionFinished("SessionManager::GetByID")
+    //
+    // removed LOG Function
 
     return _Manager.Session.readFromCache(sessionID)
 }
@@ -140,9 +140,9 @@ func (sm *SessionManager) GetByID(sessionID bson.ObjectId) (s *Session) {
 // GetByUser
 // returns an array of active sessions of accountID
 func (sm *SessionManager) GetByUser(accountID string, pg Pagination) []Session {
-    _funcName := "SessionManager::GetByUser"
-    _Log.FunctionStarted(_funcName, accountID, pg)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -153,7 +153,7 @@ func (sm *SessionManager) GetByUser(accountID string, pg Pagination) []Session {
         "uid":     accountID,
         "expired": false,
     }).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&s); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return s
 
@@ -162,9 +162,9 @@ func (sm *SessionManager) GetByUser(accountID string, pg Pagination) []Session {
 // GetAccount
 // returns Account for the session identified by SessionKey and SessionSecret
 func (sm *SessionManager) GetAccount(sk bson.ObjectId) *Account {
-    _funcName := "SessionManager::GetAccount"
-    _Log.FunctionStarted(_funcName, sk.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     session := _Manager.Session.GetByID(sk)
     if session.AccountID != "" {
@@ -178,9 +178,9 @@ func (sm *SessionManager) GetAccount(sk bson.ObjectId) *Account {
 // set key-values in session identified by SessionKey(sk)
 // if everything was ok it return TRUE otherwise returns FALSE
 func (sm *SessionManager) Set(sk bson.ObjectId, v bson.M) bool {
-    _funcName := "SessionManager::Set"
-    _Log.FunctionStarted(_funcName, sk.Hex(), v)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
     defer _Manager.Session.updateCache(sk)
 
     dbSession := _MongoSession.Clone()
@@ -194,7 +194,7 @@ func (sm *SessionManager) Set(sk bson.ObjectId, v bson.M) bool {
         },
         bson.M{"$set": v},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
@@ -202,9 +202,9 @@ func (sm *SessionManager) Set(sk bson.ObjectId, v bson.M) bool {
 
 // UpdateLastAccess updates the session document with the last access of the Account
 func (sm *SessionManager) UpdateLastAccess(sk bson.ObjectId) bool {
-    _funcName := "SessionManager::UpdateLastAccess"
-    _Log.FunctionStarted(_funcName, sk.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
     defer _Manager.Session.updateCache(sk)
 
     dbSession := _MongoSession.Clone()
@@ -218,7 +218,7 @@ func (sm *SessionManager) UpdateLastAccess(sk bson.ObjectId) bool {
         },
         bson.M{"$set": bson.M{"last_access": Timestamp()}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
@@ -228,9 +228,9 @@ func (sm *SessionManager) UpdateLastAccess(sk bson.ObjectId) bool {
 // verifies if the SessionKey(sk) and SessionSecret(ss) are matched and the session
 // with these keys are exists and valid
 func (sm *SessionManager) Verify(sk bson.ObjectId, ss string) (r bool) {
-    _funcName := "SessionManager::Verify"
-    _Log.FunctionStarted(_funcName, sk.Hex(), ss)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     if session := _Manager.Session.GetByID(sk); session == nil {
         return false
@@ -245,9 +245,9 @@ func (sm *SessionManager) Verify(sk bson.ObjectId, ss string) (r bool) {
  */
 // Login
 func (s *Session) Login() {
-    _funcName := "Session::Login"
-    _Log.FunctionStarted(_funcName)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     v := bson.M{
         "uid":   s.AccountID,
@@ -262,8 +262,8 @@ func (s *Session) Login() {
 
 // CloseOtherActives deletes all other actives sessions of the user
 func (s *Session) CloseOtherActives() {
-    _Log.FunctionStarted("Session::CloseOtherActives", s.ID)
-    defer _Log.FunctionFinished("SessionManager::Expire")
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)

@@ -29,9 +29,9 @@ func NewPhoneManager() *PhoneManager {
 // Description:
 // This function registers the accountID for the phoneNumber
 func (pm *PhoneManager) RegisterPhoneToAccount(accountID, phoneNumber string) {
-    _funcName := "PhoneManager::RegisterPhoneToAccount"
-    _Log.FunctionStarted(_funcName, accountID, phoneNumber)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -50,9 +50,9 @@ func (pm *PhoneManager) RegisterPhoneToAccount(accountID, phoneNumber string) {
 // UnRegisterPhoneToAccount  un-registers the accountID for the phoneNumber, This function must be called when
 // user changes his/her phone number
 func (pm *PhoneManager) UnRegisterPhoneToAccount(accountID, phoneNumber string) {
-    _funcName := "PhoneManager::UnRegisterPhoneToAccount"
-    _Log.FunctionStarted(_funcName, accountID, phoneNumber)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -71,9 +71,9 @@ func (pm *PhoneManager) UnRegisterPhoneToAccount(accountID, phoneNumber string) 
 // If 'phoneNumber' is in contacts of 'accountID' then add 'accountID' to the list of accounts
 // which attached to 'phoneNumber'
 func (pm *PhoneManager) AddContactToPhone(accountID, phoneNumber string) {
-    _funcName := "PhoneManager::AddContactToPhone"
-    _Log.FunctionStarted(_funcName, accountID, phoneNumber)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -91,9 +91,9 @@ func (pm *PhoneManager) AddContactToPhone(accountID, phoneNumber string) {
 // Description:
 // If 'phoneNumber' is not in contacts of the 'accountID' anymore then remove it from the list
 func (pm *PhoneManager) RemoveContactFromPhone(accountID, phoneNumber string) {
-    _funcName := "PhoneManager::RemoveContactFromPhone"
-    _Log.FunctionStarted(_funcName, accountID, phoneNumber)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -111,9 +111,9 @@ func (pm *PhoneManager) RemoveContactFromPhone(accountID, phoneNumber string) {
 // Description:
 // Returns an array of accountIDs who have this number in their contact list
 func (pm *PhoneManager) GetContactsByPhoneNumber(phoneNumber string) []string {
-    _funcName := "PhoneManager::GetContactsByPhoneNumber"
-    _Log.FunctionStarted(_funcName, phoneNumber)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -127,9 +127,9 @@ func (pm *PhoneManager) GetContactsByPhoneNumber(phoneNumber string) []string {
 // Description:
 // Returns an array of account ids who have the number owned by 'accountID'
 func (pm *PhoneManager) GetContactsByAccountID(accountID string) []string {
-    _funcName := "PhoneManager::GetContactsByAccountID"
-    _Log.FunctionStarted(_funcName, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)

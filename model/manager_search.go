@@ -32,9 +32,9 @@ func NewSearchManager() *SearchManager {
 // 				PLACE_SEARCH_FILTER_PERSONAL
 // 				PLACE_SEARCH_FILTER_ALL
 func (sm *SearchManager) Places(keyword, filter, sort, grandParentID string, pg Pagination) []Place {
-    _funcName := "SearchManager::Places"
-    _Log.FunctionStarted(_funcName, keyword, filter, grandParentID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -72,10 +72,10 @@ func (sm *SearchManager) Places(keyword, filter, sort, grandParentID string, pg 
         Q = Q.Sort(sort)
     }
     Q = Q.Skip(pg.GetSkip()).Limit(pg.GetLimit())
-    _Log.ExplainQuery(_funcName, Q)
+    // Log Explain Query
 
     if err := Q.All(&places); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return places
 }
@@ -85,9 +85,9 @@ func (sm *SearchManager) Places(keyword, filter, sort, grandParentID string, pg 
 // 		1. ACCOUNTS.PLACES collection and sorted by the connection strength
 // 		2. SEARCH.PLACES collection which contains all the places which are searchable
 func (sm *SearchManager) PlacesForCompose(keyword, accountID string, pg Pagination) []Place {
-    _funcName := "SearchManager::PlacesForCompose"
-    _Log.FunctionStarted(_funcName, keyword, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -144,9 +144,9 @@ func (sm *SearchManager) PlacesForCompose(keyword, accountID string, pg Paginati
 
 // 	RecipientsForCompose returns an array of Recipients filtered by keyword
 func (sm *SearchManager) RecipientsForCompose(keyword, accountID string, pg Pagination) []string {
-    _funcName := "SearchManager::RecipientsForCompose"
-    _Log.FunctionStarted(_funcName, keyword, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -170,9 +170,9 @@ func (sm *SearchManager) RecipientsForCompose(keyword, accountID string, pg Pagi
 // 	PlacesForSearch returns an array of Place objects filtered by keyword
 // 	It searches through all the places that accountID is member of
 func (sm *SearchManager) PlacesForSearch(keyword, accountID string, pg Pagination) []Place {
-    _funcName := "SearchManager::PlacesForSearch"
-    _Log.FunctionStarted(_funcName, keyword, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -222,9 +222,9 @@ func (sm *SearchManager) PlacesForSearch(keyword, accountID string, pg Paginatio
 // 					ACCOUNT_SEARCH_FILTER_DEVICES
 // 					ACCOUNT_SEARCH_FILTER_ALL
 func (sm *SearchManager) Accounts(keyword, filter, sort string, pg Pagination) []Account {
-    _funcName := "SearchManager::Accounts"
-    _Log.FunctionStarted(_funcName, keyword, filter)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -258,7 +258,7 @@ func (sm *SearchManager) Accounts(keyword, filter, sort string, pg Pagination) [
     }
 
     if err := Q.Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&accounts); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
 
     return accounts
@@ -266,9 +266,9 @@ func (sm *SearchManager) Accounts(keyword, filter, sort string, pg Pagination) [
 
 // 	AccountsForAddToPlace search through the members of grand place of placeID and filter by keyword
 func (sm *SearchManager) AccountsForAddToPlace(accountID, placeID string, keywords []string, pg Pagination) []Account {
-    _funcName := "SearchManager::AccountsForAddToPlace"
-    _Log.FunctionStarted(_funcName, accountID, placeID, keywords)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -304,9 +304,9 @@ func (sm *SearchManager) AccountsForAddToPlace(accountID, placeID string, keywor
 // 	AccountsForAddToGrandPlace search through all the members of nested who are searchable and they are not already member of
 // 	the placeID
 func (sm *SearchManager) AccountsForAddToGrandPlace(inviterID, placeID string, keyword string, pg Pagination) []Account {
-    _funcName := "SearchManager::AccountForInvite"
-    _Log.FunctionStarted(_funcName, inviterID, placeID, keyword)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -375,9 +375,9 @@ func (sm *SearchManager) AccountsForAddToGrandPlace(inviterID, placeID string, k
 
 // 	AccountsForSearch search through all the members of placeIDs and all the users who are searchable.
 func (sm *SearchManager) AccountsForSearch(accountID string, keyword string, pg Pagination) []Account {
-    _funcName := "SearchManager::AccountsForSearch"
-    _Log.FunctionStarted(_funcName, accountID, keyword)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -427,9 +427,9 @@ func (sm *SearchManager) AccountsForSearch(accountID string, keyword string, pg 
 
 // 	AccountsForTaskMention searches through members of placeIDs and filter by keyword
 func (sm *SearchManager) AccountsForTaskMention(task *Task, keyword string) []Account {
-    _funcName := "SearchManager::AccountsForTaskMention"
-    _Log.FunctionStarted(_funcName, task.ID, keyword)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -455,9 +455,9 @@ func (sm *SearchManager) AccountsForTaskMention(task *Task, keyword string) []Ac
 
 // 	AccountsForPostMention searches through members of placeIDs and filter by keyword
 func (sm *SearchManager) AccountsForPostMention(placeIDs, keywords []string, pg Pagination) []Account {
-    _funcName := "SearchManager::AccountsForPostMention"
-    _Log.FunctionStarted(_funcName, placeIDs, keywords)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -503,9 +503,9 @@ func (sm *SearchManager) AccountsForPostMention(placeIDs, keywords []string, pg 
 
 // Apps searches through registered apps
 func (sm *SearchManager) Apps(keyword string, pg Pagination) []App {
-    _funcName := "SearchManager::Apps"
-    _Log.FunctionStarted(_funcName, keyword)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -515,16 +515,16 @@ func (sm *SearchManager) Apps(keyword string, pg Pagination) []App {
     if err := db.C(COLLECTION_APPS).Find(
         bson.M{"app_name": bson.M{"$regex": fmt.Sprintf("%s", keyword), "$options": "i"}},
     ).Limit(pg.GetLimit()).All(&apps); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return apps
 }
 
 // 	Labels returns an array of all the labels ids filtered by keyword and filter
 func (sm *SearchManager) Labels(accountID, keyword, filter string, pg Pagination) []Label {
-    _funcName := "SearchManager::Labels"
-    _Log.FunctionStarted(_funcName, accountID, keyword, filter)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -553,16 +553,16 @@ func (sm *SearchManager) Labels(accountID, keyword, filter string, pg Pagination
     default:
     }
     if err := db.C(COLLECTION_LABELS).Find(q).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&labels); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return labels
 }
 
 // 	Posts searches through posts in "placeIDs" and filter them by keywords
 func (sm *SearchManager) Posts(keyword, accountID string, placeIDs, senderIDs, labelIDs []string, hasAttachments bool, pg Pagination) []Post {
-    _funcName := "SearchManager::Posts"
-    _Log.FunctionStarted(_funcName, accountID, placeIDs, senderIDs, labelIDs, hasAttachments)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -619,9 +619,9 @@ func (sm *SearchManager) Posts(keyword, accountID string, placeIDs, senderIDs, l
 
 // 	PostsConversations returns posts between two accounts: accountID1 and accountID2
 func (sm *SearchManager) PostsConversations(peerID1, peerID2, keywords string, pg Pagination) []Post {
-    _funcName := "SearchManager::PostConversations"
-    _Log.FunctionStarted(_funcName, peerID1, peerID2, keywords)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -664,16 +664,16 @@ func (sm *SearchManager) PostsConversations(peerID1, peerID2, keywords string, p
 
     posts := make([]Post, 0, pg.GetLimit())
     if err := db.C(COLLECTION_POSTS).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&posts); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return posts
 }
 
 // 	Tasks searches through tasks
 func (sm *SearchManager) Tasks(keyword, accountID string, assignorIDs, assigneeIDs, labelIDs []string, hasAttachments bool, pg Pagination) []Task {
-    _funcName := "SearchManager::Tasks"
-    _Log.FunctionStarted(_funcName, assignorIDs, assigneeIDs, labelIDs, hasAttachments)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -733,9 +733,9 @@ func (sm *SearchManager) Tasks(keyword, accountID string, assignorIDs, assigneeI
 // 	AddPlaceToSearchIndex adds placeID and placeName into the search index, then all the users can find the place
 // 	info in the search result
 func (sm *SearchManager) AddPlaceToSearchIndex(placeID, placeName string) {
-    _funcName := "SearchManager::AddPlaceToSearchIndex"
-    _Log.FunctionStarted(_funcName, placeID, placeName)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -746,9 +746,9 @@ func (sm *SearchManager) AddPlaceToSearchIndex(placeID, placeName string) {
 
 // RemovePlaceFromSearchIndex removes placeID and placeName from the search index collection
 func (sm *SearchManager) RemovePlaceFromSearchIndex(placeID string) {
-    _funcName := "SearchManager::RemovePlaceFromSearchIndex"
-    _Log.FunctionStarted(_funcName, placeID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -759,9 +759,9 @@ func (sm *SearchManager) RemovePlaceFromSearchIndex(placeID string) {
 
 // 	AddSearchHistory adds searched terms of users in an object with an array inside it.
 func (sm *SearchManager) AddSearchHistory(accountID, keyword string) bool {
-    _funcName := "SearchManager::AddSearchHistory"
-    _Log.FunctionStarted(_funcName, accountID, keyword)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -779,7 +779,7 @@ func (sm *SearchManager) AddSearchHistory(accountID, keyword string) bool {
             },
         }},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
@@ -787,9 +787,9 @@ func (sm *SearchManager) AddSearchHistory(accountID, keyword string) bool {
 
 // GetSearchHistory returns an array of searched queries of user accountID
 func (sm *SearchManager) GetSearchHistory(accountID, keyword string) []string {
-    _funcName := "SearchManager::GetSearchHistory"
-    _Log.FunctionStarted(_funcName, accountID, keyword)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -816,9 +816,9 @@ func (sm *SearchManager) GetSearchHistory(accountID, keyword string) []string {
 // 					ACCOUNT_SEARCH_FILTER_DEVICES
 // 					ACCOUNT_SEARCH_FILTER_ALL
 func (sm *SearchManager) AccountIDs(filter string) []string {
-    _funcName := "SearchManager::AccountIDs"
-    _Log.FunctionStarted(_funcName, filter)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -845,7 +845,7 @@ func (sm *SearchManager) AccountIDs(filter string) []string {
 
 	var accountIDs []string
     if err := Q.Select(bson.M{"_id":1}).All(&accountIDs); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
 
     return accountIDs

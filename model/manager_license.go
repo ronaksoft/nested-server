@@ -32,13 +32,13 @@ func NewLicenceManager() *LicenseManager {
 
 // Load reads the appropriate key from SYSTEM_INTERNAL collection and unmarshal it.
 func (m *LicenseManager) Load() bool {
-    _funcName := "LicenseManager::Load"
-    _Log.FunctionStarted(_funcName, )
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     r := MS{}
     if err := _MongoDB.C(COLLECTION_SYSTEM_INTERNAL).FindId("license_key").One(r); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     licenseKey := r["value"]
@@ -47,7 +47,7 @@ func (m *LicenseManager) Load() bool {
     }
     jsonLicense := Decrypt(LICENSE_ENCRYPT_KEY, licenseKey)
     if err := json.Unmarshal([]byte(jsonLicense), m.license); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
@@ -67,13 +67,13 @@ func (m *LicenseManager) Get() *License {
 }
 
 func (m *LicenseManager) Set(licenseKey string) {
-    _funcName := "LicenseManager::Set"
+    // _funcName
     if _, err := _MongoDB.C(COLLECTION_SYSTEM_INTERNAL).UpsertId(
         "license_key",
         bson.M{"$set": bson.M{
             "value": licenseKey,
         }},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
 }

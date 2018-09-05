@@ -73,7 +73,7 @@ func NewPlaceManager() *PlaceManager {
 }
 
 func (pm *PlaceManager) readFromCache(placeID string) *Place {
-    _funcName := "PlaceManager::readFromCache"
+    // _funcName
 
     place := new(Place)
     c := _Cache.Pool.Get()
@@ -81,7 +81,7 @@ func (pm *PlaceManager) readFromCache(placeID string) *Place {
     keyID := fmt.Sprintf("place:gob:%s", placeID)
     if gobPlace, err := redis.Bytes(c.Do("GET", keyID)); err != nil {
         if err := _MongoDB.C(COLLECTION_PLACES).FindId(placeID).One(place); err != nil {
-            _Log.Error(_funcName, err.Error())
+            _Log.Warn(err.Error())
             return nil
         }
         gobPlace := new(bytes.Buffer)
@@ -130,9 +130,9 @@ func (pm *PlaceManager) removeCache(placeID string) bool {
 // AddKeyHolder add the accountID to the list of placeID key holders, if he/she was not
 // a member of that place before (i.e. he/she is not creator or key holder of the placeID)
 func (pm *PlaceManager) AddKeyholder(placeID, accountID string) *PlaceManager {
-    _funcName := "PlaceManager::AddKeyHolder"
-    _Log.FunctionStarted(_funcName, placeID, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Place.removeCache(placeID)
     defer _Manager.Account.removeCache(accountID)
 
@@ -155,7 +155,7 @@ func (pm *PlaceManager) AddKeyholder(placeID, accountID string) *PlaceManager {
             "$inc":      bson.M{"counters.key_holders": 1},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error(), "COLLECTION_PLACES UPDATE")
+        _Log.Warn(err.Error())
     }
 
     // Update ACCOUNTS collection
@@ -163,7 +163,7 @@ func (pm *PlaceManager) AddKeyholder(placeID, accountID string) *PlaceManager {
         bson.M{"_id": accountID},
         bson.M{"$addToSet": bson.M{"access_places": placeID}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error(), "COLLECTION_ACCOUNTS UPDATE")
+        _Log.Warn(err.Error())
     }
 
     // Update POSTS.READS.COUNTERS collection
@@ -218,9 +218,9 @@ func (pm *PlaceManager) AddKeyholder(placeID, accountID string) *PlaceManager {
 //	Available returns true if the placeID is available to be created. It means that this placeID
 //	is not reserved or not already taken.
 func (pm *PlaceManager) Available(placeID string) bool {
-    _funcName := "PlaceManager::Available"
-    _Log.FunctionStarted(_funcName, placeID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -251,9 +251,9 @@ func (pm *PlaceManager) Available(placeID string) bool {
 
 //	CountUnreadPosts counts all the unread posts for accountID in all placeIDs
 func (pm *PlaceManager) CountUnreadPosts(placeIDs []string, accountID string) int {
-    _funcName := "PlaceManager::CountUnreadPosts"
-    _Log.FunctionStarted(_funcName, placeIDs, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -276,9 +276,9 @@ func (pm *PlaceManager) CountUnreadPosts(placeIDs []string, accountID string) in
 
 //	CreatePersonalPlace creates personal grand place and sub places.  The difference between this function and
 func (pm *PlaceManager) CreatePersonalPlace(pcr PlaceCreateRequest) *Place {
-    _funcName := "PlaceManager::CreatePersonalPlace"
-    _Log.FunctionStarted(_funcName, pcr)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -316,10 +316,10 @@ func (pm *PlaceManager) CreatePersonalPlace(pcr PlaceCreateRequest) *Place {
     p.Picture = pcr.Picture
 
     if err := db.C(COLLECTION_PLACES).Insert(p); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     } else if err = db.C(COLLECTION_PLACES).FindId(p.ID).One(&p); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
 
@@ -343,9 +343,9 @@ func (pm *PlaceManager) CreatePersonalPlace(pcr PlaceCreateRequest) *Place {
 //	overrides. We used separate functions for creating different place for more code clarity and better
 //	maintainability.
 func (pm *PlaceManager) CreateGrandPlace(pcr PlaceCreateRequest) *Place {
-    _funcName := "PlaceManager::CreateGrandPlace"
-    _Log.FunctionStarted(_funcName)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Account.removeCache(pcr.AccountID)
 
     dbSession := _MongoSession.Copy()
@@ -373,10 +373,10 @@ func (pm *PlaceManager) CreateGrandPlace(pcr PlaceCreateRequest) *Place {
     place.Picture = pcr.Picture
 
     if err := db.C(COLLECTION_PLACES).Insert(place); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     } else if err = db.C(COLLECTION_PLACES).FindId(place.ID).One(&place); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
 
@@ -395,9 +395,9 @@ func (pm *PlaceManager) CreateGrandPlace(pcr PlaceCreateRequest) *Place {
 //	overrides. We used separate functions for creating different place for more code clarity and better
 //	maintainability.
 func (pm *PlaceManager) CreateLockedPlace(pcr PlaceCreateRequest) *Place {
-    _funcName := "PlaceManager::CreateLockedPlace"
-    _Log.FunctionStarted(_funcName, pcr)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -427,10 +427,10 @@ func (pm *PlaceManager) CreateLockedPlace(pcr PlaceCreateRequest) *Place {
     p.Level = parentPlace.Level + 1
 
     if err := db.C(COLLECTION_PLACES).Insert(p); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     } else if db.C(COLLECTION_PLACES).FindId(p.ID).One(&p); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
 
@@ -439,7 +439,7 @@ func (pm *PlaceManager) CreateLockedPlace(pcr PlaceCreateRequest) *Place {
         p.GetParentID(),
         bson.M{"$inc": bson.M{"counters.childs": 1}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
 
     // Update System.Internal Counter
@@ -457,9 +457,9 @@ func (pm *PlaceManager) CreateLockedPlace(pcr PlaceCreateRequest) *Place {
 //	overrides. We used separate functions for creating different place for more code clarity and better
 //	maintainability.
 func (pm *PlaceManager) CreateUnlockedPlace(pcr PlaceCreateRequest) *Place {
-    _funcName := "PlaceManager::CreateUnlockedPlace"
-    _Log.FunctionStarted(_funcName, pcr)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -497,10 +497,10 @@ func (pm *PlaceManager) CreateUnlockedPlace(pcr PlaceCreateRequest) *Place {
     p.Level = 1
 
     if err := db.C(COLLECTION_PLACES).Insert(p); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     } else if db.C(COLLECTION_PLACES).FindId(p.ID).One(&p); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
 
@@ -529,9 +529,9 @@ func (pm *PlaceManager) CreateUnlockedPlace(pcr PlaceCreateRequest) *Place {
 
 //	Demote change user level from creator to key holder
 func (pm *PlaceManager) Demote(placeID, accountID string) *PlaceManager {
-    _funcName := "PlaceManager::Demote"
-    _Log.FunctionStarted(_funcName, placeID, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -555,16 +555,16 @@ func (pm *PlaceManager) Demote(placeID, accountID string) *PlaceManager {
             },
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return pm
 }
 
 //	Exists returns true if place is already exists, this function is opposite of Available
 func (pm *PlaceManager) Exists(placeID string) bool {
-    _funcName := "PlaceManager::Exists"
-    _Log.FunctionStarted(_funcName, placeID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -577,9 +577,9 @@ func (pm *PlaceManager) Exists(placeID string) bool {
 
 //	GetByID returns a pointer to a place identified by placeID.
 func (pm *PlaceManager) GetByID(placeID string, pj M) *Place {
-    _funcName := "PlaceManager::GetByID"
-    _Log.FunctionStarted(_funcName, placeID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     return _Manager.Place.readFromCache(placeID)
 }
@@ -587,18 +587,18 @@ func (pm *PlaceManager) GetByID(placeID string, pj M) *Place {
 //	GetPlacesByIDs returns an array of places identified by placeIDs. Only found places will be returned
 //	and the rest will be silently ignored
 func (pm *PlaceManager) GetPlacesByIDs(placeIDs []string) []Place {
-    _funcName := "PlaceManager::GetPlacesByIDs"
-    _Log.FunctionStarted(_funcName, placeIDs)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     return _Manager.Place.readMultiFromCache(placeIDs)
 }
 
 // GetGrandParentIDs accepts an array of placeIDs and returns an array of their grand place ids.
 func (pm *PlaceManager) GetGrandParentIDs(placeIDs []string) []string {
-    _funcName := "PlaceManager::GetGrandParentIDs"
-    _Log.FunctionStarted(_funcName, placeIDs)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     var res []string
     for _, v := range placeIDs {
@@ -610,9 +610,9 @@ func (pm *PlaceManager) GetGrandParentIDs(placeIDs []string) []string {
 
 // GetParentID returns the parent's id of the placeID
 func (pm *PlaceManager) GetParentID(placeID string) string {
-    _funcName := "PlaceManager::GetParentID"
-    _Log.FunctionStarted(_funcName, placeID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     return string(placeID[:strings.LastIndex(placeID, ".")])
 }
 
@@ -624,9 +624,9 @@ func (pm *PlaceManager) GetParentID(placeID string) string {
 //	5. PLACE_COUNTER_POSTS
 //	6. PLACE_COUNTER_QUOTA
 func (pm *PlaceManager) IncrementCounter(placeIDs []string, counterName string, c int) bool {
-    _funcName := "PlaceManager::IncrementCounter"
-    _Log.FunctionStarted(_funcName, placeIDs, counterName, c)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -641,7 +641,7 @@ func (pm *PlaceManager) IncrementCounter(placeIDs []string, counterName string, 
             bson.M{"_id": bson.M{"$in": placeIDs}},
             bson.M{"$inc": bson.M{keyName: c}},
         ); err != nil {
-            _Log.Error(_funcName, err.Error())
+            _Log.Warn(err.Error())
             return false
         }
     }
@@ -651,9 +651,9 @@ func (pm *PlaceManager) IncrementCounter(placeIDs []string, counterName string, 
 //	IsSubPlace returns TRUE if subPlaceID is a sub-place of placeID. It will returns TRUE even if
 //	subPlaceID is not a direct child of the placeID.
 func (pm *PlaceManager) IsSubPlace(placeID, subPlaceID string) bool {
-    _funcName := "PlaceManager::IsSubPlace"
-    _Log.FunctionStarted(_funcName, placeID, subPlaceID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     di := strings.Index(subPlaceID, ".")
     pi := strings.Index(subPlaceID, placeID+".")
@@ -665,9 +665,9 @@ func (pm *PlaceManager) IsSubPlace(placeID, subPlaceID string) bool {
 
 // Promote promotes the accountID in the placeID from keyholder to creator
 func (pm *PlaceManager) Promote(placeID, accountID string) *PlaceManager {
-    _funcName := "PlaceManager::Promote"
-    _Log.FunctionStarted(_funcName, placeID, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Place.removeCache(placeID)
     defer _Manager.Account.removeCache(accountID)
 
@@ -691,7 +691,7 @@ func (pm *PlaceManager) Promote(placeID, accountID string) *PlaceManager {
             },
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     _Manager.Account.UpdatePlaceConnection(accountID, []string{placeID}, 1)
@@ -700,9 +700,9 @@ func (pm *PlaceManager) Promote(placeID, accountID string) *PlaceManager {
 
 // bookmarkPost pins postID to one of the pinned posts of placeID
 func (pm *PlaceManager) PinPost(placeID string, postID bson.ObjectId) bool {
-    _funcName := "PlaceManager::PinPost"
-    _Log.FunctionStarted(_funcName, placeID, postID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Place.removeCache(placeID)
 
     dbSession := _MongoSession.Clone()
@@ -720,7 +720,7 @@ func (pm *PlaceManager) PinPost(placeID string, postID bson.ObjectId) bool {
             },
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
@@ -728,9 +728,9 @@ func (pm *PlaceManager) PinPost(placeID string, postID bson.ObjectId) bool {
 
 // UnpinPost unpins postID from the placeID
 func (pm *PlaceManager) UnpinPost(placeID string, postID bson.ObjectId) bool {
-    _funcName := "PlaceManager::UnpinPost"
-    _Log.FunctionStarted(_funcName, placeID, postID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Place.removeCache(placeID)
 
     dbSession := _MongoSession.Clone()
@@ -741,7 +741,7 @@ func (pm *PlaceManager) UnpinPost(placeID string, postID bson.ObjectId) bool {
         bson.M{"_id": placeID},
         bson.M{"$pull": bson.M{"pinned_posts": postID}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
@@ -750,9 +750,9 @@ func (pm *PlaceManager) UnpinPost(placeID string, postID bson.ObjectId) bool {
 // Remove deletes the place forever and all the posts and activities of that place will be gone.
 // also all the members will be removed from the place
 func (pm *PlaceManager) Remove(placeID string, accountID string) bool {
-    _funcName := "PlaceManager::Remove"
-    _Log.FunctionStarted(_funcName)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Place.removeCache(placeID)
 
     dbSession := _MongoSession.Copy()
@@ -776,7 +776,7 @@ func (pm *PlaceManager) Remove(placeID string, accountID string) bool {
             place.GetParentID(),
             bson.M{"$inc": bson.M{"counters.childs": -1}},
         ); err != nil {
-            _Log.Error(_funcName, err.Error())
+            _Log.Warn(err.Error())
         }
     }
 
@@ -789,7 +789,7 @@ func (pm *PlaceManager) Remove(placeID string, accountID string) bool {
                 "$inc":  bson.M{"counters.unlocked_childs": -1},
             },
         ); err != nil {
-            _Log.Error(_funcName, err.Error())
+            _Log.Warn(err.Error())
         }
     }
 
@@ -807,7 +807,7 @@ func (pm *PlaceManager) Remove(placeID string, accountID string) bool {
 
     // Remove the place from PLACES collection
     if err := db.C(COLLECTION_PLACES).RemoveId(placeID); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -827,9 +827,9 @@ func (pm *PlaceManager) Remove(placeID string, accountID string) bool {
 }
 
 func (pm *PlaceManager) RemoveAllMembers(placeID string) {
-    _funcName := "PlaceManager::RemoveAllMembers"
-    _Log.FunctionStarted(_funcName, placeID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -842,22 +842,22 @@ func (pm *PlaceManager) RemoveAllMembers(placeID string) {
         bson.M{"_id": bson.M{"$in": memberIDs}},
         bson.M{"$pull": bson.M{"access_places": placeID}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
 
     if _, err := db.C(COLLECTION_ACCOUNTS).UpdateAll(
         bson.M{"bookmarked_places": placeID},
         bson.M{"$pull": bson.M{"bookmarked_places": placeID}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
 
 }
 
 func (pm *PlaceManager) RemoveKeyHolder(placeID, accountID, actorID string) *PlaceManager {
-    _funcName := "PlaceManager::RemoveKeyHolder"
-    _Log.FunctionStarted(_funcName, placeID, accountID, actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Place.removeCache(placeID)
     defer _Manager.Account.removeCache(accountID)
 
@@ -878,7 +878,7 @@ func (pm *PlaceManager) RemoveKeyHolder(placeID, accountID, actorID string) *Pla
             "$inc":  bson.M{"counters.key_holders": -1},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
 
     // Update ACCOUNTS collection
@@ -891,7 +891,7 @@ func (pm *PlaceManager) RemoveKeyHolder(placeID, accountID, actorID string) *Pla
             "recently_visited":  placeID,
         }},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     if ci, err := db.C(COLLECTION_POSTS_READS).UpdateAll(
         bson.M{
@@ -901,7 +901,7 @@ func (pm *PlaceManager) RemoveKeyHolder(placeID, accountID, actorID string) *Pla
         },
         bson.M{"$set": bson.M{"read": true}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error(), ci)
+        _Log.Warn(err.Error())
     }
 
     // Update POSTS.READS.COUNTERS collection
@@ -911,7 +911,7 @@ func (pm *PlaceManager) RemoveKeyHolder(placeID, accountID, actorID string) *Pla
             "place_id":   placeID,
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
 
     if place.IsGrandPlace() {
@@ -922,7 +922,7 @@ func (pm *PlaceManager) RemoveKeyHolder(placeID, accountID, actorID string) *Pla
                     "place_id":   unlockedPlaceID,
                 },
             ); err != nil {
-                _Log.Error(_funcName, err.Error())
+                _Log.Warn(err.Error())
             }
         }
     }
@@ -937,9 +937,9 @@ func (pm *PlaceManager) RemoveKeyHolder(placeID, accountID, actorID string) *Pla
 }
 
 func (pm *PlaceManager) RemoveCreator(placeID, accountID, actorID string) *PlaceManager {
-    _funcName := "PlaceManager::RemoveCreator"
-    _Log.FunctionStarted(_funcName, placeID, accountID, actorID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     pm.Demote(placeID, accountID)
     pm.RemoveKeyHolder(placeID, accountID, actorID)
@@ -947,9 +947,9 @@ func (pm *PlaceManager) RemoveCreator(placeID, accountID, actorID string) *Place
 }
 
 func (pm *PlaceManager) SetPicture(placeID string, pic Picture) {
-    _funcName := "PlaceManager::SetPicture"
-    _Log.FunctionStarted(_funcName, placeID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Place.removeCache(placeID)
 
     dbSession := _MongoSession.Clone()
@@ -960,14 +960,14 @@ func (pm *PlaceManager) SetPicture(placeID string, pic Picture) {
         placeID,
         bson.M{"$set": bson.M{"picture": pic}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
 }
 
 func (pm *PlaceManager) Update(placeID string, placeUpdateRequest M) bool {
-    _funcName := "PlaceManager::Update"
-    _Log.FunctionStarted(_funcName, placeID, placeUpdateRequest)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Place.removeCache(placeID)
 
     dbSession := _MongoSession.Clone()
@@ -984,7 +984,7 @@ func (pm *PlaceManager) Update(placeID string, placeUpdateRequest M) bool {
     }
     if len(placeUpdateRequest) > 0 {
         if err := db.C(COLLECTION_PLACES).UpdateId(placeID, bson.M{"$set": placeUpdateRequest}); err != nil {
-            _Log.Error(_funcName, err.Error())
+            _Log.Warn(err.Error())
             return false
         }
     }
@@ -992,9 +992,9 @@ func (pm *PlaceManager) Update(placeID string, placeUpdateRequest M) bool {
 }
 
 func (pm *PlaceManager) UpdateLimits(placeID string, limits MI) bool {
-    _funcName := "PlaceManager::UpdateLimits"
-    _Log.FunctionStarted(_funcName, placeID, limits)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Place.removeCache(placeID)
 
     dbSession := _MongoSession.Clone()
@@ -1021,7 +1021,7 @@ func (pm *PlaceManager) UpdateLimits(placeID string, limits MI) bool {
         bson.M{"grand_parent_id": placeID},
         bson.M{"$set": m},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
@@ -1143,9 +1143,9 @@ func (p *Place) HasCreatorLimit() bool {
 }
 
 func (p *Place) IsCreator(accountID string) bool {
-    _funcName := "Place::IsCreator"
-    _Log.FunctionStarted(_funcName, p.ID, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     for _, creatorID := range p.CreatorIDs {
         if creatorID == accountID {
@@ -1157,9 +1157,9 @@ func (p *Place) IsCreator(accountID string) bool {
 }
 
 func (p *Place) IsKeyholder(accountID string) bool {
-    _funcName := "Place::IsKeyholder"
-    _Log.FunctionStarted(_funcName, p.ID, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     for _, keyholderID := range p.KeyholderIDs {
         if keyholderID == accountID {
@@ -1170,9 +1170,9 @@ func (p *Place) IsKeyholder(accountID string) bool {
 }
 
 func (p *Place) IsMember(accountID string) bool {
-    _funcName := "Place::IsMember"
-    _Log.FunctionStarted(_funcName, p.ID, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     for _, creatorID := range p.CreatorIDs {
         if creatorID == accountID {
@@ -1188,9 +1188,9 @@ func (p *Place) IsMember(accountID string) bool {
 }
 
 func (p *Place) HasReadAccess(accountID string) bool {
-    _funcName := "Place::HasReadAccess"
-    _Log.FunctionStarted(_funcName, p.ID, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     if p.IsMember(accountID) {
         return true
@@ -1204,9 +1204,9 @@ func (p *Place) HasReadAccess(accountID string) bool {
 }
 
 func (p *Place) HasWriteAccess(accountID string) bool {
-    _funcName := "Place::HasWriteAccess"
-    _Log.FunctionStarted(_funcName, p.ID, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     if p.IsMember(accountID) && p.Policy.AddPost == PLACE_POLICY_EVERYONE {
         return true
@@ -1228,9 +1228,9 @@ func (p *Place) HasWriteAccess(accountID string) bool {
 }
 
 func (p *Place) GetAccess(accountID string) MB {
-    _funcName := "Place::GetAccess"
-    _Log.FunctionStarted(_funcName, p.ID, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     acl := MB{}
     acl[PLACE_ACCESS_READ_POST] = false

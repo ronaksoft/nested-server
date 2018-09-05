@@ -31,7 +31,7 @@ func NewAppManager() *AppManager {
 
 // Register register the app info as a verified app to be used by members of the Nested instance
 func (m *AppManager) Register(appID, appName, homepage, callbackURL, developer, iconSmall, iconLarge string) bool {
-    _funcName := "AppManager::Register"
+    // _funcName
     a := App{
         ID:           appID,
         Name:         appName,
@@ -45,7 +45,7 @@ func (m *AppManager) Register(appID, appName, homepage, callbackURL, developer, 
         return false
     }
     if err := _MongoDB.C(COLLECTION_APPS).Insert(a); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
@@ -53,9 +53,9 @@ func (m *AppManager) Register(appID, appName, homepage, callbackURL, developer, 
 
 // UnRegister removes the app from the verified apps list
 func (m *AppManager) UnRegister(appID string) bool {
-    _funcName := "AppManager::UnRegister"
+    // _funcName
     if err := _MongoDB.C(COLLECTION_APPS).RemoveId(appID); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
@@ -63,13 +63,13 @@ func (m *AppManager) UnRegister(appID string) bool {
 
 // GetByID returns a pointer to App or nil if it does not found any app in the collection
 func (m *AppManager) GetByID(appID string) *App {
-    _funcName := "AppManager::GetByID"
+    // _funcName
     app := new(App)
     if appID == _AppStore.ID {
         return &_AppStore
     }
     if err := _MongoDB.C(COLLECTION_APPS).FindId(appID).One(app); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     return app
@@ -77,34 +77,34 @@ func (m *AppManager) GetByID(appID string) *App {
 
 // GetManyByIDs returns an array of Apps
 func (m *AppManager) GetManyByIDs(appIDs []string) []App {
-    _funcName := "AppManager::GetManyByIDs"
+    // _funcName
     apps := make([]App, 0, len(appIDs))
     if err := _MongoDB.C(COLLECTION_APPS).Find(
         bson.M{"_id": bson.M{"$in": appIDs}},
     ).One(&apps); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return apps
 }
 
 // ExpireTokens remove all the AppTokens assigned to the appID
 func (m *AppManager) ExpireTokens(appID string) {
-    _funcName := "AppManager::ExpireTokens"
+    // _funcName
     if _, err := _MongoDB.C(COLLECTION_TOKENS_APPS).RemoveAll(
         bson.M{"app_id": appID},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
 }
 
 // Exists returns TRUE if appID has been registered with the system otherwise returns FALSE
 func (m *AppManager) Exists(appID string) bool {
-    _funcName := "AppManager::Exists"
+    // _funcName
     if appID == _AppStore.ID {
         return true
     }
     if n, err := _MongoDB.C(COLLECTION_APPS).FindId(appID).Count(); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     } else if n > 0 {
         return true

@@ -22,9 +22,9 @@ func NewPlaceActivityManager() *PlaceActivityManager {
 }
 
 func (tm *PlaceActivityManager) Exists(activityID bson.ObjectId) bool {
-    _funcName := "PlaceActivityManager::Exists"
-    _Log.FunctionStarted(_funcName, activityID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -36,9 +36,9 @@ func (tm *PlaceActivityManager) Exists(activityID bson.ObjectId) bool {
 }
 
 func (tm *PlaceActivityManager) GetByID(activityID bson.ObjectId) *PlaceActivity {
-    _funcName := "PlaceActivityManager::GetByID"
-    _Log.FunctionStarted(_funcName, activityID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -46,16 +46,16 @@ func (tm *PlaceActivityManager) GetByID(activityID bson.ObjectId) *PlaceActivity
 
     t := new(PlaceActivity)
     if err := db.C(COLLECTION_PLACES_ACTIVITIES).FindId(activityID).One(&t); err != nil {
-        _Log.Error(_funcName, err.Error(), activityID.Hex())
+        _Log.Warn(err.Error())
         return nil
     }
     return t
 }
 
 func (tm *PlaceActivityManager) GetActivitiesByPlace(placeID string, pg Pagination) []PlaceActivity {
-    _funcName := "PlaceActivityManager::GetActivitiesByPlace"
-    _Log.FunctionStarted(_funcName, placeID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -78,9 +78,9 @@ func (tm *PlaceActivityManager) GetActivitiesByPlace(placeID string, pg Paginati
 }
 
 func (tm *PlaceActivityManager) PostAdd(actorID string, placeIDs []string, postID bson.ObjectId) {
-    _funcName := "PlaceActivityManager::PostAdd"
-    _Log.FunctionStarted(_funcName, actorID, placeIDs, postID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -103,15 +103,15 @@ func (tm *PlaceActivityManager) PostAdd(actorID string, placeIDs []string, postI
         bulk.Insert(v)
     }
     if _, err := bulk.Run(); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return
 }
 
 func (tm *PlaceActivityManager) PostAttachPlace(actorID, newPlaceID string, postID bson.ObjectId) {
-    _funcName := "PlaceActivityManager::PostAttachPlace"
-    _Log.FunctionStarted(_funcName, actorID, newPlaceID, postID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -129,15 +129,15 @@ func (tm *PlaceActivityManager) PostAttachPlace(actorID, newPlaceID string, post
         PlaceID:    newPlaceID,
     }
     if err := db.C(COLLECTION_PLACES_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
 
 }
 
 func (tm *PlaceActivityManager) PostMove(actorID, oldPlaceID, newPlaceID string, postID bson.ObjectId) {
-    _funcName := "PlaceActivityManager::PostMove"
-    _Log.FunctionStarted(_funcName, actorID, oldPlaceID, newPlaceID, postID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -166,16 +166,16 @@ func (tm *PlaceActivityManager) PostMove(actorID, oldPlaceID, newPlaceID string,
     bulk.Insert(v)
 
     if _, err := bulk.Run(); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
 
     tm.PostRemove(actorID, oldPlaceID, postID)
 }
 
 func (tm *PlaceActivityManager) PostRemove(actorID, placeID string, postID bson.ObjectId) {
-    _funcName := "PlaceActivityManager::PostRemove"
-    _Log.FunctionStarted(_funcName, actorID, placeID, postID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -190,16 +190,16 @@ func (tm *PlaceActivityManager) PostRemove(actorID, placeID string, postID bson.
         PostID:    postID,
     }
     if err := db.C(COLLECTION_PLACES_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
 
     return
 }
 
 func (tm *PlaceActivityManager) PlaceAdd(actor, placeID string) {
-    _funcName := "PlaceActivityManager::PlaceAdd"
-    _Log.FunctionStarted(_funcName, actor, placeID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -219,9 +219,9 @@ func (tm *PlaceActivityManager) PlaceAdd(actor, placeID string) {
 }
 
 func (tm *PlaceActivityManager) PlaceRemove(placeID string) {
-    _funcName := "PlaceActivityManager::PlaceRemove"
-    _Log.FunctionStarted(_funcName, placeID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -234,7 +234,7 @@ func (tm *PlaceActivityManager) PlaceRemove(placeID string) {
         bson.M{"action": PLACE_ACTIVITY_ACTION_PLACE_ADD, "place_id": placeID, "_removed": false},
         bson.M{"$set": bson.M{"_removed": true, "last_update": ts}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
 
     // remove all the MEMBER_JOIN actions
@@ -242,15 +242,15 @@ func (tm *PlaceActivityManager) PlaceRemove(placeID string) {
         bson.M{"action": PLACE_ACTIVITY_ACTION_MEMBER_JOIN, "place_id": placeID},
         bson.M{"$set": bson.M{"_removed": true, "last_update": ts}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return
 }
 
 func (tm *PlaceActivityManager) MemberRemove(actor, placeID, memberID string, reason string) {
-    _funcName := "PlaceActivityManager::MemberRemove"
-    _Log.FunctionStarted(_funcName, actor, placeID, memberID, reason)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -271,9 +271,9 @@ func (tm *PlaceActivityManager) MemberRemove(actor, placeID, memberID string, re
 }
 
 func (tm *PlaceActivityManager) MemberJoin(actor, placeID, by string) {
-    _funcName := "PlaceActivityManager::MemberJoin"
-    _Log.FunctionStarted(_funcName, actor, placeID, by)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)

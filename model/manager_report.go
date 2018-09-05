@@ -383,7 +383,7 @@ func (rcm *ReportManager) GetCounters() M {
     return m
 }
 func (rcm *ReportManager) resetAllCounters() {
-    _funcName := "ReportManager::resetAllCounters"
+    // _funcName
     c := _Cache.getConn()
     defer c.Close()
 
@@ -412,14 +412,14 @@ func (rcm *ReportManager) resetAllCounters() {
     c.Send("DEL", fmt.Sprintf("report:counter:%s", REPORT_COUNTER_TASK_ASSIGNED_PER_ACCOUNT))
 
     if err := c.Flush(); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
 
 }
 func (rcm *ReportManager) FlushToDB() {
-    _funcName := "ReportManager::FlushToDB"
-    _Log.FunctionStarted(_funcName)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -531,9 +531,9 @@ func (rcm *ReportManager) FlushToDB() {
     rcm.resetAllCounters()
 }
 func (rcm *ReportManager) GetTimeSeriesSingleValue(from, to, key, resolution string) []TimeSeriesSingleValueHourly {
-    _funcName := "ReportManager::GetTimeSeriesSingleValue"
-    _Log.FunctionStarted(_funcName, from, to, key, resolution)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -572,9 +572,9 @@ func (rcm *ReportManager) GetTimeSeriesSingleValue(from, to, key, resolution str
 }
 
 func (rcm *ReportManager) GetAPICounters() MI {
-    _funcName := "ReportManager::GetAPICounters"
-    _Log.FunctionStarted(_funcName)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -583,7 +583,7 @@ func (rcm *ReportManager) GetAPICounters() MI {
 
     m := MI{}
     if err := db.C(COLLECTION_REPORTS_COUNTERS).FindId("apiCommands").One(&m); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     return m

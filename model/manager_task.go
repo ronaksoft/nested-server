@@ -57,7 +57,7 @@ func (tm *TaskManager) readFromCache(taskID bson.ObjectId) *Task {
         if err := _MongoDB.C(COLLECTION_TASKS).Find(
             bson.M{"_id": taskID, "_removed": false},
         ).One(task); err != nil {
-            _Log.Error("TaskManager::readFromCache", err.Error(), taskID.Hex())
+            _Log.Warn(err.Error())
             return nil
         }
         gobTask := new(bytes.Buffer)
@@ -105,9 +105,9 @@ func (tm *TaskManager) removeCache(taskID bson.ObjectId) bool {
 
 // CreateTask creates the task object in database based on the date of TaskCreateRequest
 func (tm *TaskManager) CreateTask(tcr TaskCreateRequest) *Task {
-    _funcName := "TaskManager::CreateTask"
-    _Log.FunctionStarted(_funcName, tcr)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -155,7 +155,7 @@ func (tm *TaskManager) CreateTask(tcr TaskCreateRequest) *Task {
 
     // Create the task object in db
     if err := db.C(COLLECTION_TASKS).Insert(task); err != nil {
-        _Log.Error(_funcName, err.Error(), "creating task object")
+        _Log.Warn(err.Error())
         return nil
     }
 
@@ -169,7 +169,7 @@ func (tm *TaskManager) CreateTask(tcr TaskCreateRequest) *Task {
         task.RelatedPost,
         bson.M{"$addToSet": bson.M{"related_tasks": task.ID}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error(), "updating post document")
+        _Log.Warn(err.Error())
     }
 
     // Set task as the owner of the attachments
@@ -193,7 +193,7 @@ func (tm *TaskManager) CreateTask(tcr TaskCreateRequest) *Task {
             "$inc":      bson.M{"counters.related_tasks": 1},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error(), "updating parent task")
+        _Log.Warn(err.Error())
     }
 
     _Manager.TaskActivity.Created(task.ID, task.AssignorID)
@@ -220,9 +220,9 @@ func (tm *TaskManager) GetTasksByIDs(taskIDs []bson.ObjectId) []Task {
 
 // GetByAssigneeID returns an array of tasks filtered by Assignee of the task
 func (tm *TaskManager) GetByAssigneeID(accountID string, pg Pagination, filter []TaskStatus) []Task {
-    _funcName := "TaskManager::GetByAssigneeID"
-    _Log.FunctionStarted(_funcName, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -238,16 +238,16 @@ func (tm *TaskManager) GetByAssigneeID(accountID string, pg Pagination, filter [
         q["status"] = bson.M{"$in": filter}
     }
     if err := db.C(COLLECTION_TASKS).Find(q).Sort("-_id").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&tasks); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return tasks
 }
 
 // GetByAssignorID returns an array of tasks filtered by Assignor of the task
 func (tm *TaskManager) GetByAssignorID(accountID string, pg Pagination, filter []TaskStatus) []Task {
-    _funcName := "TaskManager::GetByAssignorID"
-    _Log.FunctionStarted(_funcName, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -263,16 +263,16 @@ func (tm *TaskManager) GetByAssignorID(accountID string, pg Pagination, filter [
         q["status"] = bson.M{"$in": filter}
     }
     if err := db.C(COLLECTION_TASKS).Find(q).Sort("-_id").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&tasks); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return tasks
 }
 
 // GetByWatcherID returns an array of tasks filtered by Watcher of the task
 func (tm *TaskManager) GetByWatcherEditorID(accountID string, pg Pagination, filter []TaskStatus) []Task {
-    _funcName := "TaskManager::GetByWatcherID"
-    _Log.FunctionStarted(_funcName, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -291,16 +291,16 @@ func (tm *TaskManager) GetByWatcherEditorID(accountID string, pg Pagination, fil
         q["status"] = bson.M{"$in": filter}
     }
     if err := db.C(COLLECTION_TASKS).Find(q).Sort("-_id").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&tasks); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return tasks
 }
 
 // GetByCandidateID returns an array of tasks filtered by Candidate of the task
 func (tm *TaskManager) GetByCandidateID(accountID string, pg Pagination, filter []TaskStatus) []Task {
-    _funcName := "TaskManager::GetByCandidateID"
-    _Log.FunctionStarted(_funcName, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -316,7 +316,7 @@ func (tm *TaskManager) GetByCandidateID(accountID string, pg Pagination, filter 
         q["status"] = bson.M{"$in": filter}
     }
     if err := db.C(COLLECTION_TASKS).Find(q).Sort("-_id").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&tasks); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return tasks
 }
@@ -329,9 +329,9 @@ func (tm *TaskManager) GetByCustomFilter(
     accountID string, assignorIDs, assigneeIDs, labelIDs []string, labelLogic, keyword string,
     pg Pagination, filter []TaskStatus, dueDate uint64,
 ) []Task {
-    _funcName := "TaskManager::GetByCustomFilter"
-    _Log.FunctionStarted(_funcName, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -391,9 +391,9 @@ func (tm *TaskManager) GetByCustomFilter(
 
 // GetUpcomingTasks returns an array of tasks assigned to accountID and have their due date set
 func (tm *TaskManager) GetUpcomingTasks(accountID string, pg Pagination) []Task {
-    _funcName := "TaskManager::GetUpcomingTasks"
-    _Log.FunctionStarted(_funcName, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
@@ -406,16 +406,16 @@ func (tm *TaskManager) GetUpcomingTasks(accountID string, pg Pagination) []Task 
         "_removed": false,
     }
     if err := db.C(COLLECTION_TASKS).Find(q).Sort("-due_date").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&tasks); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return tasks
 }
 
 // RemoveTask soft-removes the task and all of its activities. This function sets _removed to TRUE
 func (tm *TaskManager) RemoveTask(taskID bson.ObjectId) bool {
-    _funcName := "TaskManager::RemoveTask"
-    _Log.FunctionStarted(_funcName, taskID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Task.removeCache(taskID)
 
     dbSession := _MongoSession.Copy()
@@ -429,7 +429,7 @@ func (tm *TaskManager) RemoveTask(taskID bson.ObjectId) bool {
         taskID,
         bson.M{"$set": bson.M{"_removed": true}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error(), "Update Task")
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -438,7 +438,7 @@ func (tm *TaskManager) RemoveTask(taskID bson.ObjectId) bool {
         bson.M{"task_id": taskID},
         bson.M{"$set": bson.M{"_removed": true}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error(), "Update Activities")
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -448,7 +448,7 @@ func (tm *TaskManager) RemoveTask(taskID bson.ObjectId) bool {
             bson.M{"_id": bson.M{"$in": task.RelatedTasks}},
             bson.M{"$unset": bson.M{"related_to": true}},
         ); err != nil {
-            _Log.Error(_funcName, err.Error(), "Update Related Tasks")
+            _Log.Warn(err.Error())
         }
     }
 
@@ -460,7 +460,7 @@ func (tm *TaskManager) RemoveTask(taskID bson.ObjectId) bool {
                 "$inc":  bson.M{"counters.related_tasks": -1},
             },
         ); err != nil {
-            _Log.Error(_funcName, err.Error(), "Update RelatedTo Task")
+            _Log.Warn(err.Error())
         }
     }
     return true
@@ -552,9 +552,9 @@ func (t *Task) RemoveComment(accountID string, commentID bson.ObjectId) bool {
 
 // AddAttachments add fileIDs to the task and create the related task activities
 func (t *Task) AddAttachments(accountID string, fileIDs []UniversalID) bool {
-    _funcName := "Task::AddAttachments"
-    _Log.FunctionStarted(_funcName, t.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -571,7 +571,7 @@ func (t *Task) AddAttachments(accountID string, fileIDs []UniversalID) bool {
             "$inc":      bson.M{"counters.attachments": len(fileIDs)},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -589,9 +589,9 @@ func (t *Task) AddAttachments(accountID string, fileIDs []UniversalID) bool {
 
 // AddLabels add labelIDs to the task and create the related task activities
 func (t *Task) AddLabels(accountID string, labelIDs []string) bool {
-    _funcName := "Task::AddLabels"
-    _Log.FunctionStarted(_funcName, t.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -608,7 +608,7 @@ func (t *Task) AddLabels(accountID string, labelIDs []string) bool {
             "$inc":      bson.M{"counters.labels": len(labelIDs)},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -622,9 +622,9 @@ func (t *Task) AddLabels(accountID string, labelIDs []string) bool {
 
 // AddToDo add a new "ToDoItem" to the task document and updates the todo_nid (next id)
 func (t *Task) AddToDo(accountID string, txt string, weight int) *TaskToDo {
-    _funcName := "Task::AddToDo"
-    _Log.FunctionStarted(_funcName, t.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -644,7 +644,7 @@ func (t *Task) AddToDo(accountID string, txt string, weight int) *TaskToDo {
             "$inc": bson.M{"counters.todo_nid": 1},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
 
@@ -658,9 +658,9 @@ func (t *Task) AddToDo(accountID string, txt string, weight int) *TaskToDo {
 // watcherIDs has been already in the list then none of the watcherIDs added.
 // Caller must make sure that all the watcherIDs are not in the list before calling this function
 func (t *Task) AddWatchers(adderID string, watcherIDs []string) bool {
-    _funcName := "Task::AddWatchers"
-    _Log.FunctionStarted(_funcName, t.ID.Hex(), watcherIDs)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -680,7 +680,7 @@ func (t *Task) AddWatchers(adderID string, watcherIDs []string) bool {
             "$inc": bson.M{"counters.watchers": len(watcherIDs)},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -693,9 +693,9 @@ func (t *Task) AddWatchers(adderID string, watcherIDs []string) bool {
 // AddEditors accept an array of editorIDs and add them to the list of the taskID, if any of the
 // editorIDs has been already in the list then none of the editorIDs will be added.
 func (t *Task) AddEditors(adderID string, editorIDs []string) bool {
-    _funcName := "Task::AddEditors"
-    _Log.FunctionStarted(_funcName, t.ID.Hex(), editorIDs)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -715,7 +715,7 @@ func (t *Task) AddEditors(adderID string, editorIDs []string) bool {
             "$inc": bson.M{"counters.editors": len(editorIDs)},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -729,9 +729,9 @@ func (t *Task) AddEditors(adderID string, editorIDs []string) bool {
 // candidateIDs has been already in the list then none of the candidateIDs will be added.
 // Caller must make sure that all the candidateIDs are not int the list before calling this function
 func (t *Task) AddCandidates(adderID string, candidateIDs []string) bool {
-    _funcName := "Task::AddCandidates"
-    _Log.FunctionStarted(_funcName, t.ID.Hex(), candidateIDs)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -751,7 +751,7 @@ func (t *Task) AddCandidates(adderID string, candidateIDs []string) bool {
             "$inc": bson.M{"counters.watchers": len(candidateIDs)},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -763,9 +763,9 @@ func (t *Task) AddCandidates(adderID string, candidateIDs []string) bool {
 
 // RemoveAttachments removes fileID from the task and creates the appropriate task activity
 func (t *Task) RemoveAttachments(accountID string, fileIDs []UniversalID) bool {
-    _funcName := "Task::RemoveAttachments"
-    _Log.FunctionStarted(_funcName, t.ID.Hex(), fileIDs)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -782,7 +782,7 @@ func (t *Task) RemoveAttachments(accountID string, fileIDs []UniversalID) bool {
             "$inc":  bson.M{"counters.attachments": -len(fileIDs)},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -799,9 +799,9 @@ func (t *Task) RemoveAttachments(accountID string, fileIDs []UniversalID) bool {
 
 // RemoveLabels removes labelID from the task and creates the appropriate task activity
 func (t *Task) RemoveLabels(accountID string, labelIDs []string) bool {
-    _funcName := "Task::RemoveLabels"
-    _Log.FunctionStarted(_funcName, t.ID.Hex(), labelIDs)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -818,7 +818,7 @@ func (t *Task) RemoveLabels(accountID string, labelIDs []string) bool {
             "$inc":  bson.M{"counters.labels": -len(labelIDs)},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -834,9 +834,9 @@ func (t *Task) RemoveLabels(accountID string, labelIDs []string) bool {
 
 // RemoveToDo removes the "ToDoItem" and creates the related task activity
 func (t *Task) RemoveToDo(accountID string, todoID int) bool {
-    _funcName := "Task::RemoveToDo"
-    _Log.FunctionStarted(_funcName, t.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -854,7 +854,7 @@ func (t *Task) RemoveToDo(accountID string, todoID int) bool {
         t.ID,
         bson.M{"$pull": bson.M{"todos": bson.M{"_id": todoID}}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -866,9 +866,9 @@ func (t *Task) RemoveToDo(accountID string, todoID int) bool {
 // RemoveEditors removes the editorID from the watchers list of the taskID and returns true if the
 // operation was successful otherwise returns false
 func (t *Task) RemoveEditors(removerID string, editorIDs []string) bool {
-    _funcName := "Task::RemoveEditors"
-    _Log.FunctionStarted(_funcName, t.ID.Hex(), editorIDs)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -901,7 +901,7 @@ func (t *Task) RemoveEditors(removerID string, editorIDs []string) bool {
             "$inc": bson.M{"counters.editors": -len(editorIDs)},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -914,9 +914,9 @@ func (t *Task) RemoveEditors(removerID string, editorIDs []string) bool {
 // RemoveWatchers removes the watcherID from the watchers list of the taskID and returns true if the
 // operation was successful otherwise returns false
 func (t *Task) RemoveWatchers(removerID string, watcherIDs []string) bool {
-    _funcName := "Task::RemoveWatchers"
-    _Log.FunctionStarted(_funcName, t.ID.Hex(), watcherIDs)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -949,7 +949,7 @@ func (t *Task) RemoveWatchers(removerID string, watcherIDs []string) bool {
             "$inc": bson.M{"counters.watchers": -len(watcherIDs)},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -962,9 +962,9 @@ func (t *Task) RemoveWatchers(removerID string, watcherIDs []string) bool {
 // RemoveCandidates removes the watcherID from the watchers list of the taskID and returns true if the
 // operation was successful otherwise returns false
 func (t *Task) RemoveCandidates(removerID string, candidateIDs []string) bool {
-    _funcName := "Task::RemoveCandidates"
-    _Log.FunctionStarted(_funcName, t.ID.Hex(), candidateIDs)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -984,7 +984,7 @@ func (t *Task) RemoveCandidates(removerID string, candidateIDs []string) bool {
             "$inc": bson.M{"counters.candidates": -len(candidateIDs)},
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -996,9 +996,9 @@ func (t *Task) RemoveCandidates(removerID string, candidateIDs []string) bool {
 
 // UpdateMemberIDs
 func (t *Task) UpdateMemberIDs() {
-    _funcName := "Task::UpdateMemberIDs"
-    _Log.FunctionStarted(_funcName, t.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -1009,16 +1009,16 @@ func (t *Task) UpdateMemberIDs() {
         t.ID,
         bson.M{"$set": bson.M{"members": memberIDs.KeysToArray()}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return
 }
 
 // UpdateStatus
 func (t *Task) UpdateStatus(accountID string, newStatus TaskStatus) bool {
-    _funcName := "Task::UpdateStatus"
-    _Log.FunctionStarted(_funcName, t.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -1037,7 +1037,7 @@ func (t *Task) UpdateStatus(accountID string, newStatus TaskStatus) bool {
                 "completed_on": Timestamp(),
             }},
         ); err != nil {
-            _Log.Error(_funcName, err.Error())
+            _Log.Warn(err.Error())
             return false
         }
         _Manager.Report.CountTaskCompletedPerAccount(t.AssigneeID)
@@ -1051,7 +1051,7 @@ func (t *Task) UpdateStatus(accountID string, newStatus TaskStatus) bool {
                 "completed_on": 0,
             }},
         ); err != nil {
-            _Log.Error(_funcName, err.Error())
+            _Log.Warn(err.Error())
             return false
         }
         _Manager.TaskActivity.StatusChanged(t.ID, accountID, newStatus)
@@ -1061,9 +1061,9 @@ func (t *Task) UpdateStatus(accountID string, newStatus TaskStatus) bool {
 }
 
 func (t *Task) UpdateTodo(accountID string, todoID int, text string, weight int, done bool) bool {
-    _funcName := "Task::UpdateToDo"
-    _Log.FunctionStarted(_funcName, t.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -1094,7 +1094,7 @@ func (t *Task) UpdateTodo(accountID string, todoID int, text string, weight int,
             "todos.$.done":   done,
         }},
     ); err != nil {
-        _Log.Error(_funcName, err.Error(), t.ID.Hex(), todoID)
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -1115,9 +1115,9 @@ func (t *Task) UpdateTodo(accountID string, todoID int, text string, weight int,
 }
 
 func (t *Task) Update(accountID string, title, desc string, dueDate uint64, dueDateHasClock bool) bool {
-    _funcName := "Task::Update"
-    _Log.FunctionStarted(_funcName, t.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -1134,7 +1134,7 @@ func (t *Task) Update(accountID string, title, desc string, dueDate uint64, dueD
                 "due_date_has_clock": dueDateHasClock,
             }},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     if t.Title != title {
@@ -1162,9 +1162,9 @@ func (t *Task) Update(accountID string, title, desc string, dueDate uint64, dueD
 }
 
 func (t *Task) UpdateAssignee(accountID string, candidateIDs []string) bool {
-    _funcName := "Task::UpdateAssignee"
-    _Log.FunctionStarted(_funcName, t.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
     defer t.UpdateMemberIDs()
 
@@ -1182,7 +1182,7 @@ func (t *Task) UpdateAssignee(accountID string, candidateIDs []string) bool {
                 },
             },
         ); err != nil {
-            _Log.Error(_funcName, err.Error())
+            _Log.Warn(err.Error())
             return false
         }
         _Manager.TaskActivity.AssigneeChanged(t.ID, accountID, candidateIDs[0])
@@ -1203,7 +1203,7 @@ func (t *Task) UpdateAssignee(accountID string, candidateIDs []string) bool {
                 "$addToSet": bson.M{"members": bson.M{"$each": candidateIDs}},
             },
         ); err != nil {
-            _Log.Error(_funcName, err.Error())
+            _Log.Warn(err.Error())
             return false
         }
         _Manager.TaskActivity.CandidateAdded(t.ID, accountID, candidateIDs)
@@ -1321,9 +1321,9 @@ func (t *Task) HasAccess(accountID string, a int) bool {
 
 // HasActivity returns TRUE if the activityID is for t otherwise returns FALSE
 func (t *Task) HasActivity(activityID bson.ObjectId) bool {
-    _funcName := "Task::HasActivity"
-    _Log.FunctionStarted(_funcName, t.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -1360,9 +1360,9 @@ func (t *Task) HasAttachment(attachmentID UniversalID) bool {
 }
 
 func (t *Task) Accept(accountID string) bool {
-    _funcName := "Task::Accept"
-    _Log.FunctionStarted(_funcName, t.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -1379,7 +1379,7 @@ func (t *Task) Accept(accountID string) bool {
             },
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
 
@@ -1389,9 +1389,9 @@ func (t *Task) Accept(accountID string) bool {
 }
 
 func (t *Task) Reject(accountID, reason string) bool {
-    _funcName := "Task::Reject"
-    _Log.FunctionStarted(_funcName, t.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -1409,7 +1409,7 @@ func (t *Task) Reject(accountID, reason string) bool {
                 "$inc":  bson.M{"counters.candidates": -1},
             },
         ); err != nil {
-            _Log.Error(_funcName, err.Error())
+            _Log.Warn(err.Error())
             return false
         }
 
@@ -1429,7 +1429,7 @@ func (t *Task) Reject(accountID, reason string) bool {
                 "$inc":  bson.M{"counters.candidates": -1},
             },
         ); err != nil {
-            _Log.Error(_funcName, err.Error())
+            _Log.Warn(err.Error())
             return false
         }
         _Manager.TaskActivity.CandidateRemoved(t.ID, accountID, []string{accountID})
@@ -1441,9 +1441,9 @@ func (t *Task) Reject(accountID, reason string) bool {
 }
 
 func (t *Task) Resign(accountID, reason string) bool {
-    _funcName := "Task::Resign"
-    _Log.FunctionStarted(_funcName, t.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -1463,7 +1463,7 @@ func (t *Task) Resign(accountID, reason string) bool {
             },
         },
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
 

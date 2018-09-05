@@ -22,9 +22,9 @@ func NewPostActivityManager() *PostActivityManager {
     return new(PostActivityManager)
 }
 func (pm *PostActivityManager) Remove(activityID bson.ObjectId) bool {
-    _funcName := "PostActivityManager::Remove"
-    _Log.FunctionStarted(_funcName, activityID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -34,15 +34,15 @@ func (pm *PostActivityManager) Remove(activityID bson.ObjectId) bool {
         activityID,
         bson.M{"$set": bson.M{"_removed": true}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
 }
 func (pm *PostActivityManager) GetActivityByID(activityID bson.ObjectId) *PostActivity {
-    _funcName := "PostActivityManager::GetActivityByID"
-    _Log.FunctionStarted(_funcName, activityID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -50,15 +50,15 @@ func (pm *PostActivityManager) GetActivityByID(activityID bson.ObjectId) *PostAc
 
     postActivity := new(PostActivity)
     if err := db.C(COLLECTION_POSTS_ACTIVITIES).FindId(activityID).One(postActivity); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     return postActivity
 }
 func (pm *PostActivityManager) GetActivitiesByIDs(activityIDs []bson.ObjectId) []PostActivity {
-    _funcName := "PostActivityManager::GetActivitiesByIDs"
-    _Log.FunctionStarted(_funcName)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -68,15 +68,15 @@ func (pm *PostActivityManager) GetActivitiesByIDs(activityIDs []bson.ObjectId) [
     if err := db.C(COLLECTION_POSTS_ACTIVITIES).Find(
         bson.M{"_id": bson.M{"$in": activityIDs}},
     ).All(&postActivities); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     return postActivities
 }
 func (pm *PostActivityManager) GetActivitiesByPostID(postID bson.ObjectId, pg Pagination, filter []PostAction) []PostActivity {
-    _funcName := "PostActivityManager::GetActivitiesByPostID"
-    _Log.FunctionStarted(_funcName)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -100,19 +100,19 @@ func (pm *PostActivityManager) GetActivitiesByPostID(postID bson.ObjectId, pg Pa
     }
 
     Q := db.C(COLLECTION_POSTS_ACTIVITIES).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
-    _Log.ExplainQuery(_funcName, Q)
+    // Log Explain Query
 
     if err := Q.All(&postActivities); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return []PostActivity{}
     }
     return postActivities
 }
 
 func (pm *PostActivityManager) CommentAdd(postID bson.ObjectId, actorID string, commentID bson.ObjectId) {
-    _funcName := "PostActivityManager::CommentAdd"
-    _Log.FunctionStarted(_funcName, actorID, postID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -129,15 +129,15 @@ func (pm *PostActivityManager) CommentAdd(postID bson.ObjectId, actorID string, 
     }
 
     if err := db.C(COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return
 }
 
 func (pm *PostActivityManager) CommentRemove(postID bson.ObjectId, actorID string, commentID bson.ObjectId) {
-    _funcName := "PostActivityManager::CommentRemove"
-    _Log.FunctionStarted(_funcName, actorID, postID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -154,15 +154,15 @@ func (pm *PostActivityManager) CommentRemove(postID bson.ObjectId, actorID strin
     }
 
     if err := db.C(COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return
 }
 
 func (pm *PostActivityManager) LabelAdd(postID bson.ObjectId, actorID string, labelID string) {
-    _funcName := "PostActivityManager::LabelAdd"
-    _Log.FunctionStarted(_funcName, actorID, postID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -179,15 +179,15 @@ func (pm *PostActivityManager) LabelAdd(postID bson.ObjectId, actorID string, la
     }
 
     if err := db.C(COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return
 }
 
 func (pm *PostActivityManager) LabelRemove(postID bson.ObjectId, actorID string, labelID string) {
-    _funcName := "PostActivityManager::LabelRemove"
-    _Log.FunctionStarted(_funcName, actorID, postID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -204,15 +204,15 @@ func (pm *PostActivityManager) LabelRemove(postID bson.ObjectId, actorID string,
     }
 
     if err := db.C(COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return
 }
 
 func (pm *PostActivityManager) PlaceMove(postID bson.ObjectId, actorID string, oldPlaceID string, newPlaceID string) {
-    _funcName := "PostActivityManager::PlaceMove"
-    _Log.FunctionStarted(_funcName, actorID, postID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -230,15 +230,15 @@ func (pm *PostActivityManager) PlaceMove(postID bson.ObjectId, actorID string, o
     }
 
     if err := db.C(COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return
 }
 
 func (pm *PostActivityManager) PlaceAttached(postID bson.ObjectId, actorID string, newPlaceID string) {
-    _funcName := "PostActivityManager::PlaceAttached"
-    _Log.FunctionStarted(_funcName, actorID, postID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -255,15 +255,15 @@ func (pm *PostActivityManager) PlaceAttached(postID bson.ObjectId, actorID strin
     }
 
     if err := db.C(COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return
 }
 
 func (pm *PostActivityManager) Edit(postID bson.ObjectId, actorID string) {
-    _funcName := "PostActivityManager::Edit"
-    _Log.FunctionStarted(_funcName, actorID, postID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -279,7 +279,7 @@ func (pm *PostActivityManager) Edit(postID bson.ObjectId, actorID string) {
     }
 
     if err := db.C(COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return
 

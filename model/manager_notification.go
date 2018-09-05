@@ -105,9 +105,9 @@ func (n *Notification) incrementCounter() {
 func (nm *NotificationManager) GetByAccountID(
     accountID string, pg Pagination, only_unread bool, subject string,
 ) []Notification {
-    _funcName := "NotificationManager::GetByAccountID"
-    _Log.FunctionStarted(_funcName, accountID, only_unread)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -140,16 +140,16 @@ func (nm *NotificationManager) GetByAccountID(
     if err := db.C(COLLECTION_NOTIFICATIONS).Find(query).
         Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit()).
         All(&n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return n
 }
 
 // GetByID returns a pointer to Notification object identified by notificationID
 func (nm *NotificationManager) GetByID(notificationID string) (n *Notification) {
-    _funcName := "NotificationManager::GetByID"
-    _Log.FunctionStarted(_funcName, notificationID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -162,9 +162,9 @@ func (nm *NotificationManager) GetByID(notificationID string) (n *Notification) 
 
 // MarkAsRead set the notificationID as read, if notificationID = 'all' then mark all the unread notifications as read
 func (nm *NotificationManager) MarkAsRead(notificationID, accountID string) {
-    _funcName := "NotificationManager::MarkAsRead"
-    _Log.FunctionStarted(_funcName, notificationID, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -206,9 +206,9 @@ func (nm *NotificationManager) MarkAsRead(notificationID, accountID string) {
 
 //MarkAsReadByPostID set all notifications related to postID as read. Useful when clients read comments
 func (nm *NotificationManager) MarkAsReadByPostID(postID bson.ObjectId, accountID string) []string {
-    _funcName := "NotificationManager::MarkAsReadByPostID"
-    _Log.FunctionStarted(_funcName, postID.Hex(), accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -247,9 +247,9 @@ func (nm *NotificationManager) MarkAsReadByPostID(postID bson.ObjectId, accountI
 
 // Remove removes notification from user notifications' list
 func (nm *NotificationManager) Remove(notificationID string) bool {
-    _funcName := "NotificationManager::Remove"
-    _Log.FunctionStarted(_funcName, notificationID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -259,7 +259,7 @@ func (nm *NotificationManager) Remove(notificationID string) bool {
         notificationID,
         bson.M{"$set": bson.M{"_removed": true}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
@@ -267,9 +267,9 @@ func (nm *NotificationManager) Remove(notificationID string) bool {
 
 // Post Notifications
 func (nm *NotificationManager) AddMention(senderID, mentionedID string, postID, commentID bson.ObjectId) *Notification {
-    _funcName := "NotificationManager::AddMention"
-    _Log.FunctionStarted(_funcName, senderID, mentionedID, postID.Hex(), commentID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -289,7 +289,7 @@ func (nm *NotificationManager) AddMention(senderID, mentionedID string, postID, 
     n.Removed = false
 
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error(), senderID, mentionedID, postID.Hex(), commentID.Hex())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -297,9 +297,9 @@ func (nm *NotificationManager) AddMention(senderID, mentionedID string, postID, 
 }
 
 func (nm *NotificationManager) JoinedPlace(adderID, addedID, placeID string) *Notification {
-    _funcName := "NotificationManager::JoinedPlace"
-    _Log.FunctionStarted(_funcName, adderID, addedID, placeID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -318,7 +318,7 @@ func (nm *NotificationManager) JoinedPlace(adderID, addedID, placeID string) *No
     n.Removed = false
 
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error(), adderID, addedID, placeID)
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -326,9 +326,9 @@ func (nm *NotificationManager) JoinedPlace(adderID, addedID, placeID string) *No
 }
 
 func (nm *NotificationManager) Comment(accountID, commenterID string, postID, commentID bson.ObjectId) *Notification {
-    _funcName := "NotificationManager::Comment"
-    _Log.FunctionStarted(_funcName, accountID, commenterID, postID.Hex(), commentID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -374,7 +374,7 @@ func (nm *NotificationManager) Comment(accountID, commenterID string, postID, co
 
     n.Data.Others = []string{n.ActorID}
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -382,9 +382,9 @@ func (nm *NotificationManager) Comment(accountID, commenterID string, postID, co
 }
 
 func (nm *NotificationManager) Promoted(promotedID, promoterID, placeID string) *Notification {
-    _funcName := "NotificationManager::Promoted"
-    _Log.FunctionStarted(_funcName, promotedID, promoterID, placeID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -403,7 +403,7 @@ func (nm *NotificationManager) Promoted(promotedID, promoterID, placeID string) 
     n.Removed = false
 
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -411,9 +411,9 @@ func (nm *NotificationManager) Promoted(promotedID, promoterID, placeID string) 
 }
 
 func (nm *NotificationManager) Demoted(demotedID, demoterID, placeID string) *Notification {
-    _funcName := "NotificationManager::Demoted"
-    _Log.FunctionStarted(_funcName, demotedID, demoterID, placeID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -432,7 +432,7 @@ func (nm *NotificationManager) Demoted(demotedID, demoterID, placeID string) *No
     n.Removed = false
 
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -440,9 +440,9 @@ func (nm *NotificationManager) Demoted(demotedID, demoterID, placeID string) *No
 }
 
 func (nm *NotificationManager) PlaceSettingsChanged(accountID, changerID, placeID string) *Notification {
-    _funcName := "NotificationManager::PlaceSettingsChanged"
-    _Log.FunctionStarted(_funcName, accountID, changerID, placeID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -477,7 +477,7 @@ func (nm *NotificationManager) PlaceSettingsChanged(accountID, changerID, placeI
         }
     }
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -485,9 +485,9 @@ func (nm *NotificationManager) PlaceSettingsChanged(accountID, changerID, placeI
 }
 
 func (nm *NotificationManager) NewSession(accountID, clientID string) *Notification {
-    _funcName := "NotificationManager::NewSession"
-    _Log.FunctionStarted(_funcName, accountID, clientID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -506,7 +506,7 @@ func (nm *NotificationManager) NewSession(accountID, clientID string) *Notificat
     n.Removed = false
 
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -516,9 +516,9 @@ func (nm *NotificationManager) NewSession(accountID, clientID string) *Notificat
 func (nm *NotificationManager) LabelRequestApproved(
     accountID, labelID, deciderID string, labelRequestID bson.ObjectId,
 ) *Notification {
-    _funcName := "NotificationManager::LabelRequestApproved"
-    _Log.FunctionStarted(_funcName, accountID, labelID, deciderID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -538,7 +538,7 @@ func (nm *NotificationManager) LabelRequestApproved(
     n.Removed = false
 
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -549,9 +549,9 @@ func (nm *NotificationManager) LabelRequestApproved(
 func (nm *NotificationManager) LabelRequestRejected(
     accountID, labelID, deciderID string, labelRequestID bson.ObjectId,
 ) *Notification {
-    _funcName := "NotificationManager::LabelRequestRejected"
-    _Log.FunctionStarted(_funcName, accountID, labelID, deciderID, labelRequestID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -571,7 +571,7 @@ func (nm *NotificationManager) LabelRequestRejected(
     n.Removed = false
 
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -580,9 +580,9 @@ func (nm *NotificationManager) LabelRequestRejected(
 }
 
 func (nm *NotificationManager) LabelRequest(accountID, requesterID string) *Notification {
-    _funcName := "NotificationManager::LabelRequest"
-    _Log.FunctionStarted(_funcName, accountID, requesterID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -622,7 +622,7 @@ func (nm *NotificationManager) LabelRequest(accountID, requesterID string) *Noti
     }
 
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -630,9 +630,9 @@ func (nm *NotificationManager) LabelRequest(accountID, requesterID string) *Noti
 }
 
 func (nm *NotificationManager) LabelJoined(accountID, labelID, adderID string) *Notification {
-    _funcName := "NotificationManager::LabelJoined"
-    _Log.FunctionStarted(_funcName, accountID, labelID, adderID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -651,7 +651,7 @@ func (nm *NotificationManager) LabelJoined(accountID, labelID, adderID string) *
     n.Removed = false
 
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -660,9 +660,9 @@ func (nm *NotificationManager) LabelJoined(accountID, labelID, adderID string) *
 
 // Task Notifications
 func (nm *NotificationManager) TaskAssigned(accountID, assignorID string, task *Task) *Notification {
-    _funcName := "NotificationManager::TaskAssigned"
-    _Log.FunctionStarted(_funcName, accountID, assignorID, task.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -682,7 +682,7 @@ func (nm *NotificationManager) TaskAssigned(accountID, assignorID string, task *
     n.Data.TaskTitle = task.Title
 
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -691,9 +691,9 @@ func (nm *NotificationManager) TaskAssigned(accountID, assignorID string, task *
 }
 
 func (nm *NotificationManager) TaskWatcherAdded(accountID, adderID string, task *Task) *Notification {
-    _funcName := "NotificationManager::TaskWatcherAdded"
-    _Log.FunctionStarted(_funcName, accountID, adderID, task.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -713,7 +713,7 @@ func (nm *NotificationManager) TaskWatcherAdded(accountID, adderID string, task 
     n.Data.TaskTitle = task.Title
 
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -721,9 +721,9 @@ func (nm *NotificationManager) TaskWatcherAdded(accountID, adderID string, task 
 }
 
 func (nm *NotificationManager) TaskEditorAdded(accountID, adderID string, task *Task) *Notification {
-    _funcName := "NotificationManager::TaskEditorAdded"
-    _Log.FunctionStarted(_funcName, accountID, adderID, task.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -743,7 +743,7 @@ func (nm *NotificationManager) TaskEditorAdded(accountID, adderID string, task *
     n.Data.TaskTitle = task.Title
 
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -751,9 +751,9 @@ func (nm *NotificationManager) TaskEditorAdded(accountID, adderID string, task *
 }
 
 func (nm *NotificationManager) TaskCandidateAdded(accountID, adderID string, task *Task) *Notification {
-    _funcName := "NotificationManager::TaskCandidateAdded"
-    _Log.FunctionStarted(_funcName, accountID, adderID, task.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -773,7 +773,7 @@ func (nm *NotificationManager) TaskCandidateAdded(accountID, adderID string, tas
     n.Data.TaskTitle = task.Title
 
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -782,9 +782,9 @@ func (nm *NotificationManager) TaskCandidateAdded(accountID, adderID string, tas
 }
 
 func (nm *NotificationManager) TaskAssigneeChanged(accountID, newAssigneeID, actorID string, task *Task) *Notification {
-    _funcName := "NotificationManager::TaskAssigneeChanged"
-    _Log.FunctionStarted(_funcName, accountID, newAssigneeID, actorID, task.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -804,7 +804,7 @@ func (nm *NotificationManager) TaskAssigneeChanged(accountID, newAssigneeID, act
     n.Data.TaskTitle = task.Title
 
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     n.incrementCounter()
     return n
@@ -813,9 +813,9 @@ func (nm *NotificationManager) TaskAssigneeChanged(accountID, newAssigneeID, act
 func (nm *NotificationManager) TaskUpdated(
     accountID string, changerID string, task *Task, newTitle, newDesc string,
 ) *Notification {
-    _funcName := "NotificationManager::TaskUpdated"
-    _Log.FunctionStarted(_funcName, changerID, task.ID.Hex(), newTitle, newDesc)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -835,7 +835,7 @@ func (nm *NotificationManager) TaskUpdated(
     n.Data.TaskDesc = newDesc
     n.Data.TaskTitle = newTitle
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -843,9 +843,9 @@ func (nm *NotificationManager) TaskUpdated(
 }
 
 func (nm *NotificationManager) TaskOverdue(accountID string, task *Task) *Notification {
-    _funcName := "NotificationManager::TaskOverdue"
-    _Log.FunctionStarted(_funcName, task.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -865,7 +865,7 @@ func (nm *NotificationManager) TaskOverdue(accountID string, task *Task) *Notifi
     n.Data.TaskTitle = task.Title
 
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -874,9 +874,9 @@ func (nm *NotificationManager) TaskOverdue(accountID string, task *Task) *Notifi
 }
 
 func (nm *NotificationManager) TaskDueTimeUpdated(accountID string, task *Task) *Notification {
-    _funcName := "NotificationManager::TaskOverdueUpdated"
-    _Log.FunctionStarted(_funcName, task.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -896,7 +896,7 @@ func (nm *NotificationManager) TaskDueTimeUpdated(accountID string, task *Task) 
     n.Data.TaskTitle = task.Title
 
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -905,9 +905,9 @@ func (nm *NotificationManager) TaskDueTimeUpdated(accountID string, task *Task) 
 }
 
 func (nm *NotificationManager) TaskRejected(accountID, actorID string, task *Task) *Notification {
-    _funcName := "NotificationManager::TaskRejected"
-    _Log.FunctionStarted(_funcName, task.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -927,7 +927,7 @@ func (nm *NotificationManager) TaskRejected(accountID, actorID string, task *Tas
     n.Data.TaskTitle = task.Title
 
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -936,9 +936,9 @@ func (nm *NotificationManager) TaskRejected(accountID, actorID string, task *Tas
 }
 
 func (nm *NotificationManager) TaskAccepted(accountID, actorID string, task *Task) *Notification {
-    _funcName := "NotificationManager::TaskAccepted"
-    _Log.FunctionStarted(_funcName, task.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -958,7 +958,7 @@ func (nm *NotificationManager) TaskAccepted(accountID, actorID string, task *Tas
     n.Data.TaskTitle = task.Title
 
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -967,9 +967,9 @@ func (nm *NotificationManager) TaskAccepted(accountID, actorID string, task *Tas
 }
 
 func (nm *NotificationManager) TaskCompleted(accountID, actorID string, task *Task) *Notification {
-    _funcName := "NotificationManager::TaskCompleted"
-    _Log.FunctionStarted(_funcName, task.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -989,7 +989,7 @@ func (nm *NotificationManager) TaskCompleted(accountID, actorID string, task *Ta
     n.Data.TaskTitle = task.Title
 
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -998,9 +998,9 @@ func (nm *NotificationManager) TaskCompleted(accountID, actorID string, task *Ta
 }
 
 func (nm *NotificationManager) TaskHold(accountID, actorID string, task *Task) *Notification {
-    _funcName := "NotificationManager::TaskHold"
-    _Log.FunctionStarted(_funcName, task.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -1020,7 +1020,7 @@ func (nm *NotificationManager) TaskHold(accountID, actorID string, task *Task) *
     n.Data.TaskTitle = task.Title
 
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -1029,9 +1029,9 @@ func (nm *NotificationManager) TaskHold(accountID, actorID string, task *Task) *
 }
 
 func (nm *NotificationManager) TaskInProgress(accountID, actorID string, task *Task) *Notification {
-    _funcName := "NotificationManager::TaskInProgress"
-    _Log.FunctionStarted(_funcName, task.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -1051,7 +1051,7 @@ func (nm *NotificationManager) TaskInProgress(accountID, actorID string, task *T
     n.Data.TaskTitle = task.Title
 
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -1060,9 +1060,9 @@ func (nm *NotificationManager) TaskInProgress(accountID, actorID string, task *T
 }
 
 func (nm *NotificationManager) TaskFailed(accountID, actorID string, task *Task) *Notification {
-    _funcName := "NotificationManager::TaskFailed"
-    _Log.FunctionStarted(_funcName, task.ID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -1082,7 +1082,7 @@ func (nm *NotificationManager) TaskFailed(accountID, actorID string, task *Task)
     n.Data.TaskTitle = task.Title
 
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -1093,9 +1093,9 @@ func (nm *NotificationManager) TaskFailed(accountID, actorID string, task *Task)
 func (nm *NotificationManager) TaskCommentMentioned(
     mentionedID, actorID string, task *Task, activityID bson.ObjectId,
 ) *Notification {
-    _funcName := "NotificationManager::AddMention"
-    _Log.FunctionStarted(_funcName, actorID, mentionedID, task.ID.Hex(), activityID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -1116,7 +1116,7 @@ func (nm *NotificationManager) TaskCommentMentioned(
     n.Data.TaskTitle = task.Title
 
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error(), actorID, mentionedID, task.ID.Hex(), activityID.Hex())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()
@@ -1124,9 +1124,9 @@ func (nm *NotificationManager) TaskCommentMentioned(
 }
 
 func (nm *NotificationManager) TaskComment(accountID, actorID string, task *Task, activityID bson.ObjectId) *Notification {
-    _funcName := "NotificationManager::Comment"
-    _Log.FunctionStarted(_funcName, accountID, actorID, activityID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -1174,7 +1174,7 @@ func (nm *NotificationManager) TaskComment(accountID, actorID string, task *Task
 
     n.Data.Others = []string{n.ActorID}
     if err := db.C(COLLECTION_NOTIFICATIONS).Insert(n); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     n.incrementCounter()

@@ -33,9 +33,9 @@ func NewWebsocketManager() *WebsocketManager { return new(WebsocketManager) }
 //	SetKey is used to find accountIDs by [bundleID]
 //	DHKey is used to find accountID but [bundleID],[websocketID]
 func (wm *WebsocketManager) Register(websocketID, bundleID, deviceID, accountID string) bool {
-    _funcName := "WebsocketManager::Register"
-    _Log.FunctionStarted(_funcName, websocketID, bundleID, deviceID, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     c := _Cache.Pool.Get()
     defer c.Close()
@@ -64,9 +64,9 @@ func (wm *WebsocketManager) Register(websocketID, bundleID, deviceID, accountID 
 // Returns an array of Websocket, if bundleID != "" then it only returns websockets
 // which are in the bundleID
 func (wm *WebsocketManager) GetWebsocketsByAccountID(accountID, bundleID string) []Websocket {
-    _funcName := "WebsocketManager::GetWebsocketsByAccountID"
-    _Log.FunctionStarted(_funcName, accountID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     c := _Cache.Pool.Get()
     defer c.Close()
@@ -77,7 +77,7 @@ func (wm *WebsocketManager) GetWebsocketsByAccountID(accountID, bundleID string)
     websockets := make([]Websocket, 0)
     hashKeyID := fmt.Sprintf("ws:account:%s", accountID)
     if m, err := redis.StringMap(c.Do("HGETALL", hashKeyID)); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return []Websocket{}
     } else {
         for key, deviceID := range m {
@@ -99,9 +99,9 @@ func (wm *WebsocketManager) GetWebsocketsByAccountID(accountID, bundleID string)
 
 // GetAccountsByBundleID
 func (wm *WebsocketManager) GetAccountsByBundleID(bundleID string) []string {
-    _funcName := "WebsocketManager::GetWebsocketsByBundleID"
-    _Log.FunctionStarted(_funcName)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     c := _Cache.Pool.Get()
     defer c.Close()
@@ -111,7 +111,7 @@ func (wm *WebsocketManager) GetAccountsByBundleID(bundleID string) []string {
     }
     setKeyID := fmt.Sprintf("ws:bundle:%s", bundleID)
     if accountIDs, err := redis.Strings(c.Do("SMEMBERS", setKeyID)); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     } else {
         return accountIDs
     }
@@ -121,9 +121,9 @@ func (wm *WebsocketManager) GetAccountsByBundleID(bundleID string) []string {
 // Remove
 // Removes the websocketID in the bundleID
 func (wm *WebsocketManager) Remove(websocketID, bundleID string) *Websocket {
-    _funcName := "WebsocketManager::Remove"
-    _Log.FunctionStarted(_funcName, websocketID, bundleID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     c := _Cache.Pool.Get()
     defer c.Close()
@@ -135,7 +135,7 @@ func (wm *WebsocketManager) Remove(websocketID, bundleID string) *Websocket {
     ws := new(Websocket)
     keyID := fmt.Sprintf("bundle-ws:%s:%s", bundleID, websocketID)
     if accountID, err := redis.String(c.Do("GET", keyID)); err != nil {
-        _Log.Error(_funcName, err.Error(), bundleID, websocketID)
+        _Log.Warn(err.Error())
         return nil
     } else {
         fieldName := fmt.Sprintf("%s:%s", bundleID, websocketID)
@@ -167,9 +167,9 @@ func (wm *WebsocketManager) Remove(websocketID, bundleID string) *Websocket {
 
 // RemoveByBundleID
 func (wm *WebsocketManager) RemoveByBundleID(bundleID string) {
-    _funcName := "WebsocketManager::RemoveByBundleID"
-    _Log.FunctionStarted(_funcName, bundleID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     c := _Cache.Pool.Get()
     defer c.Close()
@@ -180,7 +180,7 @@ func (wm *WebsocketManager) RemoveByBundleID(bundleID string) {
 
     setKeyID := fmt.Sprintf("ws:bundle:%s", bundleID)
     if accountIDs, err := redis.Strings(c.Do("SMEMBERS", setKeyID)); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     } else {
         for _, accountID := range accountIDs {
             hashKeyID := fmt.Sprintf("ws:account:%s", accountID)
@@ -197,9 +197,9 @@ func (wm *WebsocketManager) RemoveByBundleID(bundleID string) {
 // IsConnected
 // Returns a map of accountIDs with TRUE value for each accountID which has at least one open socket
 func (wm *WebsocketManager) IsConnected(accountIDs []string) MB {
-    _funcName := "WebsocketManager::IsConnected"
-    _Log.FunctionStarted(_funcName, accountIDs)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
     res := MB{}
     c := _Cache.Pool.Get()
     defer c.Close()

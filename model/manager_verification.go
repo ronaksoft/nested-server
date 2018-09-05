@@ -41,9 +41,9 @@ func NewVerificationManager() *VerificationManager {
 // Creates a verification object for 'phone' and return the verification object to caller
 // if verification object is nil then something has been wrong
 func (vm *VerificationManager) CreateByPhone(phone string) *Verification {
-    _funcName := "VerificationManager::CreateByPhone"
-    _Log.FunctionStarted(_funcName, phone)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -61,7 +61,7 @@ func (vm *VerificationManager) CreateByPhone(phone string) *Verification {
         v.LongCode = base64.URLEncoding.EncodeToString(md5.New().Sum([]byte(RandomID(10))))
     }
     if err := db.C(COLLECTION_VERIFICATIONS).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return v
 }
@@ -70,9 +70,9 @@ func (vm *VerificationManager) CreateByPhone(phone string) *Verification {
 // Creates a verification object for 'email' and return the verification object to caller
 // if verification object is nil then something has been wrong
 func (vm *VerificationManager) CreateByEmail(email string) *Verification {
-    _funcName := "VerificationManager::CreateByEmail"
-    _Log.FunctionStarted(_funcName, email)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -90,7 +90,7 @@ func (vm *VerificationManager) CreateByEmail(email string) *Verification {
         v.LongCode = base64.URLEncoding.EncodeToString(md5.New().Sum([]byte(RandomID(10))))
     }
     if err := db.C(COLLECTION_VERIFICATIONS).Insert(v); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
     }
     return v
 }
@@ -99,9 +99,9 @@ func (vm *VerificationManager) CreateByEmail(email string) *Verification {
 // Returns the Verification object identified by ID, this function does not check any
 // extra parameter. It returns the Verification object even if it was expired or verified ...
 func (vm *VerificationManager) GetByID(verifyID string) *Verification {
-    _funcName := "VerificationManager::GetByID"
-    _Log.FunctionStarted(_funcName, verifyID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -109,7 +109,7 @@ func (vm *VerificationManager) GetByID(verifyID string) *Verification {
 
     v := new(Verification)
     if err := db.C(COLLECTION_VERIFICATIONS).FindId(verifyID).One(v); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return nil
     }
     return v
@@ -119,9 +119,9 @@ func (vm *VerificationManager) GetByID(verifyID string) *Verification {
 // Returns true if the code matches verification code otherwise if attempts are exceeded the limit
 // or expire time has been passed the verification object is expired.
 func (vm *VerificationManager) Verify(verifyID, code string) bool {
-    _funcName := "VerificationManager::Verify"
-    _Log.FunctionStarted(_funcName, verifyID, code)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -133,7 +133,7 @@ func (vm *VerificationManager) Verify(verifyID, code string) bool {
         ReturnNew: true,
     }
     if _, err := db.C(COLLECTION_VERIFICATIONS).FindId(verifyID).Apply(ch, v); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     // expire the verification if too many wrong attempts or too long
@@ -169,9 +169,9 @@ func (vm *VerificationManager) Verify(verifyID, code string) bool {
 // Description:
 // Returns true if verification identified by verifyID is verified otherwise returns false
 func (vm *VerificationManager) Verified(verifyID string) bool {
-    _funcName := "VerificationManager::Verified"
-    _Log.FunctionStarted(_funcName, verifyID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -179,7 +179,7 @@ func (vm *VerificationManager) Verified(verifyID string) bool {
 
     v := new(Verification)
     if err := db.C(COLLECTION_VERIFICATIONS).FindId(verifyID).One(v); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return v.Verified
@@ -187,9 +187,9 @@ func (vm *VerificationManager) Verified(verifyID string) bool {
 
 // IncrementSmsCounter Increments the counter for number SMS messages have been sent for this Verification object.
 func (vm *VerificationManager) IncrementSmsCounter(verifyID string) {
-    _funcName := "VerificationManager::IncrementSmsCounter"
-    _Log.FunctionStarted(_funcName, verifyID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -197,18 +197,18 @@ func (vm *VerificationManager) IncrementSmsCounter(verifyID string) {
 
     v := new(Verification)
     if err := db.C(COLLECTION_VERIFICATIONS).FindId(verifyID).One(v); err != nil {
-        _Log.Error(_funcName, err.Error(), "FindId")
+        _Log.Warn(err.Error())
     }
     if err := db.C(COLLECTION_VERIFICATIONS).UpdateId(verifyID, bson.M{"$inc": bson.M{"counters.sms": 1}}); err != nil {
-        _Log.Error(_funcName, err.Error(), "UpdateId")
+        _Log.Warn(err.Error())
     }
 }
 
 // IncrementCallCounter Increments the counter for number of calls have been made for this Verification object.
 func (vm *VerificationManager) IncrementCallCounter(verifyID string) {
-    _funcName := "VerificationManager::IncrementCallCounter"
-    _Log.FunctionStarted(_funcName, verifyID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -216,18 +216,18 @@ func (vm *VerificationManager) IncrementCallCounter(verifyID string) {
 
     v := new(Verification)
     if err := db.C(COLLECTION_VERIFICATIONS).FindId(verifyID).One(v); err != nil {
-        _Log.Error(_funcName, err.Error(), "FindId")
+        _Log.Warn(err.Error())
     }
     if err := db.C(COLLECTION_VERIFICATIONS).UpdateId(verifyID, bson.M{"$inc": bson.M{"counters.call": 1}}); err != nil {
-        _Log.Error(_funcName, err.Error(), "UpdateId")
+        _Log.Warn(err.Error())
     }
 }
 
 // IncrementEmailCounter Increments the counter for the number of emails have been sent for this Verification object.
 func (vm *VerificationManager) IncrementEmailCounter(verifyID string) {
-    _funcName := "VerificationManager::IncrementEmailCounter"
-    _Log.FunctionStarted(_funcName, verifyID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -235,18 +235,18 @@ func (vm *VerificationManager) IncrementEmailCounter(verifyID string) {
 
     v := new(Verification)
     if err := db.C(COLLECTION_VERIFICATIONS).FindId(verifyID).One(v); err != nil {
-        _Log.Error(_funcName, err.Error(), "FindId")
+        _Log.Warn(err.Error())
     }
     if err := db.C(COLLECTION_VERIFICATIONS).UpdateId(verifyID, bson.M{"$inc": bson.M{"counters.email": 1}}); err != nil {
-        _Log.Error(_funcName, err.Error(), "UpdateId")
+        _Log.Warn(err.Error())
     }
 }
 
 // Expire expires the verification identified by "verifyID" and that Verification object cannot be verified anymore.
 func (vm *VerificationManager) Expire(verifyID string) {
-    _funcName := "VerificationManager::Expire"
-    _Log.FunctionStarted(_funcName, verifyID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    // removed LOG Function
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -254,9 +254,9 @@ func (vm *VerificationManager) Expire(verifyID string) {
 
     v := new(Verification)
     if err := db.C(COLLECTION_VERIFICATIONS).FindId(verifyID).One(v); err != nil {
-        _Log.Error(_funcName, err.Error(), "FindId")
+        _Log.Warn(err.Error())
     }
     if err := db.C(COLLECTION_VERIFICATIONS).UpdateId(verifyID, bson.M{"$set": bson.M{"expired": true}}); err != nil {
-        _Log.Error(_funcName, err.Error(), "UpdateId")
+        _Log.Warn(err.Error())
     }
 }

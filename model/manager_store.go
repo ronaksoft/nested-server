@@ -110,9 +110,9 @@ func GenerateFileInfo(filename, uploader string, fileType string, thumbnails Thu
 
 // Save inserts file into database
 func (fm *StoreManager) Save(r io.Reader, info StoredFileInfo) *StoredFileInfo {
-    _funcName := "StoreManager::Save"
-    _Log.FunctionStarted(_funcName, info)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Copy()
     store := dbSession.DB(STORE_NAME).GridFS("fs")
@@ -122,7 +122,7 @@ func (fm *StoreManager) Save(r io.Reader, info StoredFileInfo) *StoredFileInfo {
 
     var gFile *mgo.GridFile
     if gf, err := store.Create(finfo.Name); err != nil {
-        _Log.Error(_funcName, err.Error(), "MongoStore Create")
+        _Log.Warn(err.Error())
         return nil
     } else {
         gFile = gf
@@ -134,7 +134,7 @@ func (fm *StoreManager) Save(r io.Reader, info StoredFileInfo) *StoredFileInfo {
     gFile.SetContentType(finfo.MimeType)
 
     if n, err := io.Copy(gFile, r); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         gFile.Abort()
         return nil
     } else if 0 == n {
@@ -152,16 +152,16 @@ func (fm *StoreManager) Save(r io.Reader, info StoredFileInfo) *StoredFileInfo {
 
 // SetThumbnails sets a file's thumbnails map in file info
 func (fm *StoreManager) SetThumbnails(uniID UniversalID, thumbnails Thumbnails) error {
-    _funcName := "StoreManager::SetThumbnails"
-    _Log.FunctionStarted(_funcName, uniID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     store := dbSession.DB(STORE_NAME).GridFS("fs")
     defer dbSession.Close()
 
     if err := store.Files.UpdateId(uniID, bson.M{"$set": bson.M{"metadata.thumbnails": thumbnails}}); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return err
     }
     return nil
@@ -169,16 +169,16 @@ func (fm *StoreManager) SetThumbnails(uniID UniversalID, thumbnails Thumbnails) 
 
 // SetMeta sets a file's meta object in file info
 func (fm *StoreManager) SetMeta(uniID UniversalID, meta interface{}) error {
-    _funcName := "StoreManager::SetMeta"
-    _Log.FunctionStarted(_funcName, uniID, meta)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     store := dbSession.DB(STORE_NAME).GridFS("fs")
     defer dbSession.Close()
 
     if err := store.Files.UpdateId(uniID, bson.M{"$set": bson.M{"metadata.meta": meta}}); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return err
     }
     return nil
@@ -186,16 +186,16 @@ func (fm *StoreManager) SetMeta(uniID UniversalID, meta interface{}) error {
 
 // Exists checks if file exists
 func (fm *StoreManager) Exists(uniID UniversalID) bool {
-    _funcName := "StoreManager::Exists"
-    _Log.FunctionStarted(_funcName, uniID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     store := dbSession.DB(STORE_NAME).GridFS("fs")
     defer dbSession.Close()
 
     if c, err := store.Files.FindId(uniID).Count(); err != nil || 0 == c {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true

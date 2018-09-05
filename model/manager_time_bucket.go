@@ -27,9 +27,9 @@ func (bm *TimeBucketManager) GetBucketID(timestamp uint64) string {
 }
 
 func (bm *TimeBucketManager) GetBucketsBefore(timestamp uint64) []TimeBucket {
-    _funcName := "TimeBucketManager::GetBucketsBefore"
-    _Log.FunctionStarted(_funcName, timestamp)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -40,15 +40,15 @@ func (bm *TimeBucketManager) GetBucketsBefore(timestamp uint64) []TimeBucket {
     if err := db.C(COLLECTION_TIME_BUCKETS).Find(
         bson.M{"_id": bson.M{"$lt": bucketID}},
     ).All(&buckets); err != nil {
-        _Log.Error(_funcName, err.Error(), timestamp, bucketID)
+        _Log.Warn(err.Error())
     }
     return buckets
 }
 
 func (bm *TimeBucketManager) GetByID(bucketID string) *TimeBucket {
-    _funcName := "TimeBucketManager::GetByID"
-    _Log.FunctionStarted(_funcName, bucketID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -56,16 +56,16 @@ func (bm *TimeBucketManager) GetByID(bucketID string) *TimeBucket {
 
     bucket := new(TimeBucket)
     if err := db.C(COLLECTION_TIME_BUCKETS).FindId(bucketID).One(bucket); err != nil {
-        _Log.Error(_funcName, err.Error(), bucketID)
+        _Log.Warn(err.Error())
         return nil
     }
     return bucket
 }
 
 func (bm *TimeBucketManager) AddOverdueTask(timestamp uint64, taskID bson.ObjectId) bool {
-    _funcName := "TimeBucketManager::AddOverdueTask"
-    _Log.FunctionStarted(_funcName, taskID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -76,16 +76,16 @@ func (bm *TimeBucketManager) AddOverdueTask(timestamp uint64, taskID bson.Object
         bson.M{"_id": bucketID},
         bson.M{"$addToSet": bson.M{"overdue_tasks": taskID}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
 }
 
 func (bm *TimeBucketManager) RemoveOverdueTask(timestamp uint64, taskID bson.ObjectId) bool {
-    _funcName := "TimeBucketManager::RemoveOverdueTask"
-    _Log.FunctionStarted(_funcName, taskID.Hex())
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -96,23 +96,23 @@ func (bm *TimeBucketManager) RemoveOverdueTask(timestamp uint64, taskID bson.Obj
         bson.M{"_id": bucketID, "overdue_tasks": taskID},
         bson.M{"$pull": bson.M{"overdue_tasks": taskID}},
     ); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
 }
 
 func (bm *TimeBucketManager) Remove(bucketID string) bool {
-    _funcName := "TimeBucketManager::Remove"
-    _Log.FunctionStarted(_funcName, bucketID)
-    defer _Log.FunctionFinished(_funcName)
+    // _funcName
+    //
+    // removed LOG Function
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
 
     if err := db.C(COLLECTION_TIME_BUCKETS).RemoveId(bucketID); err != nil {
-        _Log.Error(_funcName, err.Error())
+        _Log.Warn(err.Error())
         return false
     }
     return true
