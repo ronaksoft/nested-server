@@ -1,17 +1,18 @@
 package api
 
 import (
-    "git.ronaksoftware.com/nested/server/model"
     "log"
     "os"
     "sync"
-    "gopkg.in/fzerorubigd/onion.v3"
+
+    "git.ronaksoftware.com/nested/server/model"
     "git.ronaksoftware.com/nested/server/server-gateway/client"
+    "gopkg.in/fzerorubigd/onion.v3"
 )
 
 // AUTH_LEVEL Constants
 const (
-    _                       AuthLevel = iota
+    _ AuthLevel = iota
     AUTH_LEVEL_UNAUTHORIZED
     AUTH_LEVEL_APP_L1
     AUTH_LEVEL_APP_L2
@@ -78,7 +79,6 @@ func NewServer(config *onion.Onion, wg *sync.WaitGroup) *API {
 
     // Instantiate Worker
     s.requestWorker = NewWorker(s)
-
 
     return s
 }

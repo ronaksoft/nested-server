@@ -80,6 +80,15 @@ type Manager struct {
 
 func NewManager(instanceID, mongoDSN, redisDSN string, debug int) (*Manager, error) {
     __Debug = debug
+    logConfig := zap.NewProductionConfig()
+    logConfig.Encoding = "console"
+    logConfig.Level = zap.NewAtomicLevelAt(zapcore.Level(__Debug))
+    if v, err := logConfig.Build(); err != nil {
+        os.Exit(1)
+    } else {
+        _Log = v
+    }
+
 
     // Initial MongoDB
     tlsConfig := new(tls.Config)
@@ -155,14 +164,6 @@ func NewManager(instanceID, mongoDSN, redisDSN string, debug int) (*Manager, err
     _Manager.Websocket = NewWebsocketManager()
 
 
-    logConfig := zap.NewProductionConfig()
-    logConfig.Encoding = "json"
-    logConfig.Level = zap.NewAtomicLevelAt(zapcore.Level(__Debug))
-    if v, err := logConfig.Build(); err != nil {
-        os.Exit(1)
-    } else {
-        _Log = v
-    }
 
 
     // Load the system constants
