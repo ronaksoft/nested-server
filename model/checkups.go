@@ -4,9 +4,10 @@ import (
     "crypto/md5"
     "encoding/hex"
     "fmt"
+    "log"
+
     "github.com/globalsign/mgo"
     "github.com/globalsign/mgo/bson"
-    "log"
 )
 
 func StartupCheckups() {

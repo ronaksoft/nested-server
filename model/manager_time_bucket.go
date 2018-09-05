@@ -1,9 +1,10 @@
 package nested
 
 import (
-    "github.com/globalsign/mgo/bson"
-    "time"
     "fmt"
+    "time"
+
+    "github.com/globalsign/mgo/bson"
 )
 
 type TimeBucket struct {

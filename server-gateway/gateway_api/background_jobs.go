@@ -1,11 +1,12 @@
 package api
 
 import (
-    "time"
-    "git.ronaksoftware.com/nested/server/model"
-    "git.ronaksoftware.com/nested/server/server-ntfy/client"
     "log"
     "sync"
+    "time"
+
+    "git.ronaksoftware.com/nested/server/model"
+    "git.ronaksoftware.com/nested/server/server-ntfy/client"
     "gopkg.in/fzerorubigd/onion.v3"
 )
 

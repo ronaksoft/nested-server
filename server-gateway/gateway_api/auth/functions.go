@@ -1,14 +1,15 @@
 package nestedServiceAuth
 
 import (
-    "git.ronaksoftware.com/nested/server/model"
-    "strings"
-    "log"
-    "fmt"
-    "time"
-    "regexp"
-    "html/template"
     "bytes"
+    "fmt"
+    "html/template"
+    "log"
+    "regexp"
+    "strings"
+    "time"
+
+    "git.ronaksoftware.com/nested/server/model"
     "git.ronaksoftware.com/nested/server/server-gateway/client"
 )
 

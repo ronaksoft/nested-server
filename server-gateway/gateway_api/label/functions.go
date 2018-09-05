@@ -1,10 +1,11 @@
 package nestedServiceLabel
 
 import (
-    "git.ronaksoftware.com/nested/server/model"
-    "github.com/globalsign/mgo/bson"
     "strings"
+
+    "git.ronaksoftware.com/nested/server/model"
     "git.ronaksoftware.com/nested/server/server-gateway/client"
+    "github.com/globalsign/mgo/bson"
 )
 
 // @Command:	label/add_member
@@ -159,7 +160,7 @@ func (s *LabelService) GetLabelMembers(requester *nested.Account, request *neste
         return
     }
     labelMembers := _Model.Account.GetAccountsByIDs(label.Members)
-    r := []nested.M{}
+    var r []nested.M
     for _, member := range labelMembers {
         r = append(r, s.Worker().Map().Account(member, false))
     }

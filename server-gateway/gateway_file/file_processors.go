@@ -1,14 +1,15 @@
 package file
 
 import (
+    "errors"
+    "fmt"
     "io"
     "path"
-    "git.ronaksoftware.com/nested/server/model"
-    "git.ronaksoftware.com/common/server-protocol"
     "sync"
+
+    "git.ronaksoftware.com/common/server-protocol"
+    "git.ronaksoftware.com/nested/server/model"
     "git.ronaksoftware.com/nested/server/server-gateway/gateway_file/convert"
-    "fmt"
-    "errors"
     "go.uber.org/zap"
 )
 

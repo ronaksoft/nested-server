@@ -4,8 +4,9 @@ import (
     "bytes"
     "encoding/gob"
     "fmt"
-    "github.com/gomodule/redigo/redis"
+
     "github.com/globalsign/mgo/bson"
+    "github.com/gomodule/redigo/redis"
 )
 
 type Session struct {

@@ -1,8 +1,9 @@
 package main
 
 import (
-  "strings"
-  "github.com/jhillyerd/enmime"
+    "strings"
+
+    "github.com/jhillyerd/enmime"
 )
 
 type RecipientGroup struct {

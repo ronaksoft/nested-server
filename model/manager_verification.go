@@ -3,9 +3,10 @@ package nested
 import (
     "crypto/md5"
     "encoding/base64"
+    "time"
+
     "github.com/globalsign/mgo"
     "github.com/globalsign/mgo/bson"
-    "time"
 )
 
 const (

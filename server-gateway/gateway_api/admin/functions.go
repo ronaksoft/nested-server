@@ -1,17 +1,18 @@
 package nestedServiceAdmin
 
 import (
-    "git.ronaksoftware.com/nested/server/model"
-    "strings"
+    "bytes"
     "crypto/md5"
     "encoding/hex"
-    "time"
-    "regexp"
-    "log"
     "fmt"
-    "strconv"
-    "bytes"
     "html/template"
+    "log"
+    "regexp"
+    "strconv"
+    "strings"
+    "time"
+
+    "git.ronaksoftware.com/nested/server/model"
     "git.ronaksoftware.com/nested/server/server-gateway/client"
     "git.ronaksoftware.com/nested/server/server-gateway/gateway_api"
 )
@@ -216,7 +217,7 @@ func (s *AdminService) createPost(requester *nested.Account, request *nestedGate
         mapAttachments[attachID] = true
     }
 
-    for attachID, _ := range mapAttachments {
+    for attachID := range mapAttachments {
         pcr.AttachmentIDs = append(pcr.AttachmentIDs, nested.UniversalID(attachID))
     }
 
@@ -1690,7 +1691,7 @@ func (s *AdminService) createPostForAllAccounts(requester *nested.Account, reque
 		mapAttachments[attachID] = true
 	}
 
-	for attachID, _ := range mapAttachments {
+	for attachID := range mapAttachments {
 		pcr.AttachmentIDs = append(pcr.AttachmentIDs, nested.UniversalID(attachID))
 	}
 

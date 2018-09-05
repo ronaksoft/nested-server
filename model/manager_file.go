@@ -4,11 +4,12 @@ import (
     "bytes"
     "encoding/gob"
     "fmt"
-    "github.com/gomodule/redigo/redis"
-    "github.com/globalsign/mgo/bson"
     "path/filepath"
     "strings"
     "time"
+
+    "github.com/globalsign/mgo/bson"
+    "github.com/gomodule/redigo/redis"
 )
 
 // File Status

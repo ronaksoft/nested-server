@@ -3,6 +3,7 @@ package nested
 import (
     "encoding/json"
     "time"
+
     "github.com/globalsign/mgo/bson"
 )
 

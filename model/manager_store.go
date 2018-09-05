@@ -1,11 +1,12 @@
 package nested
 
 import (
-    "github.com/globalsign/mgo"
-    "github.com/globalsign/mgo/bson"
     "fmt"
     "io"
     "time"
+
+    "github.com/globalsign/mgo"
+    "github.com/globalsign/mgo/bson"
 )
 
 type MetaData struct {

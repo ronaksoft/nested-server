@@ -1,15 +1,16 @@
 package main
 
 import (
-    "net"
-    "log"
     "encoding/csv"
     "fmt"
+    "log"
+    "net"
     "net/mail"
+    "os"
+    "strings"
+
     "git.ronaksoftware.com/nested/server/model"
     "gopkg.in/fzerorubigd/onion.v3"
-    "strings"
-    "os"
 )
 
 var (

@@ -1,8 +1,9 @@
 package nested
 
 import (
-    "github.com/gomodule/redigo/redis"
     "log"
+
+    "github.com/gomodule/redigo/redis"
 )
 
 type CacheManager struct {

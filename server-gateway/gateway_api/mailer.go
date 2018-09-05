@@ -1,19 +1,20 @@
 package api
 
 import (
-    "github.com/globalsign/mgo/bson"
-    "fmt"
-    "time"
-    "git.ronaksoftware.com/nested/server/model"
-    "log"
-    "gopkg.in/mail.v2"
-    "crypto/tls"
-    "html/template"
-    "strings"
-    "path"
-    "github.com/dustin/go-humanize"
     "bytes"
+    "crypto/tls"
+    "fmt"
+    "html/template"
+    "log"
+    "path"
+    "strings"
+    "time"
+
+    "git.ronaksoftware.com/nested/server/model"
+    "github.com/dustin/go-humanize"
+    "github.com/globalsign/mgo/bson"
     "github.com/jaytaylor/html2text"
+    "gopkg.in/mail.v2"
 )
 
 // MailRequest

@@ -38,29 +38,29 @@ const (
 
 // Adjustable Default Parameters
 var (
-    CACHE_LIFETIME          int    = 3600 // Seconds
-    REGISTER_MODE           int    = REGISTER_MODE_ADMIN_ONLY
-    DEFAULT_MAX_UPLOAD_SIZE string = "100MB"
+    CACHE_LIFETIME          = 3600 // Seconds
+    REGISTER_MODE           = REGISTER_MODE_ADMIN_ONLY
+    DEFAULT_MAX_UPLOAD_SIZE = "100MB"
 
-    DEFAULT_PLACE_MAX_CHILDREN   int = 10
-    DEFAULT_PLACE_MAX_CREATORS   int = 5
-    DEFAULT_PLACE_MAX_KEYHOLDERS int = 25
-    DEFAULT_PLACE_MAX_LEVEL      int = 3
+    DEFAULT_PLACE_MAX_CHILDREN   = 10
+    DEFAULT_PLACE_MAX_CREATORS   = 5
+    DEFAULT_PLACE_MAX_KEYHOLDERS = 25
+    DEFAULT_PLACE_MAX_LEVEL      = 3
 
-    DEFAULT_POST_MAX_ATTACHMENTS int    = 50
-    DEFAULT_POST_MAX_TARGETS     int    = 20
-    DEFAULT_POST_MAX_LABELS      int    = 10
+    DEFAULT_POST_MAX_ATTACHMENTS        = 50
+    DEFAULT_POST_MAX_TARGETS            = 20
+    DEFAULT_POST_MAX_LABELS             = 10
     DEFAULT_POST_RETRACT_TIME    uint64 = 86400000 // 24h
 
-    DEFAULT_ACCOUNT_GRAND_PLACES int = 2
+    DEFAULT_ACCOUNT_GRAND_PLACES = 2
 
-    DEFAULT_LABEL_MAX_MEMBERS int = 50
+    DEFAULT_LABEL_MAX_MEMBERS = 50
 
-    DEFAULT_COMPANY_NAME string = "Nested"
-    DEFAULT_COMPANY_DESC string = "Team Communication Platform"
-    DEFAULT_COMPANY_LOGO string = ""
-    DEFAULT_MAGIC_NUMBER string = "989121228718"
-    DEFAULT_SYSTEM_LANG  string = "en"
+    DEFAULT_COMPANY_NAME = "Nested"
+    DEFAULT_COMPANY_DESC = "Team Communication Platform"
+    DEFAULT_COMPANY_LOGO = ""
+    DEFAULT_MAGIC_NUMBER = "989121228718"
+    DEFAULT_SYSTEM_LANG  = "en"
 
     DB_NAME                     string
     STORE_NAME                  string

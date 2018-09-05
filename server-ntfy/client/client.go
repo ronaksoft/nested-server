@@ -1,12 +1,13 @@
 package ntfy
 
 import (
-    "github.com/nats-io/go-nats"
     "encoding/json"
-    "git.ronaksoftware.com/nested/server/model"
-    "log"
     "fmt"
+    "log"
+
+    "git.ronaksoftware.com/nested/server/model"
     "github.com/globalsign/mgo/bson"
+    "github.com/nats-io/go-nats"
 )
 
 var (

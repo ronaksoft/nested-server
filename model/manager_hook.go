@@ -1,10 +1,11 @@
 package nested
 
 import (
-    "github.com/globalsign/mgo/bson"
-    "net/http"
-    "encoding/json"
     "bytes"
+    "encoding/json"
+    "net/http"
+
+    "github.com/globalsign/mgo/bson"
 )
 
 const (

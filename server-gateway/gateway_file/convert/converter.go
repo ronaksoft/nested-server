@@ -2,12 +2,13 @@ package convert
 
 import (
     "fmt"
-    "path"
+    "os"
     "os/exec"
+    "path"
     "reflect"
     "strings"
+
     "go.uber.org/zap"
-    "os"
 )
 
 var (

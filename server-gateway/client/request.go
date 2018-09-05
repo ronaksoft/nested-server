@@ -1,9 +1,10 @@
 package nestedGateway
 
 import (
-    "github.com/globalsign/mgo/bson"
-    "git.ronaksoftware.com/nested/server/model"
     "encoding/json"
+
+    "git.ronaksoftware.com/nested/server/model"
+    "github.com/globalsign/mgo/bson"
 )
 
 type Request struct {

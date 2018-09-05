@@ -5,8 +5,6 @@ import (
     "crypto/cipher"
     "encoding/base64"
     "fmt"
-    "github.com/dustin/go-humanize"
-    "github.com/globalsign/mgo/bson"
     "log"
     "math/rand"
     "path/filepath"
@@ -15,6 +13,9 @@ import (
     "strconv"
     "strings"
     "time"
+
+    "github.com/dustin/go-humanize"
+    "github.com/globalsign/mgo/bson"
 )
 
 func Timestamp() (ts uint64) {

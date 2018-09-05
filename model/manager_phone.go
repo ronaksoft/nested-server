@@ -1,8 +1,9 @@
 package nested
 
 import (
-    "github.com/globalsign/mgo/bson"
     "log"
+
+    "github.com/globalsign/mgo/bson"
 )
 
 // Phone Manager and Methods

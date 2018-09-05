@@ -1,10 +1,11 @@
 package nestedServiceClient
 
 import (
-    "git.ronaksoftware.com/nested/server/model"
     "encoding/json"
-    "strings"
     "log"
+    "strings"
+
+    "git.ronaksoftware.com/nested/server/model"
     "git.ronaksoftware.com/nested/server/server-gateway/client"
 )
 

@@ -1,9 +1,9 @@
 package nestedServiceLabel
 
 import (
-	"git.ronaksoftware.com/nested/server/server-gateway/client"
-	"git.ronaksoftware.com/nested/server/model"
-	"git.ronaksoftware.com/nested/server/server-gateway/gateway_api"
+    "git.ronaksoftware.com/nested/server/model"
+    "git.ronaksoftware.com/nested/server/server-gateway/client"
+    "git.ronaksoftware.com/nested/server/server-gateway/gateway_api"
 )
 
 const (

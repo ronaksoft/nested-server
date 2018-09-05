@@ -1,11 +1,12 @@
 package file
 
 import (
+    "os"
+
     "git.ronaksoftware.com/nested/server/model"
     "git.ronaksoftware.com/nested/server/server-gateway/gateway_file/convert"
-    "gopkg.in/fzerorubigd/onion.v3"
     "go.uber.org/zap"
-    "os"
+    "gopkg.in/fzerorubigd/onion.v3"
 )
 
 var (

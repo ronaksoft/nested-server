@@ -2,10 +2,11 @@ package nested
 
 import (
     "fmt"
-    "github.com/globalsign/mgo"
-    "github.com/globalsign/mgo/bson"
     "strconv"
     "strings"
+
+    "github.com/globalsign/mgo"
+    "github.com/globalsign/mgo/bson"
 )
 
 const (

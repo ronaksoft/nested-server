@@ -3,9 +3,10 @@ package nested
 import (
     "encoding/json"
     "fmt"
-    "github.com/gomodule/redigo/redis"
-    "github.com/globalsign/mgo/bson"
     "log"
+
+    "github.com/globalsign/mgo/bson"
+    "github.com/gomodule/redigo/redis"
 )
 
 const (

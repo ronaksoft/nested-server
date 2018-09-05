@@ -1,12 +1,13 @@
 package nestedServicePost
 
 import (
-	"fmt"
-	"git.ronaksoftware.com/nested/server/server-gateway/client"
-	"git.ronaksoftware.com/nested/server/server-gateway/gateway_api"
-	"git.ronaksoftware.com/nested/server/model"
-	"github.com/globalsign/mgo/bson"
-	"strings"
+    "fmt"
+    "strings"
+
+    "git.ronaksoftware.com/nested/server/model"
+    "git.ronaksoftware.com/nested/server/server-gateway/client"
+    "git.ronaksoftware.com/nested/server/server-gateway/gateway_api"
+    "github.com/globalsign/mgo/bson"
 )
 
 // @Command:	post/add_label
@@ -333,7 +334,7 @@ func (s *PostService) createPost(requester *nested.Account, request *nestedGatew
 	for _, attachID := range attachments {
 		mapAttachments[attachID] = true
 	}
-	for attachID, _ := range mapAttachments {
+	for attachID := range mapAttachments {
 		pcr.AttachmentIDs = append(pcr.AttachmentIDs, nested.UniversalID(attachID))
 	}
 
@@ -904,7 +905,7 @@ func (s *PostService) whoHaveReadThisPost(requester *nested.Account, request *ne
 	}
 	pg := s.Worker().Argument().GetPagination(request)
 	postReads := _Model.Post.GetAccountsWhoReadThis(post.ID, pg)
-	r := []nested.M{}
+    var r []nested.M
 	for _, pr := range postReads {
 		account := _Model.Account.GetByID(pr.AccountID, nil)
 		r = append(r, nested.M{

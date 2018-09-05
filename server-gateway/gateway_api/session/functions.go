@@ -1,11 +1,12 @@
 package nestedServiceSession
 
 import (
-    "git.ronaksoftware.com/nested/server/model"
-    "github.com/globalsign/mgo/bson"
     "log"
     "strings"
+
+    "git.ronaksoftware.com/nested/server/model"
     "git.ronaksoftware.com/nested/server/server-gateway/client"
+    "github.com/globalsign/mgo/bson"
 )
 
 // @Command:	session/close

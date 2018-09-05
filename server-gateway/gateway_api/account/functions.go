@@ -2,11 +2,12 @@ package nestedServiceAccount
 
 import (
 	"fmt"
-	"git.ronaksoftware.com/nested/server/server-gateway/client"
-	"git.ronaksoftware.com/nested/server/model"
 	"regexp"
 	"strings"
 	"time"
+
+	"git.ronaksoftware.com/nested/server/model"
+	"git.ronaksoftware.com/nested/server/server-gateway/client"
 )
 
 // @Command: account/available
@@ -267,7 +268,7 @@ func (s *AccountService) getAccountSentPosts(requester *nested.Account, request 
 // @Input:	with_children		bool		+
 // @Input:	filter				string		+	(creator | key_holder | all)
 func (s *AccountService) getAccountAllPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
-	d := []nested.M{}
+	var d []nested.M
 	var filter string
 	var withChildren bool
 	if v, ok := request.Data["with_children"].(bool); ok {

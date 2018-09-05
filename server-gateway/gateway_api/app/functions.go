@@ -1,8 +1,9 @@
 package nestedServiceApp
 
 import (
-    "git.ronaksoftware.com/nested/server/model"
     "strings"
+
+    "git.ronaksoftware.com/nested/server/model"
     "git.ronaksoftware.com/nested/server/server-gateway/client"
 )
 

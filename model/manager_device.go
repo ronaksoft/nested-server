@@ -1,8 +1,9 @@
 package nested
 
 import (
-    "github.com/globalsign/mgo/bson"
     "time"
+
+    "github.com/globalsign/mgo/bson"
 )
 
 const (

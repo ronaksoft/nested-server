@@ -1,10 +1,11 @@
 package nestedServicePlace
 
 import (
-    "git.ronaksoftware.com/nested/server/model"
-    "strings"
-    "regexp"
     "log"
+    "regexp"
+    "strings"
+
+    "git.ronaksoftware.com/nested/server/model"
     "git.ronaksoftware.com/nested/server/server-gateway/client"
 )
 
@@ -42,7 +43,7 @@ func (s *PlaceService) addPlaceMember(requester *nested.Account, request *nested
         return
     }
     grandPlace := place.GetGrandParent()
-    invalidIDs := []string{}
+    var invalidIDs []string
     for _, m := range memberIDs {
         if grandPlace.IsMember(m) && !place.IsMember(m) {
             if !place.HasKeyholderLimit() {
@@ -578,7 +579,7 @@ func (s *PlaceService) getPlaceAccess(requester *nested.Account, request *nested
         }
     }
 
-    r := []nested.M{}
+    var r []nested.M
     for _, place := range places {
         access := place.GetAccess(requester.ID)
         a := make([]string, 0, 10)
@@ -772,7 +773,7 @@ func (s *PlaceService) getPlaceCreators(requester *nested.Account, request *nest
         iEnd = len(place.CreatorIDs)
     }
 
-    r := []nested.M{}
+    var r []nested.M
     for _, v := range place.CreatorIDs[iStart:iEnd] {
         m := s.Worker().Model().Account.GetByID(v, nil)
         r = append(r, s.Worker().Map().Account(*m, false))
@@ -805,7 +806,7 @@ func (s *PlaceService) getPlaceKeyholders(requester *nested.Account, request *ne
         iEnd = len(place.KeyholderIDs)
     }
 
-    r := []nested.M{}
+    var r []nested.M
     for _, v := range place.KeyholderIDs[iStart:iEnd] {
         m := s.Worker().Model().Account.GetByID(v, nil)
         r = append(r, s.Worker().Map().Account(*m, false))
@@ -885,7 +886,7 @@ func (s *PlaceService) getSubPlaces(requester *nested.Account, request *nestedGa
     }
     placeIDs := mapPlaceIDs.KeysToArray()
     places := s.Worker().Model().Place.GetPlacesByIDs(placeIDs)
-    r := []nested.M{}
+    var r []nested.M
     for _, place := range places {
         r = append(r, s.Worker().Map().Place(requester, place, place.GetAccess(requester.ID)))
     }

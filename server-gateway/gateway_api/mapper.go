@@ -1,8 +1,9 @@
 package api
 
 import (
-    "git.ronaksoftware.com/nested/server/model"
     "log"
+
+    "git.ronaksoftware.com/nested/server/model"
     "github.com/globalsign/mgo/bson"
 )
 
@@ -157,7 +158,7 @@ func (m *Mapper) Label(requester *nested.Account, label nested.Label, details bo
         } else {
             members = m.worker.Model().Account.GetAccountsByIDs(label.Members)
         }
-        topMembers := []nested.M{}
+        var topMembers []nested.M
         for _, member := range members {
             topMembers = append(topMembers, m.Account(member, false))
         }
@@ -484,8 +485,8 @@ func (m *Mapper) Post(requester *nested.Account, post nested.Post, preview bool)
     }
 
     // present post_comments
-    postRecentCommentIDs := []bson.ObjectId{}
-    postRecentComments := []nested.M{}
+    var postRecentCommentIDs []bson.ObjectId
+    var postRecentComments []nested.M
     for _, comment := range post.RecentComments {
         postRecentCommentIDs = append(postRecentCommentIDs, comment.ID)
     }
@@ -704,7 +705,7 @@ func (m *Mapper) Task(requester *nested.Account, task nested.Task, details bool)
     // Related Tasks
     if len(task.RelatedTasks) > 0 {
         rTasks := m.worker.Model().Task.GetTasksByIDs(task.RelatedTasks)
-        relatedTasks := []nested.M{}
+        var relatedTasks []nested.M
         for _, t := range rTasks {
             if t.HasAccess(requester.ID, nested.TASK_ACCESS_READ) {
                 relatedTasks = append(relatedTasks, nested.M{
@@ -761,7 +762,7 @@ func (m *Mapper) TaskActivity(requester *nested.Account, taskActivity nested.Tas
         r["description"] = taskActivity.Desc
     case nested.TASK_ACTIVITY_CANDIDATE_ADDED, nested.TASK_ACTIVITY_CANDIDATE_REMOVED:
         candidates := m.worker.Model().Account.GetAccountsByIDs(taskActivity.CandidateIDs)
-        d := []nested.M{}
+        var d []nested.M
         for _, w := range candidates {
             d = append(d, m.Account(w, false))
         }
@@ -773,7 +774,7 @@ func (m *Mapper) TaskActivity(requester *nested.Account, taskActivity nested.Tas
         r["status"] = taskActivity.Status
     case nested.TASK_ACTIVITY_LABEL_ADDED, nested.TASK_ACTIVITY_LABEL_REMOVED:
         labels := m.worker.Model().Label.GetByIDs(taskActivity.LabelIDs)
-        mapLabels := []nested.M{}
+        var mapLabels []nested.M
         for _, label := range labels {
             mapLabels = append(mapLabels, m.Label(requester, label, false))
         }

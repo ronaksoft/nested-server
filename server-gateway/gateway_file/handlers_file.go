@@ -1,22 +1,23 @@
 package file
 
 import (
-    "github.com/kataras/iris"
-    "net/http"
-    "git.ronaksoftware.com/nested/server/model"
-    "github.com/globalsign/mgo"
-    "fmt"
-    "time"
-    "github.com/globalsign/mgo/bson"
-    "mime/multipart"
-    "git.ronaksoftware.com/nested/server/server-gateway/client"
-    "io"
-    "path"
-    "git.ronaksoftware.com/common/server-protocol"
-    "sync"
     "errors"
+    "fmt"
+    "io"
     "io/ioutil"
+    "mime/multipart"
+    "net/http"
+    "path"
     "strings"
+    "sync"
+    "time"
+
+    "git.ronaksoftware.com/common/server-protocol"
+    "git.ronaksoftware.com/nested/server/model"
+    "git.ronaksoftware.com/nested/server/server-gateway/client"
+    "github.com/globalsign/mgo"
+    "github.com/globalsign/mgo/bson"
+    "github.com/kataras/iris"
 )
 
 func (fs *Server) ForceDownload(ctx iris.Context) {

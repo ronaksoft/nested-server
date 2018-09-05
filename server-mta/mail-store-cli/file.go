@@ -1,12 +1,13 @@
 package main
 
 import (
+    "errors"
     "io"
     "os"
     "time"
-    "errors"
-    "git.ronaksoftware.com/nested/server/server-gateway/client"
+
     "git.ronaksoftware.com/nested/server/model"
+    "git.ronaksoftware.com/nested/server/server-gateway/client"
 )
 
 func uploadFile(filename, uploaderId, status string, ownerIds []string, r io.Reader) (*nestedGateway.UploadedFile, error) {

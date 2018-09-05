@@ -1,13 +1,14 @@
 package api
 
 import (
-    "git.ronaksoftware.com/nested/server/model"
-    "time"
+    "strconv"
     "strings"
-    "gopkg.in/fzerorubigd/onion.v3"
+    "time"
+
+    "git.ronaksoftware.com/nested/server/model"
     "git.ronaksoftware.com/nested/server/server-gateway/client"
     "github.com/globalsign/mgo/bson"
-    "strconv"
+    "gopkg.in/fzerorubigd/onion.v3"
 )
 
 /*
@@ -191,7 +192,7 @@ func (ae *ArgumentHandler) GetAccounts(request *nestedGateway.Request, response 
         for _, accountID := range accountIDs {
             mapAccountIDs[accountID] = true
         }
-        for accountID, _ := range mapAccountIDs {
+        for accountID := range mapAccountIDs {
             uniqueAccountIDs = append(uniqueAccountIDs, accountID)
         }
         accounts = ae.worker.Model().Account.GetAccountsByIDs(uniqueAccountIDs)
@@ -208,7 +209,7 @@ func (ae *ArgumentHandler) GetAccountIDs(request *nestedGateway.Request, respons
         for _, accountID := range accountIDs {
             mapAccountIDs[accountID] = true
         }
-        for accountID, _ := range mapAccountIDs {
+        for accountID := range mapAccountIDs {
             uniqueAccountIDs = append(uniqueAccountIDs, accountID)
         }
     } else {

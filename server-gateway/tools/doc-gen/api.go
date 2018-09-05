@@ -1,13 +1,13 @@
 package main
 
 import (
-    "os"
-    "log"
     "bufio"
     "fmt"
-    "strings"
     "html/template"
+    "log"
+    "os"
     "path/filepath"
+    "strings"
 )
 
 const jsonTemplate string = `

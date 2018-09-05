@@ -1,9 +1,9 @@
 package main
 
 import (
+    "go.uber.org/zap"
     "gopkg.in/fzerorubigd/onion.v3"
     "gopkg.in/fzerorubigd/onion.v3/extraenv"
-    "go.uber.org/zap"
 )
 
 func readConfig() *onion.Onion {

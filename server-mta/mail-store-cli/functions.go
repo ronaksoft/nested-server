@@ -1,20 +1,21 @@
 package main
 
 import (
-    "io"
-    "github.com/jhillyerd/enmime"
     "bytes"
+    "crypto/md5"
+    "encoding/base64"
+    "encoding/hex"
     "fmt"
+    "io"
+    "io/ioutil"
+    "net/http"
     "net/mail"
     "strings"
-    "git.ronaksoftware.com/nested/server/model"
-    "crypto/md5"
-    "encoding/hex"
-    "net/http"
     "sync"
-    "io/ioutil"
-    "encoding/base64"
+
+    "git.ronaksoftware.com/nested/server/model"
     "git.ronaksoftware.com/nested/server/server-gateway/client"
+    "github.com/jhillyerd/enmime"
 )
 
 func Dispatch(sender string, recipients []string, body io.Reader) error {

@@ -4,10 +4,11 @@ import (
     "bytes"
     "encoding/gob"
     "fmt"
-    "github.com/gomodule/redigo/redis"
-    "github.com/globalsign/mgo/bson"
     "regexp"
     "strings"
+
+    "github.com/globalsign/mgo/bson"
+    "github.com/gomodule/redigo/redis"
 )
 
 const (

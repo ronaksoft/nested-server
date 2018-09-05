@@ -1,12 +1,13 @@
 package nestedServiceTask
 
 import (
-    "git.ronaksoftware.com/nested/server/model"
-    "strings"
-    "github.com/globalsign/mgo/bson"
-    "strconv"
     "encoding/base64"
+    "strconv"
+    "strings"
+
+    "git.ronaksoftware.com/nested/server/model"
     "git.ronaksoftware.com/nested/server/server-gateway/client"
+    "github.com/globalsign/mgo/bson"
 )
 
 // @Command:	task/create
@@ -101,7 +102,7 @@ func (s *TaskService) create(requester *nested.Account, request *nestedGateway.R
 		}
 	}
     if v, ok := request.Data["attachment_id"].(string); ok {
-        attachmentIDs := []nested.UniversalID{}
+        var attachmentIDs []nested.UniversalID
         for _, attachmentID := range strings.SplitN(v, ",", nested.DEFAULT_MAX_RESULT_LIMIT) {
             attachmentIDs = append(attachmentIDs, nested.UniversalID(attachmentID))
         }
@@ -268,7 +269,7 @@ func (s *TaskService) addLabel(requester *nested.Account, request *nestedGateway
 // @Input:	weight			int		+	(between 1 - 10)
 func (s *TaskService) addTodo(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
     var todoText string
-    var todoWeight int = 1
+    var todoWeight = 1
     task := s.Worker().Argument().GetTask(request, response)
     if task == nil {
         return
@@ -604,7 +605,7 @@ func (s *TaskService) getActivities(requester *nested.Account, request *nestedGa
             []nested.TaskAction{},
         )
     }
-    r := []nested.M{}
+    var r []nested.M
     for _, activity := range activities {
         r = append(r, s.Worker().Map().TaskActivity(requester, activity, details))
     }
@@ -652,7 +653,7 @@ func (s *TaskService) getManyActivities(requester *nested.Account, request *nest
     if v, ok := request.Data["details"].(bool); ok {
         details = v
     }
-    r := []nested.M{}
+    var r []nested.M
     taskActivities := s.Worker().Model().TaskActivity.GetActivitiesByIDs(taskActivityIDs)
     for _, activity := range taskActivities {
         r = append(r, s.Worker().Map().TaskActivity(requester, activity, details))

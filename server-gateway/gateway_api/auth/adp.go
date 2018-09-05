@@ -1,10 +1,10 @@
 package nestedServiceAuth
 
 import (
+	"log"
+	"net/http"
 	"net/url"
 	"strings"
-	"net/http"
-	"log"
 )
 
 // ADP is a SMS Provider

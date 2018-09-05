@@ -1,11 +1,12 @@
 package nested
 
 import (
-	"fmt"
-	"github.com/globalsign/mgo/bson"
-	"log"
-	"strings"
-	"time"
+    "fmt"
+    "log"
+    "strings"
+    "time"
+
+    "github.com/globalsign/mgo/bson"
 )
 
 /*

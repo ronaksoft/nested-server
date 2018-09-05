@@ -2,6 +2,7 @@ package nested
 
 import (
     "fmt"
+
     "github.com/globalsign/mgo/bson"
 )
 
