@@ -1600,8 +1600,127 @@ func (s *AdminService) prepareWelcome(accountID string) {
         Body:        body.String(),
         ContentType: nested.CONTENT_TYPE_TEXT_HTML,
         PlaceIDs:    []string{accountID},
+		SystemData: nested.PostSystemData{
+			NoComment: true,
+		},
     }
 
     s.Worker().Model().Post.AddPost(pcr)
+}
+
+// @Command:	admin/create_post_for_all_accounts
+// @Input:  subject			string	+
+// @Input:  attaches			string 	+	(comma separated)
+// @Input:  content_type		string	+	(text/plain | text/html)
+// @Input:  iframe_url         string +
+func (s *AdminService) createPostForAllAccounts(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+	var targets []string
+	var attachments []string
+	var subject, body, content_type, iframeUrl, filter string
+	var labels []nested.Label
+	if v, ok := request.Data["filter"].(string); ok {
+		filter = v
+	}
+	if v, ok := request.Data["label_id"].(string); ok {
+		labelIDs := strings.SplitN(v, ",", nested.DEFAULT_POST_MAX_LABELS)
+		labels = s.Worker().Model().Label.GetByIDs(labelIDs)
+	} else {
+		labels = []nested.Label{}
+	}
+	if v, ok := request.Data["attaches"].(string); ok && v != "" {
+		attachments = strings.SplitN(v, ",", nested.DEFAULT_POST_MAX_ATTACHMENTS)
+	} else {
+		attachments = []string{}
+	}
+	if v, ok := request.Data["content_type"].(string); ok {
+		switch v {
+		case nested.CONTENT_TYPE_TEXT_HTML, nested.CONTENT_TYPE_TEXT_PLAIN:
+			content_type = v
+		default:
+			content_type = nested.CONTENT_TYPE_TEXT_PLAIN
+		}
+	} else {
+		content_type = nested.CONTENT_TYPE_TEXT_PLAIN
+	}
+	if v, ok := request.Data["subject"].(string); ok {
+		subject = v
+	}
+	if v, ok := request.Data["body"].(string); ok {
+		body = v
+	}
+	if v, ok := request.Data["iframe_url"].(string); ok {
+		iframeUrl = v
+	}
+
+	if "" == strings.Trim(subject, " ") && "" == strings.Trim(body, " ") && len(attachments) == 0 {
+		response.Error(nested.ERR_INCOMPLETE, []string{"subject", "body"})
+		return
+	}
+	targets = s.Worker().Model().Search.AccountIDs(filter)
+
+	if len(targets) == 0 {
+		response.Error(nested.ERR_INVALID, []string{"targets"})
+		return
+	}
+
+	for i, v := range attachments {
+		if v == "" || !s.Worker().Model().File.Exists(nested.UniversalID(v)) {
+			if len(attachments) > 1 {
+				attachments[i] = attachments[len(attachments)-1]
+				attachments = attachments[:len(attachments)-1]
+			} else {
+				attachments = attachments[:0]
+				break
+			}
+		}
+	}
+
+	pcr := nested.PostCreateRequest{
+		PlaceIDs:    targets,
+		ContentType: content_type,
+		SenderID:    requester.ID,
+		SystemData: nested.PostSystemData{
+			NoComment: true,
+		},
+	}
+
+	// Make attachments unique and add them to PostCreateRequest
+	mapAttachments := nested.MB{}
+	for _, attachID := range attachments {
+		mapAttachments[attachID] = true
+	}
+
+	for attachID, _ := range mapAttachments {
+		pcr.AttachmentIDs = append(pcr.AttachmentIDs, nested.UniversalID(attachID))
+	}
+
+	// Set Body for PostCreateRequest
+	pcr.Body = body
+	pcr.IFrameUrl = iframeUrl
+
+	// check if subject does not exceed the limit
+	if len(subject) > 255 {
+		pcr.Subject = string(subject[:255])
+	} else {
+		pcr.Subject = subject
+	}
+
+	post := s.Worker().Model().Post.AddPost(pcr)
+	if post == nil {
+		response.Error(nested.ERR_UNKNOWN, []string{})
+		return
+	}
+
+	for _, label := range labels {
+		if label.Public || label.IsMember(requester.ID) {
+			post.AddLabel(requester.ID, label.ID)
+		}
+	}
+
+	s.Worker().Pusher().PostAdded(post)
+
+	response.OkWithData(nested.M{
+		"post_id":        post.ID,
+	})
 
 }

@@ -52,7 +52,8 @@ deploy:production:
 deploy:staging:
   stage: deploy
   only:
-  - fix-task-attachments
+  - behrooz
+  - fix
   image: docker:latest
   services:
   - docker:dind
