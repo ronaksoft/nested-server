@@ -552,9 +552,6 @@ func (t *Task) RemoveComment(accountID string, commentID bson.ObjectId) bool {
 
 // AddAttachments add fileIDs to the task and create the related task activities
 func (t *Task) AddAttachments(accountID string, fileIDs []UniversalID) bool {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -589,9 +586,6 @@ func (t *Task) AddAttachments(accountID string, fileIDs []UniversalID) bool {
 
 // AddLabels add labelIDs to the task and create the related task activities
 func (t *Task) AddLabels(accountID string, labelIDs []string) bool {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -622,9 +616,6 @@ func (t *Task) AddLabels(accountID string, labelIDs []string) bool {
 
 // AddToDo add a new "ToDoItem" to the task document and updates the todo_nid (next id)
 func (t *Task) AddToDo(accountID string, txt string, weight int) *TaskToDo {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -658,9 +649,6 @@ func (t *Task) AddToDo(accountID string, txt string, weight int) *TaskToDo {
 // watcherIDs has been already in the list then none of the watcherIDs added.
 // Caller must make sure that all the watcherIDs are not in the list before calling this function
 func (t *Task) AddWatchers(adderID string, watcherIDs []string) bool {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -693,9 +681,6 @@ func (t *Task) AddWatchers(adderID string, watcherIDs []string) bool {
 // AddEditors accept an array of editorIDs and add them to the list of the taskID, if any of the
 // editorIDs has been already in the list then none of the editorIDs will be added.
 func (t *Task) AddEditors(adderID string, editorIDs []string) bool {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -729,9 +714,6 @@ func (t *Task) AddEditors(adderID string, editorIDs []string) bool {
 // candidateIDs has been already in the list then none of the candidateIDs will be added.
 // Caller must make sure that all the candidateIDs are not int the list before calling this function
 func (t *Task) AddCandidates(adderID string, candidateIDs []string) bool {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -763,9 +745,6 @@ func (t *Task) AddCandidates(adderID string, candidateIDs []string) bool {
 
 // RemoveAttachments removes fileID from the task and creates the appropriate task activity
 func (t *Task) RemoveAttachments(accountID string, fileIDs []UniversalID) bool {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -799,9 +778,6 @@ func (t *Task) RemoveAttachments(accountID string, fileIDs []UniversalID) bool {
 
 // RemoveLabels removes labelID from the task and creates the appropriate task activity
 func (t *Task) RemoveLabels(accountID string, labelIDs []string) bool {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -834,9 +810,6 @@ func (t *Task) RemoveLabels(accountID string, labelIDs []string) bool {
 
 // RemoveToDo removes the "ToDoItem" and creates the related task activity
 func (t *Task) RemoveToDo(accountID string, todoID int) bool {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -866,9 +839,6 @@ func (t *Task) RemoveToDo(accountID string, todoID int) bool {
 // RemoveEditors removes the editorID from the watchers list of the taskID and returns true if the
 // operation was successful otherwise returns false
 func (t *Task) RemoveEditors(removerID string, editorIDs []string) bool {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -914,9 +884,6 @@ func (t *Task) RemoveEditors(removerID string, editorIDs []string) bool {
 // RemoveWatchers removes the watcherID from the watchers list of the taskID and returns true if the
 // operation was successful otherwise returns false
 func (t *Task) RemoveWatchers(removerID string, watcherIDs []string) bool {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -962,9 +929,6 @@ func (t *Task) RemoveWatchers(removerID string, watcherIDs []string) bool {
 // RemoveCandidates removes the watcherID from the watchers list of the taskID and returns true if the
 // operation was successful otherwise returns false
 func (t *Task) RemoveCandidates(removerID string, candidateIDs []string) bool {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -996,10 +960,6 @@ func (t *Task) RemoveCandidates(removerID string, candidateIDs []string) bool {
 
 // UpdateMemberIDs
 func (t *Task) UpdateMemberIDs() {
-    // _funcName
-
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -1016,9 +976,6 @@ func (t *Task) UpdateMemberIDs() {
 
 // UpdateStatus
 func (t *Task) UpdateStatus(accountID string, newStatus TaskStatus) bool {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -1061,9 +1018,6 @@ func (t *Task) UpdateStatus(accountID string, newStatus TaskStatus) bool {
 }
 
 func (t *Task) UpdateTodo(accountID string, todoID int, text string, weight int, done bool) bool {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -1115,9 +1069,6 @@ func (t *Task) UpdateTodo(accountID string, todoID int, text string, weight int,
 }
 
 func (t *Task) Update(accountID string, title, desc string, dueDate uint64, dueDateHasClock bool) bool {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
 
     dbSession := _MongoSession.Clone()
@@ -1162,9 +1113,6 @@ func (t *Task) Update(accountID string, title, desc string, dueDate uint64, dueD
 }
 
 func (t *Task) UpdateAssignee(accountID string, candidateIDs []string) bool {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Task.removeCache(t.ID)
     defer t.UpdateMemberIDs()
 
