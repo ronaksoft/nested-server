@@ -371,8 +371,7 @@ func (s *AdminService) createGrandPlace(requester *nested.Account, request *nest
             return
         }
         if matched, err := regexp.MatchString(nested.DEFAULT_REGEX_GRANDPLACE_ID, pcr.ID); err != nil {
-            log.Println(err.Error())
-            response.Error(nested.ERR_UNKNOWN, []string{})
+            response.Error(nested.ERR_UNKNOWN, []string{err.Error()})
             return
         } else if !matched {
             response.Error(nested.ERR_INVALID, []string{"place_id"})

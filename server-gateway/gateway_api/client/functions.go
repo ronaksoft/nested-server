@@ -110,7 +110,6 @@ func (s *ClientService) getKey(requester *nested.Account, request *nestedGateway
 func (s *ClientService) getAllKeys(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
     keys := s.Worker().Model().Account.GetAllKeys(requester.ID)
     keyNames := make([]string, 0, len(keys))
-    log.Println(keys)
     for _, m := range keys {
         key := strings.SplitN(m["_id"], ".", 2)
         if len(key) > 1 {

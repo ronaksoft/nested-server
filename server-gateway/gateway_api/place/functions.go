@@ -138,8 +138,7 @@ func (s *PlaceService) createGrandPlace(requester *nested.Account, request *nest
             return
         }
         if matched, err := regexp.MatchString(nested.DEFAULT_REGEX_GRANDPLACE_ID, pcr.ID); err != nil {
-            log.Println(err.Error())
-            response.Error(nested.ERR_UNKNOWN, []string{})
+            response.Error(nested.ERR_UNKNOWN, []string{err.Error()})
             return
         } else if !matched {
             response.Error(nested.ERR_INVALID, []string{"place_id"})
@@ -277,8 +276,7 @@ func (s *PlaceService) createLockedPlace(requester *nested.Account, request *nes
             localPlaceID := string(pcr.ID[pos+1:])
             // check if place id is a valid place id
             if matched, err := regexp.MatchString(nested.DEFAULT_REGEX_PLACE_ID, localPlaceID); err != nil {
-                log.Println(err.Error())
-                response.Error(nested.ERR_UNKNOWN, []string{})
+                response.Error(nested.ERR_UNKNOWN, []string{err.Error()})
                 return
             } else if !matched {
                 response.Error(nested.ERR_INVALID, []string{"place_id"})
@@ -438,8 +436,7 @@ func (s *PlaceService) createUnlockedPlace(requester *nested.Account, request *n
             localPlaceID := string(pcr.ID[pos+1:])
             // check if place id is a valid place id
             if matched, err := regexp.MatchString(nested.DEFAULT_REGEX_PLACE_ID, localPlaceID); err != nil {
-                log.Println(err.Error())
-                response.Error(nested.ERR_UNKNOWN, []string{})
+                response.Error(nested.ERR_UNKNOWN, []string{err.Error()})
                 return
             } else if !matched {
                 response.Error(nested.ERR_INVALID, []string{"place_id"})
@@ -701,7 +698,6 @@ func (s *PlaceService) getPlaceFiles(requester *nested.Account, request *nestedG
             d := s.Worker().Map().FileInfo(f.File)
             d["post_id"] = f.PostId.Hex()
             r = append(r, d)
-            log.Println(d["_id"], d["upload_time"])
     }
     response.OkWithData(nested.M{"files": r})
 }

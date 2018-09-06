@@ -50,6 +50,7 @@ func NewWorker(server *API) *Worker {
     sw.pusher = NewPushManager(sw)
     sw.mailer = NewMailer(sw)
 
+
     return sw
 }
 func (sw *Worker) Execute(request *nestedGateway.Request, response *nestedGateway.Response) {

@@ -72,7 +72,7 @@ func (s *AuthService) getEmailVerificationCode(requester *nested.Account, reques
         }
     }
     verification := s.Worker().Model().Verification.CreateByEmail(email)
-    //TODO:: send email using MessageAPI
+
     response.OkWithData(nested.M{
         "vid": verification.ID,
         //"email": fmt.Sprintf("%s******%s", string(phone[:3]), string(phone[len(phone) - 2:])),
@@ -133,60 +133,9 @@ func (s *AuthService) sendCodeByText(requester *nested.Account, request *nestedG
             s.Worker().Config().GetString("ADP_MESSAGE_URL"),
         )
         adp.SendSms(verification.Phone, "Nested verification code is: "+verification.ShortCode)
-    } else {
-        twilio := NewTwilioClient(
-            s.Worker().Config().GetString("TWILIO_ACCOUNT_SID"),
-            s.Worker().Config().GetString("TWILIO_TOKEN"),
-            s.Worker().Config().GetString("TWILIO_MESSAGE_NUMBER"),
-            s.Worker().Config().GetStringSlice("TWILIO_CALL_NUMBERS"),
-        )
-        twilio.SendSms(verification.Phone, "Nested verification code is: "+verification.ShortCode)
     }
-
     response.Ok()
     return
-}
-
-// @Command:	auth/call_phone
-// @Input:	vid		string	*
-func (s *AuthService) sendCodeByPhoneCall(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
-    var verification *nested.Verification
-    if v, ok := request.Data["vid"].(string); ok {
-        verification = s.Worker().Model().Verification.GetByID(v)
-        if verification == nil {
-            response.Error(nested.ERR_INVALID, []string{"vid"})
-            return
-        }
-    } else {
-        response.Error(nested.ERR_INCOMPLETE, []string{"vid"})
-        return
-    }
-    if verification.Phone == nested.TEST_PHONE_NUMBER {
-        return
-    }
-    if verification.Counters.Call > 3 {
-        response.Error(nested.ERR_LIMIT, []string{"no_more_call"})
-        return
-    }
-    s.Worker().Model().Verification.IncrementCallCounter(verification.ID)
-    twilio := NewTwilioClient(
-        s.Worker().Config().GetString("TWILIO_ACCOUNT_SID"),
-        s.Worker().Config().GetString("TWILIO_TOKEN"),
-        s.Worker().Config().GetString("TWILIO_MESSAGE_NUMBER"),
-        s.Worker().Config().GetStringSlice("TWILIO_CALL_NUMBERS"),
-    )
-    twilio.SendCall(
-        verification.Phone,
-        fmt.Sprintf("https://callback.twilio.nested.me/auth/read_code/hash:%s/vid:%s", verification.LongCode, verification.ID),
-    )
-    response.Ok()
-    return
-}
-
-// @Command:	auth/send_email
-// @Input:	vid		string	*
-func (s *AuthService) sendCodeByEmail(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
-    //TODO:: to be implemented
 }
 
 // @Command:	auth/recover_pass

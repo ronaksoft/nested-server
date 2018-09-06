@@ -62,7 +62,6 @@ func JobReporter(b *BackgroundJob) {
         bundleID,
         nested.SystemInfo(),
     )
-    log.Println("Report Debouncer Called.")
 }
 
 // JobOverdueTasks

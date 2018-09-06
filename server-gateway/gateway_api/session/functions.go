@@ -21,7 +21,6 @@ func (s *SessionService) close(requester *nested.Account, request *nestedGateway
         response.Error(nested.ERR_ACCESS, []string{"_sk", "_ss"})
         return
     }
-    log.Println("Session Expired because of CloseSession::", request.SessionKey.Hex())
     s.Worker().Model().Session.Expire(request.SessionKey)
     if session.DeviceID != "" {
         s.Worker().Pusher().Notification.UnregisterDevice(session.DeviceID, session.DeviceToken, session.AccountID)
@@ -79,7 +78,6 @@ func (s *SessionService) recall(requester *nested.Account, request *nestedGatewa
     s.Worker().Model().Session.UpdateLastAccess(sk)
 
     if session.AccountID == "" {
-        log.Println("SESSION::EXPIRED::ACCOUNT NOT EXIST IN SESSION", request.SessionKey)
         s.Worker().Model().Session.Expire(sk)
         response.Error(nested.ERR_SESSION, []string{"uid"})
         return
@@ -116,7 +114,6 @@ func (s *SessionService) recall(requester *nested.Account, request *nestedGatewa
         },
     )
     if account == nil {
-        log.Println("USERAPI::RecallSession::Account is nil::", sk.Hex())
         response.Error(nested.ERR_UNKNOWN, []string{})
         return
     }
@@ -178,7 +175,6 @@ func (s *SessionService) register(requester *nested.Account, request *nestedGate
     // if user already logged in close the session before creating new session
     if requester != nil {
         sessionKey := request.SessionKey
-        log.Println("SESSION::EXPIRED::ALREADY_LOGGED_IN", uid, sessionKey)
         if sessionKey.Valid() {
             s.Worker().Model().Session.Expire(request.SessionKey)
         }
@@ -315,8 +311,6 @@ func (s *SessionService) closeActive(requester *nested.Account, request *nestedG
         response.Error(nested.ERR_ACCESS, []string{"current session"})
         return
     }
-
-    log.Println("Session Expired because of CloseActiveSession::", sessionKey.Hex())
     s.Worker().Model().Session.Expire(sessionKey)
     response.Ok()
 }

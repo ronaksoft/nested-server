@@ -389,8 +389,6 @@ func (m *Mapper) PlaceActivity(requester *nested.Account, placeActivity nested.P
                     }
                 }
                 r["post"] = m.worker.Map().Post(requester, *post, true)
-            } else {
-                log.Println("Post does not exists:", place.ID, placeActivity.PostID)
             }
             oldPlace := m.worker.Model().Place.GetByID(placeActivity.OldPlaceID, nil)
             newPlace := m.worker.Model().Place.GetByID(placeActivity.NewPlaceID, nil)

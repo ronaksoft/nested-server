@@ -76,7 +76,7 @@ func NewMailer(worker *Worker) *Mailer {
     m.cyrusUrl = worker.Config().GetString("CYRUS_URL")
     m.chRequests = make(chan MailRequest, 1000)
     if tpl, err := template.ParseFiles("/ronak/templates/post_email.html"); err != nil {
-        log.Println(err.Error())
+        log.Fatal(err.Error())
     } else {
         m.template = tpl
     }
