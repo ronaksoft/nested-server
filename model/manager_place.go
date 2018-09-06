@@ -563,10 +563,6 @@ func (pm *PlaceManager) Demote(placeID, accountID string) *PlaceManager {
 
 //	Exists returns true if place is already exists, this function is opposite of Available
 func (pm *PlaceManager) Exists(placeID string) bool {
-    // _funcName
-
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -578,29 +574,17 @@ func (pm *PlaceManager) Exists(placeID string) bool {
 
 //	GetByID returns a pointer to a place identified by placeID.
 func (pm *PlaceManager) GetByID(placeID string, pj M) *Place {
-    // _funcName
-
-    // removed LOG Function
-
     return _Manager.Place.readFromCache(placeID)
 }
 
 //	GetPlacesByIDs returns an array of places identified by placeIDs. Only found places will be returned
 //	and the rest will be silently ignored
 func (pm *PlaceManager) GetPlacesByIDs(placeIDs []string) []Place {
-    // _funcName
-
-    // removed LOG Function
-
     return _Manager.Place.readMultiFromCache(placeIDs)
 }
 
 // GetGrandParentIDs accepts an array of placeIDs and returns an array of their grand place ids.
 func (pm *PlaceManager) GetGrandParentIDs(placeIDs []string) []string {
-    // _funcName
-
-    // removed LOG Function
-
     var res []string
     for _, v := range placeIDs {
         res = append(res, strings.Split(v, ".")[0])
@@ -611,9 +595,6 @@ func (pm *PlaceManager) GetGrandParentIDs(placeIDs []string) []string {
 
 // GetParentID returns the parent's id of the placeID
 func (pm *PlaceManager) GetParentID(placeID string) string {
-    // _funcName
-
-    // removed LOG Function
     return string(placeID[:strings.LastIndex(placeID, ".")])
 }
 
@@ -625,10 +606,6 @@ func (pm *PlaceManager) GetParentID(placeID string) string {
 //	5. PLACE_COUNTER_POSTS
 //	6. PLACE_COUNTER_QUOTA
 func (pm *PlaceManager) IncrementCounter(placeIDs []string, counterName string, c int) bool {
-    // _funcName
-
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -652,10 +629,6 @@ func (pm *PlaceManager) IncrementCounter(placeIDs []string, counterName string, 
 //	IsSubPlace returns TRUE if subPlaceID is a sub-place of placeID. It will returns TRUE even if
 //	subPlaceID is not a direct child of the placeID.
 func (pm *PlaceManager) IsSubPlace(placeID, subPlaceID string) bool {
-    // _funcName
-
-    // removed LOG Function
-
     di := strings.Index(subPlaceID, ".")
     pi := strings.Index(subPlaceID, placeID+".")
     if placeID != subPlaceID && di != -1 && pi == 0 {
@@ -666,9 +639,6 @@ func (pm *PlaceManager) IsSubPlace(placeID, subPlaceID string) bool {
 
 // Promote promotes the accountID in the placeID from keyholder to creator
 func (pm *PlaceManager) Promote(placeID, accountID string) *PlaceManager {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Place.removeCache(placeID)
     defer _Manager.Account.removeCache(accountID)
 
@@ -701,9 +671,6 @@ func (pm *PlaceManager) Promote(placeID, accountID string) *PlaceManager {
 
 // bookmarkPost pins postID to one of the pinned posts of placeID
 func (pm *PlaceManager) PinPost(placeID string, postID bson.ObjectId) bool {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Place.removeCache(placeID)
 
     dbSession := _MongoSession.Clone()
@@ -729,9 +696,6 @@ func (pm *PlaceManager) PinPost(placeID string, postID bson.ObjectId) bool {
 
 // UnpinPost unpins postID from the placeID
 func (pm *PlaceManager) UnpinPost(placeID string, postID bson.ObjectId) bool {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Place.removeCache(placeID)
 
     dbSession := _MongoSession.Clone()
@@ -751,9 +715,6 @@ func (pm *PlaceManager) UnpinPost(placeID string, postID bson.ObjectId) bool {
 // Remove deletes the place forever and all the posts and activities of that place will be gone.
 // also all the members will be removed from the place
 func (pm *PlaceManager) Remove(placeID string, accountID string) bool {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Place.removeCache(placeID)
 
     dbSession := _MongoSession.Copy()
@@ -828,10 +789,6 @@ func (pm *PlaceManager) Remove(placeID string, accountID string) bool {
 }
 
 func (pm *PlaceManager) RemoveAllMembers(placeID string) {
-    // _funcName
-
-    // removed LOG Function
-
     dbSession := _MongoSession.Copy()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -856,9 +813,6 @@ func (pm *PlaceManager) RemoveAllMembers(placeID string) {
 }
 
 func (pm *PlaceManager) RemoveKeyHolder(placeID, accountID, actorID string) *PlaceManager {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Place.removeCache(placeID)
     defer _Manager.Account.removeCache(accountID)
 
@@ -938,19 +892,12 @@ func (pm *PlaceManager) RemoveKeyHolder(placeID, accountID, actorID string) *Pla
 }
 
 func (pm *PlaceManager) RemoveCreator(placeID, accountID, actorID string) *PlaceManager {
-    // _funcName
-
-    // removed LOG Function
-
     pm.Demote(placeID, accountID)
     pm.RemoveKeyHolder(placeID, accountID, actorID)
     return pm
 }
 
 func (pm *PlaceManager) SetPicture(placeID string, pic Picture) {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Place.removeCache(placeID)
 
     dbSession := _MongoSession.Clone()
@@ -966,9 +913,6 @@ func (pm *PlaceManager) SetPicture(placeID string, pic Picture) {
 }
 
 func (pm *PlaceManager) Update(placeID string, placeUpdateRequest M) bool {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Place.removeCache(placeID)
 
     dbSession := _MongoSession.Clone()
@@ -993,9 +937,6 @@ func (pm *PlaceManager) Update(placeID string, placeUpdateRequest M) bool {
 }
 
 func (pm *PlaceManager) UpdateLimits(placeID string, limits MI) bool {
-    // _funcName
-
-    // removed LOG Function
     defer _Manager.Place.removeCache(placeID)
 
     dbSession := _MongoSession.Clone()
