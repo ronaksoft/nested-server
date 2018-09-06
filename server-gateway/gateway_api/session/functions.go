@@ -1,7 +1,6 @@
 package nestedServiceSession
 
 import (
-    "log"
     "strings"
 
     "git.ronaksoftware.com/nested/server/model"

@@ -1,7 +1,6 @@
 package nestedServicePlace
 
 import (
-    "log"
     "regexp"
     "strings"
 

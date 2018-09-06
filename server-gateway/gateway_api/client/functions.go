@@ -2,7 +2,6 @@ package nestedServiceClient
 
 import (
     "encoding/json"
-    "log"
     "strings"
 
     "git.ronaksoftware.com/nested/server/model"
