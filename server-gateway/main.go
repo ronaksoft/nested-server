@@ -18,12 +18,14 @@ var (
 func init() {
     _Config = readConfig()
     _BundleID = _Config.GetString("BUNDLE_ID")
+
     // Initialize Logger
     _LogLevel = zap.NewAtomicLevelAt(zap.DebugLevel)
     zap.NewProductionConfig()
     config := zap.NewProductionConfig()
     config.Encoding = "console"
     config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+    config.EncoderConfig.EncodeDuration = zapcore.StringDurationEncoder
     config.Level = _LogLevel
     if v, err := config.Build(); err != nil {
         os.Exit(1)

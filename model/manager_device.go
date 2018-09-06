@@ -7,11 +7,11 @@ import (
 )
 
 const (
-    DEVICE_OS_ANDROID  = "android"
-    DEVICE_OS_FIREFOX  = "firefox"
-    DEVICE_OS_CHROME   = "chrome"
-    DEVICE_OS_IOS      = "ios"
-    DEVICE_OS_SAFARI   = "safari"
+    DEVICE_OS_ANDROID = "android"
+    DEVICE_OS_FIREFOX = "firefox"
+    DEVICE_OS_CHROME  = "chrome"
+    DEVICE_OS_IOS     = "ios"
+    DEVICE_OS_SAFARI  = "safari"
 )
 
 type Device struct {
@@ -31,10 +31,6 @@ type DeviceManager struct{}
 func NewDeviceManager() *DeviceManager { return new(DeviceManager) }
 
 func (dm *DeviceManager) GetByAccountID(accountID string) []Device {
-    // _funcName
-    //
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -47,10 +43,6 @@ func (dm *DeviceManager) GetByAccountID(accountID string) []Device {
 }
 
 func (dm *DeviceManager) IncrementBadge(accountID string) {
-    // _funcName
-    //
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -64,10 +56,6 @@ func (dm *DeviceManager) IncrementBadge(accountID string) {
 }
 
 func (dm *DeviceManager) Register(deviceID, deviceToken, deviceOS, accountID string) bool {
-    // _funcName
-    //
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -91,7 +79,15 @@ func (dm *DeviceManager) Register(deviceID, deviceToken, deviceOS, accountID str
         TotalUpdates: 0,
     }
     if err := db.C(COLLECTION_ACCOUNTS_DEVICES).Insert(d); err != nil {
-        _Log.Warn(err.Error())
+        db.C(COLLECTION_ACCOUNTS_DEVICES).UpdateId(
+            deviceID,
+            bson.M{
+                "$set": bson.M{
+                    "_dt": deviceToken,
+                    "os":  deviceOS,
+                    "uid": accountID,
+                },
+            })
         return false
     }
 
@@ -99,10 +95,6 @@ func (dm *DeviceManager) Register(deviceID, deviceToken, deviceOS, accountID str
 }
 
 func (dm *DeviceManager) Remove(deviceID string) bool {
-    // _funcName
-    //
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -115,10 +107,6 @@ func (dm *DeviceManager) Remove(deviceID string) bool {
 }
 
 func (dm *DeviceManager) SetAsConnected(deviceID, accountID string) bool {
-    // _funcName
-    //
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -140,10 +128,6 @@ func (dm *DeviceManager) SetAsConnected(deviceID, accountID string) bool {
 }
 
 func (dm *DeviceManager) SetAsDisconnected(deviceID string) bool {
-    // _funcName
-    //
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -159,10 +143,6 @@ func (dm *DeviceManager) SetAsDisconnected(deviceID string) bool {
 }
 
 func (dm *DeviceManager) Update(deviceID, deviceToken, deviceOS, accountID string) bool {
-    // _funcName
-    //
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()

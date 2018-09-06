@@ -241,8 +241,8 @@ func (gw *GatewayServer) httpOnConnection(ctx iris.Context) {
 
     _Log.Debug("HTTP Request Received",
         zap.String("AppID", userRequest.AppID),
-        zap.String("Command", userRequest.Command),
-        zap.String("ResponseStatus", userResponse.Status),
+        zap.String("Cmd", userRequest.Command),
+        zap.String("Status", userResponse.Status),
         zap.Duration("Duration", time.Now().Sub(startTime)),
     )
     n, _ := ctx.JSON(userResponse)
@@ -296,8 +296,8 @@ func (gw *GatewayServer) websocketOnConnection(c websocket.Connection) {
             gw.api.Worker().Execute(userRequest, userResponse)
             _Log.Debug("Websocket Request Received",
                 zap.String("AppID", userRequest.AppID),
-                zap.String("Command", userRequest.Command),
-                zap.String("ResponseStatus", userResponse.Status),
+                zap.String("Cmd", userRequest.Command),
+                zap.String("Status", userResponse.Status),
                 zap.Duration("Duration", time.Now().Sub(startTime)),
             )
             bytes := userResponse.MarshalJSON()
