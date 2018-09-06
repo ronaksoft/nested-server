@@ -2,7 +2,6 @@ package main
 
 import (
     "encoding/json"
-    "fmt"
     "net/http"
     "os"
     "strings"
@@ -34,21 +33,37 @@ import (
     "github.com/iris-contrib/middleware/cors"
     "github.com/kataras/iris"
     "github.com/kataras/iris/websocket"
+    "go.uber.org/zap"
+)
+
+var (
+    _WelcomeMsgBytes []byte
 )
 
 // GatewayServer
 type GatewayServer struct {
-    wg            *sync.WaitGroup
-    ws            *websocket.Server
-    iris          *iris.Application
-    model         *nested.Manager
-    ntfy          *ntfy.Client
-    file          *file.Server
-    api           *api.API
+    wg    *sync.WaitGroup
+    ws    *websocket.Server
+    iris  *iris.Application
+    model *nested.Manager
+    ntfy  *ntfy.Client
+    file  *file.Server
+    api   *api.API
 }
 
 func NewGatewayServer() *GatewayServer {
     gateway := new(GatewayServer)
+
+    // Set Welcome Message to send to clients when they connect
+    _WelcomeMsg := nested.M{
+        "type": "r",
+        "data": nested.M{
+            "status": "ok",
+            "msg":    "hi",
+        },
+    }
+    _WelcomeMsgBytes, _ = json.Marshal(_WelcomeMsg)
+
     // Initialize Nested Model
     if model, err := nested.NewManager(
         _Config.GetString("INSTANCE_ID"),
@@ -107,6 +122,7 @@ func NewGatewayServer() *GatewayServer {
 
     // Initialize API API
     gateway.api = api.NewServer(_Config, gateway.wg)
+
     // Register all the available services in the server worker
     gateway.api.Worker().RegisterService(nestedServiceAccount.NewAccountService(gateway.api.Worker()))
     gateway.api.Worker().RegisterService(nestedServiceApp.NewAppService(gateway.api.Worker()))
@@ -125,8 +141,6 @@ func NewGatewayServer() *GatewayServer {
     gateway.api.Worker().RegisterService(nestedServiceSession.NewSessionService(gateway.api.Worker()))
     gateway.api.Worker().RegisterService(nestedServiceSystem.NewSystemService(gateway.api.Worker()))
     gateway.api.Worker().RegisterService(nestedServiceTask.NewTaskService(gateway.api.Worker()))
-
-
 
     // Register and run BackgroundWorkers
     gateway.api.RegisterBackgroundJob(api.NewBackgroundJob(gateway.api, 1*time.Minute, api.JobReporter))
@@ -196,6 +210,7 @@ func (gw *GatewayServer) Shutdown() {
 // This function is called with any request from clients. If the request has "Upgrade" header set to "websocket"
 // then context will be passed to 'websocketOnConnection'
 func (gw *GatewayServer) httpOnConnection(ctx iris.Context) {
+    startTime := time.Now()
     upgrade := ctx.GetHeader("Upgrade")
     if strings.ToLower(upgrade) == "websocket" {
         ctx.Do([]iris.Handler{gw.ws.Handler()})
@@ -223,6 +238,13 @@ func (gw *GatewayServer) httpOnConnection(ctx iris.Context) {
     // Send to API API
     userResponse := new(nestedGateway.Response)
     gw.api.Worker().Execute(userRequest, userResponse)
+
+    _Log.Debug("HTTP Request Received",
+        zap.String("AppID", userRequest.AppID),
+        zap.String("Command", userRequest.Command),
+        zap.String("ResponseStatus", userResponse.Status),
+        zap.Duration("Duration", time.Now().Sub(startTime)),
+    )
     n, _ := ctx.JSON(userResponse)
     gw.model.Report.CountDataOut(n)
 }
@@ -249,25 +271,20 @@ func (gw *GatewayServer) httpCheckAuth(ctx iris.Context) {
 // websocketOnConnection
 // This function will be called once in each websocket connection life-time
 func (gw *GatewayServer) websocketOnConnection(c websocket.Connection) {
-    welcomeMsg := nested.M{
-        "type": "r",
-        "data": nested.M{
-            "status": "ok",
-            "msg":    "hi",
-        },
-    }
-    if _Config.GetInt("DEBUG_LEVEL") >= 2 {
-        fmt.Println(c.ID(), string(c.Context().Request().RemoteAddr))
-    }
-    if m, err := json.Marshal(welcomeMsg); err != nil {
-        c.Disconnect()
-    } else {
-        c.EmitMessage(m)
-    }
+    _Log.Debug("Websocket Connected",
+        zap.String("ConnID", c.ID()),
+        zap.String("RemoteIP", c.Context().Request().RemoteAddr),
+    )
+
+    // Send Welcome Message to the Client
+    c.EmitMessage(_WelcomeMsgBytes)
+
+    // Websocket Message Handler
     c.OnMessage(func(m []byte) {
         if strings.HasPrefix(string(m), "PING!") {
             c.EmitMessage([]byte(strings.Replace(string(m), "PING!", "PONG!", 1)))
         } else {
+            startTime := time.Now()
             userRequest := new(nestedGateway.Request)
             json.Unmarshal(m, userRequest)
             userRequest.ClientIP = c.Context().RemoteAddr()
@@ -277,15 +294,20 @@ func (gw *GatewayServer) websocketOnConnection(c websocket.Connection) {
             // Send to API API
             userResponse := new(nestedGateway.Response)
             gw.api.Worker().Execute(userRequest, userResponse)
+            _Log.Debug("Websocket Request Received",
+                zap.String("AppID", userRequest.AppID),
+                zap.String("Command", userRequest.Command),
+                zap.String("ResponseStatus", userResponse.Status),
+                zap.Duration("Duration", time.Now().Sub(startTime)),
+            )
             bytes := userResponse.MarshalJSON()
             c.EmitMessage(bytes)
             gw.model.Report.CountDataOut(len(bytes))
         }
     })
 
+    // Websocket Disconnect Handler
     c.OnDisconnect(func() {
         gw.model.Websocket.Remove(c.ID(), _BundleID)
     })
 }
-
-

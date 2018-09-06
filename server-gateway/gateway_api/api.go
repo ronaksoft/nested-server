@@ -1,14 +1,35 @@
 package api
 
 import (
-    "log"
     "os"
     "sync"
 
     "git.ronaksoftware.com/nested/server/model"
     "git.ronaksoftware.com/nested/server/server-gateway/client"
+    "go.uber.org/zap"
+    "go.uber.org/zap/zapcore"
     "gopkg.in/fzerorubigd/onion.v3"
 )
+
+var (
+    _Log      *zap.Logger
+    _LogLevel zap.AtomicLevel
+)
+
+func init() {
+    // Initialize Logger
+    _LogLevel = zap.NewAtomicLevelAt(zap.DebugLevel)
+    zap.NewProductionConfig()
+    config := zap.NewProductionConfig()
+    config.Encoding = "console"
+    config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+    config.Level = _LogLevel
+    if v, err := config.Build(); err != nil {
+        os.Exit(1)
+    } else {
+        _Log = v
+    }
+}
 
 // AUTH_LEVEL Constants
 const (
@@ -59,6 +80,7 @@ func NewServer(config *onion.Onion, wg *sync.WaitGroup) *API {
     s := new(API)
     s.config = config
     s.wg = wg
+
     // Instantiate Nested Model Manager
     if model, err := nested.NewManager(
         config.GetString("INSTANCE_ID"),
@@ -66,8 +88,7 @@ func NewServer(config *onion.Onion, wg *sync.WaitGroup) *API {
         config.GetString("REDIS_DSN"),
         config.GetInt("DEBUG_LEVEL"),
     ); err != nil {
-        log.Println("NewServer::Nested Manager Error::", err.Error())
-        os.Exit(1)
+        _Log.Fatal(err.Error())
     } else {
         s.model = model
     }

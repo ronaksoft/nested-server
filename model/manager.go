@@ -15,8 +15,8 @@ import (
 )
 
 var (
-    __Debug       int
     _Log          *zap.Logger
+    _LogLevel     zap.AtomicLevel
     _Manager      *Manager
     _MongoSession *mgo.Session
     _MongoDB      *mgo.Database
@@ -45,6 +45,20 @@ func init() {
     gob.Register(Account{})
     gob.Register(Place{})
     gob.Register(License{})
+
+    // Initialize Logger
+    _LogLevel = zap.NewAtomicLevelAt(zap.DebugLevel)
+    zap.NewProductionConfig()
+    config := zap.NewProductionConfig()
+    config.Encoding = "console"
+    config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+    config.Level = _LogLevel
+    if v, err := config.Build(); err != nil {
+        os.Exit(1)
+    } else {
+        _Log = v
+    }
+
 }
 
 // Manager
@@ -78,18 +92,7 @@ type Manager struct {
     Websocket     *WebsocketManager
 }
 
-func NewManager(instanceID, mongoDSN, redisDSN string, debug int) (*Manager, error) {
-    __Debug = debug
-    logConfig := zap.NewProductionConfig()
-    logConfig.Encoding = "console"
-    logConfig.Level = zap.NewAtomicLevelAt(zapcore.Level(__Debug))
-    if v, err := logConfig.Build(); err != nil {
-        os.Exit(1)
-    } else {
-        _Log = v
-    }
-
-
+func NewManager(instanceID, mongoDSN, redisDSN string, logLevel int) (*Manager, error) {
     // Initial MongoDB
     tlsConfig := new(tls.Config)
     tlsConfig.InsecureSkipVerify = true
@@ -163,13 +166,13 @@ func NewManager(instanceID, mongoDSN, redisDSN string, debug int) (*Manager, err
     _Manager.Verification = NewVerificationManager()
     _Manager.Websocket = NewWebsocketManager()
 
-
-
-
     // Load the system constants
     _Manager.System.LoadIntegerConstants()
     _Manager.System.LoadStringConstants()
     _Manager.License.Load()
+
+    // Set Log Level
+    _Manager.SetLogLevel(logLevel)
 
     return _Manager, nil
 }
@@ -183,8 +186,8 @@ func (m *Manager) Shutdown() {
     _Log.Sync()
 }
 
-func (m *Manager) SetDebugLevel(level int) {
-    __Debug = level
+func (m *Manager) SetLogLevel(level int) {
+    _LogLevel.SetLevel(zapcore.Level(level))
 }
 
 func (m *Manager) RegisterBundle(bundleID string) {
@@ -261,6 +264,7 @@ func (p *Pagination) GetLimit() int {
     return p.limit
 }
 
+// Generic Map
 type M map[string]interface{}
 
 func (m M) KeysToArray() []string {
@@ -278,6 +282,8 @@ func (m M) ValuesToArray() []interface{} {
     return arr
 }
 
+
+// Boolean MAp
 type MB map[string]bool
 
 func (m MB) AddKeys(keys ...[]string) {
