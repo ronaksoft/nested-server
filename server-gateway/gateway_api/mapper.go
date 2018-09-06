@@ -1,8 +1,6 @@
 package api
 
 import (
-    "log"
-
     "git.ronaksoftware.com/nested/server/model"
     "github.com/globalsign/mgo/bson"
 )
