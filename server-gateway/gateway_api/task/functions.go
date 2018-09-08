@@ -9,8 +9,6 @@ import (
 	"git.ronaksoftware.com/nested/server/server-gateway/client"
 	"github.com/globalsign/mgo/bson"
 	"time"
-	"log"
-	"reflect"
 )
 
 // @Command:	task/create
@@ -515,7 +513,6 @@ func (s *TaskService) getByCustomFilter(requester *nested.Account, request *nest
 	var statusFilter []nested.TaskStatus
 	var keyword string
 	var dueDate, createdAt uint64
-	log.Println("request *nestedGateway.Request", request)
 	if v, ok := request.Data["assignor_id"].(string); ok && len(v) > 0 {
 		assignorIDs = strings.SplitN(v, ",", nested.DEFAULT_MAX_RESULT_LIMIT)
 	}
@@ -553,12 +550,9 @@ func (s *TaskService) getByCustomFilter(requester *nested.Account, request *nest
 			}
 		}
 	}
-	log.Println("dueDate Type",reflect.TypeOf(request.Data["due_date"]))
 	if v, ok := request.Data["due_date"].(float64); ok {
-		log.Println("dueDate::::",v)
 		dueDate = uint64(time.Now().AddDate(0,0,int(v)).UnixNano() / 1000000)
 	}
-	log.Println("dueDate",dueDate)
 	if v, ok := request.Data["timestamp"].(float64); ok {
 		createdAt = uint64(time.Now().AddDate(0,0,-int(v)).UnixNano() / 1000000)
 	}
