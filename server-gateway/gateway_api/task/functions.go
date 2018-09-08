@@ -9,6 +9,7 @@ import (
 	"git.ronaksoftware.com/nested/server/server-gateway/client"
 	"github.com/globalsign/mgo/bson"
 	"time"
+	"log"
 )
 
 // @Command:	task/create
@@ -553,6 +554,7 @@ func (s *TaskService) getByCustomFilter(requester *nested.Account, request *nest
 	if v, ok := request.Data["due_date"].(int64); ok {
 		dueDate = nested.Timestamp() + uint64(time.Unix(v*24*60*60, 0).UnixNano()/1000000)
 	}
+	log.Println("dueDate",dueDate)
 	if v, ok := request.Data["timestamp"].(int64); ok {
 		createdAt = nested.Timestamp() - uint64(time.Unix(v*24*60*60, 0).UnixNano()/1000000)
 	}
