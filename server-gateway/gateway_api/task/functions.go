@@ -10,6 +10,7 @@ import (
 	"github.com/globalsign/mgo/bson"
 	"time"
 	"log"
+	"fmt"
 )
 
 // @Command:	task/create
@@ -513,7 +514,7 @@ func (s *TaskService) getByCustomFilter(requester *nested.Account, request *nest
 	var statusFilter []nested.TaskStatus
 	var keyword string
 	var dueDate, createdAt uint64
-
+	fmt.Sprintf("request *nestedGateway.Request :: %+v", request)
 	if v, ok := request.Data["assignor_id"].(string); ok && len(v) > 0 {
 		assignorIDs = strings.SplitN(v, ",", nested.DEFAULT_MAX_RESULT_LIMIT)
 	}
