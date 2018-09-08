@@ -556,10 +556,10 @@ func (s *TaskService) getByCustomFilter(requester *nested.Account, request *nest
 	log.Println("dueDate Type",reflect.TypeOf(request.Data["due_date"]))
 	if v, ok := request.Data["due_date"].(float64); ok {
 		log.Println("dueDate::::",v)
-		dueDate = uint64(time.Now().AddDate(0,0,int(v)).UnixNano() / 1000000) //uint64(time.Unix(v*24*60*60, 0).UnixNano()/1000000)
+		dueDate = uint64(time.Now().AddDate(0,0,int(v)).UnixNano() / 1000000)
 	}
 	log.Println("dueDate",dueDate)
-	if v, ok := request.Data["timestamp"].(int); ok {
+	if v, ok := request.Data["timestamp"].(float64); ok {
 		createdAt = uint64(time.Now().AddDate(0,0,-int(v)).UnixNano() / 1000000)
 	}
 	tasks := s.Worker().Model().Task.GetByCustomFilter(
