@@ -60,6 +60,7 @@ func StartupCheckups() {
     // Tasks
     _MongoDB.C(COLLECTION_TASKS).EnsureIndex(mgo.Index{Key: []string{"members"}, Background: true})
     _MongoDB.C(COLLECTION_TASKS).EnsureIndex(mgo.Index{Key: []string{"due_date"}, Background: true})
+    _MongoDB.C(COLLECTION_TASKS).EnsureIndex(mgo.Index{Key: []string{"timestamp"}, Background: true})
     _MongoDB.C(COLLECTION_TASKS).EnsureIndex(mgo.Index{
         Key: []string{"$text:title", "$text:description", "$text:todos"},
         Weights: map[string]int{

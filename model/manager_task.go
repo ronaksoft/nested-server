@@ -328,7 +328,7 @@ func (tm *TaskManager) GetByCandidateID(accountID string, pg Pagination, filter 
 // 3. Labels
 func (tm *TaskManager) GetByCustomFilter(
     accountID string, assignorIDs, assigneeIDs, labelIDs []string, labelLogic, keyword string,
-    pg Pagination, filter []TaskStatus, dueDate uint64,
+    pg Pagination, filter []TaskStatus, dueDate uint64, createdAt uint64,
 ) []Task {
     // _funcName
 
@@ -356,6 +356,9 @@ func (tm *TaskManager) GetByCustomFilter(
             "$diacriticSensitive": false,
         }
     }
+	if createdAt > 0 {
+		q["timestamp"] = bson.M{"$gte": createdAt}
+	}
     if dueDate > 0 {
         q["due_date"] = bson.M{"$lt": dueDate}
     }

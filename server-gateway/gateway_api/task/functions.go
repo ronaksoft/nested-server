@@ -510,7 +510,7 @@ func (s *TaskService) getByCustomFilter(requester *nested.Account, request *nest
     var labelLogic = "and"
     var statusFilter []nested.TaskStatus
     var keyword string
-    var dueDate uint64
+    var dueDate, createdAt uint64
 
     if v, ok := request.Data["assignor_id"].(string); ok && len(v) > 0 {
         assignorIDs = strings.SplitN(v, ",", nested.DEFAULT_MAX_RESULT_LIMIT)
@@ -552,7 +552,9 @@ func (s *TaskService) getByCustomFilter(requester *nested.Account, request *nest
     if v, ok := request.Data["due_date"].(float64); ok {
         dueDate = nested.Timestamp() + uint64(v)
     }
-
+    if v, ok := request.Data["timestamp"].(float64); ok {
+        createdAt = nested.Timestamp() - uint64(v)
+    }
     tasks := s.Worker().Model().Task.GetByCustomFilter(
         requester.ID,
         assignorIDs,
@@ -563,6 +565,7 @@ func (s *TaskService) getByCustomFilter(requester *nested.Account, request *nest
         s.Worker().Argument().GetPagination(request),
         statusFilter,
         dueDate,
+        createdAt,
     )
     r := make([]nested.M, 0, len(tasks))
     for _, task := range tasks {
