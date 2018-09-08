@@ -551,12 +551,12 @@ func (s *TaskService) getByCustomFilter(requester *nested.Account, request *nest
 			}
 		}
 	}
-	if v, ok := request.Data["due_date"].(int64); ok {
-		dueDate = nested.Timestamp() + uint64(time.Unix(v*24*60*60, 0).UnixNano()/1000000)
+	if v, ok := request.Data["due_date"].(int); ok {
+		dueDate = uint64(time.Now().AddDate(0,0,v).UnixNano() / 1000000) //uint64(time.Unix(v*24*60*60, 0).UnixNano()/1000000)
 	}
 	log.Println("dueDate",dueDate)
-	if v, ok := request.Data["timestamp"].(int64); ok {
-		createdAt = nested.Timestamp() - uint64(time.Unix(v*24*60*60, 0).UnixNano()/1000000)
+	if v, ok := request.Data["timestamp"].(int); ok {
+		createdAt = uint64(time.Now().AddDate(0,0,-v).UnixNano() / 1000000)
 	}
 	tasks := s.Worker().Model().Task.GetByCustomFilter(
 		requester.ID,
