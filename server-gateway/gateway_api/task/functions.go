@@ -507,7 +507,8 @@ func (s *TaskService) getByFilter(requester *nested.Account, request *nestedGate
 // @Input:      label_title         string      (comma separated)
 // @Input:      status_filter       int
 // @Input:      keyword             string
-// @Input:      due_date            string      (relative timestamp)
+// @Input:      due_date            float64      (days)
+// @Input:      timestamp           float64      (days)
 func (s *TaskService) getByCustomFilter(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	var assignorIDs, assigneeIDs, labelIDs []string
 	var labelLogic = "and"
@@ -553,13 +554,13 @@ func (s *TaskService) getByCustomFilter(requester *nested.Account, request *nest
 		}
 	}
 	log.Println("dueDate Type",reflect.TypeOf(request.Data["due_date"]))
-	if v, ok := request.Data["due_date"].(int); ok {
+	if v, ok := request.Data["due_date"].(float64); ok {
 		log.Println("dueDate::::",v)
-		dueDate = uint64(time.Now().AddDate(0,0,v).UnixNano() / 1000000) //uint64(time.Unix(v*24*60*60, 0).UnixNano()/1000000)
+		dueDate = uint64(time.Now().AddDate(0,0,int(v)).UnixNano() / 1000000) //uint64(time.Unix(v*24*60*60, 0).UnixNano()/1000000)
 	}
 	log.Println("dueDate",dueDate)
 	if v, ok := request.Data["timestamp"].(int); ok {
-		createdAt = uint64(time.Now().AddDate(0,0,-v).UnixNano() / 1000000)
+		createdAt = uint64(time.Now().AddDate(0,0,-int(v)).UnixNano() / 1000000)
 	}
 	tasks := s.Worker().Model().Task.GetByCustomFilter(
 		requester.ID,
