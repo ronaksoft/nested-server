@@ -10,6 +10,7 @@ import (
 	"github.com/globalsign/mgo/bson"
 	"time"
 	"log"
+	"reflect"
 )
 
 // @Command:	task/create
@@ -551,6 +552,7 @@ func (s *TaskService) getByCustomFilter(requester *nested.Account, request *nest
 			}
 		}
 	}
+	log.Println("dueDate Type",reflect.TypeOf(request.Data["due_date"]))
 	if v, ok := request.Data["due_date"].(int); ok {
 		log.Println("dueDate::::",v)
 		dueDate = uint64(time.Now().AddDate(0,0,v).UnixNano() / 1000000) //uint64(time.Unix(v*24*60*60, 0).UnixNano()/1000000)
