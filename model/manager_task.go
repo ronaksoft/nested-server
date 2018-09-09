@@ -309,8 +309,8 @@ func (tm *TaskManager) GetByCandidateID(accountID string, pg Pagination, filter 
 
     tasks := make([]Task, 0, pg.GetLimit())
     q := bson.M{
-        "members":    bson.M{"$in": accountID},
-        "candidates": bson.M{"$in": accountID},
+        "members":    accountID,
+        "candidates": accountID,
         "_removed":   false,
     }
     if len(filter) > 0 {
