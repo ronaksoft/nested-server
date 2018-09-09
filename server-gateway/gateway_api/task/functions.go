@@ -394,8 +394,16 @@ func (s *TaskService) updateAssignee(requester *nested.Account, request *nestedG
 	}
 
 	if task.UpdateAssignee(requester.ID, accountIDs) {
+		task1 := s.Worker().Argument().GetTask(request, response)
 		response.Ok()
-		go s.Worker().Pusher().TaskNewActivity(task, nested.TASK_ACTIVITY_ASSIGNEE_CHANGED)
+
+		if len(accountIDs) == 1 {
+			go s.Worker().Pusher().TaskAssigned(task1)
+			go s.Worker().Pusher().TaskNewActivity(task1, nested.TASK_ACTIVITY_ASSIGNEE_CHANGED)
+		} else {
+			go s.Worker().Pusher().TaskAddedToCandidates(task1, requester.ID, accountIDs)
+			go s.Worker().Pusher().TaskNewActivity(task1, nested.TASK_ACTIVITY_CANDIDATE_ADDED)
+		}
 	} else {
 		response.Error(nested.ERR_UNKNOWN, []string{"internal_error"})
 	}
@@ -551,7 +559,7 @@ func (s *TaskService) getByCustomFilter(requester *nested.Account, request *nest
 		}
 	}
 	if v, ok := request.Data["due_date"].(float64); ok {
-		dueDate = uint64(time.Now().AddDate(0,0,int(v)).UnixNano() / 1000000)
+		dueDate = uint64(time.Now().AddDate(0, 0, int(v)).UnixNano() / 1000000)
 	}
 	if v, ok := request.Data["created_at"].(float64); ok {
 		createdAt = uint64(v)
