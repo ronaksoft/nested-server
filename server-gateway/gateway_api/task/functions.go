@@ -506,7 +506,7 @@ func (s *TaskService) getByFilter(requester *nested.Account, request *nestedGate
 // @Input:      status_filter       int
 // @Input:      keyword             string
 // @Input:      due_date            float64      (days)
-// @Input:      timestamp           float64      (days)
+// @Input:      created_at          float64      (days)
 func (s *TaskService) getByCustomFilter(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	var assignorIDs, assigneeIDs, labelIDs []string
 	var labelLogic = "and"
@@ -553,8 +553,8 @@ func (s *TaskService) getByCustomFilter(requester *nested.Account, request *nest
 	if v, ok := request.Data["due_date"].(float64); ok {
 		dueDate = uint64(time.Now().AddDate(0,0,int(v)).UnixNano() / 1000000)
 	}
-	if v, ok := request.Data["timestamp"].(float64); ok {
-		createdAt = uint64(time.Now().AddDate(0,0,-int(v)).UnixNano() / 1000000)
+	if v, ok := request.Data["created_at"].(float64); ok {
+		createdAt = uint64(v)
 	}
 	tasks := s.Worker().Model().Task.GetByCustomFilter(
 		requester.ID,
