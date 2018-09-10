@@ -1146,13 +1146,13 @@ func (t *Task) UpdateAssignee(accountID string, candidateIDs []string) bool {
         if err := db.C(COLLECTION_TASKS).UpdateId(
             t.ID,
             bson.M{
-                "$set": bson.M{
+				"$addToSet": bson.M{"members": bson.M{"$each": candidateIDs}},
+				"$set": bson.M{
                     "assignee":            "",
                     "candidates":          candidateIDs,
                     "status":              TASK_STATUS_NOT_ASSIGNED,
                     "counters.candidates": len(candidateIDs),
                 },
-                "$addToSet": bson.M{"members": bson.M{"$each": candidateIDs}},
             },
         ); err != nil {
             _Log.Warn(err.Error())
