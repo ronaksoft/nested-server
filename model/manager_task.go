@@ -7,6 +7,7 @@ import (
 
     "github.com/globalsign/mgo/bson"
     "github.com/gomodule/redigo/redis"
+	"log"
 )
 
 const (
@@ -1143,6 +1144,7 @@ func (t *Task) UpdateAssignee(accountID string, candidateIDs []string) bool {
             _Manager.TaskActivity.StatusChanged(t.ID, accountID, TASK_STATUS_ASSIGNED)
         }
     } else {
+    	log.Println("$each: candidateIDs", candidateIDs)
         if err := db.C(COLLECTION_TASKS).UpdateId(
             t.ID,
             bson.M{
