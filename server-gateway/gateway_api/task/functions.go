@@ -398,6 +398,9 @@ func (s *TaskService) updateAssignee(requester *nested.Account, request *nestedG
 		response.Ok()
 
 		if len(accountIDs) == 1 {
+			if task.Status == 1 {
+				go s.Worker().Pusher().TaskNewActivity(task, nested.TASK_ACTIVITY_ASSIGNEE_CHANGED)
+			}
 			go s.Worker().Pusher().TaskAssigned(task1)
 			go s.Worker().Pusher().TaskNewActivity(task1, nested.TASK_ACTIVITY_ASSIGNEE_CHANGED)
 		} else {
