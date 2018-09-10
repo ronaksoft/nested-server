@@ -34,6 +34,11 @@ postconf -F '*/*/chroot = n'
 postconf -e message_size_limit=50000000
 postconf -e smtp_tls_security_level=may
 
+###########
+# Setting for haproxy
+###########
+postconf -e smtpd_upstream_proxy_protocol=haproxy
+
 ############
 # SASL SUPPORT FOR CLIENTS
 # The following options set parameters needed by Postfix to enable
