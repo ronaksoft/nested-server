@@ -393,19 +393,14 @@ func (s *TaskService) updateAssignee(requester *nested.Account, request *nestedG
 		return
 	}
 	if task.UpdateAssignee(requester.ID, accountIDs) {
-		task1 := s.Worker().Argument().GetTask(request, response)
-		task1.UpdateMemberIDs()
+		task.UpdateMemberIDs()
 		response.Ok()
-
 		if len(accountIDs) == 1 {
-			if task.Status == 1 {
-				go s.Worker().Pusher().TaskNewActivity(task, nested.TASK_ACTIVITY_ASSIGNEE_CHANGED)
-			}
-			go s.Worker().Pusher().TaskAssigned(task1)
-			go s.Worker().Pusher().TaskNewActivity(task1, nested.TASK_ACTIVITY_ASSIGNEE_CHANGED)
+			go s.Worker().Pusher().TaskAssigned(task)
+			go s.Worker().Pusher().TaskNewActivity(task, nested.TASK_ACTIVITY_ASSIGNEE_CHANGED)
 		} else {
-			go s.Worker().Pusher().TaskAddedToCandidates(task1, requester.ID, accountIDs)
-			go s.Worker().Pusher().TaskNewActivity(task1, nested.TASK_ACTIVITY_CANDIDATE_ADDED)
+			go s.Worker().Pusher().TaskAddedToCandidates(task, requester.ID, accountIDs)
+			go s.Worker().Pusher().TaskNewActivity(task, nested.TASK_ACTIVITY_CANDIDATE_ADDED)
 		}
 	} else {
 		response.Error(nested.ERR_UNKNOWN, []string{"internal_error"})
