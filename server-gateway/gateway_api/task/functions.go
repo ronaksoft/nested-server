@@ -9,6 +9,7 @@ import (
 	"git.ronaksoftware.com/nested/server/server-gateway/client"
 	"github.com/globalsign/mgo/bson"
 	"time"
+	"log"
 )
 
 // @Command:	task/create
@@ -392,7 +393,7 @@ func (s *TaskService) updateAssignee(requester *nested.Account, request *nestedG
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
-
+	log.Println("accountIDs",accountIDs)
 	if task.UpdateAssignee(requester.ID, accountIDs) {
 		task1 := s.Worker().Argument().GetTask(request, response)
 		response.Ok()
