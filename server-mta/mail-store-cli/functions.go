@@ -16,6 +16,7 @@ import (
     "git.ronaksoftware.com/nested/server/model"
     "git.ronaksoftware.com/nested/server/server-gateway/client"
     "github.com/jhillyerd/enmime"
+    "go.uber.org/zap"
 )
 
 func Dispatch(sender string, recipients []string, body io.Reader) error {
@@ -26,7 +27,7 @@ func Dispatch(sender string, recipients []string, body io.Reader) error {
 
     // Parse message
     if env, err := enmime.ReadEnvelope(bytes.NewReader(buf.Bytes())); err != nil {
-        _Log.Debugf("Read message error: %s", err.Error())
+        _LOG.Debug(fmt.Sprintf("Read message error: %s", err.Error()))
         return err
     } else {
         mailEnvelope = env
@@ -36,29 +37,29 @@ func Dispatch(sender string, recipients []string, body io.Reader) error {
     if v := mailEnvelope.GetHeader("From"); len(v) != 0 {
         sender = mailEnvelope.GetHeader("From")
     }
-    _Log.Debugf("Sender: %s", sender)
+    _LOG.Debug(fmt.Sprintf("Sender: %s", sender))
 
     switch sender {
     case _Config.GetString("MAILER_DAEMON"):
-        _Log.Debugf("System Message: %s", subject)
+        _LOG.Debug(fmt.Sprintf("System Message: %s", subject))
         pmSubject := mailEnvelope.GetHeader("Postmaster-Subject")
 
         switch pmSubject {
         case "Postmaster Copy: Undelivered Mail":
-            _Log.Debug("Undelivered Mail")
+            _LOG.Debug("Undelivered Mail")
             // FIXME: Notify Sender About Delivery Report
 
         case "Postmaster Warning: Delayed Mail":
-            _Log.Debug("Undelivered Mail")
+            _LOG.Debug("Undelivered Mail")
 
         }
 
         switch subject {
         case "Successful Mail Delivery Report":
-            _Log.Debug("Successful Mail Delivery Report")
+            _LOG.Debug("Successful Mail Delivery Report")
 
         case "Mail Delivery Status Report":
-            _Log.Debug("Mail Delivery Status Report")
+            _LOG.Debug("Mail Delivery Status Report")
 
         }
 
@@ -83,7 +84,7 @@ func store(sender string, recipients []string, mailEnvelop *enmime.Envelope, raw
 
     var senderID, senderName string
     if addr, err := mail.ParseAddress(sender); err != nil {
-        _Log.Error("Parse sender address error:", err)
+        _LOG.Error(err.Error())
         senderID = sender
     } else {
         senderID = addr.Address
@@ -91,7 +92,7 @@ func store(sender string, recipients []string, mailEnvelop *enmime.Envelope, raw
     }
 
     if addr, err := mail.ParseAddress(from); err != nil {
-        _Log.Error("Parse from address error:", err)
+        _LOG.Error(err.Error())
     } else {
         if addr.Address == senderID && senderName == "" {
             senderName = addr.Name
@@ -102,7 +103,8 @@ func store(sender string, recipients []string, mailEnvelop *enmime.Envelope, raw
     if replyToHeader := strings.TrimSpace(mailEnvelop.GetHeader("Reply-To")); 0 == len(replyToHeader) {
         // No Reply-To has been set
     } else if addr, err := mail.ParseAddress(replyToHeader); err != nil {
-        _Log.Error("Reply-to address is invalid:", replyToHeader)
+        _LOG.Error(err.Error())
+        _LOG.Debug(fmt.Sprintf("Reply-to address is invalid: %v", replyToHeader))
     } else {
         replyTo = addr.Address
     }
@@ -143,8 +145,10 @@ func store(sender string, recipients []string, mailEnvelop *enmime.Envelope, raw
             nonBlindTargets = append(nonBlindTargets, addr)
         }
     }
-
-    _Log.Info("Got email to: To, CC: %v; BCC: %v", nonBlindPlaceIDs, blindPlaceIDs)
+    _LOG.Info("Got email to: To, CC:; BCC:",
+        zap.Any("nonBlindPlaceIDs", nonBlindPlaceIDs),
+        zap.Any("blindPlaceIDs", blindPlaceIDs),
+    )
     // --/Process Recipients
 
     attachmentOwners := append(nonBlindPlaceIDs, blindPlaceIDs...)
@@ -152,9 +156,9 @@ func store(sender string, recipients []string, mailEnvelop *enmime.Envelope, raw
     var rawMsgFileID nested.UniversalID
     if finfo, err := uploadFile(fmt.Sprintf("%s-%s.eml", messageID, subject), senderID, nested.FILE_STATUS_ATTACHED, attachmentOwners, rawBody); err != nil {
         // TODO: Retry
-        _Log.Error("Unable to upload raw message file")
+        _LOG.Error("Unable to upload raw message file")
     } else {
-        _Log.Debugf("File %s uploaded", fmt.Sprintf("%s-%s.eml", messageID, subject))
+        _LOG.Debug(fmt.Sprintf("File %s uploaded", fmt.Sprintf("%s-%s.eml", messageID, subject)))
         rawMsgFileID = finfo.UniversalId
     }
 
@@ -165,14 +169,14 @@ func store(sender string, recipients []string, mailEnvelop *enmime.Envelope, raw
     senderIdHash := hex.EncodeToString(encoder.Sum(nil))
     senderPictureUrl := fmt.Sprintf("http://www.gravatar.com/avatar/%s?size=%d&rating=g&default=404", senderIdHash, 512)
     if req, err := http.NewRequest(http.MethodGet, senderPictureUrl, nil); err != nil {
-        _Log.Error("Unable to create gravatar http request:", err)
+        _LOG.Error("Unable to create gravatar http request:",zap.String("error", err.Error()))
     } else if res, err := http.DefaultClient.Do(req); err != nil {
-        _Log.Error("Unable to do gravatar http request:", err)
+        _LOG.Error("Unable to do gravatar http request:",zap.String("error", err.Error()))
     } else if res.StatusCode != http.StatusOK {
-        _Log.Error("Gravatar not found")
+        _LOG.Debug("Unable to do gravatar http request:")
     } else {
         if finfo, err := uploadFile(fmt.Sprintf("%s.jpg", senderIdHash), senderID, nested.FILE_STATUS_PUBLIC, []string{}, res.Body); err != nil {
-            _Log.Error("Unable set sender profile picture:", err)
+            _LOG.Error("Unable set sender profile picture:",zap.String("error",err.Error()))
         } else {
             senderPicture = finfo.Thumbs
         }
@@ -190,7 +194,7 @@ func store(sender string, recipients []string, mailEnvelop *enmime.Envelope, raw
     }
 
     // --Inline Attachments
-    _Log.Debug("Going to save inline attachments")
+    _LOG.Debug("Going to save inline attachments")
     chInlineAttachments := make(chan multipartAttachment, len(mailEnvelop.Inlines))
     for k, att := range mailEnvelop.Inlines {
         wg.Add(1)
@@ -201,7 +205,7 @@ func store(sender string, recipients []string, mailEnvelop *enmime.Envelope, raw
             var cid string
             if c := att.Header.Get("Content-Id"); len(c) > 0 {
                 cid = c[1 : len(c)-1]
-                _Log.Debugf("CID: %s --> %s", c, cid)
+                _LOG.Debug(fmt.Sprintf("CID: %s --> %s", c, cid))
             }
 
             filename := att.FileName
@@ -209,16 +213,16 @@ func store(sender string, recipients []string, mailEnvelop *enmime.Envelope, raw
                 filename = fmt.Sprintf("inline_attachment_%d", index)
             }
 
-            _Log.Debugf("Uploading Inline: %s, %s, %s, %v", att.ContentType, filename, cid, att.Header)
+            _LOG.Debug(fmt.Sprintf("Uploading Inline: %s, %s, %s, %v", att.ContentType, filename, cid, att.Header))
 
             attachmentContent, _ := ioutil.ReadAll(att)
             if finfo, err := uploadFile(filename, senderID, nested.FILE_STATUS_ATTACHED, attachmentOwners, bytes.NewReader(attachmentContent)); err != nil {
-                _Log.Error("Error adding inline attachment:", filename, err)
+                _LOG.Error("Error adding inline attachment:", zap.String("filename",filename), zap.String("error", err.Error()))
             } else {
-                _Log.Debug("Gonna create file token for %s", finfo.UniversalId)
+                _LOG.Debug(fmt.Sprintf("Gonna create file token for %v", finfo.UniversalId))
 
                 if tk, err := _Model.Token.CreateFileToken(finfo.UniversalId, "", ""); err != nil {
-                    _Log.Errorf("Error creating file token for inline attachment: %s, %s, %s", filename, cid, err)
+                    _LOG.Error(fmt.Sprintf("Error creating file token for inline attachment: %s, %s", filename, cid), zap.String("error", err.Error()))
 
                     benc := make([]byte, base64.StdEncoding.EncodedLen(len(attachmentContent)))
                     base64.StdEncoding.Encode(benc, attachmentContent)
@@ -235,14 +239,14 @@ func store(sender string, recipients []string, mailEnvelop *enmime.Envelope, raw
                         finfo:     *finfo,
                     }
                 }
-                _Log.Debugf("Uploaded Inline: %s, %s", filename, cid)
+                _LOG.Debug(fmt.Sprintf("Uploaded Inline: %s, %s", filename, cid))
             }
         }(att, k)
     }
     // --/Inline Attachments
 
     // --Attachments
-    _Log.Debug("Going to save attachments")
+    _LOG.Debug("Going to save attachments")
     chAttachments := make(chan multipartAttachment, len(mailEnvelop.Attachments))
     for k, att := range mailEnvelop.Attachments {
         wg.Add(1)
@@ -253,7 +257,7 @@ func store(sender string, recipients []string, mailEnvelop *enmime.Envelope, raw
             var cid string
             if c := att.Header.Get("Content-Id"); len(c) > 0 {
                 cid = c[1 : len(c)-1]
-                _Log.Debugf("CID: %s --> %s", c, cid)
+                _LOG.Debug(fmt.Sprintf("CID: %s --> %s", c, cid))
             }
 
             filename := att.FileName
@@ -261,15 +265,15 @@ func store(sender string, recipients []string, mailEnvelop *enmime.Envelope, raw
                 filename = fmt.Sprintf("attachment_%d", index)
             }
 
-            _Log.Debugf("Uploading: %s, %s, %s, %v", att.ContentType, filename, cid, att.Header)
+            _LOG.Debug(fmt.Sprintf("Uploading: %s, %s, %s, %v", att.ContentType, filename, cid, att.Header))
             attachmentContent, _ := ioutil.ReadAll(att)
             if finfo, err := uploadFile(att.FileName, senderID, nested.FILE_STATUS_ATTACHED, attachmentOwners, bytes.NewReader(attachmentContent)); err != nil {
-                _Log.Errorf("Error adding attachment: %s, %s", att.FileName, err)
+                _LOG.Error(fmt.Sprintf("Error adding attachment: %s", att.FileName), zap.String("error", err.Error()))
             } else {
-                _Log.Debug("Gonna create file token for %s", finfo.UniversalId)
+                _LOG.Debug(fmt.Sprintf("Gonna create file token for %s", finfo.UniversalId))
 
                 if tk, err := _Model.Token.CreateFileToken(finfo.UniversalId, "", ""); err != nil {
-                    _Log.Errorf("Error creating file token for attachment: %s, %s, %s", att.FileName, cid, err)
+                    _LOG.Error(fmt.Sprintf("Error creating file token for attachment: %s, %s", att.FileName, cid), zap.String("error", err.Error()))
 
                     benc := make([]byte, base64.StdEncoding.EncodedLen(len(attachmentContent)))
                     base64.StdEncoding.Encode(benc, attachmentContent)
@@ -286,14 +290,14 @@ func store(sender string, recipients []string, mailEnvelop *enmime.Envelope, raw
                         finfo:     *finfo,
                     }
                 }
-                _Log.Debugf("Uploaded: %s", att.FileName)
+                _LOG.Debug(fmt.Sprintf("Uploaded: %s", att.FileName))
             }
         }(att, k)
     }
 
     // Wait for files to be saved
     wg.Wait()
-    _Log.Debug("All attachments jobs have been done")
+    _LOG.Debug("All attachments jobs have been done")
     close(chAttachments)
     close(chInlineAttachments)
 
@@ -301,10 +305,10 @@ func store(sender string, recipients []string, mailEnvelop *enmime.Envelope, raw
     attachments := make(map[string]nested.FileInfo, len(mailEnvelop.Attachments)+len(mailEnvelop.Inlines))
     for att := range chInlineAttachments {
         if len(att.contentId) > 0 && strings.Count(bodyHtml, att.contentId)+strings.Count(bodyPlain, att.contentId) > 0 {
-            _Log.Debugf("Found %s in body: %d", att.contentId, strings.Count(bodyHtml, att.contentId), strings.Count(bodyPlain, att.contentId))
+            _LOG.Debug(fmt.Sprintf("Found %s in body: %d", att.contentId, strings.Count(bodyHtml, att.contentId)+strings.Count(bodyPlain, att.contentId)))
             inlineAttachments[att.contentId] = att.content
         } else {
-            _Log.Debugf("Not found %s in body", att.contentId)
+            _LOG.Debug(fmt.Sprintf("Not found %s in body", att.contentId))
             if att.finfo.Size > 0 {
                 attachments[string(att.finfo.UniversalId)] = nested.FileInfo{
                     Size:     att.finfo.Size,
@@ -315,10 +319,10 @@ func store(sender string, recipients []string, mailEnvelop *enmime.Envelope, raw
     }
     for att := range chAttachments {
         if len(att.contentId) > 0 && strings.Count(bodyHtml, att.contentId)+strings.Count(bodyPlain, att.contentId) > 0 {
-            _Log.Debugf("Found %s in body: %d", att.contentId, strings.Count(bodyHtml, att.contentId), strings.Count(bodyPlain, att.contentId))
+            _LOG.Debug(fmt.Sprintf("Found %s in body: %d", att.contentId, strings.Count(bodyHtml, att.contentId)+ strings.Count(bodyPlain, att.contentId)))
             inlineAttachments[att.contentId] = att.content
         } else {
-            _Log.Debugf("Not found %s in body", att.contentId)
+            _LOG.Debug(fmt.Sprintf("Not found %s in body", att.contentId))
         }
 
         if att.finfo.Size > 0 {
@@ -336,8 +340,8 @@ func store(sender string, recipients []string, mailEnvelop *enmime.Envelope, raw
         bodyHtml = strings.Replace(bodyHtml, fmt.Sprintf("\"cid:%s\"", k), fmt.Sprintf("\"%s\"", v), -1)
         bodyPlain = strings.Replace(bodyPlain, fmt.Sprintf("\"cid:%s\"", k), fmt.Sprintf("\"%s\"", v), -1)
     }
-    _Log.Debugf("HTML Body: %s", bodyHtml)
-    _Log.Debugf("Plain Body: %s", bodyPlain)
+    _LOG.Debug(fmt.Sprintf("HTML Body: %s", bodyHtml))
+    _LOG.Debug(fmt.Sprintf("Plain Body: %s", bodyPlain))
     // --/Prepare Body
 
     postCreate := func(targets []string) error {
@@ -360,7 +364,7 @@ func store(sender string, recipients []string, mailEnvelop *enmime.Envelope, raw
         //	if postId, domain := msgapi.EmailMessageIdDecode(inReplyTo); 0 == len(postId) || domain != _Config.GetString("DOMAIN") {
         //		// Query Nothing
         //	} else if repliedToPost := _Model.Post.GetPostByID(bson.ObjectIdHex(postId)); nil == repliedToPost {
-        //		_Log.Debugf("In-Reply-to post not exists: %s", postId)
+        //		_LOG.Debug(fmt.Sprintf("In-Reply-to post not exists: %s", postId)
         //	} else {
         //		postCreateReq.ReplyTo = repliedToPost.ID
         //	}
@@ -382,10 +386,10 @@ func store(sender string, recipients []string, mailEnvelop *enmime.Envelope, raw
             postCreateReq.Body = bodyPlain
         }
 
-        _Log.Debugf("Content Type: %s", postCreateReq.ContentType)
+        _LOG.Debug(fmt.Sprintf("Content Type: %s", postCreateReq.ContentType))
 
         // Validate Sender
-        _Log.Debug("Sender: %s", senderID)
+        _LOG.Debug(fmt.Sprintf("Sender: %s", senderID))
 
         // Validate Targets and Separate places and emails
         mapPlaceIDs := make(map[string]bool)
@@ -410,10 +414,10 @@ func store(sender string, recipients []string, mailEnvelop *enmime.Envelope, raw
         }
 
         if post := _Model.Post.AddPost(postCreateReq); post == nil {
-            _Log.Error("Post add error:")
+            _LOG.Error("Post add error:")
             return fmt.Errorf("could not create post")
         } else {
-            _Log.Info("Post added: %s", post.ID)
+            _LOG.Info(fmt.Sprintf("Post added: %s", post.ID))
             _ClientNtfy.ExternalPushPlaceActivityPostAdded(post)
             for _, pid := range post.PlaceIDs {
                 // Internal
@@ -427,18 +431,18 @@ func store(sender string, recipients []string, mailEnvelop *enmime.Envelope, raw
     }
 
     // Create one post for CCs
-    _Log.Info("Gonna add post to:", nonBlindTargets)
+    _LOG.Info(fmt.Sprintf("Gonna add post to: %v",nonBlindTargets))
     if err := postCreate(nonBlindTargets); err != nil {
-        _Log.Error("Post add error:", err)
+        _LOG.Error("Post add error:", zap.String("error", err.Error()))
 
         return err
     }
 
     // Create Individual Posts for BCCs
     for _, recipient := range blindPlaceIDs {
-        _Log.Info("Gonna add post to:", recipient)
+        _LOG.Info(fmt.Sprintf("Gonna add post to: %v", recipient))
         if err := postCreate([]string{recipient}); err != nil {
-            _Log.Error("Post add error:", err)
+            _LOG.Error("Post add error:", zap.String("error", err.Error()))
 
             return err
         }

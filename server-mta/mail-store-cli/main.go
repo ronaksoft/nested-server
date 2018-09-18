@@ -10,7 +10,9 @@ import (
     "git.ronaksoftware.com/nested/server/server-gateway/client"
     "git.ronaksoftware.com/nested/server/server-ntfy/client"
     "gopkg.in/fzerorubigd/onion.v3"
-    "gopkg.in/op/go-logging.v1"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"fmt"
 )
 
 const LOG_PREFIX string = "nested/mailbox-store"
@@ -21,7 +23,7 @@ var (
 	_ClientNtfy    *ntfy.Client
 	_Config        *onion.Onion
 	_Model *nested.Manager
-	_Log           *logging.Logger
+	_LOG           *zap.Logger
 )
 
 /**
@@ -34,27 +36,25 @@ var (
  */
 func main() {
 	// --Configurations
+	_Config = readConfig()
+	initLogger()
+	defer _LOG.Sync()
+
 	sender := flag.String("s", "", "Sender Address")
-	flag.IntVar(&_Verbosity, "v", 1, "Verbosity level [0, 3]")
-	logWriters := flag.String("log", "syslog", "Log writer (:= syslog)")
-	flag.Parse()
 	recipients := flag.Args()
-	initLogger(*logWriters, _Verbosity)
+	flag.Parse()
 
 	if 0 == len(strings.TrimSpace(*sender)) {
-		_Log.Fatal("Invalid Input: Sender is necessary")
+		_LOG.Fatal("Invalid Input: Sender is necessary")
 	}
 
 	if 0 == len(recipients) {
-		_Log.Fatal("Invalid Input: At least one recipient is required")
+		_LOG.Fatal("Invalid Input: At least one recipient is required")
 	}
 
-	_Config = readConfig()
-	// --/Configurations
-
-	_Log.Infof("Cyrus Url: %s", _Config.GetString("CYRUS_URL"))
-	_Log.Infof("Cyrus Api DHKey: %s", _Config.GetString("CYRUS_FILE_SYSTEM_KEY"))
-	_Log.Infof("Domain: %s", _Config.GetString("DOMAIN"))
+	_LOG.Debug(fmt.Sprintf("Cyrus Url: %s", _Config.GetString("CYRUS_URL")))
+	_LOG.Debug(fmt.Sprintf("Cyrus Api DHKey: %s", _Config.GetString("CYRUS_FILE_SYSTEM_KEY")))
+	_LOG.Debug(fmt.Sprintf("Domain: %s", _Config.GetString("DOMAIN")))
 
 	// Instantiate Storage Client
 	if v, err := nestedGateway.NewClient(
@@ -62,8 +62,8 @@ func main() {
 		_Config.GetString("CYRUS_FILE_SYSTEM_KEY"),
 		_Config.GetBool("CYRUS_INSECURE_HTTPS"),
 	); err != nil {
-		_Log.Error("Failed to instantiate Storage client:", err.Error())
-		_Log.Fatal("Failed to connect to Storage Agent")
+		_LOG.Error(err.Error())
+		_LOG.Fatal("Failed to connect to Storage Agent")
 	} else {
 		_ClientStorage = v
 	}
@@ -83,60 +83,52 @@ func main() {
 
 	// Instantiate NTFY Client
 	if _ClientNtfy = ntfy.NewClient(_Config.GetString("JOB_ADDRESS"), _Model); _ClientNtfy == nil {
-		_Log.Error("Failed to instantiate NTFY client")
-		_Log.Fatal("Failed to connect to NTFY Agent")
+		_LOG.Error("Failed to instantiate NTFY client")
+		_LOG.Fatal("Failed to connect to NTFY Agent")
 	}
 	defer _ClientNtfy.Close()
 
 	if err := Dispatch(*sender, recipients, os.Stdin); err != nil {
-		_Log.Errorf("Failed to decide on message: %s", err.Error())
-		_Log.Fatal("Unknown Message")
+		_LOG.Error(err.Error())
+		_LOG.Fatal("Unknown Message")
 	}
 }
 
-func initLogger(writers string, verbosity int) {
-	if logger, err := logging.GetLogger("main"); err != nil {
-		os.Exit(1)
-	} else {
-		_Log = logger
-		if 0 == verbosity {
-			return
-		}
-
-		writers := strings.Split(writers, ",")
-		level := logging.CRITICAL
-		switch {
-		case 2 == verbosity:
-			level = logging.INFO
-		case 3 <= verbosity:
-			level = logging.DEBUG
-		}
-
-		var backends []logging.Backend
-		for _, v := range writers {
-			var backend logging.Backend
-			switch strings.TrimSpace(v) {
-			case "std":
-				backend = logging.NewLogBackend(os.Stdout, "", 0)
-			case "file":
-				if fh, err := os.OpenFile("/var/log/mailbox-store.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666); nil == err {
-					backend = logging.NewLogBackend(fh, "", 0)
-				}
-			case "syslog":
-				if b, err := logging.NewSyslogBackend(LOG_PREFIX); nil == err {
-					backend = b
-				} else {
-					panic(err)
-				}
-			}
-
-			if backend != nil {
-				lvlBackend := logging.AddModuleLevel(backend)
-				lvlBackend.SetLevel(level, "")
-				backends = append(backends, lvlBackend)
-			}
-		}
-
-		logging.SetBackend(backends...)
-	}
+func initLogger() {
+	logLevel := zap.NewAtomicLevelAt(zapcore.Level(_Config.GetInt("CONF_LOG_LEVEL")))
+	fileLog, _ := os.Create(_Config.GetString("/var/log/mailbox-store.log"))
+	defer fileLog.Close()
+	consoleWriteSyncer := zapcore.Lock(os.Stdout)
+	consoleEncoder := zapcore.NewConsoleEncoder(zapcore.EncoderConfig{
+		TimeKey:        "ts",
+		LevelKey:       "level",
+		NameKey:        "logger",
+		CallerKey:      "caller",
+		MessageKey:     "msg",
+		StacktraceKey:  "stacktrace",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.LowercaseLevelEncoder,
+		EncodeTime:     zapcore.ISO8601TimeEncoder,
+		EncodeDuration: zapcore.StringDurationEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
+	})
+	fileWriteSyncer := zapcore.Lock(fileLog)
+	fileEncoder := zapcore.NewJSONEncoder(zapcore.EncoderConfig{
+		TimeKey:        "ts",
+		LevelKey:       "level",
+		NameKey:        "logger",
+		CallerKey:      "caller",
+		MessageKey:     "msg",
+		StacktraceKey:  "stacktrace",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.LowercaseLevelEncoder,
+		EncodeTime:     zapcore.EpochTimeEncoder,
+		EncodeDuration: zapcore.SecondsDurationEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
+	})
+	core := zapcore.NewTee(
+		zapcore.NewCore(fileEncoder, fileWriteSyncer, logLevel),
+		zapcore.NewCore(consoleEncoder, consoleWriteSyncer, logLevel),
+	)
+	_LOG = zap.New(core)
 }
