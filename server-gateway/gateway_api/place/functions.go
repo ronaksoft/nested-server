@@ -1467,7 +1467,6 @@ func (s *PlaceService) unpinPost(requester *nested.Account, request *nestedGatew
 
 // @Command:	place/get_blocked_ids
 // @Input:	place_id		string	 *
-// @Input:  accounts        []string *
 func (s *PlaceService) getBlockedIDs(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	var IDs []string
 	var place *nested.Place
@@ -1492,10 +1491,10 @@ func (s *PlaceService) blockIDs(requester *nested.Account, request *nestedGatewa
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
 		return
 	}
-	if v, ok := request.Data["IDs"].(string); ok {
+	if v, ok := request.Data["ids"].(string); ok {
 		IDs = strings.SplitN(v, ",", nested.DEFAULT_MAX_RESULT_LIMIT)
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"IDs"})
+		response.Error(nested.ERR_INCOMPLETE, []string{"ids"})
 		return
 	}
 	for _,id := range IDs {

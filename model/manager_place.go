@@ -1061,7 +1061,7 @@ func (pm *PlaceManager) RemoveFromBlacklist(placeID string, IDs [] string) bool 
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
 
-	_, err := db.C(COLLECTION_PLACES_BLOCKED_IDS).UpsertId(
+	err := db.C(COLLECTION_PLACES_BLOCKED_IDS).UpdateId(
 		placeID,
 		bson.M{"$pull": bson.M{"ids": bson.M{"$each": IDs}}},
 	)
