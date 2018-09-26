@@ -1063,7 +1063,7 @@ func (pm *PlaceManager) RemoveFromBlacklist(placeID string, IDs [] string) bool 
 
 	err := db.C(COLLECTION_PLACES_BLOCKED_IDS).UpdateId(
 		placeID,
-		bson.M{"$pull": bson.M{"ids": bson.M{"$each": IDs}}},
+		bson.M{"$pull": bson.M{"ids": bson.M{"$in": IDs}}},
 	)
 	if err != nil {
 		_Log.Warn(err.Error())
