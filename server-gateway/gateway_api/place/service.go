@@ -31,7 +31,7 @@ const (
 	CMD_GET_MUTUAL_PLACES     = "place/get_mutual_places"
 	CMD_GET_NOTIFICATION      = "place/get_notification"
 	CMD_GET_ACTIVITIES        = "place/get_activities"
-	CMD_GET_BLOCKED_ADDRESSES = "place/get_blocked_ids"
+	CMD_GET_BLOCKED_ADDRESSES = "place/get_blocked_addresses"
 	CMD_LEAVE                 = "place/leave"
 	CMD_MARK_ALL_READ         = "place/mark_all_read"
 	CMD_REMOVE                = "place/remove"
