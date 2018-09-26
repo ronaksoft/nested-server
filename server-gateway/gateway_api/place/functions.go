@@ -1465,10 +1465,10 @@ func (s *PlaceService) unpinPost(requester *nested.Account, request *nestedGatew
     response.Ok()
 }
 
-// @Command:	place/get_blocked_ids
-// @Input:	place_id		string	 *
-func (s *PlaceService) getBlockedIDs(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
-	var IDs []string
+// @Command:	place/get_blocked_addresses
+// @Input:	    place_id		string	 *
+func (s *PlaceService) getBlockedAddresses(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+	var Addresses []string
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
 		return
@@ -1477,27 +1477,27 @@ func (s *PlaceService) getBlockedIDs(requester *nested.Account, request *nestedG
 		response.Error(nested.ERR_ACCESS, []string{""})
 		return
 	}
-	IDs = s.Worker().Model().Place.GetPlaceBlockedIDs(place.ID)
-	response.OkWithData(nested.M{"ids": IDs})
+	Addresses = s.Worker().Model().Place.GetPlaceBlockedAddresses(place.ID)
+	response.OkWithData(nested.M{"addresses": Addresses})
 		return
 }
 
-// @Command:	place/block_ids
+// @Command:	place/add_to_blacklist
 // @Input:	place_id		string	 *
-// @Input:  IDs             []string *
-func (s *PlaceService) blockIDs(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
-	var IDs []string
+// @Input:  addresses       []string *
+func (s *PlaceService) addToBlackList(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+	var addresses []string
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
 		return
 	}
-	if v, ok := request.Data["ids"].(string); ok {
-		IDs = strings.SplitN(v, ",", nested.DEFAULT_MAX_RESULT_LIMIT)
+	if v, ok := request.Data["addresses"].(string); ok {
+		addresses = strings.SplitN(v, ",", nested.DEFAULT_MAX_RESULT_LIMIT)
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"ids"})
+		response.Error(nested.ERR_INCOMPLETE, []string{"addresses"})
 		return
 	}
-	for _,id := range IDs {
+	for _,id := range addresses {
 		if id == requester.ID {
 			response.Error(nested.ERR_ACCESS, []string{"cant block yourself"})
 			return
@@ -1508,7 +1508,7 @@ func (s *PlaceService) blockIDs(requester *nested.Account, request *nestedGatewa
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
-	if s.Worker().Model().Place.AddToBlacklist(place.ID, IDs) {
+	if s.Worker().Model().Place.AddToBlacklist(place.ID, addresses) {
 		response.Ok()
 	} else {
 		response.Error(nested.ERR_UNKNOWN, []string{})
@@ -1516,19 +1516,19 @@ func (s *PlaceService) blockIDs(requester *nested.Account, request *nestedGatewa
 	}
 }
 
-// @Command:	place/unblock_ids
+// @Command:	place/remove_from_blacklist
 // @Input:	place_id		string	 *
-// @Input:  ids             []string *
-func (s *PlaceService) unblockIDs(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
-	var IDs []string
+// @Input:  addresses       []string *
+func (s *PlaceService) removeFromBlacklist(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+	var addresses []string
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
 		return
 	}
-	if v, ok := request.Data["ids"].(string); ok {
-		IDs = strings.SplitN(v, ",", nested.DEFAULT_MAX_RESULT_LIMIT)
+	if v, ok := request.Data["addresses"].(string); ok {
+		addresses = strings.SplitN(v, ",", nested.DEFAULT_MAX_RESULT_LIMIT)
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"ids"})
+		response.Error(nested.ERR_INCOMPLETE, []string{"addresses"})
 		return
 	}
 	// Only creators of the place or system admins can do it
@@ -1536,7 +1536,7 @@ func (s *PlaceService) unblockIDs(requester *nested.Account, request *nestedGate
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
-	if s.Worker().Model().Place.RemoveFromBlacklist(place.ID, IDs) {
+	if s.Worker().Model().Place.RemoveFromBlacklist(place.ID, addresses) {
 		response.Ok()
 	} else {
 		response.Error(nested.ERR_UNKNOWN, []string{})

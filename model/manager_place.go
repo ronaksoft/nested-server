@@ -1028,26 +1028,26 @@ func (pm *PlaceManager) UpdateLimits(placeID string, limits MI) bool {
     return true
 }
 
-func (pm *PlaceManager) GetPlaceBlockedIDs(placeID string) []string {
+func (pm *PlaceManager) GetPlaceBlockedAddresses(placeID string) []string {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
-	blockedIDs := BlockedIDs{}
-	if err := db.C(COLLECTION_PLACES_BLOCKED_IDS).FindId(placeID).One(&blockedIDs); err != nil {
+	blockedAddresses := BlockedAddresses{}
+	if err := db.C(COLLECTION_PLACES_BLOCKED_ADDRESSES).FindId(placeID).One(&blockedAddresses); err != nil {
 		_Log.Warn(err.Error())
 		return nil
 	}
-	return blockedIDs.IDs
+	return blockedAddresses.Addresses
 }
 
-func (pm *PlaceManager) AddToBlacklist(placeID string, IDs [] string) bool {
+func (pm *PlaceManager) AddToBlacklist(placeID string, addresses [] string) bool {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
 
-	_, err := db.C(COLLECTION_PLACES_BLOCKED_IDS).UpsertId(
+	_, err := db.C(COLLECTION_PLACES_BLOCKED_ADDRESSES).UpsertId(
 		placeID,
-		bson.M{"$addToSet": bson.M{"ids": bson.M{"$each": IDs}}},
+		bson.M{"$addToSet": bson.M{"addresses": bson.M{"$each": addresses}}},
 	)
 	if err != nil {
 		_Log.Warn(err.Error())
@@ -1056,14 +1056,14 @@ func (pm *PlaceManager) AddToBlacklist(placeID string, IDs [] string) bool {
 	return true
 }
 
-func (pm *PlaceManager) RemoveFromBlacklist(placeID string, IDs [] string) bool {
+func (pm *PlaceManager) RemoveFromBlacklist(placeID string, addresses [] string) bool {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
 
-	err := db.C(COLLECTION_PLACES_BLOCKED_IDS).UpdateId(
+	err := db.C(COLLECTION_PLACES_BLOCKED_ADDRESSES).UpdateId(
 		placeID,
-		bson.M{"$pull": bson.M{"ids": bson.M{"$in": IDs}}},
+		bson.M{"$pull": bson.M{"addresses": bson.M{"$in": addresses}}},
 	)
 	if err != nil {
 		_Log.Warn(err.Error())
@@ -1072,13 +1072,13 @@ func (pm *PlaceManager) RemoveFromBlacklist(placeID string, IDs [] string) bool 
 	return true
 }
 
-func (pm *PlaceManager) IsBlocked(placeID, ID string) bool {
+func (pm *PlaceManager) IsBlocked(placeID, address string) bool {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
 
-	n, err := db.C(COLLECTION_PLACES_BLOCKED_IDS).FindId(placeID).Select(
-		bson.M{"ids": ID},
+	n, err := db.C(COLLECTION_PLACES_BLOCKED_ADDRESSES).FindId(placeID).Select(
+		bson.M{"addresses": address},
 	).Count()
 	if err != nil {
 		_Log.Warn(err.Error())
@@ -1132,9 +1132,9 @@ type PlaceLimit struct {
     Quota      int `json:"size" bson:"size"`
 }
 
-type BlockedIDs struct {
-	PlaceID string   `json:"_id" bson:"_id"`
-	IDs     []string `json:"ids" bson:"ids"`
+type BlockedAddresses struct {
+	PlaceID   string   `json:"_id" bson:"_id"`
+	Addresses []string `json:"addresses" bson:"addresses"`
 }
 
 func (p *Place) GetPrivacy() PlacePrivacy {
