@@ -18,7 +18,6 @@ import (
 const LOG_PREFIX string = "nested/mailbox-store"
 
 var (
-	_Verbosity     int
 	_ClientStorage *nestedGateway.Client
 	_ClientNtfy    *ntfy.Client
 	_Config        *onion.Onion

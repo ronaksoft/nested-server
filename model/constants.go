@@ -90,6 +90,7 @@ const (
     COLLECTION_PLACES                  = "places"
     COLLECTION_PLACES_ACTIVITIES       = "places.activities"
     COLLECTION_PLACES_GROUPS           = "places.groups"
+    COLLECTION_PLACES_BLOCKED_IDS      = "places.blocked_ids"
     COLLECTION_POSTS                   = "posts"
     COLLECTION_POSTS_ACTIVITIES        = "posts.activities"
     COLLECTION_POSTS_COMMENTS          = "posts.comments"

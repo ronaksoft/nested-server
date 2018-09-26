@@ -44,6 +44,9 @@ const (
     CMD_DEMOTE_MEMBER      = "place/demote_member"
     CMD_INVITE_MEMBER      = "place/invite_member"
     CMD_UPDATE             = "place/update"
+    CMD_BLOCK              = "place/block"
+    CMD_UNBLOCK            = "place/unblock"
+    CMD_GET_BLOCKED_IDS    = "place/get_blocked_ids"
 )
 
 type PlaceService struct {
@@ -77,6 +80,7 @@ func NewPlaceService(worker *api.Worker) *PlaceService {
         CMD_GET_UNREAD_POSTS:   {api.AUTH_LEVEL_APP_L3, s.getPlaceUnreadPosts},
         CMD_GET_MUTUAL_PLACES:  {api.AUTH_LEVEL_APP_L3, s.getMutualPlaces},
         CMD_GET_NOTIFICATION:   {api.AUTH_LEVEL_USER, s.getPlaceNotification},
+        CMD_GET_BLOCKED_IDS:    {api.AUTH_LEVEL_USER, s.getBlockedIDs},
         CMD_INVITE_MEMBER:      {api.AUTH_LEVEL_USER, s.invitePlaceMember},
         CMD_MARK_ALL_READ:      {api.AUTH_LEVEL_APP_L3, s.markAllPostsAsRead},
         CMD_PROMOTE_MEMBER:     {api.AUTH_LEVEL_USER, s.promoteMember},
@@ -90,6 +94,8 @@ func NewPlaceService(worker *api.Worker) *PlaceService {
         CMD_UPDATE:             {api.AUTH_LEVEL_USER, s.update},
         CMD_PIN_POST:           {api.AUTH_LEVEL_APP_L3, s.pinPost},
         CMD_UNPIN_POST:         {api.AUTH_LEVEL_APP_L3, s.unpinPost},
+        CMD_BLOCK:              {api.AUTH_LEVEL_USER, s.blockIDs},
+        CMD_UNBLOCK:            {api.AUTH_LEVEL_USER, s.unblockIDs},
     }
 
     return s

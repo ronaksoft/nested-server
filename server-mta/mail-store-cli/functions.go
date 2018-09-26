@@ -402,7 +402,7 @@ func store(sender string, recipients []string, mailEnvelop *enmime.Envelope, raw
                 } else {
                     mapEmails[v] = true
                 }
-            } else if _Model.Place.Exists(v) {
+            } else if _Model.Place.Exists(v) && !_Model.Place.IsBlocked(v, senderID)  {
                 mapPlaceIDs[v] = true
             }
         }
