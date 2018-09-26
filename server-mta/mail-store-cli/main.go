@@ -95,7 +95,7 @@ func main() {
 
 func initLogger() {
 	logLevel := zap.NewAtomicLevelAt(zapcore.Level(_Config.GetInt("CONF_LOG_LEVEL")))
-	fileLog, _ := os.Create(_Config.GetString("/var/log/mailbox-store.log"))
+	fileLog, _ := os.Create("/var/log/mailbox-store.log")
 	defer fileLog.Close()
 	consoleWriteSyncer := zapcore.Lock(os.Stdout)
 	consoleEncoder := zapcore.NewConsoleEncoder(zapcore.EncoderConfig{
