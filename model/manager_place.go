@@ -1028,6 +1028,65 @@ func (pm *PlaceManager) UpdateLimits(placeID string, limits MI) bool {
     return true
 }
 
+func (pm *PlaceManager) GetPlaceBlockedAddresses(placeID string) []string {
+	dbSession := _MongoSession.Clone()
+	db := dbSession.DB(DB_NAME)
+	defer dbSession.Close()
+	blockedAddresses := BlockedAddresses{}
+	if err := db.C(COLLECTION_PLACES_BLOCKED_ADDRESSES).FindId(placeID).One(&blockedAddresses); err != nil {
+		_Log.Warn(err.Error())
+		return nil
+	}
+	return blockedAddresses.Addresses
+}
+
+func (pm *PlaceManager) AddToBlacklist(placeID string, addresses [] string) bool {
+	dbSession := _MongoSession.Clone()
+	db := dbSession.DB(DB_NAME)
+	defer dbSession.Close()
+
+	_, err := db.C(COLLECTION_PLACES_BLOCKED_ADDRESSES).UpsertId(
+		placeID,
+		bson.M{"$addToSet": bson.M{"addresses": bson.M{"$each": addresses}}},
+	)
+	if err != nil {
+		_Log.Warn(err.Error())
+		return false
+	}
+	return true
+}
+
+func (pm *PlaceManager) RemoveFromBlacklist(placeID string, addresses [] string) bool {
+	dbSession := _MongoSession.Clone()
+	db := dbSession.DB(DB_NAME)
+	defer dbSession.Close()
+
+	err := db.C(COLLECTION_PLACES_BLOCKED_ADDRESSES).UpdateId(
+		placeID,
+		bson.M{"$pull": bson.M{"addresses": bson.M{"$in": addresses}}},
+	)
+	if err != nil {
+		_Log.Warn(err.Error())
+		return false
+	}
+	return true
+}
+
+func (pm *PlaceManager) IsBlocked(placeID, address string) bool {
+	dbSession := _MongoSession.Clone()
+	db := dbSession.DB(DB_NAME)
+	defer dbSession.Close()
+
+	n, err := db.C(COLLECTION_PLACES_BLOCKED_ADDRESSES).FindId(placeID).Select(
+		bson.M{"addresses": address},
+	).Count()
+	if err != nil {
+		_Log.Warn(err.Error())
+		return false
+	}
+	return n > 0
+}
+
 type Place struct {
     ID                  string          `json:"_id" bson:"_id"`
     Type                string          `json:"type" bson:"type"`
@@ -1071,6 +1130,11 @@ type PlaceLimit struct {
     Keyholders int `json:"key_holders" bson:"key_holders"`
     Children   int `json:"childs" bson:"childs"`
     Quota      int `json:"size" bson:"size"`
+}
+
+type BlockedAddresses struct {
+	PlaceID   string   `json:"_id" bson:"_id"`
+	Addresses []string `json:"addresses" bson:"addresses"`
 }
 
 func (p *Place) GetPrivacy() PlacePrivacy {
@@ -1326,3 +1390,6 @@ func (p *Place) GetAccessArray(accountID string) []string {
     }
     return array
 }
+
+
+
