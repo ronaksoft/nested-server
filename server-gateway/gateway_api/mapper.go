@@ -516,7 +516,7 @@ func (m *Mapper) Post(requester *nested.Account, post nested.Post, preview bool)
     }
     r["post_labels"] = postLabels
 
-    // present post_attachments
+    // present and sort post_attachments
     files := m.worker.Model().File.GetFilesByIDs(post.AttachmentIDs)
     attachmentMap := make(map[int]nested.FileInfo, len(files))
     uplaodTimes := make([]int, 0, len(files))
