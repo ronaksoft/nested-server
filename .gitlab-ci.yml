@@ -54,7 +54,7 @@ deploy:staging:
   only:
   - behrooz
   - fix
-  - fix-task-attachments
+  - fix-post-attachment-sort
   image: docker:latest
   services:
   - docker:dind

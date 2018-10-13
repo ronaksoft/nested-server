@@ -3,6 +3,7 @@ package api
 import (
     "git.ronaksoftware.com/nested/server/model"
     "github.com/globalsign/mgo/bson"
+	"sort"
 )
 
 /*
@@ -515,11 +516,18 @@ func (m *Mapper) Post(requester *nested.Account, post nested.Post, preview bool)
     }
     r["post_labels"] = postLabels
 
-    // present post_attachments
+    // present and sort post_attachments
     files := m.worker.Model().File.GetFilesByIDs(post.AttachmentIDs)
-    postAttachments := make([]nested.M, 0, len(files))
+    attachmentMap := make(map[int]nested.FileInfo, len(files))
+    uplaodTimes := make([]int, 0, len(files))
     for _, file := range files {
-        postAttachments = append(postAttachments, m.FileInfo(file))
+    	attachmentMap[int(file.UploadTimestamp)] = file
+    	uplaodTimes = append(uplaodTimes, int(file.UploadTimestamp))
+	}
+	sort.Ints(uplaodTimes)
+    postAttachments := make([]nested.M, 0, len(files))
+    for _, uploadTime := range uplaodTimes {
+        postAttachments = append(postAttachments, m.FileInfo(attachmentMap[uploadTime]))
     }
     r["post_attachments"] = postAttachments
 
