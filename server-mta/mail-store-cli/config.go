@@ -9,8 +9,14 @@ import (
 func readConfig() *onion.Onion {
 	dl := onion.NewDefaultLayer()
 
+	// Log
+	dl.SetDefault("DEBUG_LEVEL","")
+
 	// InstanceID
 	dl.SetDefault("INSTANCE_ID", "")
+
+	// Watchdog interval
+	dl.SetDefault("WATCHDOG_INTERVAL", "1")
 
 	// Model
 	dl.SetDefault("MONGO_DSN", "mongodb://db-mongo.nst:27001")

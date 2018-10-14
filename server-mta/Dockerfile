@@ -15,6 +15,7 @@ RUN apt-get -y install supervisor postfix sasl2-bin opendkim opendkim-tools
 ADD ./install.sh /opt/install.sh
 ADD ./_build/mail-store-cli /ronak/bin/
 ADD ./_build/mail-map /ronak/bin/
+ADD ./_build/mail-instances /ronak/bin/
 
 EXPOSE 587
 EXPOSE 25

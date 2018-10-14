@@ -1,72 +1,71 @@
 package main
 
 import (
-    "errors"
-    "io"
-    "os"
-    "time"
-
-    "git.ronaksoftware.com/nested/server/model"
-    "git.ronaksoftware.com/nested/server/server-gateway/client"
-    "fmt"
+	"errors"
+	"git.ronaksoftware.com/nested/server/model"
+	"git.ronaksoftware.com/nested/server/server-mta/mail-store-cli/client-storage"
+	"io"
+	"os"
+	"time"
+	"go.uber.org/zap"
 )
 
-func uploadFile(filename, uploaderId, status string, ownerIds []string, r io.Reader) (*nestedGateway.UploadedFile, error) {
-    f := &MyFile{
-        r:        r,
-        name:     filename,
-        uploader: uploaderId,
-        status:   status,
-        owners:   ownerIds,
-    }
+func uploadFile(filename, uploaderId, status string, ownerIds []string, r io.Reader, clientStorage *client_storage.Client) (*client_storage.UploadedFile, error) {
+	f := &MyFile{
+		r:        r,
+		name:     filename,
+		uploader: uploaderId,
+		status:   status,
+		owners:   ownerIds,
+	}
 
-    _LOG.Debug(fmt.Sprintf("Uploading file %s...", filename))
+	_LOG.Info("Uploading file %s...", zap.String("filename",filename))
 
-    if res, err := _ClientStorage.Upload(nested.UPLOAD_TYPE_FILE, f); err != nil {
-        return nil, err
-    } else if 0 == len(res.Files) {
-        return nil, errors.New("file not uploaded")
-    } else {
-        return &res.Files[0], nil
-    }
+	if res, err := clientStorage.Upload(nested.UPLOAD_TYPE_FILE, f); err != nil {
+		return nil, err
+	} else if 0 == len(res.Files) {
+		return nil, errors.New("file not uploaded")
+	} else {
+		return &res.Files[0], nil
+	}
 }
 
 type MyFile struct {
-    r        io.Reader
-    name     string
-    uploader string
-    status   string
-    owners   []string
+	r        io.Reader
+	name     string
+	uploader string
+	status   string
+	owners   []string
 }
 
 func (f *MyFile) Read(p []byte) (int, error) {
-    return f.r.Read(p)
+	return f.r.Read(p)
 }
 
 func (f MyFile) Name() string {
-    return f.name
+	return f.name
 }
 
 func (f MyFile) Size() int64 {
-    return 0
+	return 0
 }
 
 func (f MyFile) Mode() os.FileMode {
-    return os.ModePerm
+	return os.ModePerm
 }
 
 func (f MyFile) ModTime() time.Time {
-    return time.Now()
+	return time.Now()
 }
 
 func (f MyFile) IsDir() bool {
-    return false
+	return false
 }
 
 func (f MyFile) Sys() interface{} {
-    return nil
+	return nil
 }
 
 func (f *MyFile) Stat() (os.FileInfo, error) {
-    return f, nil
+	return f, nil
 }

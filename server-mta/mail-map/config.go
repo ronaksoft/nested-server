@@ -11,6 +11,9 @@ func readConfig() *onion.Onion {
     // InstanceID
     dl.SetDefault("INSTANCE_ID", "")
 
+    // Watchdog interval
+    dl.SetDefault("WATCHDOG_INTERVAL", "1")
+
     // Model
     dl.SetDefault("MONGO_DSN", "mongodb://db-mongo.nst:27001")
     dl.SetDefault("REDIS_DSN", "cache-redis.nst:6379")

@@ -5,6 +5,10 @@ if [[ -a /etc/supervisor/conf.d/supervisord.conf ]]; then
   exit 0
 fi
 
+# add user mail to docker group
+groupadd -g 999 docker
+usermod -a -G docker mail
+
 #supervisor
 cat > /etc/supervisor/conf.d/supervisord.conf <<EOF
 [supervisord]
@@ -18,6 +22,15 @@ command=/usr/sbin/rsyslogd -n -c3
 
 [program:mail-map]
 command=/ronak/bin/mail-map
+autorestart=true
+stdout_logfile=/dev/fd/1
+stdout_logfile_maxbytes=0
+
+[program:mail-store-cli]
+command=/ronak/bin/mail-store-cli
+autorestart=true
+stdout_logfile=/dev/fd/1
+stdout_logfile_maxbytes=0
 EOF
 
 ############
@@ -49,6 +62,11 @@ pwcheck_method: auxprop
 auxprop_plugin: sasldb
 mech_list: PLAIN LOGIN CRAM-MD5 DIGEST-MD5 NTLM
 EOF
+# set domains in virtual_mailbox_domains
+#cat >> /etc/postfix/virtual_domains <<EOF
+#ronaksoftware.com
+#webapp2.ronaksoftware.com
+#EOF
 # sasldb2
 echo ${NST_SMTP_CRED} | tr , \\n > /tmp/passwd
 while IFS=':' read -r _user _pwd; do
@@ -78,8 +96,8 @@ fi
 #############
 postconf -e -M nested_mail/unix="\
 nested_mail unix    -       n       n       -       -       pipe \
-user=mail argv=/ronak/bin/mail-store-cli -v 3  -s \${sender} \${recipient}"
-postconf -e virtual_mailbox_domains=${NST_DOMAIN}
+user=mail:docker argv=/ronak/bin/mail-instances -d \${domain}  -s \${sender} \${recipient}"
+postconf -e virtual_mailbox_domains=/etc/postfix/virtual_domains #${NST_DOMAIN}
 postconf -e virtual_mailbox_maps=tcp:localhost:2374
 postconf -e virtual_uid_maps=static:5000
 postconf -e virtual_gid_maps=static:5000
