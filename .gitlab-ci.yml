@@ -53,8 +53,7 @@ deploy:staging:
   stage: deploy
   only:
   - behrooz
-  - fix
-  - fix-post-attachment-sort
+  - mta
   image: docker:latest
   services:
   - docker:dind
