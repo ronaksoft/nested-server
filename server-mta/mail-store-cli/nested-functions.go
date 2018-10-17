@@ -459,6 +459,21 @@ func (m *Model) GetFileByID(uniID nested.UniversalID, pj nested.M) *nested.FileI
 	return file
 }
 
+func (m *Model) IsBlocked(placeID, address string) bool {
+	dbSession := m.Session.Clone()
+	db := dbSession.DB(m.DB)
+	defer dbSession.Close()
+
+	n, err := db.C(nested.COLLECTION_PLACES_BLOCKED_ADDRESSES).FindId(placeID).Select(
+		bson.M{"addresses": address},
+	).Count()
+	if err != nil {
+		_LOG.Warn(err.Error())
+		return false
+	}
+	return n > 0
+}
+
 func (m *Model) AddPost(pcr nested.PostCreateRequest) *nested.Post {
 	dbSession := m.Session.Clone()
 	db := dbSession.DB(m.DB)
