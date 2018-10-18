@@ -464,9 +464,7 @@ func (m *Model) IsBlocked(placeID, address string) bool {
 	db := dbSession.DB(m.DB)
 	defer dbSession.Close()
 
-	n, err := db.C(nested.COLLECTION_PLACES_BLOCKED_ADDRESSES).FindId(placeID).Select(
-		bson.M{"addresses": address},
-	).Count()
+	n, err := db.C(nested.COLLECTION_PLACES_BLOCKED_ADDRESSES).Find(bson.M{"_id": placeID, "addresses": address}).Count()
 	if err != nil {
 		_LOG.Warn(err.Error())
 		return false
@@ -515,14 +513,16 @@ func (m *Model) AddPost(pcr nested.PostCreateRequest) *nested.Post {
 	post.LastUpdate = ts
 
 	var attach_size int64
-	for _, uniID := range pcr.AttachmentIDs {
-		m.AddPostAsOwner(uniID, post.ID)
-		success := m.SetFileStatus(uniID, nested.FILE_STATUS_ATTACHED)
-		if !success {
-			return nil
+	if len(pcr.AttachmentIDs) > 0 {
+		for _, uniID := range pcr.AttachmentIDs {
+			m.AddPostAsOwner(uniID, post.ID)
+			success := m.SetFileStatus(uniID, nested.FILE_STATUS_ATTACHED)
+			if !success {
+				return nil
+			}
+			f := m.GetFileByID(uniID, nil)
+			attach_size += f.Size
 		}
-		f := m.GetFileByID(uniID, nil)
-		attach_size += f.Size
 	}
 	post.Counters.Size = attach_size
 
