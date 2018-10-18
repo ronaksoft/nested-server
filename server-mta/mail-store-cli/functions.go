@@ -384,7 +384,9 @@ func store(domain, sender string, recipients []string, mailEnvelope *enmime.Enve
 			_LOG.Error("ERROR::::::Post add error:")
 			return fmt.Errorf("could not create post")
 		} else {
-			_LOG.Debug("Post added", zap.String("post.Body", post.Body),zap.Bool("post.internal", post.Internal),zap.String("post.SenderID", post.SenderID))
+			_LOG.Debug("Post added to nested instance", zap.String("post.SenderID", post.SenderID))
+			_LOG.Debug("Post added to nested instance", zap.String("post.Subject", post.Subject))
+			_LOG.Debug("Post added to nested instance", zap.Strings("post.Places", post.PlaceIDs))
 			m.ExternalPushPlaceActivityPostAdded(post)
 			for _, pid := range post.PlaceIDs {
 				// Internal
