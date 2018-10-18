@@ -106,18 +106,18 @@ func NewRecipientGroup(mime *enmime.Envelope) *RecipientGroup {
 	recipients.BccMap = make(map[string]string)
 
 	for _, addr := range toAddrs {
-		recipients.To = append(recipients.To, addr.Address)
-		recipients.ToMap[addr.Address] = addr.Address
+		recipients.To = append(recipients.To,strings.ToLower(addr.Address))
+		recipients.ToMap[strings.ToLower(addr.Address)] = strings.ToLower(addr.Address)
 	}
 
 	for _, addr := range ccAddrs {
-		recipients.Cc = append(recipients.Cc, addr.Address)
-		recipients.CcMap[addr.Address] = addr.Address
+		recipients.Cc = append(recipients.Cc, strings.ToLower(addr.Address))
+		recipients.CcMap[strings.ToLower(addr.Address)] = strings.ToLower(addr.Address)
 	}
 
 	for _, addr := range bccAddrs {
-		recipients.Bcc = append(recipients.Bcc, addr.Address)
-		recipients.BccMap[addr.Address] = addr.Address
+		recipients.Bcc = append(recipients.Bcc, strings.ToLower(addr.Address))
+		recipients.BccMap[strings.ToLower(addr.Address)] = strings.ToLower(addr.Address)
 	}
 
 	return recipients

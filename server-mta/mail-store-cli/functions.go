@@ -108,17 +108,17 @@ func store(domain, sender string, recipients []string, mailEnvelope *enmime.Enve
 	var nonBlindTargets []string
 	var blindPlaceIDs []string
 	for _, rcpt := range recipients {
-		_, isTo := recipientGroup.ToMap[rcpt]
-		_, isCc := recipientGroup.CcMap[rcpt]
-		_, isBcc := recipientGroup.BccMap[rcpt]
+		_, isTo := recipientGroup.ToMap[strings.ToLower(rcpt)]
+		_, isCc := recipientGroup.CcMap[strings.ToLower(rcpt)]
+		_, isBcc := recipientGroup.BccMap[strings.ToLower(rcpt)]
 
-		req := strings.Split(rcpt, "@")
+		req := strings.Split(strings.ToLower(rcpt), "@")
 		// TODO: Check alias
 		mailbox := req[0]
 
 		if isTo || isCc {
 			nonBlindPlaceIDs = append(nonBlindPlaceIDs, mailbox)
-			nonBlindTargets = append(nonBlindTargets, rcpt)
+			nonBlindTargets = append(nonBlindTargets, strings.ToLower(rcpt))
 		} else if isBcc {
 			blindPlaceIDs = append(blindPlaceIDs, mailbox)
 		}
