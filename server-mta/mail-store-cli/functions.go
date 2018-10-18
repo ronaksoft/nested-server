@@ -361,8 +361,10 @@ func store(domain, sender string, recipients []string, mailEnvelope *enmime.Enve
 		_LOG.Debug("domain:", zap.Any("", domain))
 		for _, v := range targets {
 			if idx := strings.Index(v, "@"); idx != -1 {
+				_LOG.Debug("fmt.Sprintf(@%s, domain)", zap.String("",fmt.Sprintf("@%s", domain)))
+
 				if strings.HasSuffix(strings.ToLower(v), fmt.Sprintf("@%s", domain)) && !m.IsBlocked(v[:idx], senderID) {
-					// TODO:: Security bug ?!!
+					_LOG.Debug("", zap.String("",fmt.Sprintf("v[:idx]", v[:idx])))
 					mapPlaceIDs[v[:idx]] = true
 				} else {
 					mapEmails[v] = true

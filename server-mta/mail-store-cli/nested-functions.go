@@ -463,7 +463,7 @@ func (m *Model) IsBlocked(placeID, address string) bool {
 	dbSession := m.Session.Clone()
 	db := dbSession.DB(m.DB)
 	defer dbSession.Close()
-
+	_LOG.Debug("IsBlocked", zap.String("palceID",placeID), zap.String("address",address))
 	n, err := db.C(nested.COLLECTION_PLACES_BLOCKED_ADDRESSES).Find(bson.M{"_id": placeID, "addresses": address}).Count()
 	if err != nil {
 		_LOG.Warn(err.Error())
