@@ -1747,18 +1747,28 @@ func (s *AdminService) createPostForAllAccounts(requester *nested.Account, reque
 }
 
 // @Command:	admin/add_default_places
-// @Input:  	places			[]string	+
+// @Input:  	place_ids			[]string	+
 func (s *AdminService) addDefaultPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	var places []string
-	if v, ok := request.Data["places"].(string); ok {
+	ids := s.Worker().Model().Place.GetDefaultPlaces()
+	if v, ok := request.Data["place_ids"].(string); ok {
 		placeIDs := strings.SplitN(v, ",", -1)
 		for _, id := range placeIDs {
 			if place := s.Worker().Model().Place.GetByID(id, nil); place != nil {
-				places = append(places, id)
+				exist := false
+				for _, pid := range ids {
+					if pid == id {
+						exist = true
+						continue
+					}
+				}
+				if exist == false {
+					places = append(places, id)
+				}
 			}
 		}
 	} else {
-		response.Error(nested.ERR_INVALID, []string{"places"})
+		response.Error(nested.ERR_INVALID, []string{"place_ids"})
 		return
 	}
 	if success := s.Worker().Model().Place.AddDefaultPlaces(places); !success {
@@ -1780,10 +1790,10 @@ func (s *AdminService) getDefaultPlaces(requester *nested.Account, request *nest
 }
 
 // @Command:	admin/remove_default_places
-// @Input:  	places			[]string	+
+// @Input:  	place_ids			[]string	+
 func (s *AdminService) removeDefaultPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	var placeIDs []string
-	if v, ok := request.Data["placeIDs"].(string); ok {
+	if v, ok := request.Data["place_ids"].(string); ok {
 		ids := strings.SplitN(v, ",", -1)
 		for _, id := range ids {
 			if place := s.Worker().Model().Place.GetByID(id, nil); place != nil {
