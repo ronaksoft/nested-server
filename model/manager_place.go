@@ -1087,6 +1087,64 @@ func (pm *PlaceManager) IsBlocked(placeID, address string) bool {
 	return n > 0
 }
 
+//	AddDefaultPlaces adds placeIDs to the initial place list
+func (pm *PlaceManager) AddDefaultPlaces(placeIDs []string) bool {
+    dbSession := _MongoSession.Clone()
+    db := dbSession.DB(DB_NAME)
+    defer dbSession.Close()
+    bulk := db.C(COLLECTION_PLACES_INITIAL).Bulk()
+    for _, id := range placeIDs {
+        bulk.Upsert(bson.M{"_id" : id})
+    }
+    _, err := bulk.Run()
+    if err != nil {
+        _Log.Warn(err.Error())
+        return false
+    }
+    return true
+}
+
+//	GetDefaultPlacesWithPagination gets initial placeIDs
+func (pm *PlaceManager) GetDefaultPlacesWithPagination(pg Pagination) []string {
+	dbSession := _MongoSession.Clone()
+	db := dbSession.DB(DB_NAME)
+	defer dbSession.Close()
+	placeIDs := make([]string, 0, pg.GetLimit())
+	err := db.C(COLLECTION_PLACES_INITIAL).Find(nil).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&placeIDs)
+	if err != nil {
+		_Log.Warn(err.Error())
+		return nil
+	}
+	return placeIDs
+}
+
+//	GetDefaultPlaces gets default placeIDs
+func (pm *PlaceManager) GetDefaultPlaces() []string {
+	dbSession := _MongoSession.Clone()
+	db := dbSession.DB(DB_NAME)
+	defer dbSession.Close()
+	var placeIDs []string
+	err := db.C(COLLECTION_PLACES_INITIAL).Find(nil).All(&placeIDs)
+	if err != nil {
+		_Log.Warn(err.Error())
+		return nil
+	}
+	return placeIDs
+}
+
+//	RemoveDefaultPlaces removes default placeIDs
+func (pm *PlaceManager) RemoveDefaultPlaces(placeIDs []string) bool {
+	dbSession := _MongoSession.Clone()
+	db := dbSession.DB(DB_NAME)
+	defer dbSession.Close()
+	err := db.C(COLLECTION_PLACES_INITIAL).Remove(bson.M{"_id" : bson.M{ "$in" : placeIDs}})
+	if err != nil {
+		_Log.Warn(err.Error())
+		return false
+	}
+	return true
+}
+
 type Place struct {
     ID                  string          `json:"_id" bson:"_id"`
     Type                string          `json:"type" bson:"type"`

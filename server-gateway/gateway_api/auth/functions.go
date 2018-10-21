@@ -381,6 +381,30 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
     // add user's account & place to search index
     s.Worker().Model().Search.AddPlaceToSearchIndex(uid, fmt.Sprintf("%s %s", fname, lname))
 
+    // Add user to the default places
+    if placeIDs := s.Worker().Model().Place.GetDefaultPlaces(); len(placeIDs) > 0 {
+        for _, placeID := range placeIDs {
+            place := s.Worker().Model().Place.GetByID(placeID, nil)
+            grandPlace := place.GetGrandParent()
+            if grandPlace.IsMember(uid) && !place.IsMember(uid) {
+                if !place.HasKeyholderLimit() {
+                    s.Worker().Model().Place.AddKeyholder(place.ID, uid)
+
+                    // Enables notification by default
+                    s.Worker().Model().Account.SetPlaceNotification(uid, place.ID, true)
+
+                    // Add the place to the added user's feed list
+                    s.Worker().Model().Account.AddPlaceToBookmarks(uid, place.ID)
+
+                    // Handle push notifications and activities
+                    s.Worker().Pusher().PlaceJoined(place, requester.ID, uid)
+
+                    place.Counter.Keyholders += 1
+                }
+            }
+        }
+    }
+
     // prepare welcome message and invitations
     go s.prepareWelcome(uid)
 

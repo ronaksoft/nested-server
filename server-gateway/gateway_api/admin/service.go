@@ -19,13 +19,16 @@ const (
     CMD_PLACE_CREATE            string = "admin/create_place"
     CMD_PLACE_LIST              string = "admin/place_list"
     CMD_PLACE_ADD_MEMBER        string = "admin/place_add_member"
+    CMD_PLACE_ADD_DEFAULT       string = "admin/add_default_places"
     CMD_PLACE_PROMOTE_MEMBER    string = "admin/place_promote_member"
     CMD_PLACE_DEMOTE_MEMBER     string = "admin/place_demote_member"
     CMD_PLACE_REMOVE_MEMBER     string = "admin/place_remove_member"
+    CMD_PLACE_GET_DEFAULT       string = "admin/get_default_places"
     CMD_PLACE_REMOVE            string = "admin/place_remove"
     CMD_PLACE_LIST_MEMBERS      string = "admin/place_list_members"
     CMD_PLACE_UPDATE            string = "admin/place_update"
     CMD_PLACE_SET_PICTURE       string = "admin/place_set_picture"
+    CMD_PLACE_REMOVE_DEFAULT    string = "admin/remove_default_places"
     CMD_ACCOUNT_REGISTER        string = "admin/account_register"
     CMD_ACCOUNT_SET_PASS        string = "admin/account_set_pass"
     CMD_ACCOUNT_DISABLE         string = "admin/account_disable"
@@ -34,7 +37,9 @@ const (
     CMD_ACCOUNT_LIST_PLACES     string = "admin/account_list_places"
     CMD_ACCOUNT_UPDATE          string = "admin/account_update"
     CMD_ACCOUNT_SET_PICTURE     string = "admin/account_set_picture"
+    CMD_ACCOUNTS_DEFAULT_PLACES string = "admin/add_accounts_to_Default_Places"
     CMD_ACCOUNT_REMOVE_PICTURE  string = "admin/account_remove_picture"
+    CMD_ACCOUNT_POST_TO_ALL     string = "admin/create_post_for_all_accounts"
     CMD_SET_MESSAGE_TEMPLATE    string = "admin/set_message_template"
     CMD_GET_MESSAGE_TEMPLATES   string = "admin/get_message_templates"
     CMD_REMOVE_MESSAGE_TEMPLATE string = "admin/remove_message_template"
@@ -63,6 +68,8 @@ func NewAdminService(worker *api.Worker) *AdminService {
         CMD_ACCOUNT_UPDATE:          {api.AUTH_LEVEL_ADMIN_USER, s.updateAccount},
         CMD_ACCOUNT_SET_PICTURE:     {api.AUTH_LEVEL_ADMIN_USER, s.setAccountProfilePicture},
         CMD_ACCOUNT_REMOVE_PICTURE:  {api.AUTH_LEVEL_ADMIN_USER, s.removeAccountProfilePicture},
+        CMD_ACCOUNTS_DEFAULT_PLACES: {api.AUTH_LEVEL_ADMIN_USER, s.addAccountsToDefaultPlaces},
+        CMD_ACCOUNT_POST_TO_ALL:     {api.AUTH_LEVEL_ADMIN_USER, s.createPostForAllAccounts},
         CMD_HEALTH_CHECK:            {api.AUTH_LEVEL_ADMIN_USER, s.checkSystemHealth},
         CMD_PLACE_CREATE:            {api.AUTH_LEVEL_ADMIN_USER, s.createPlace},
         CMD_PLACE_CREATE_GRAND:      {api.AUTH_LEVEL_ADMIN_USER, s.createGrandPlace},
@@ -75,6 +82,9 @@ func NewAdminService(worker *api.Worker) *AdminService {
         CMD_PLACE_REMOVE:            {api.AUTH_LEVEL_ADMIN_USER, s.removePlace},
         CMD_PLACE_UPDATE:            {api.AUTH_LEVEL_ADMIN_USER, s.updatePlace},
         CMD_PLACE_SET_PICTURE:       {api.AUTH_LEVEL_ADMIN_USER, s.setPlaceProfilePicture},
+        CMD_PLACE_ADD_DEFAULT:       {api.AUTH_LEVEL_ADMIN_USER, s.addDefaultPlaces},
+        CMD_PLACE_GET_DEFAULT:       {api.AUTH_LEVEL_ADMIN_USER, s.getDefaultPlaces},
+        CMD_PLACE_REMOVE_DEFAULT:    {api.AUTH_LEVEL_ADMIN_USER, s.removeDefaultPlaces},
         CMD_SET_MESSAGE_TEMPLATE:    {api.AUTH_LEVEL_ADMIN_USER, s.setMessageTemplate},
         CMD_GET_MESSAGE_TEMPLATES:   {api.AUTH_LEVEL_ADMIN_USER, s.getMessageTemplates},
         CMD_REMOVE_MESSAGE_TEMPLATE: {api.AUTH_LEVEL_ADMIN_USER, s.removeMessageTemplates},

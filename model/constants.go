@@ -89,6 +89,7 @@ const (
     COLLECTION_PHONES                   = "phones"
     COLLECTION_PLACES                   = "places"
     COLLECTION_PLACES_ACTIVITIES        = "places.activities"
+	COLLECTION_PLACES_INITIAL           = "posts.reads"
     COLLECTION_PLACES_GROUPS            = "places.groups"
     COLLECTION_PLACES_BLOCKED_ADDRESSES = "places.blocked_addresses"
     COLLECTION_POSTS                    = "posts"
