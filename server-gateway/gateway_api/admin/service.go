@@ -37,7 +37,7 @@ const (
     CMD_ACCOUNT_LIST_PLACES     string = "admin/account_list_places"
     CMD_ACCOUNT_UPDATE          string = "admin/account_update"
     CMD_ACCOUNT_SET_PICTURE     string = "admin/account_set_picture"
-    CMD_ACCOUNT_join_PLACES     string = "admin/account_join_places"
+    CMD_ACCOUNT_JOIN_PLACES     string = "admin/account_join_places"
     CMD_ACCOUNT_REMOVE_PICTURE  string = "admin/account_remove_picture"
     CMD_ACCOUNT_POST_TO_ALL     string = "admin/create_post_for_all_accounts"
     CMD_SET_MESSAGE_TEMPLATE    string = "admin/set_message_template"
@@ -68,7 +68,7 @@ func NewAdminService(worker *api.Worker) *AdminService {
         CMD_ACCOUNT_UPDATE:          {api.AUTH_LEVEL_ADMIN_USER, s.updateAccount},
         CMD_ACCOUNT_SET_PICTURE:     {api.AUTH_LEVEL_ADMIN_USER, s.setAccountProfilePicture},
         CMD_ACCOUNT_REMOVE_PICTURE:  {api.AUTH_LEVEL_ADMIN_USER, s.removeAccountProfilePicture},
-        CMD_ACCOUNT_join_PLACES:     {api.AUTH_LEVEL_ADMIN_USER, s.accountJoinDefaultPlaces},
+        CMD_ACCOUNT_JOIN_PLACES:     {api.AUTH_LEVEL_ADMIN_USER, s.accountJoinDefaultPlaces},
         CMD_ACCOUNT_POST_TO_ALL:     {api.AUTH_LEVEL_ADMIN_USER, s.createPostForAllAccounts},
         CMD_HEALTH_CHECK:            {api.AUTH_LEVEL_ADMIN_USER, s.checkSystemHealth},
         CMD_PLACE_CREATE:            {api.AUTH_LEVEL_ADMIN_USER, s.createPlace},
