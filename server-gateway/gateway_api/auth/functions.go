@@ -383,6 +383,7 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 
     // Add user to the default places
     if placeIDs := s.Worker().Model().Place.GetDefaultPlaces(); len(placeIDs) > 0 {
+		log.Println("registeruserAccount::placeIDs", placeIDs)
         for _, placeID := range placeIDs {
             place := s.Worker().Model().Place.GetByID(placeID, nil)
             grandPlace := place.GetGrandParent()

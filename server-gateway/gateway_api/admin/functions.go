@@ -1201,6 +1201,7 @@ func (s *AdminService) createAccount(requester *nested.Account, request *nestedG
 	s.Worker().Model().Search.AddPlaceToSearchIndex(uid, fmt.Sprintf("%s %s", fname, lname))
 
 	if placeIDs := s.Worker().Model().Place.GetDefaultPlaces(); len(placeIDs) > 0 {
+		log.Println("createAccount::placeIDs", placeIDs)
 		for _, placeID := range placeIDs {
 			place := s.Worker().Model().Place.GetByID(placeID, nil)
 			grandPlace := place.GetGrandParent()
@@ -1835,6 +1836,7 @@ func (s *AdminService) accountJoinDefaultPlaces(requester *nested.Account, reque
 		response.Error(nested.ERR_INVALID, []string{"place_ids"})
 		return
 	} else {
+		log.Println("accountJoinDefaultPlaces::placeIDs ",placeIDs)
 		for _, placeID := range placeIDs {
 			for _, uid := range accountIDs {
 				place := s.Worker().Model().Place.GetByID(placeID, nil)
