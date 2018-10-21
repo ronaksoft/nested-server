@@ -1209,7 +1209,7 @@ func (s *AdminService) createAccount(requester *nested.Account, request *nestedG
 				continue
 			}
 			// if user is not a keyHolder or Creator of place grandPlace, then make him to be
-			if !grandPlace.IsMember(uid) { //&& !place.IsMember(uid)
+			if !grandPlace.IsMember(uid) {
 				if !grandPlace.HasKeyholderLimit() {
 					s.Worker().Model().Place.AddKeyholder(grandPlace.ID, uid)
 					// Enables notification by default
@@ -1223,6 +1223,10 @@ func (s *AdminService) createAccount(requester *nested.Account, request *nestedG
 				} else {
 					response.Error(nested.ERR_INVALID, []string{"grandplace_keyholder_limit"})
 					return
+				}
+				// if place is a grandPlace then skip going deeper
+				if place.IsGrandPlace() {
+					continue
 				}
 				if !place.HasKeyholderLimit() {
 					s.Worker().Model().Place.AddKeyholder(place.ID, uid)
@@ -1873,7 +1877,7 @@ func (s *AdminService) accountJoinDefaultPlaces(requester *nested.Account, reque
 					continue
 				}
 				// if user is not a keyHolder or Creator of place grandPlace, then make him to be
-				if !grandPlace.IsMember(uid) { //&& !place.IsMember(uid)
+				if !grandPlace.IsMember(uid) {
 					if !grandPlace.HasKeyholderLimit() {
 						s.Worker().Model().Place.AddKeyholder(grandPlace.ID, uid)
 						// Enables notification by default
@@ -1887,6 +1891,10 @@ func (s *AdminService) accountJoinDefaultPlaces(requester *nested.Account, reque
 					} else {
 						response.Error(nested.ERR_INVALID, []string{"grandplace_keyholder_limit"})
 						return
+					}
+					// if place is a grandPlace then skip going deeper
+					if place.IsGrandPlace() {
+						continue
 					}
 					if !place.HasKeyholderLimit() {
 						s.Worker().Model().Place.AddKeyholder(place.ID, uid)
@@ -1908,5 +1916,6 @@ func (s *AdminService) accountJoinDefaultPlaces(requester *nested.Account, reque
 				}
 			}
 		}
+		response.Ok()
 	}
 }
