@@ -37,7 +37,7 @@ const (
     CMD_ACCOUNT_LIST_PLACES     string = "admin/account_list_places"
     CMD_ACCOUNT_UPDATE          string = "admin/account_update"
     CMD_ACCOUNT_SET_PICTURE     string = "admin/account_set_picture"
-    CMD_ACCOUNTS_DEFAULT_PLACES string = "admin/add_accounts_to_Default_Places"
+    CMD_ACCOUNTS_DEFAULT_PLACES string = "admin/add_accounts_to_default_places"
     CMD_ACCOUNT_REMOVE_PICTURE  string = "admin/account_remove_picture"
     CMD_ACCOUNT_POST_TO_ALL     string = "admin/create_post_for_all_accounts"
     CMD_SET_MESSAGE_TEMPLATE    string = "admin/set_message_template"

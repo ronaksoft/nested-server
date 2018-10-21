@@ -1771,6 +1771,10 @@ func (s *AdminService) addDefaultPlaces(requester *nested.Account, request *nest
 		response.Error(nested.ERR_INVALID, []string{"place_ids"})
 		return
 	}
+	if len(places) < 1 {
+		response.Error(nested.ERR_INVALID, []string{"place_ids"})
+		return
+	}
 	if success := s.Worker().Model().Place.AddDefaultPlaces(places); !success {
 		response.Error(nested.ERR_UNKNOWN, []string{""})
 		return
@@ -1812,7 +1816,7 @@ func (s *AdminService) removeDefaultPlaces(requester *nested.Account, request *n
 	}
 }
 
-// @Command:	admin/add_accounts_to_Default_Places
+// @Command:	admin/add_accounts_to_default_places
 // @Input:  	account_ids			[]string	+
 func (s *AdminService) addAccountsToDefaultPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	var accountIDs []string
