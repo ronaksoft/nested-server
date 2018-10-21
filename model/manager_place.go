@@ -1094,7 +1094,7 @@ func (pm *PlaceManager) AddDefaultPlaces(placeIDs []string) bool {
     defer dbSession.Close()
     bulk := db.C(COLLECTION_PLACES_INITIAL).Bulk()
     for _, id := range placeIDs {
-        bulk.Upsert(bson.M{"_id" : id})
+        bulk.Upsert(bson.M{"_id" : id} , bson.M{"_id" : id})
     }
     _, err := bulk.Run()
     if err != nil {

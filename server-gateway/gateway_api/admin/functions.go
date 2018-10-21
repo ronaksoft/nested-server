@@ -1769,20 +1769,7 @@ func (s *AdminService) addDefaultPlaces(requester *nested.Account, request *nest
 }
 
 // @Command:	admin/get_default_places
-// @Input:  	places			[]string	+
 func (s *AdminService) getDefaultPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
-	var places []string
-	if v, ok := request.Data["places"].(string); ok {
-		placeIDs := strings.SplitN(v, ",", -1)
-		for _, id := range placeIDs {
-			if place := s.Worker().Model().Place.GetByID(id, nil); place != nil {
-				places = append(places, id)
-			}
-		}
-	} else {
-		response.Error(nested.ERR_INVALID, []string{"places"})
-		return
-	}
 	pg := s.Worker().Argument().GetPagination(request)
 	if placeIDs := s.Worker().Model().Place.GetDefaultPlacesWithPagination(pg); placeIDs == nil {
 		response.Error(nested.ERR_UNKNOWN, []string{""})
