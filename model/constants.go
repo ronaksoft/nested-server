@@ -79,7 +79,7 @@ const (
     COLLECTION_ACCOUNTS_ACCOUNTS       = "accounts.accounts"   // Account's most related accounts
     COLLECTION_ACCOUNTS_POSTS          = "accounts.posts"      // Account's bookmarked posts
     COLLECTION_ACCOUNTS_LABELS         = "accounts.labels"
-    COLLECTION_ACCOUNTS_SEARCH_HISTORY = "accounts.search.history"
+    COLLECTION_ACCOUNTS_SEARCH_HISTORY  = "accounts.search.history"
     COLLECTION_CONTACTS                 = "contacts"
     COLLECTION_FILES                    = "files"
     COLLECTION_HOOKS                    = "hooks"
@@ -89,7 +89,7 @@ const (
     COLLECTION_PHONES                   = "phones"
     COLLECTION_PLACES                   = "places"
     COLLECTION_PLACES_ACTIVITIES        = "places.activities"
-	COLLECTION_PLACES_INITIAL           = "posts.reads"
+	COLLECTION_PLACES_DEFAULT           = "places.default"
     COLLECTION_PLACES_GROUPS            = "places.groups"
     COLLECTION_PLACES_BLOCKED_ADDRESSES = "places.blocked_addresses"
     COLLECTION_POSTS                    = "posts"

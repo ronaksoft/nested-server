@@ -1092,16 +1092,18 @@ func (pm *PlaceManager) AddDefaultPlaces(placeIDs []string) bool {
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
-    bulk := db.C(COLLECTION_PLACES_INITIAL).Bulk()
-    for _, id := range placeIDs {
-        bulk.Upsert(bson.M{"_id" : id} , bson.M{"_id" : id})
-    }
-    _, err := bulk.Run()
-    if err != nil {
-        _Log.Warn(err.Error())
-        return false
-    }
-    return true
+
+    bulk:= db.C(COLLECTION_PLACES_DEFAULT).Bulk()
+    bulk.Unordered()
+	for _, id := range placeIDs {
+		bulk.Upsert(bson.M{"_id" : id} , bson.M{"_id" : id})
+	}
+	_, err := bulk.Run()
+	if err != nil {
+		_Log.Warn(err.Error())
+		return false
+	}
+	return true
 }
 
 //	GetDefaultPlacesWithPagination gets initial placeIDs
@@ -1110,7 +1112,7 @@ func (pm *PlaceManager) GetDefaultPlacesWithPagination(pg Pagination) []string {
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
 	placeIDs := make([]string, 0, pg.GetLimit())
-	err := db.C(COLLECTION_PLACES_INITIAL).Find(nil).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&placeIDs)
+	err := db.C(COLLECTION_PLACES_DEFAULT).Find(nil).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&placeIDs)
 	if err != nil {
 		_Log.Warn(err.Error())
 		return nil
@@ -1124,7 +1126,7 @@ func (pm *PlaceManager) GetDefaultPlaces() []string {
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
 	var placeIDs []string
-	err := db.C(COLLECTION_PLACES_INITIAL).Find(nil).All(&placeIDs)
+	err := db.C(COLLECTION_PLACES_DEFAULT).Find(nil).All(&placeIDs)
 	if err != nil {
 		_Log.Warn(err.Error())
 		return nil
@@ -1137,7 +1139,7 @@ func (pm *PlaceManager) RemoveDefaultPlaces(placeIDs []string) bool {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
-	err := db.C(COLLECTION_PLACES_INITIAL).Remove(bson.M{"_id" : bson.M{ "$in" : placeIDs}})
+	err := db.C(COLLECTION_PLACES_DEFAULT).Remove(bson.M{"_id" : bson.M{ "$in" : placeIDs}})
 	if err != nil {
 		_Log.Warn(err.Error())
 		return false
