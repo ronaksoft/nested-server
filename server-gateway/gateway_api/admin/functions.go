@@ -1201,11 +1201,29 @@ func (s *AdminService) createAccount(requester *nested.Account, request *nestedG
 	s.Worker().Model().Search.AddPlaceToSearchIndex(uid, fmt.Sprintf("%s %s", fname, lname))
 
 	if placeIDs := s.Worker().Model().Place.GetDefaultPlaces(); len(placeIDs) > 0 {
-		log.Println("createAccount::placeIDs", placeIDs)
 		for _, placeID := range placeIDs {
 			place := s.Worker().Model().Place.GetByID(placeID, nil)
 			grandPlace := place.GetGrandParent()
-			if grandPlace.IsMember(uid) && !place.IsMember(uid) {
+			// if user is already a member of the place then skip
+			if place.IsMember(uid) {
+				continue
+			}
+			// if user is not a keyHolder or Creator of place grandPlace, then make him to be
+			if !grandPlace.IsMember(uid) { //&& !place.IsMember(uid)
+				if !grandPlace.HasKeyholderLimit() {
+					s.Worker().Model().Place.AddKeyholder(grandPlace.ID, uid)
+					// Enables notification by default
+					s.Worker().Model().Account.SetPlaceNotification(uid, grandPlace.ID, true)
+
+					// Add the place to the added user's feed list
+					s.Worker().Model().Account.AddPlaceToBookmarks(uid, grandPlace.ID)
+
+					// Handle push notifications and activities
+					s.Worker().Pusher().PlaceJoined(grandPlace, requester.ID, uid)
+				} else {
+					response.Error(nested.ERR_INVALID, []string{"grandplace_keyholder_limit"})
+					return
+				}
 				if !place.HasKeyholderLimit() {
 					s.Worker().Model().Place.AddKeyholder(place.ID, uid)
 
@@ -1219,10 +1237,14 @@ func (s *AdminService) createAccount(requester *nested.Account, request *nestedG
 					s.Worker().Pusher().PlaceJoined(place, requester.ID, uid)
 
 					place.Counter.Keyholders += 1
+				} else {
+					response.Error(nested.ERR_INVALID, []string{"place_keyholder_limit"})
+					return
 				}
 			}
 		}
 	}
+
 	// prepare welcome message and invitations
 	go s.prepareWelcome(uid)
 
@@ -1756,6 +1778,11 @@ func (s *AdminService) addDefaultPlaces(requester *nested.Account, request *nest
 		placeIDs := strings.SplitN(v, ",", -1)
 		for _, id := range placeIDs {
 			if place := s.Worker().Model().Place.GetByID(id, nil); place != nil {
+				// no one can join personal places
+				if place.IsPersonal() {
+					response.Error(nested.ERR_ACCESS, []string{"personal_place"})
+					return
+				}
 				exist := false
 				for _, pid := range ids {
 					if pid == id {
@@ -1836,12 +1863,31 @@ func (s *AdminService) accountJoinDefaultPlaces(requester *nested.Account, reque
 		response.Error(nested.ERR_INVALID, []string{"place_ids"})
 		return
 	} else {
-		log.Println("accountJoinDefaultPlaces::placeIDs ",placeIDs)
+		log.Println("accountJoinDefaultPlaces::placeIDs ", placeIDs)
 		for _, placeID := range placeIDs {
 			for _, uid := range accountIDs {
 				place := s.Worker().Model().Place.GetByID(placeID, nil)
 				grandPlace := place.GetGrandParent()
-				if grandPlace.IsMember(uid) && !place.IsMember(uid) {
+				// if user is already a member of the place then skip
+				if place.IsMember(uid) {
+					continue
+				}
+				// if user is not a keyHolder or Creator of place grandPlace, then make him to be
+				if !grandPlace.IsMember(uid) { //&& !place.IsMember(uid)
+					if !grandPlace.HasKeyholderLimit() {
+						s.Worker().Model().Place.AddKeyholder(grandPlace.ID, uid)
+						// Enables notification by default
+						s.Worker().Model().Account.SetPlaceNotification(uid, grandPlace.ID, true)
+
+						// Add the place to the added user's feed list
+						s.Worker().Model().Account.AddPlaceToBookmarks(uid, grandPlace.ID)
+
+						// Handle push notifications and activities
+						s.Worker().Pusher().PlaceJoined(grandPlace, requester.ID, uid)
+					} else {
+						response.Error(nested.ERR_INVALID, []string{"grandplace_keyholder_limit"})
+						return
+					}
 					if !place.HasKeyholderLimit() {
 						s.Worker().Model().Place.AddKeyholder(place.ID, uid)
 
@@ -1855,13 +1901,12 @@ func (s *AdminService) accountJoinDefaultPlaces(requester *nested.Account, reque
 						s.Worker().Pusher().PlaceJoined(place, requester.ID, uid)
 
 						place.Counter.Keyholders += 1
+					} else {
+						response.Error(nested.ERR_INVALID, []string{"place_keyholder_limit"})
+						return
 					}
 				}
 			}
 		}
 	}
 }
-
-
-
-
