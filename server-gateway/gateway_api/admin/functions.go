@@ -1816,9 +1816,9 @@ func (s *AdminService) removeDefaultPlaces(requester *nested.Account, request *n
 	}
 }
 
-// @Command:	admin/accounts_add_places
+// @Command:	admin/account_join_places
 // @Input:  	account_ids			[]string	+
-func (s *AdminService) addAccountsToDefaultPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) accountJoinDefaultPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	var accountIDs []string
 	if v, ok := request.Data["account_ids"].(string); ok {
 		ids := strings.SplitN(v, ",", -1)
