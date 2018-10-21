@@ -54,7 +54,7 @@ deploy:staging:
   only:
   - behrooz
   - fix
-  - fix-post-attachment-sort
+  - admin-add-place
   image: docker:latest
   services:
   - docker:dind
