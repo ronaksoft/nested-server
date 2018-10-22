@@ -63,11 +63,11 @@ mech_list: PLAIN LOGIN CRAM-MD5 DIGEST-MD5 NTLM
 EOF
 
 # sasldb2
-echo ${NST_SMTP_CRED} | tr , \\n > /tmp/passwd
-while IFS=':' read -r _user _pwd; do
-  echo $_pwd | saslpasswd2 -p -c -u ${NST_DOMAIN} $_user
-done < /tmp/passwd
-chown postfix.sasl /etc/sasldb2
+#echo ${NST_SMTP_CRED} | tr , \\n > /tmp/passwd
+#while IFS=':' read -r _user _pwd; do
+#  echo $_pwd | saslpasswd2 -p -c -u ${NST_DOMAIN} $_user
+#done < /tmp/passwd
+#chown postfix.sasl /etc/sasldb2
 
 ############
 # Enable TLS

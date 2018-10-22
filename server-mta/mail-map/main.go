@@ -42,6 +42,8 @@ type info struct {
 	SystemKey    string
 	CyrusURL     string
 	MongoSession *mgo.Session
+	SmtpUser     string
+	SmtpPass     string
 }
 
 var instanceInfo = make(map[string]info)
@@ -73,6 +75,8 @@ func main() {
 			SystemKey:    envs["NST_FILE_SYSTEM_KEY"],
 			CyrusURL:     envs["NST_CYRUS_URL"],
 			MongoSession: session,
+			SmtpUser:     envs["NST_SMTP_USER"],
+			SmtpPass:     envs["NST_SMTP_PASS"],
 		}
 	}
 	f, err := os.OpenFile("/etc/postfix/virtual_domains", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
@@ -86,10 +90,32 @@ func main() {
 		}
 	}
 
+	//x, err := os.OpenFile("/etc/postfix/sasl_passwd", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
+	//if err != nil {
+	//	fmt.Println("sasl_passwd", err)
+	//}
+	//defer x.Close()
+	for key, info := range instanceInfo {
+		cmd := fmt.Sprintf("echo %s | saslpasswd2 -p -c -u %s %s", info.SmtpPass, key, info.SmtpUser)
+		_, err := exec.Command("bash", "-c", cmd).Output()
+		if err != nil {
+			fmt.Println("exec.Command::sasl_passwd", err)
+		}
+		//if _, err = x.WriteString(fmt.Sprintf("mail.%s    %s:%s\n",key, info.SmtpUser, info.SmtpPass)); err != nil {
+		//	fmt.Println("sasl_passwd::WriteString", err)
+		//}
+	}
+	cmd := "chown postfix.sasl /etc/sasldb2"
+	_, err = exec.Command("bash", "-c", cmd).Output()
+	if err != nil {
+		fmt.Println("exec.Command::sasl_passwd", err)
+	}
+
 	t, err := os.OpenFile("/etc/opendkim/TrustedHosts", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
 	if err != nil {
 		fmt.Println("TrustedHosts",err)
 	}
+	defer t.Close()
 	for key := range instanceInfo {
 		if _, err = t.WriteString("*." + key + "\n"); err != nil {
 			fmt.Println("TrustedHosts::WriteString",err)
@@ -100,6 +126,7 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	defer k.Close()
 	for key := range instanceInfo {
 		if _, err = k.WriteString(fmt.Sprintf("mail._domainkey.%s %s:mail:/etc/opendkim/domainkeys/dkim.private\n", key, key)); err != nil {
 			fmt.Println("KeyTable::WriteString",err)
@@ -110,6 +137,7 @@ func main() {
 	if err != nil {
 		fmt.Println("SigningTable::",err)
 	}
+	defer s.Close()
 	for key := range instanceInfo {
 		if _, err = s.WriteString(fmt.Sprintf("*@%s mail._domainkey.%s\n", key, key)); err != nil {
 			fmt.Println("SigningTable::WriteString",err)
