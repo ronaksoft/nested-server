@@ -61,7 +61,7 @@ deploy:staging:
   script:
   - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
   - cd ./server-gateway
-  - docker build --pull -t $CI_REGISTRY_IMAGE/gateway:TEST .
+  - docker build --pull -t $CI_REGISTRY_IMAGE/gateway:AAP .
   - docker push $CI_REGISTRY_IMAGE/gateway:TEST
   - cd ../server-ntfy
   - docker build --pull -t $CI_REGISTRY_IMAGE/ntfy:TEST .
