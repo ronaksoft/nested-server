@@ -85,35 +85,35 @@ func main() {
 		}
 	}
 
-	t, err := os.OpenFile("/etc/opendkim/TrustedHosts", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
-	if err != nil {
-		fmt.Println("TrustedHosts",err)
-	}
-	for key := range instanceInfo {
-		if _, err = t.WriteString("*." + key + "\n"); err != nil {
-			fmt.Println("TrustedHosts::WriteString",err)
-		}
-	}
-
-	k, err := os.OpenFile("/etc/opendkim/KeyTable", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
-	if err != nil {
-		fmt.Println(err)
-	}
-	for key := range instanceInfo {
-		if _, err = k.WriteString(fmt.Sprintf("mail._domainkey.%s %s:mail:/etc/opendkim/domainkeys/dkim.private\n", key, key)); err != nil {
-			fmt.Println("KeyTable::WriteString",err)
-		}
-	}
-
-	s, err := os.OpenFile("/etc/opendkim/SigningTable", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
-	if err != nil {
-		fmt.Println("SigningTable::",err)
-	}
-	for key := range instanceInfo {
-		if _, err = s.WriteString(fmt.Sprintf("*@%s mail._domainkey.%s\n", key, key)); err != nil {
-			fmt.Println("SigningTable::WriteString",err)
-		}
-	}
+	//t, err := os.OpenFile("/etc/opendkim/TrustedHosts", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
+	//if err != nil {
+	//	fmt.Println("TrustedHosts",err)
+	//}
+	//for key := range instanceInfo {
+	//	if _, err = t.WriteString("*." + key + "\n"); err != nil {
+	//		fmt.Println("TrustedHosts::WriteString",err)
+	//	}
+	//}
+	//
+	//k, err := os.OpenFile("/etc/opendkim/KeyTable", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	//for key := range instanceInfo {
+	//	if _, err = k.WriteString(fmt.Sprintf("mail._domainkey.%s %s:mail:/etc/opendkim/domainkeys/dkim.private\n", key, key)); err != nil {
+	//		fmt.Println("KeyTable::WriteString",err)
+	//	}
+	//}
+	//
+	//s, err := os.OpenFile("/etc/opendkim/SigningTable", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
+	//if err != nil {
+	//	fmt.Println("SigningTable::",err)
+	//}
+	//for key := range instanceInfo {
+	//	if _, err = s.WriteString(fmt.Sprintf("*@%s mail._domainkey.%s\n", key, key)); err != nil {
+	//		fmt.Println("SigningTable::WriteString",err)
+	//	}
+	//}
 
 
 	fmt.Println("mail-map::instanceInfo", instanceInfo)

@@ -61,11 +61,7 @@ pwcheck_method: auxprop
 auxprop_plugin: sasldb
 mech_list: PLAIN LOGIN CRAM-MD5 DIGEST-MD5 NTLM
 EOF
-# set domains in virtual_mailbox_domains
-#cat >> /etc/postfix/virtual_domains <<EOF
-#ronaksoftware.com
-#webapp2.ronaksoftware.com
-#EOF
+
 # sasldb2
 echo ${NST_SMTP_CRED} | tr , \\n > /tmp/passwd
 while IFS=':' read -r _user _pwd; do
@@ -158,12 +154,13 @@ cat >> /etc/opendkim/TrustedHosts <<EOF
 127.0.0.1
 localhost
 192.168.0.1/24
+*.${NST_DOMAIN}
 EOF
-#cat >> /etc/opendkim/KeyTable <<EOF
-#mail._domainkey.${NST_DOMAIN} ${NST_DOMAIN}:mail:$(find /etc/opendkim/domainkeys -iname *.private)
-#EOF
-#cat >> /etc/opendkim/SigningTable <<EOF
-#*@${NST_DOMAIN} mail._domainkey.${NST_DOMAIN}
-#EOF
+cat >> /etc/opendkim/KeyTable <<EOF
+mail._domainkey.${NST_DOMAIN} ${NST_DOMAIN}:mail:$(find /etc/opendkim/domainkeys -iname *.private)
+EOF
+cat >> /etc/opendkim/SigningTable <<EOF
+*@${NST_DOMAIN} mail._domainkey.${NST_DOMAIN}
+EOF
 chown opendkim:opendkim $(find /etc/opendkim/domainkeys -iname *.private)
 chmod 400 $(find /etc/opendkim/domainkeys -iname *.private)
