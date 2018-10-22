@@ -154,13 +154,13 @@ cat >> /etc/default/opendkim <<EOF
 SOCKET="inet:12301@localhost"
 EOF
 
-#cat >> /etc/opendkim/TrustedHosts <<EOF
-#127.0.0.1
-#localhost
-#192.168.0.1/24
-#
+cat >> /etc/opendkim/TrustedHosts <<EOF
+127.0.0.1
+localhost
+192.168.0.1/24
+
 #*.${NST_DOMAIN}
-#EOF
+EOF
 #cat >> /etc/opendkim/KeyTable <<EOF
 #mail._domainkey.${NST_DOMAIN} ${NST_DOMAIN}:mail:$(find /etc/opendkim/domainkeys -iname *.private)
 #EOF
