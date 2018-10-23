@@ -79,6 +79,7 @@ func main() {
 			SmtpPass:     envs["NST_SMTP_PASS"],
 		}
 	}
+	fmt.Println("instanceInfo[envs[NST_DOMAIN]]", instanceInfo)
 	f, err := os.OpenFile("/etc/postfix/virtual_domains", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
 	if err != nil {
 		fmt.Println("virtual_domains", err)
@@ -89,28 +90,23 @@ func main() {
 			fmt.Println("virtual_domains::WriteString", err)
 		}
 	}
-
-	//x, err := os.OpenFile("/etc/postfix/sasl_passwd", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
-	//if err != nil {
-	//	fmt.Println("sasl_passwd", err)
-	//}
-	//defer x.Close()
+	fmt.Println(1)
+	// SMTP Authentication for Mail servers using sasldb2
+	// check results by sasldblistusers2 commmand
 	for key, info := range instanceInfo {
 		cmd := fmt.Sprintf("echo %s | saslpasswd2 -p -c -u %s %s", info.SmtpPass, key, info.SmtpUser)
 		_, err := exec.Command("bash", "-c", cmd).Output()
 		if err != nil {
 			fmt.Println("exec.Command::sasl_passwd", err)
 		}
-		//if _, err = x.WriteString(fmt.Sprintf("mail.%s    %s:%s\n",key, info.SmtpUser, info.SmtpPass)); err != nil {
-		//	fmt.Println("sasl_passwd::WriteString", err)
-		//}
 	}
 	cmd := "chown postfix.sasl /etc/sasldb2"
 	_, err = exec.Command("bash", "-c", cmd).Output()
 	if err != nil {
 		fmt.Println("exec.Command::sasl_passwd", err)
 	}
-
+	fmt.Println(2)
+	//
 	t, err := os.OpenFile("/etc/opendkim/TrustedHosts", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
 	if err != nil {
 		fmt.Println("TrustedHosts",err)
@@ -121,7 +117,7 @@ func main() {
 			fmt.Println("TrustedHosts::WriteString",err)
 		}
 	}
-
+	fmt.Println(3)
 	k, err := os.OpenFile("/etc/opendkim/KeyTable", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
 	if err != nil {
 		fmt.Println(err)
@@ -132,7 +128,7 @@ func main() {
 			fmt.Println("KeyTable::WriteString",err)
 		}
 	}
-
+	fmt.Println(4)
 	s, err := os.OpenFile("/etc/opendkim/SigningTable", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
 	if err != nil {
 		fmt.Println("SigningTable::",err)
@@ -143,14 +139,15 @@ func main() {
 			fmt.Println("SigningTable::WriteString",err)
 		}
 	}
+	fmt.Println(5)
  	_, err = exec.Command("opendkim", "-f", "-A").Output()
  	if err != nil {
  		fmt.Println(err)
 	}
-
+	fmt.Println(6)
 	fmt.Println("mail-map::instanceInfo", instanceInfo)
 	go runEvery(time.Minute * time.Duration(_Config.GetInt("WATCHDOG_INTERVAL")), watchdog)
-	fmt.Println("Start Listening")
+	fmt.Println("mail-map::Start Listening tcp:2374")
 	listener, err := net.Listen("tcp", ":2374")
 	if err != nil {
 		fmt.Println(err.Error())
