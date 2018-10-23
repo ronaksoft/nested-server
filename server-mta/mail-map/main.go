@@ -104,7 +104,7 @@ func main() {
 	cmd := "chown postfix.sasl /etc/sasldb2"
 	_, err = exec.Command("bash", "-c", cmd).Output()
 	if err != nil {
-		fmt.Println("exec.Command::sasl_passwd", err)
+		fmt.Println("exec.Command::postfix.sasl", err)
 	}
 
 	// opendkim configs
@@ -330,6 +330,7 @@ func watchdog(t time.Time) {
 				fmt.Println(err)
 			}
 		}
+		os.Remove("/etc/sasldb2")
 		// SMTP Authentication for Mail servers using sasldb2
 		// check results by sasldblistusers2 commmand
 		for key, info := range instanceInfo {
@@ -342,7 +343,7 @@ func watchdog(t time.Time) {
 		cmd := "chown postfix.sasl /etc/sasldb2"
 		_, err = exec.Command("bash", "-c", cmd).Output()
 		if err != nil {
-			fmt.Println("exec.Command::sasl_passwd", err)
+			fmt.Println("exec.Command::postfix.sasl", err)
 		}
 
 		os.Remove("/etc/opendkim/TrustedHosts")
