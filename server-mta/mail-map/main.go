@@ -17,6 +17,7 @@ import (
 	"time"
 	"gopkg.in/fzerorubigd/onion.v3"
 	"os/exec"
+	"log"
 )
 
 var (
@@ -101,11 +102,11 @@ func main() {
 			fmt.Println("exec.Command::sasl_passwd", err)
 		}
 	}
-	cmd := "chown postfix.sasl /etc/sasldb2"
-	_, err = exec.Command("bash", "-c", cmd).Output()
-	if err != nil {
-		fmt.Println("exec.Command::postfix.sasl", err)
-	}
+	//cmd := "chown postfix.sasl /etc/sasldb2"
+	//_, err = exec.Command("bash", "-c", cmd).Output()
+	//if err != nil {
+	//	fmt.Println("exec.Command::postfix.sasl", err)
+	//}
 
 	// opendkim configs
 	t, err := os.OpenFile("/etc/opendkim/TrustedHosts", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
@@ -330,7 +331,10 @@ func watchdog(t time.Time) {
 				fmt.Println(err)
 			}
 		}
-		os.Remove("/etc/sasldb2")
+		err = os.Remove("/etc/sasldb2")
+		if err != nil {
+			log.Println(err)
+		}
 		// SMTP Authentication for Mail servers using sasldb2
 		// check results by sasldblistusers2 commmand
 		for key, info := range instanceInfo {
@@ -340,11 +344,11 @@ func watchdog(t time.Time) {
 				fmt.Println("exec.Command::sasl_passwd", err)
 			}
 		}
-		cmd := "chown postfix.sasl /etc/sasldb2"
-		_, err = exec.Command("bash", "-c", cmd).Output()
-		if err != nil {
-			fmt.Println("exec.Command::postfix.sasl", err)
-		}
+		//cmd := "chown postfix.sasl /etc/sasldb2"
+		//_, err = exec.Command("bash", "-c", cmd).Output()
+		//if err != nil {
+		//	fmt.Println("exec.Command::postfix.sasl", err)
+		//}
 
 		os.Remove("/etc/opendkim/TrustedHosts")
 		// opendkim configs
