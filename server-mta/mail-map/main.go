@@ -140,7 +140,8 @@ func main() {
 		}
 	}
 	fmt.Println(5)
- 	_, err = exec.Command("opendkim", "-f", "-A").Output()
+	cmd = "opendkim -f -A"
+	_, err = exec.Command("bash", "-c", cmd).Output()
  	if err != nil {
  		fmt.Println(err)
 	}
