@@ -79,7 +79,8 @@ func main() {
 			SmtpPass:     envs["NST_SMTP_PASS"],
 		}
 	}
-	fmt.Println("instanceInfo[envs[NST_DOMAIN]]", instanceInfo)
+
+	// set multiple domains in postfix virtual_domains
 	f, err := os.OpenFile("/etc/postfix/virtual_domains", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
 	if err != nil {
 		fmt.Println("virtual_domains", err)
@@ -90,7 +91,7 @@ func main() {
 			fmt.Println("virtual_domains::WriteString", err)
 		}
 	}
-	fmt.Println(1)
+
 	// SMTP Authentication for Mail servers using sasldb2
 	// check results by sasldblistusers2 commmand
 	for key, info := range instanceInfo {
@@ -105,8 +106,8 @@ func main() {
 	if err != nil {
 		fmt.Println("exec.Command::sasl_passwd", err)
 	}
-	fmt.Println(2)
-	//
+
+	// opendkim configs
 	t, err := os.OpenFile("/etc/opendkim/TrustedHosts", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
 	if err != nil {
 		fmt.Println("TrustedHosts",err)
@@ -117,7 +118,6 @@ func main() {
 			fmt.Println("TrustedHosts::WriteString",err)
 		}
 	}
-	fmt.Println(3)
 	k, err := os.OpenFile("/etc/opendkim/KeyTable", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
 	if err != nil {
 		fmt.Println(err)
@@ -128,7 +128,6 @@ func main() {
 			fmt.Println("KeyTable::WriteString",err)
 		}
 	}
-	fmt.Println(4)
 	s, err := os.OpenFile("/etc/opendkim/SigningTable", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
 	if err != nil {
 		fmt.Println("SigningTable::",err)
@@ -139,16 +138,14 @@ func main() {
 			fmt.Println("SigningTable::WriteString",err)
 		}
 	}
-	fmt.Println(5)
+	// run opendkim, it blocks! so run it in background
 	go func() {
-		cmd = "opendkim -f -A"
-		_, err = exec.Command("bash", "-c", cmd).Output()
+		_, err = exec.Command("opendkim", "-f", "-A").Output()
 		if err != nil {
 			fmt.Println(err)
 		}
 	}()
 
-	fmt.Println(6)
 	fmt.Println("mail-map::instanceInfo", instanceInfo)
 	go runEvery(time.Minute * time.Duration(_Config.GetInt("WATCHDOG_INTERVAL")), watchdog)
 	fmt.Println("mail-map::Start Listening tcp:2374")
@@ -331,6 +328,55 @@ func watchdog(t time.Time) {
 		for key := range instanceInfo {
 			if _, err = f.WriteString(key + "\n"); err != nil {
 				fmt.Println(err)
+			}
+		}
+		// SMTP Authentication for Mail servers using sasldb2
+		// check results by sasldblistusers2 commmand
+		for key, info := range instanceInfo {
+			cmd := fmt.Sprintf("echo %s | saslpasswd2 -p -c -u %s %s", info.SmtpPass, key, info.SmtpUser)
+			_, err := exec.Command("bash", "-c", cmd).Output()
+			if err != nil {
+				fmt.Println("exec.Command::sasl_passwd", err)
+			}
+		}
+		cmd := "chown postfix.sasl /etc/sasldb2"
+		_, err = exec.Command("bash", "-c", cmd).Output()
+		if err != nil {
+			fmt.Println("exec.Command::sasl_passwd", err)
+		}
+
+		os.Remove("/etc/opendkim/TrustedHosts")
+		// opendkim configs
+		t, err := os.OpenFile("/etc/opendkim/TrustedHosts", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
+		if err != nil {
+			fmt.Println("TrustedHosts",err)
+		}
+		defer t.Close()
+		for key := range instanceInfo {
+			if _, err = t.WriteString("*." + key + "\n"); err != nil {
+				fmt.Println("TrustedHosts::WriteString",err)
+			}
+		}
+		os.Remove("/etc/opendkim/KeyTable")
+		k, err := os.OpenFile("/etc/opendkim/KeyTable", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
+		if err != nil {
+			fmt.Println(err)
+		}
+		defer k.Close()
+		for key := range instanceInfo {
+			if _, err = k.WriteString(fmt.Sprintf("mail._domainkey.%s %s:mail:/etc/opendkim/domainkeys/dkim.private\n", key, key)); err != nil {
+				fmt.Println("KeyTable::WriteString",err)
+			}
+		}
+		os.Remove("/etc/opendkim/SigningTable")
+		s, err := os.OpenFile("/etc/opendkim/SigningTable", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
+		if err != nil {
+			fmt.Println("SigningTable::",err)
+		}
+		defer s.Close()
+		for key := range instanceInfo {
+			if _, err = s.WriteString(fmt.Sprintf("*@%s mail._domainkey.%s\n", key, key)); err != nil {
+				fmt.Println("SigningTable::WriteString",err)
 			}
 		}
 	}

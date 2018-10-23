@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"gopkg.in/op/go-logging.v1"
 	"io"
 	"net"
 	"os"
 	"strings"
-	"fmt"
 )
 
 var (
@@ -19,10 +19,10 @@ var (
 const LOG_PREFIX string = "nested/mail-instances"
 
 type mailInfo struct {
-	Sender     string        `json:"sender"`
-	Domain     string        `json:"domain"`
-	Recipients []string      `json:"recipients"`
-	Buffer     []byte        `json:"buffer"`
+	Sender     string   `json:"sender"`
+	Domain     string   `json:"domain"`
+	Recipients []string `json:"recipients"`
+	Buffer     []byte   `json:"buffer"`
 }
 
 func main() {
@@ -42,24 +42,18 @@ func main() {
 		Recipients: recipients,
 		Buffer:     buf.Bytes(),
 	}
-	_Log.Info("Buffer:     buf.Bytes(),", m.Recipients)
+	_Log.Debug(fmt.Sprintf("mail-instances::Postfix wants to store email from %s for %s", m.Sender, m.Recipients))
 	b, err := json.Marshal(m)
 	if err != nil {
-		_Log.Error("mail-instances::json.Marshal(m)", err.Error())
-		fmt.Println("mail-instances::json.Marshal(m)", err.Error())
+		_Log.Error(err.Error())
 	}
-	_Log.Info("mail-instances::InstanceInfo:", *sender, *domain, recipients)
-	fmt.Println("mail-instances::InstanceInfo:", *sender, *domain, recipients)
-
 	conn, err := net.Dial("tcp", "127.0.0.1:2300")
 	if err != nil {
-		_Log.Error("net.Dial(tcp, :2300)", err.Error())
-		fmt.Println("net.Dial(tcp, :2300)", err.Error())
+		_Log.Error(err.Error())
 	}
 	_, err = conn.Write(b)
 	if err != nil {
-		_Log.Error("conn.Write(b)", err.Error())
-		fmt.Println("conn.Write(b)", err.Error())
+		_Log.Error(err.Error())
 	}
 	defer conn.Close()
 }

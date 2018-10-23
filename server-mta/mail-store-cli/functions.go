@@ -320,8 +320,6 @@ func store(domain, sender string, recipients []string, mailEnvelope *enmime.Enve
 		bodyHtml = strings.Replace(bodyHtml, fmt.Sprintf("\"cid:%s\"", k), fmt.Sprintf("\"%s\"", v), -1)
 		bodyPlain = strings.Replace(bodyPlain, fmt.Sprintf("\"cid:%s\"", k), fmt.Sprintf("\"%s\"", v), -1)
 	}
-	_LOG.Info("HTML Body:", zap.String("", bodyHtml))
-	_LOG.Info("Plain Body: %s", zap.String("", bodyPlain))
 	// --/Prepare Body
 
 	postCreate := func(targets []string) error {
@@ -399,7 +397,7 @@ func store(domain, sender string, recipients []string, mailEnvelope *enmime.Enve
 	}
 
 	// Create one post for CCs
-	_LOG.Info("Gonna add post to:", zap.Any("nonBlindTargets", nonBlindTargets))
+	_LOG.Debug("Gonna add post to:", zap.Any("nonBlindTargets", nonBlindTargets))
 	if err := postCreate(nonBlindTargets); err != nil {
 		_LOG.Error("ERROR::::::Post add error:", zap.Error(err))
 		return err
@@ -407,7 +405,7 @@ func store(domain, sender string, recipients []string, mailEnvelope *enmime.Enve
 
 	// Create Individual Posts for BCCs
 	for _, recipient := range blindPlaceIDs {
-		_LOG.Info("Gonna add post to:", zap.String("recipient", recipient))
+		_LOG.Debug("Gonna add post to:", zap.String("recipient", recipient))
 		if err := postCreate([]string{recipient}); err != nil {
 			_LOG.Error("ERROR::::::Post add error:", zap.Error(err))
 			return err
