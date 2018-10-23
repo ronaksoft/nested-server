@@ -140,11 +140,14 @@ func main() {
 		}
 	}
 	fmt.Println(5)
-	cmd = "opendkim -f -A"
-	_, err = exec.Command("bash", "-c", cmd).Output()
- 	if err != nil {
- 		fmt.Println(err)
-	}
+	go func() {
+		cmd = "opendkim -f -A"
+		_, err = exec.Command("bash", "-c", cmd).Output()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}()
+
 	fmt.Println(6)
 	fmt.Println("mail-map::instanceInfo", instanceInfo)
 	go runEvery(time.Minute * time.Duration(_Config.GetInt("WATCHDOG_INTERVAL")), watchdog)
