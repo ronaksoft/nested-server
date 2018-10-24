@@ -158,11 +158,8 @@ func (m *Mailer) createMessage(postID bson.ObjectId) *mail.Message {
     }
     for _, place := range places {
         if place.Privacy.Receptive == nested.PLACE_RECEPTIVE_EXTERNAL {
-        	if place.ID == postSender.ID {
+        	if place.ID == postSender.ID || place.GrandParentID == postSender.ID  {
         		continue
-			}
-			if place.GrandParentID == postSender.ID {
-				continue
 			}
             recipients = append(recipients, msg.FormatAddress(fmt.Sprintf("%s@%s", place.ID, m.domain), place.Name))
         }
