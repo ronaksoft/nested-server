@@ -93,21 +93,41 @@ func main() {
 	}
 
 	// SMTP Authentication for Mail servers
-	x, err := os.OpenFile("/etc/postfix/sasl_passwd", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
+	//x, err := os.OpenFile("/etc/postfix/sasl_passwd", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
+	//if err != nil {
+	//	fmt.Println("sasl_passwd", err)
+	//}
+	//defer x.Close()
+	//for key, inf := range instanceInfo {
+	//	if _, err = x.WriteString(fmt.Sprintf("mail.%s    %s:%s\n", key, inf.SmtpUser, inf.SmtpPass)); err != nil {
+	//		fmt.Println("sasl_passwd::WriteString", err)
+	//	}
+	//}
+	//cmd := fmt.Sprintf("postmap hash:/etc/postfix/sasl_passwd")
+	//_, err = exec.Command("bash", "-c", cmd).Output()
+	//if err != nil {
+	//	fmt.Println("exec.Command::sasl_passwd", err)
+	//}
+
+	err = os.Remove("/etc/sasldb2")
 	if err != nil {
-		fmt.Println("sasl_passwd", err)
+		fmt.Println(err)
 	}
-	defer x.Close()
-	for key, inf := range instanceInfo {
-		if _, err = x.WriteString(fmt.Sprintf("mail.%s    %s:%s\n", key, inf.SmtpUser, inf.SmtpPass)); err != nil {
-			fmt.Println("sasl_passwd::WriteString", err)
+	// SMTP Authentication for Mail servers using sasldb2
+	// check results by sasldblistusers2 commmand
+	for key, info := range instanceInfo {
+		cmd := fmt.Sprintf("echo %s | saslpasswd2 -p -c -u %s %s", info.SmtpPass, key, info.SmtpUser)
+		_, err := exec.Command("bash", "-c", cmd).Output()
+		if err != nil {
+			fmt.Println("exec.Command::sasl_passwd", err)
 		}
 	}
-	cmd := fmt.Sprintf("postmap hash:/etc/postfix/sasl_passwd")
+	cmd := "chown postfix.sasl /etc/sasldb2"
 	_, err = exec.Command("bash", "-c", cmd).Output()
 	if err != nil {
-		fmt.Println("exec.Command::sasl_passwd", err)
+		fmt.Println("exec.Command::postfix.sasl", err)
 	}
+
 
 	// opendkim configs
 	t, err := os.OpenFile("/etc/opendkim/TrustedHosts", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
@@ -140,8 +160,8 @@ func main() {
 			fmt.Println("SigningTable::WriteString", err)
 		}
 	}
-	// run opendkim
 
+	// run opendkim
 	_, err = exec.Command("opendkim", "-A").Output()
 	if err != nil {
 		fmt.Println(err)
@@ -332,24 +352,24 @@ func watchdog(t time.Time) {
 			}
 		}
 
-		os.Remove("/etc/postfix/sasl_passwd")
+		//os.Remove("/etc/postfix/sasl_passwd")
 		// SMTP Authentication for Mail servers
-		x, err := os.OpenFile("/etc/postfix/sasl_passwd", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
-		if err != nil {
-			fmt.Println("sasl_passwd", err)
-		}
-		defer x.Close()
-		for key, inf := range instanceInfo {
-			if _, err = x.WriteString(fmt.Sprintf("mail.%s    %s:%s\n", key, inf.SmtpUser, inf.SmtpPass)); err != nil {
-				fmt.Println("sasl_passwd::WriteString", err)
-			}
-		}
-		os.Remove("/etc/postfix/sasl_passwd.db")
-		cmd := fmt.Sprintf("postmap hash:/etc/postfix/sasl_passwd")
-		_, err = exec.Command("bash", "-c", cmd).Output()
-		if err != nil {
-			fmt.Println("exec.Command::sasl_passwd", err)
-		}
+		//x, err := os.OpenFile("/etc/postfix/sasl_passwd", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
+		//if err != nil {
+		//	fmt.Println("sasl_passwd", err)
+		//}
+		//defer x.Close()
+		//for key, inf := range instanceInfo {
+		//	if _, err = x.WriteString(fmt.Sprintf("mail.%s    %s:%s\n", key, inf.SmtpUser, inf.SmtpPass)); err != nil {
+		//		fmt.Println("sasl_passwd::WriteString", err)
+		//	}
+		//}
+		//os.Remove("/etc/postfix/sasl_passwd.db")
+		//cmd := fmt.Sprintf("postmap hash:/etc/postfix/sasl_passwd")
+		//_, err = exec.Command("bash", "-c", cmd).Output()
+		//if err != nil {
+		//	fmt.Println("exec.Command::sasl_passwd", err)
+		//}
 
 		// opendkim configs
 		os.Remove("/etc/opendkim/TrustedHosts")
@@ -386,22 +406,22 @@ func watchdog(t time.Time) {
 			}
 		}
 		// stop and re-run opendkim
-		cmd = fmt.Sprintf("pkill opendkim")
-		_, err = exec.Command("bash", "-c", cmd).Output()
-		if err != nil {
-			fmt.Println("exec.Command::pkill opendkim", err)
-		}
-		cmd = fmt.Sprintf("opendkim -A")
-		_, err = exec.Command("bash", "-c", cmd).Output()
-		if err != nil {
-			fmt.Println("exec.Command::opendkim -A", err)
-		}
+		//cmd = fmt.Sprintf("pkill opendkim")
+		//_, err = exec.Command("bash", "-c", cmd).Output()
+		//if err != nil {
+		//	fmt.Println("exec.Command::pkill opendkim", err)
+		//}
+		//cmd = fmt.Sprintf("opendkim -A")
+		//_, err = exec.Command("bash", "-c", cmd).Output()
+		//if err != nil {
+		//	fmt.Println("exec.Command::opendkim -A", err)
+		//}
 		// reload postfix
-		cmd = fmt.Sprintf("postfix reload")
-		_, err = exec.Command("bash", "-c", cmd).Output()
-		if err != nil {
-			fmt.Println("exec.Command::postfix reload", err)
-		}
+		//cmd = fmt.Sprintf("postfix reload")
+		//_, err = exec.Command("bash", "-c", cmd).Output()
+		//if err != nil {
+		//	fmt.Println("exec.Command::postfix reload", err)
+		//}
 	}
 }
 
