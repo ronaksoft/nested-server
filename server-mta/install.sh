@@ -65,12 +65,13 @@ smtp_sasl_security_options=
 postconf -e smtpd_sasl_auth_enable=yes
 postconf -e broken_sasl_auth_clients=yes
 postconf -e smtpd_recipient_restrictions=permit_sasl_authenticated,reject_unauth_destination
+
 # smtpd.conf
-cat >> /etc/postfix/sasl/smtpd.conf <<EOF
-pwcheck_method: auxprop
-auxprop_plugin: sasldb
-mech_list: PLAIN LOGIN CRAM-MD5 DIGEST-MD5 NTLM
-EOF
+#cat >> /etc/postfix/sasl/smtpd.conf <<EOF
+#pwcheck_method: auxprop
+#auxprop_plugin: sasldb
+#mech_list: PLAIN LOGIN CRAM-MD5 DIGEST-MD5 NTLM
+#EOF
 
 # sasldb2
 #echo ${NST_SMTP_CRED} | tr , \\n > /tmp/passwd
