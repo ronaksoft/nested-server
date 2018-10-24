@@ -46,7 +46,17 @@ postconf -F '*/*/chroot = n'
 postconf -e message_size_limit=50000000
 postconf -e smtp_tls_security_level=may
 
+# SASL SUPPORT FOR SERVERS
+#
+# The following options set parameters needed by Postfix to enable
+# Cyrus-SASL support for authentication of mail servers.
+#
+postconf -e smtp_sasl_auth_enable=yes
+postconf -e smtp_sasl_password_maps=hash:/etc/postfix/sasl_passwd
+# leaving this empty will allow Postfix to use anonymous and plaintext authentication
+smtp_sasl_security_options=
 ############
+
 # SASL SUPPORT FOR CLIENTS
 # The following options set parameters needed by Postfix to enable
 # Cyrus-SASL support for authentication of mail clients.
