@@ -161,6 +161,9 @@ func (m *Mailer) createMessage(postID bson.ObjectId) *mail.Message {
         	if place.ID == postSender.ID {
         		continue
 			}
+			if place.GrandParentID == postSender.ID {
+				continue
+			}
             recipients = append(recipients, msg.FormatAddress(fmt.Sprintf("%s@%s", place.ID, m.domain), place.Name))
         }
     }
