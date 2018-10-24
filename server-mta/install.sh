@@ -123,11 +123,11 @@ NST_CYRUS_FILE_SYSTEM_KEY=${NST_CYRUS_FILE_SYSTEM_KEY}"
 if [[ -z "$(find /etc/opendkim/domainkeys -iname *.private)" ]]; then
   exit 0
 fi
-#cat >> /etc/supervisor/conf.d/supervisord.conf <<EOF
+cat >> /etc/supervisor/conf.d/supervisord.conf <<EOF
 
-#[program:opendkim]
-#command=/usr/sbin/opendkim -f -A
-#EOF
+[program:opendkim]
+command=/usr/sbin/opendkim -f -A
+EOF
 # /etc/postfix/main.cf
 postconf -e milter_protocol=2
 postconf -e milter_default_action=accept
@@ -165,12 +165,13 @@ cat >> /etc/opendkim/TrustedHosts <<EOF
 127.0.0.1
 localhost
 192.168.0.1/24
+*.${NST_DOMAIN}
 EOF
-#cat >> /etc/opendkim/KeyTable <<EOF
-#mail._domainkey.${NST_DOMAIN} ${NST_DOMAIN}:mail:$(find /etc/opendkim/domainkeys -iname *.private)
-#EOF
-#cat >> /etc/opendkim/SigningTable <<EOF
-#*@${NST_DOMAIN} mail._domainkey.${NST_DOMAIN}
-#EOF
+cat >> /etc/opendkim/KeyTable <<EOF
+mail._domainkey.${NST_DOMAIN} ${NST_DOMAIN}:mail:$(find /etc/opendkim/domainkeys -iname *.private)
+EOF
+cat >> /etc/opendkim/SigningTable <<EOF
+*@${NST_DOMAIN} mail._domainkey.${NST_DOMAIN}
+EOF
 chown opendkim:opendkim $(find /etc/opendkim/domainkeys -iname *.private)
 chmod 400 $(find /etc/opendkim/domainkeys -iname *.private)

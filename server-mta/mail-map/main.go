@@ -14,7 +14,6 @@ import (
 	"net"
 	"net/mail"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
 )
@@ -109,65 +108,67 @@ func main() {
 	//	fmt.Println("exec.Command::sasl_passwd", err)
 	//}
 
-	err = os.Remove("/etc/sasldb2")
-	if err != nil {
-		fmt.Println(err)
-	}
-	// SMTP Authentication for Mail servers using sasldb2
-	// check results by sasldblistusers2 commmand
-	for key, info := range instanceInfo {
-		cmd := fmt.Sprintf("echo %s | saslpasswd2 -p -c -u %s %s", info.SmtpPass, key, info.SmtpUser)
-		_, err := exec.Command("bash", "-c", cmd).Output()
-		if err != nil {
-			fmt.Println("exec.Command::sasl_passwd", err)
-		}
-	}
-	cmd := "chown postfix.sasl /etc/sasldb2"
-	_, err = exec.Command("bash", "-c", cmd).Output()
-	if err != nil {
-		fmt.Println("exec.Command::postfix.sasl", err)
-	}
+
+
+	//err = os.Remove("/etc/sasldb2")
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	//// SMTP Authentication for Mail servers using sasldb2
+	//// check results by sasldblistusers2 commmand
+	//for key, info := range instanceInfo {
+	//	cmd := fmt.Sprintf("echo %s | saslpasswd2 -p -c -u %s %s", info.SmtpPass, key, info.SmtpUser)
+	//	_, err := exec.Command("bash", "-c", cmd).Output()
+	//	if err != nil {
+	//		fmt.Println("exec.Command::sasl_passwd", err)
+	//	}
+	//}
+	//cmd := "chown postfix.sasl /etc/sasldb2"
+	//_, err = exec.Command("bash", "-c", cmd).Output()
+	//if err != nil {
+	//	fmt.Println("exec.Command::postfix.sasl", err)
+	//}
 
 
 	// opendkim configs
-	t, err := os.OpenFile("/etc/opendkim/TrustedHosts", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
-	if err != nil {
-		fmt.Println("TrustedHosts", err)
-	}
-	defer t.Close()
-	for key := range instanceInfo {
-		if _, err = t.WriteString("*." + key + "\n"); err != nil {
-			fmt.Println("TrustedHosts::WriteString", err)
-		}
-	}
-	k, err := os.OpenFile("/etc/opendkim/KeyTable", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer k.Close()
-	for key := range instanceInfo {
-		if _, err = k.WriteString(fmt.Sprintf("mail._domainkey.%s %s:mail:/etc/opendkim/domainkeys/dkim.private\n", key, key)); err != nil {
-			fmt.Println("KeyTable::WriteString", err)
-		}
-	}
-	s, err := os.OpenFile("/etc/opendkim/SigningTable", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
-	if err != nil {
-		fmt.Println("SigningTable::", err)
-	}
-	defer s.Close()
-	for key := range instanceInfo {
-		if _, err = s.WriteString(fmt.Sprintf("*@%s mail._domainkey.%s\n", key, key)); err != nil {
-			fmt.Println("SigningTable::WriteString", err)
-		}
-	}
+	//t, err := os.OpenFile("/etc/opendkim/TrustedHosts", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
+	//if err != nil {
+	//	fmt.Println("TrustedHosts", err)
+	//}
+	//defer t.Close()
+	//for key := range instanceInfo {
+	//	if _, err = t.WriteString("*." + key + "\n"); err != nil {
+	//		fmt.Println("TrustedHosts::WriteString", err)
+	//	}
+	//}
+	//k, err := os.OpenFile("/etc/opendkim/KeyTable", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	//defer k.Close()
+	//for key := range instanceInfo {
+	//	if _, err = k.WriteString(fmt.Sprintf("mail._domainkey.%s %s:mail:/etc/opendkim/domainkeys/dkim.private\n", key, key)); err != nil {
+	//		fmt.Println("KeyTable::WriteString", err)
+	//	}
+	//}
+	//s, err := os.OpenFile("/etc/opendkim/SigningTable", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
+	//if err != nil {
+	//	fmt.Println("SigningTable::", err)
+	//}
+	//defer s.Close()
+	//for key := range instanceInfo {
+	//	if _, err = s.WriteString(fmt.Sprintf("*@%s mail._domainkey.%s\n", key, key)); err != nil {
+	//		fmt.Println("SigningTable::WriteString", err)
+	//	}
+	//}
 
 	// run opendkim
-	_, err = exec.Command("opendkim", "-A").Output()
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	fmt.Println("mail-map::instanceInfo", instanceInfo)
+	//_, err = exec.Command("opendkim", "-A").Output()
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	//
+	//fmt.Println("mail-map::instanceInfo", instanceInfo)
 	go runEvery(time.Minute*time.Duration(_Config.GetInt("WATCHDOG_INTERVAL")), watchdog)
 	fmt.Println("mail-map::Start Listening tcp:2374")
 	listener, err := net.Listen("tcp", ":2374")
@@ -372,39 +373,39 @@ func watchdog(t time.Time) {
 		//}
 
 		// opendkim configs
-		os.Remove("/etc/opendkim/TrustedHosts")
-		t, err := os.OpenFile("/etc/opendkim/TrustedHosts", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
-		if err != nil {
-			fmt.Println("TrustedHosts", err)
-		}
-		defer t.Close()
-		for key := range instanceInfo {
-			if _, err = t.WriteString("*." + key + "\n"); err != nil {
-				fmt.Println("TrustedHosts::WriteString", err)
-			}
-		}
-		os.Remove("/etc/opendkim/KeyTable")
-		k, err := os.OpenFile("/etc/opendkim/KeyTable", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
-		if err != nil {
-			fmt.Println(err)
-		}
-		defer k.Close()
-		for key := range instanceInfo {
-			if _, err = k.WriteString(fmt.Sprintf("mail._domainkey.%s %s:mail:/etc/opendkim/domainkeys/dkim.private\n", key, key)); err != nil {
-				fmt.Println("KeyTable::WriteString", err)
-			}
-		}
-		os.Remove("/etc/opendkim/SigningTable")
-		s, err := os.OpenFile("/etc/opendkim/SigningTable", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
-		if err != nil {
-			fmt.Println("SigningTable::", err)
-		}
-		defer s.Close()
-		for key := range instanceInfo {
-			if _, err = s.WriteString(fmt.Sprintf("*@%s mail._domainkey.%s\n", key, key)); err != nil {
-				fmt.Println("SigningTable::WriteString", err)
-			}
-		}
+		//os.Remove("/etc/opendkim/TrustedHosts")
+		//t, err := os.OpenFile("/etc/opendkim/TrustedHosts", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
+		//if err != nil {
+		//	fmt.Println("TrustedHosts", err)
+		//}
+		//defer t.Close()
+		//for key := range instanceInfo {
+		//	if _, err = t.WriteString("*." + key + "\n"); err != nil {
+		//		fmt.Println("TrustedHosts::WriteString", err)
+		//	}
+		//}
+		//os.Remove("/etc/opendkim/KeyTable")
+		//k, err := os.OpenFile("/etc/opendkim/KeyTable", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
+		//if err != nil {
+		//	fmt.Println(err)
+		//}
+		//defer k.Close()
+		//for key := range instanceInfo {
+		//	if _, err = k.WriteString(fmt.Sprintf("mail._domainkey.%s %s:mail:/etc/opendkim/domainkeys/dkim.private\n", key, key)); err != nil {
+		//		fmt.Println("KeyTable::WriteString", err)
+		//	}
+		//}
+		//os.Remove("/etc/opendkim/SigningTable")
+		//s, err := os.OpenFile("/etc/opendkim/SigningTable", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
+		//if err != nil {
+		//	fmt.Println("SigningTable::", err)
+		//}
+		//defer s.Close()
+		//for key := range instanceInfo {
+		//	if _, err = s.WriteString(fmt.Sprintf("*@%s mail._domainkey.%s\n", key, key)); err != nil {
+		//		fmt.Println("SigningTable::WriteString", err)
+		//	}
+		//}
 		// stop and re-run opendkim
 		//cmd = fmt.Sprintf("pkill opendkim")
 		//_, err = exec.Command("bash", "-c", cmd).Output()
