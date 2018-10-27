@@ -381,21 +381,17 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 	s.Worker().Model().Search.AddPlaceToSearchIndex(uid, fmt.Sprintf("%s %s", fname, lname))
 
 	if placeIDs := s.Worker().Model().Place.GetDefaultPlaces(); len(placeIDs) > 0 {
-		log.Println("placeIds", placeIDs, "userID", uid)
 		for _, placeID := range placeIDs {
 			place :=  s.Worker().Model().Place.GetByID(placeID, nil)
 			grandPlace := place.GetGrandParent()
-			log.Println("place", place.ID, "grandPlace",grandPlace.ID)
 			// if user is already a member of the place then skip
 			if place.IsMember(uid) {
-				log.Println("place.IsMember")
 				continue
 			}
 			// if user is not a keyHolder or Creator of place grandPlace, then make him to be
 			if !grandPlace.IsMember(uid) {
 				log.Println("grandPlace.IsMember(uid):: not member of grandPlcae")
 				if !grandPlace.HasKeyholderLimit() {
-					log.Println("grandplace has capacity")
 					s.Worker().Model().Place.AddKeyholder(grandPlace.ID, uid)
 					// Enables notification by default
 					s.Worker().Model().Account.SetPlaceNotification(uid, grandPlace.ID, true)

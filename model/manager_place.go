@@ -9,7 +9,6 @@ import (
 
 	"github.com/globalsign/mgo/bson"
 	"github.com/gomodule/redigo/redis"
-	"log"
 )
 
 const (
@@ -1146,12 +1145,9 @@ func (pm *PlaceManager) GetDefaultPlaces() []string {
 		return nil
 	}
 	ids := make([]string, 0, len(defaultPlaces))
-	log.Println("GetDefaultPlaces::defaultPlaces ",defaultPlaces)
 	for _, placeID := range defaultPlaces {
 		ids = append(ids, placeID.PlaceID)
 	}
-	log.Println("GetDefaultPlaces::ids ",ids)
-
 	return ids
 }
 
