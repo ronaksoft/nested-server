@@ -1814,7 +1814,7 @@ func (s *AdminService) addDefaultPlaces(requester *nested.Account, request *nest
 	response.OkWithData(nested.M{})
 }
 
-// @Command:	admin/get_default_places
+// @Command:	admin/default_places_get
 func (s *AdminService) getDefaultPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	pg := s.Worker().Argument().GetPagination(request)
 	if placeIDs := s.Worker().Model().Place.GetDefaultPlacesWithPagination(pg); placeIDs == nil {
@@ -1845,7 +1845,7 @@ func (s *AdminService) getDefaultPlaces(requester *nested.Account, request *nest
 	}
 }
 
-// @Command:	admin/remove_default_places
+// @Command:	admin/default_places_remove
 // @Input:  	place_ids			string	+
 func (s *AdminService) removeDefaultPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	var placeIDs []string
@@ -1868,7 +1868,7 @@ func (s *AdminService) removeDefaultPlaces(requester *nested.Account, request *n
 	}
 }
 
-// @Command:	admin/account_join_places
+// @Command:	admin/default_places_set_users
 // @Input:  	account_ids			string	+
 func (s *AdminService) accountJoinDefaultPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	var accountIDs []string
