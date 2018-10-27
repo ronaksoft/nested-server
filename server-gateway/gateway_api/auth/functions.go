@@ -383,7 +383,7 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 	if placeIDs := s.Worker().Model().Place.GetDefaultPlaces(); len(placeIDs) > 0 {
 		log.Println("placeIds", placeIDs, "userID", uid)
 		for _, placeID := range placeIDs {
-			place := s.Worker().Model().Place.GetByID(placeID, nil)
+			place :=  s.Worker().Model().Place.GetByID(placeID, nil)
 			grandPlace := place.GetGrandParent()
 			log.Println("place", place.ID, "grandPlace",grandPlace.ID)
 			// if user is already a member of the place then skip
@@ -404,6 +404,7 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 					s.Worker().Model().Account.AddPlaceToBookmarks(uid, grandPlace.ID)
 
 					// Handle push notifications and activities
+					log.Println("PlaceJoined", grandPlace, requester.ID, uid)
 					s.Worker().Pusher().PlaceJoined(grandPlace, requester.ID, uid)
 				} else {
 					response.Error(nested.ERR_INVALID, []string{"grandplace_keyholder_limit"})
