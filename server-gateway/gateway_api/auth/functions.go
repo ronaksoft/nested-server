@@ -403,10 +403,8 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 					// Add the place to the added user's feed list
 					s.Worker().Model().Account.AddPlaceToBookmarks(uid, grandPlace.ID)
 
-
 					// Handle push notifications and activities
-					log.Println("PlaceJoined", grandPlace.ID, requester.ID, uid)
-					s.Worker().Pusher().PlaceJoined(grandPlace, requester.ID, uid)
+					s.Worker().Pusher().PlaceJoined(grandPlace, uid, uid)
 				} else {
 					response.Error(nested.ERR_INVALID, []string{"grandplace_keyholder_limit"})
 					return
@@ -426,7 +424,7 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 					s.Worker().Model().Account.AddPlaceToBookmarks(uid, place.ID)
 
 					// Handle push notifications and activities
-					s.Worker().Pusher().PlaceJoined(place, requester.ID, uid)
+					s.Worker().Pusher().PlaceJoined(place, uid, uid)
 
 					place.Counter.Keyholders += 1
 				} else {
