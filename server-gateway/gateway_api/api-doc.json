@@ -1036,14 +1036,14 @@
 			"pagination": false
 		},
 		{
-			"cmd": "admin/get_default_places",
+			"cmd": "admin/default_places_get",
 			"args": [
 				
 			],
 			"pagination": false
 		},
 		{
-			"cmd": "admin/remove_default_places",
+			"cmd": "admin/default_places_remove",
 			"args": [
 				{
 					"name": "place_ids",
@@ -1055,7 +1055,7 @@
 			"pagination": false
 		},
 		{
-			"cmd": "admin/account_join_places",
+			"cmd": "admin/default_places_set_users",
 			"args": [
 				{
 					"name": "account_ids",

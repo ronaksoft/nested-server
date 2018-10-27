@@ -1773,7 +1773,7 @@ func (s *AdminService) createPostForAllAccounts(requester *nested.Account, reque
 	})
 }
 
-// @Command:	admin/add_default_places
+// @Command:	admin/default_places_add
 // @Input:  	place_ids			string	+
 func (s *AdminService) addDefaultPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	var places []string
