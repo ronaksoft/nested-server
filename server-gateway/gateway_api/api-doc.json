@@ -1024,7 +1024,7 @@
 			"pagination": false
 		},
 		{
-			"cmd": "admin/add_default_places",
+			"cmd": "admin/default_places_add",
 			"args": [
 				{
 					"name": "place_ids",
