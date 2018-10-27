@@ -403,6 +403,7 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 					// Add the place to the added user's feed list
 					s.Worker().Model().Account.AddPlaceToBookmarks(uid, grandPlace.ID)
 
+
 					// Handle push notifications and activities
 					log.Println("PlaceJoined", grandPlace.ID, requester.ID, uid)
 					s.Worker().Pusher().PlaceJoined(grandPlace, requester.ID, uid)
