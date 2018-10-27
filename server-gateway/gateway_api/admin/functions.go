@@ -1855,7 +1855,7 @@ func (s *AdminService) removeDefaultPlaces(requester *nested.Account, request *n
 
 // @Command:	admin/default_places_set_users
 // @Input:  	account_ids			string	+
-func (s *AdminService) accountJoinDefaultPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) defaultPlacesSetUsers(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	var accountIDs []string
 	if v, ok := request.Data["account_ids"].(string); ok {
 		ids := strings.SplitN(v, ",", -1)
@@ -1872,7 +1872,7 @@ func (s *AdminService) accountJoinDefaultPlaces(requester *nested.Account, reque
 		response.Error(nested.ERR_INVALID, []string{"place_ids"})
 		return
 	} else {
-		log.Println("accountJoinDefaultPlaces::placeIDs ", placeIDs)
+		log.Println("defaultPlacesSetUsers::placeIDs ", placeIDs)
 		for _, placeID := range placeIDs {
 			for _, uid := range accountIDs {
 				place := s.Worker().Model().Place.GetByID(placeID, nil)
