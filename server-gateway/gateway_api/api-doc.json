@@ -324,6 +324,13 @@
 				}
 			],
 			"pagination": false
+		},
+		{
+			"cmd": "account/remove_email",
+			"args": [
+				
+			],
+			"pagination": false
 		}
 	],
 "admin":
@@ -988,6 +995,76 @@
 				}
 			],
 			"pagination": false
+		},
+		{
+			"cmd": "admin/create_post_for_all_accounts",
+			"args": [
+				{
+					"name": "subject",
+					"type": "string",
+					"comment": "",
+					"required": false
+				},{
+					"name": "attaches",
+					"type": "string",
+					"comment": "(comma separated)",
+					"required": false
+				},{
+					"name": "content_type",
+					"type": "string",
+					"comment": "(text/plain | text/html)",
+					"required": false
+				},{
+					"name": "iframe_url",
+					"type": "string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/add_default_places",
+			"args": [
+				{
+					"name": "place_ids",
+					"type": "[]string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/get_default_places",
+			"args": [
+				
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/remove_default_places",
+			"args": [
+				{
+					"name": "place_ids",
+					"type": "[]string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "admin/account_join_places",
+			"args": [
+				{
+					"name": "account_ids",
+					"type": "[]string",
+					"comment": "",
+					"required": false
+				}
+			],
+			"pagination": false
 		}
 	],
 "app":
@@ -1114,6 +1191,18 @@
 				}
 			],
 			"pagination": false
+		},
+		{
+			"cmd": "app/set_fav_status",
+			"args": [
+				{
+					"name": "app_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
 		}
 	],
 "auth":
@@ -1166,30 +1255,6 @@
 		},
 		{
 			"cmd": "auth/send_text",
-			"args": [
-				{
-					"name": "vid",
-					"type": "string",
-					"comment": "",
-					"required": true
-				}
-			],
-			"pagination": false
-		},
-		{
-			"cmd": "auth/call_phone",
-			"args": [
-				{
-					"name": "vid",
-					"type": "string",
-					"comment": "",
-					"required": true
-				}
-			],
-			"pagination": false
-		},
-		{
-			"cmd": "auth/send_email",
 			"args": [
 				{
 					"name": "vid",
@@ -2476,6 +2541,52 @@
 				}
 			],
 			"pagination": false
+		},
+		{
+			"cmd": "place/get_blocked_addresses",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/add_to_blacklist",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "addresses",
+					"type": "[]string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
+		},
+		{
+			"cmd": "place/remove_from_blacklist",
+			"args": [
+				{
+					"name": "place_id",
+					"type": "string",
+					"comment": "",
+					"required": true
+				},{
+					"name": "addresses",
+					"type": "[]string",
+					"comment": "",
+					"required": true
+				}
+			],
+			"pagination": false
 		}
 	],
 "post":
@@ -3729,8 +3840,13 @@
 					"required": false
 				},{
 					"name": "due_date",
-					"type": "string",
-					"comment": "timestamp)",
+					"type": "float64",
+					"comment": "",
+					"required": false
+				},{
+					"name": "created_at",
+					"type": "float64",
+					"comment": "",
 					"required": false
 				}
 			],

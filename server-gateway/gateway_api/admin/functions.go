@@ -1774,7 +1774,7 @@ func (s *AdminService) createPostForAllAccounts(requester *nested.Account, reque
 }
 
 // @Command:	admin/add_default_places
-// @Input:  	place_ids			[]string	+
+// @Input:  	place_ids			string	+
 func (s *AdminService) addDefaultPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	var places []string
 	ids := s.Worker().Model().Place.GetDefaultPlaces()
@@ -1826,7 +1826,7 @@ func (s *AdminService) getDefaultPlaces(requester *nested.Account, request *nest
 }
 
 // @Command:	admin/remove_default_places
-// @Input:  	place_ids			[]string	+
+// @Input:  	place_ids			string	+
 func (s *AdminService) removeDefaultPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	var placeIDs []string
 	if v, ok := request.Data["place_ids"].(string); ok {
@@ -1849,7 +1849,7 @@ func (s *AdminService) removeDefaultPlaces(requester *nested.Account, request *n
 }
 
 // @Command:	admin/account_join_places
-// @Input:  	account_ids			[]string	+
+// @Input:  	account_ids			string	+
 func (s *AdminService) accountJoinDefaultPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	var accountIDs []string
 	if v, ok := request.Data["account_ids"].(string); ok {
