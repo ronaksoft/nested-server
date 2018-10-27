@@ -404,7 +404,7 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 					s.Worker().Model().Account.AddPlaceToBookmarks(uid, grandPlace.ID)
 
 					// Handle push notifications and activities
-					log.Println("PlaceJoined", grandPlace, requester.ID, uid)
+					log.Println("PlaceJoined", grandPlace.ID, requester.ID, uid)
 					s.Worker().Pusher().PlaceJoined(grandPlace, requester.ID, uid)
 				} else {
 					response.Error(nested.ERR_INVALID, []string{"grandplace_keyholder_limit"})
