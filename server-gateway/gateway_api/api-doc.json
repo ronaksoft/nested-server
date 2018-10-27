@@ -1028,7 +1028,7 @@
 			"args": [
 				{
 					"name": "place_ids",
-					"type": "[]string",
+					"type": "string",
 					"comment": "",
 					"required": false
 				}
@@ -1047,7 +1047,7 @@
 			"args": [
 				{
 					"name": "place_ids",
-					"type": "[]string",
+					"type": "string",
 					"comment": "",
 					"required": false
 				}
@@ -1059,7 +1059,7 @@
 			"args": [
 				{
 					"name": "account_ids",
-					"type": "[]string",
+					"type": "string",
 					"comment": "",
 					"required": false
 				}

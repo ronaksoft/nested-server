@@ -1821,7 +1821,27 @@ func (s *AdminService) getDefaultPlaces(requester *nested.Account, request *nest
 		response.Error(nested.ERR_UNKNOWN, []string{""})
 		return
 	} else {
-		response.OkWithData(nested.M{"places_ids": placeIDs})
+		r := make([]nested.M, 0, len(placeIDs))
+		iStart := 0
+		iLength := nested.DEFAULT_MAX_RESULT_LIMIT
+		iEnd := iStart + iLength
+		if iEnd > len(placeIDs) {
+			iEnd = len(placeIDs)
+		}
+		for {
+			for _, place := range s.Worker().Model().Place.GetPlacesByIDs(placeIDs[iStart:iEnd]) {
+				r = append(r, s.Worker().Map().Place(requester, place, place.GetAccess(requester.ID)))
+			}
+			iStart += iLength
+			iEnd = iStart + iLength
+			if iStart >= len(placeIDs) {
+				break
+			}
+			if iEnd > len(placeIDs) {
+				iEnd = len(placeIDs)
+			}
+		}
+		response.OkWithData(nested.M{"places": r})
 	}
 }
 
