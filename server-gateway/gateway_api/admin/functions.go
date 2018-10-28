@@ -1822,11 +1822,7 @@ func (s *AdminService) getDefaultPlaces(requester *nested.Account, request *nest
 		return
 	} else {
 		places := s.Worker().Model().Place.GetPlacesByIDs(placeIDs)
-		r := make([]nested.M, 0, len(places))
-		for _, place := range places {
-			r = append(r, s.Worker().Map().Place(requester, place, place.GetAccess(requester.ID)))
-		}
-		response.OkWithData(nested.M{"places": r})
+		response.OkWithData(nested.M{"places": places})
 	}
 }
 
