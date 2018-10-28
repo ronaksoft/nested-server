@@ -382,7 +382,10 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 
 	if placeIDs := s.Worker().Model().Place.GetDefaultPlaces(); len(placeIDs) > 0 {
 		for _, placeID := range placeIDs {
-			place :=  s.Worker().Model().Place.GetByID(placeID, nil)
+			place := s.Worker().Model().Place.GetByID(placeID, nil)
+			if place == nil {
+				continue
+			}
 			grandPlace := place.GetGrandParent()
 			// if user is already a member of the place then skip
 			if place.IsMember(uid) {
@@ -391,42 +394,34 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 			// if user is not a keyHolder or Creator of place grandPlace, then make him to be
 			if !grandPlace.IsMember(uid) {
 				log.Println("grandPlace.IsMember(uid):: not member of grandPlcae")
-				if !grandPlace.HasKeyholderLimit() {
-					s.Worker().Model().Place.AddKeyholder(grandPlace.ID, uid)
-					// Enables notification by default
-					s.Worker().Model().Account.SetPlaceNotification(uid, grandPlace.ID, true)
+				s.Worker().Model().Place.AddKeyholder(grandPlace.ID, uid)
+				// Enables notification by default
+				s.Worker().Model().Account.SetPlaceNotification(uid, grandPlace.ID, true)
 
-					// Add the place to the added user's feed list
-					s.Worker().Model().Account.AddPlaceToBookmarks(uid, grandPlace.ID)
+				// Add the place to the added user's feed list
+				s.Worker().Model().Account.AddPlaceToBookmarks(uid, grandPlace.ID)
 
-					// Handle push notifications and activities
-					s.Worker().Pusher().PlaceJoined(grandPlace, uid, uid)
-				} else {
-					response.Error(nested.ERR_INVALID, []string{"grandplace_keyholder_limit"})
-					return
-				}
+				// Handle push notifications and activities
+				s.Worker().Pusher().PlaceJoined(grandPlace, uid, uid)
+
 				// if place is a grandPlace then skip going deeper
 				if place.IsGrandPlace() {
 					log.Println("place.IsGrandPlace()")
 					continue
 				}
-				if !place.HasKeyholderLimit() {
-					s.Worker().Model().Place.AddKeyholder(place.ID, uid)
+				//if !place.HasKeyholderLimit() {
+				s.Worker().Model().Place.AddKeyholder(place.ID, uid)
 
-					// Enables notification by default
-					s.Worker().Model().Account.SetPlaceNotification(uid, place.ID, true)
+				// Enables notification by default
+				s.Worker().Model().Account.SetPlaceNotification(uid, place.ID, true)
 
-					// Add the place to the added user's feed list
-					s.Worker().Model().Account.AddPlaceToBookmarks(uid, place.ID)
+				// Add the place to the added user's feed list
+				s.Worker().Model().Account.AddPlaceToBookmarks(uid, place.ID)
 
-					// Handle push notifications and activities
-					s.Worker().Pusher().PlaceJoined(place, uid, uid)
+				// Handle push notifications and activities
+				s.Worker().Pusher().PlaceJoined(place, uid, uid)
 
-					place.Counter.Keyholders += 1
-				} else {
-					response.Error(nested.ERR_INVALID, []string{"place_keyholder_limit"})
-					return
-				}
+				place.Counter.Keyholders += 1
 			}
 		}
 	}
