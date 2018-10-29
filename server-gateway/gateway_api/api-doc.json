@@ -633,7 +633,7 @@
 				{
 					"name": "filter",
 					"type": "string",
-					"comment": "(grand_places | locked_places | unlocked_places | personal_places | all)",
+					"comment": "(grand_places | locked_places | unlocked_places | personal_places | shared_places | all)",
 					"required": false
 				},{
 					"name": "keyword",
