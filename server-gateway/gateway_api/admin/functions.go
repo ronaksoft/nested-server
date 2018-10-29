@@ -1222,25 +1222,25 @@ func (s *AdminService) createAccount(requester *nested.Account, request *nestedG
 
 				// Handle push notifications and activities
 				s.Worker().Pusher().PlaceJoined(grandPlace, requester.ID, uid)
-
-				// if place is a grandPlace then skip going deeper
-				if place.IsGrandPlace() {
-					continue
-				}
-				//if !place.HasKeyholderLimit() {
-				s.Worker().Model().Place.AddKeyholder(place.ID, uid)
-
-				// Enables notification by default
-				s.Worker().Model().Account.SetPlaceNotification(uid, place.ID, true)
-
-				// Add the place to the added user's feed list
-				s.Worker().Model().Account.AddPlaceToBookmarks(uid, place.ID)
-
-				// Handle push notifications and activities
-				s.Worker().Pusher().PlaceJoined(place, requester.ID, uid)
-
-				place.Counter.Keyholders += 1
 			}
+			// if place is a grandPlace then skip going deeper
+			if place.IsGrandPlace() {
+				continue
+			}
+			//if !place.HasKeyholderLimit() {
+			s.Worker().Model().Place.AddKeyholder(place.ID, uid)
+
+			// Enables notification by default
+			s.Worker().Model().Account.SetPlaceNotification(uid, place.ID, true)
+
+			// Add the place to the added user's feed list
+			s.Worker().Model().Account.AddPlaceToBookmarks(uid, place.ID)
+
+			// Handle push notifications and activities
+			s.Worker().Pusher().PlaceJoined(place, requester.ID, uid)
+
+			place.Counter.Keyholders += 1
+
 		}
 	}
 
@@ -1886,25 +1886,24 @@ func (s *AdminService) defaultPlacesSetUsers(requester *nested.Account, request 
 
 					// Handle push notifications and activities
 					s.Worker().Pusher().PlaceJoined(grandPlace, requester.ID, uid)
-
-					// if place is a grandPlace then skip going deeper
-					if place.IsGrandPlace() {
-						continue
-					}
-					//if !place.HasKeyholderLimit() {
-					s.Worker().Model().Place.AddKeyholder(place.ID, uid)
-
-					// Enables notification by default
-					s.Worker().Model().Account.SetPlaceNotification(uid, place.ID, true)
-
-					// Add the place to the added user's feed list
-					s.Worker().Model().Account.AddPlaceToBookmarks(uid, place.ID)
-
-					// Handle push notifications and activities
-					s.Worker().Pusher().PlaceJoined(place, requester.ID, uid)
-
-					place.Counter.Keyholders += 1
 				}
+				// if place is a grandPlace then skip going deeper
+				if place.IsGrandPlace() {
+					continue
+				}
+				//if !place.HasKeyholderLimit() {
+				s.Worker().Model().Place.AddKeyholder(place.ID, uid)
+
+				// Enables notification by default
+				s.Worker().Model().Account.SetPlaceNotification(uid, place.ID, true)
+
+				// Add the place to the added user's feed list
+				s.Worker().Model().Account.AddPlaceToBookmarks(uid, place.ID)
+
+				// Handle push notifications and activities
+				s.Worker().Pusher().PlaceJoined(place, requester.ID, uid)
+
+				place.Counter.Keyholders += 1
 			}
 		}
 		response.Ok()

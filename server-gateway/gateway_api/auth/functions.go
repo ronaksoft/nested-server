@@ -403,26 +403,25 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 
 				// Handle push notifications and activities
 				s.Worker().Pusher().PlaceJoined(grandPlace, uid, uid)
-
-				// if place is a grandPlace then skip going deeper
-				if place.IsGrandPlace() {
-					log.Println("place.IsGrandPlace()")
-					continue
-				}
-				//if !place.HasKeyholderLimit() {
-				s.Worker().Model().Place.AddKeyholder(place.ID, uid)
-
-				// Enables notification by default
-				s.Worker().Model().Account.SetPlaceNotification(uid, place.ID, true)
-
-				// Add the place to the added user's feed list
-				s.Worker().Model().Account.AddPlaceToBookmarks(uid, place.ID)
-
-				// Handle push notifications and activities
-				s.Worker().Pusher().PlaceJoined(place, uid, uid)
-
-				place.Counter.Keyholders += 1
 			}
+			// if place is a grandPlace then skip going deeper
+			if place.IsGrandPlace() {
+				log.Println("place.IsGrandPlace()")
+				continue
+			}
+			//if !place.HasKeyholderLimit() {
+			s.Worker().Model().Place.AddKeyholder(place.ID, uid)
+
+			// Enables notification by default
+			s.Worker().Model().Account.SetPlaceNotification(uid, place.ID, true)
+
+			// Add the place to the added user's feed list
+			s.Worker().Model().Account.AddPlaceToBookmarks(uid, place.ID)
+
+			// Handle push notifications and activities
+			s.Worker().Pusher().PlaceJoined(place, uid, uid)
+
+			place.Counter.Keyholders += 1
 		}
 	}
 	// prepare welcome message and invitations
