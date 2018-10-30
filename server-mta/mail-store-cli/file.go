@@ -8,6 +8,7 @@ import (
 
     "git.ronaksoftware.com/nested/server/model"
     "git.ronaksoftware.com/nested/server/server-gateway/client"
+    "fmt"
 )
 
 func uploadFile(filename, uploaderId, status string, ownerIds []string, r io.Reader) (*nestedGateway.UploadedFile, error) {
@@ -19,7 +20,7 @@ func uploadFile(filename, uploaderId, status string, ownerIds []string, r io.Rea
         owners:   ownerIds,
     }
 
-    _Log.Debugf("Uploading file %s...", filename)
+    _LOG.Debug(fmt.Sprintf("Uploading file %s...", filename))
 
     if res, err := _ClientStorage.Upload(nested.UPLOAD_TYPE_FILE, f); err != nil {
         return nil, err

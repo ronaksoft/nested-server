@@ -328,7 +328,7 @@ func (tm *TaskManager) GetByCandidateID(accountID string, pg Pagination, filter 
 // 3. Labels
 func (tm *TaskManager) GetByCustomFilter(
     accountID string, assignorIDs, assigneeIDs, labelIDs []string, labelLogic, keyword string,
-    pg Pagination, filter []TaskStatus, dueDate uint64,
+    pg Pagination, filter []TaskStatus, dueDate uint64, createdAt uint64,
 ) []Task {
     // _funcName
 
@@ -356,6 +356,9 @@ func (tm *TaskManager) GetByCustomFilter(
             "$diacriticSensitive": false,
         }
     }
+	if createdAt > 0 {
+		q["timestamp"] = bson.M{"$gte": createdAt}
+	}
     if dueDate > 0 {
         q["due_date"] = bson.M{"$lt": dueDate}
     }
@@ -1115,7 +1118,6 @@ func (t *Task) Update(accountID string, title, desc string, dueDate uint64, dueD
 
 func (t *Task) UpdateAssignee(accountID string, candidateIDs []string) bool {
     defer _Manager.Task.removeCache(t.ID)
-    defer t.UpdateMemberIDs()
 
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
@@ -1143,13 +1145,12 @@ func (t *Task) UpdateAssignee(accountID string, candidateIDs []string) bool {
         if err := db.C(COLLECTION_TASKS).UpdateId(
             t.ID,
             bson.M{
-                "$set": bson.M{
+				"$set": bson.M{
                     "assignee":            "",
                     "candidates":          candidateIDs,
                     "status":              TASK_STATUS_NOT_ASSIGNED,
                     "counters.candidates": len(candidateIDs),
                 },
-                "$addToSet": bson.M{"members": bson.M{"$each": candidateIDs}},
             },
         ); err != nil {
             _Log.Warn(err.Error())

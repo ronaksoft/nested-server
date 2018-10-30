@@ -117,7 +117,8 @@ func Get(conn net.Conn, email string) {
         return
     }
 
-    place := _Model.Place.GetByID(placeID, nil)
+	_Model.RefreshDbConnection()
+	place := _Model.Place.GetByID(placeID, nil)
     if place == nil || place.Privacy.Receptive != nested.PLACE_RECEPTIVE_EXTERNAL {
         fmt.Fprintln(conn, fmt.Sprintf("%s Unavailable", RES_UNAVAILABLE))
         return
