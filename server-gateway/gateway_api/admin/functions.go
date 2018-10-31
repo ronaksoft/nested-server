@@ -1811,36 +1811,8 @@ func (s *AdminService) addDefaultPlaces(requester *nested.Account, request *nest
 
 // @Command:	admin/default_places_get
 func (s *AdminService) getDefaultPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
-	var keyword, filter, grandParentID, sort string
-	if v, ok := request.Data["keyword"].(string); ok {
-		keyword = v
-	}
-	if v, ok := request.Data["filter"].(string); ok {
-		filter = v
-	}
-	if v, ok := request.Data["grand_parent_id"].(string); ok {
-		if s.Worker().Model().Place.Exists(v) {
-			grandParentID = v
-		}
-	}
-	if v, ok := request.Data["sort"].(string); ok {
-		sortDescending := strings.HasPrefix(v, "-")
-		switch strings.ToLower(strings.Trim(v, "-")) {
-		case "key_holders":
-			sort = "counters.key_holders"
-		case "creators":
-			sort = "counters.creators"
-		case "children":
-			sort = "counters.childs"
-		case "place_type":
-			sort = "type"
-		}
-		if sortDescending {
-			sort = fmt.Sprintf("-%s", sort)
-		}
-	}
 	pg := s.Worker().Argument().GetPagination(request)
-	if placeIDs := s.Worker().Model().Place.GetDefaultPlacesWithPagination(keyword, filter, sort, grandParentID, pg); placeIDs == nil {
+	if placeIDs := s.Worker().Model().Place.GetDefaultPlacesWithPagination(pg); placeIDs == nil {
 		response.Error(nested.ERR_UNKNOWN, []string{""})
 		return
 	} else {
