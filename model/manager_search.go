@@ -12,6 +12,7 @@ const (
     PLACE_SEARCH_FILTER_LOCKED_PLACES    string = "locked_places"
     PLACE_SEARCH_FILTER_UNLOCKED_PLACES  string = "unlocked_places"
     PLACE_SEARCH_FILTER_PERSONAL         string = "personal_places"
+	PLACE_SEARCH_FILTER_SHARED           string = "shared_places"
     PLACE_SEARCH_FILTER_ALL              string = "all"
     ACCOUNT_SEARCH_FILTER_USERS_ENABLED  string = "users_enabled"
     ACCOUNT_SEARCH_FILTER_USERS_DISABLED string = "users_disabled"
@@ -63,6 +64,8 @@ func (sm *SearchManager) Places(keyword, filter, sort, grandParentID string, pg 
         q["privacy.locked"] = false
     case PLACE_SEARCH_FILTER_PERSONAL:
         q["type"] = PLACE_TYPE_PERSONAL
+	case PLACE_SEARCH_FILTER_SHARED:
+		q["type"] = PLACE_TYPE_SHARED
     case PLACE_SEARCH_FILTER_ALL:
     default:
 

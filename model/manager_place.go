@@ -56,14 +56,19 @@ type PolicyGroup string
 type PlaceAccess MB
 
 type PlaceCreateRequest struct {
-    ID            string
-    AccountID     string
-    Name          string
-    Description   string
-    GrandParentID string
-    Privacy       PlacePrivacy
-    Policy        PlacePolicy
-    Picture       Picture
+	ID            string
+	AccountID     string
+	Name          string
+	Description   string
+	GrandParentID string
+	Privacy       PlacePrivacy
+	Policy        PlacePolicy
+	Picture       Picture
+}
+
+type DefaulPlace struct {
+	ID      bson.ObjectId `json:"_id" bson:"_id"`
+	PlaceID string        `json:"place_id" bson:"place_id"`
 }
 
 // Place Manager and Methods
@@ -1026,6 +1031,78 @@ func (pm *PlaceManager) IsBlocked(placeID, address string) bool {
 		return false
 	}
 	return n > 0
+}
+
+//	AddDefaultPlaces adds placeIDs to the initial place list
+func (pm *PlaceManager) AddDefaultPlaces(placeIDs []string) bool {
+	dbSession := _MongoSession.Clone()
+	db := dbSession.DB(DB_NAME)
+	defer dbSession.Close()
+
+	bulk := db.C(COLLECTION_PLACES_DEFAULT).Bulk()
+	bulk.Unordered()
+	for _, id := range placeIDs {
+		d := DefaulPlace{
+			ID: bson.NewObjectId(),
+			PlaceID: id,
+		}
+		bulk.Upsert(bson.M{"place_id": id}, d)
+	}
+	_, err := bulk.Run()
+	if err != nil {
+		_Log.Warn(err.Error())
+		return false
+	}
+	return true
+}
+
+//	GetDefaultPlacesWithPagination gets initial placeIDs
+func (pm *PlaceManager) GetDefaultPlacesWithPagination(pg Pagination) []string {
+	dbSession := _MongoSession.Clone()
+	db := dbSession.DB(DB_NAME)
+	defer dbSession.Close()
+	defaultPlaces := make([]DefaulPlace, 0, pg.GetLimit())
+	ids := make([]string, 0, pg.GetLimit())
+	err := db.C(COLLECTION_PLACES_DEFAULT).Find(nil).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&defaultPlaces)
+	if err != nil {
+		_Log.Warn(err.Error())
+		return nil
+	}
+	for _, placeID := range defaultPlaces {
+		ids = append(ids, placeID.PlaceID)
+	}
+	return ids
+}
+
+//	GetDefaultPlaces gets default placeIDs
+func (pm *PlaceManager) GetDefaultPlaces() []string {
+	dbSession := _MongoSession.Clone()
+	db := dbSession.DB(DB_NAME)
+	defer dbSession.Close()
+	var defaultPlaces []DefaulPlace
+	err := db.C(COLLECTION_PLACES_DEFAULT).Find(nil).All(&defaultPlaces)
+	if err != nil {
+		_Log.Warn(err.Error())
+		return nil
+	}
+	ids := make([]string, 0, len(defaultPlaces))
+	for _, placeID := range defaultPlaces {
+		ids = append(ids, placeID.PlaceID)
+	}
+	return ids
+}
+
+//	RemoveDefaultPlaces removes default placeIDs
+func (pm *PlaceManager) RemoveDefaultPlaces(placeIDs []string) bool {
+	dbSession := _MongoSession.Clone()
+	db := dbSession.DB(DB_NAME)
+	defer dbSession.Close()
+	err := db.C(COLLECTION_PLACES_DEFAULT).Remove(bson.M{"place_id": bson.M{"$in": placeIDs}})
+	if err != nil {
+		_Log.Warn(err.Error())
+		return false
+	}
+	return true
 }
 
 type Place struct {
