@@ -16,6 +16,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"os/exec"
 )
 
 var (
@@ -131,43 +132,45 @@ func main() {
 
 
 	// opendkim configs
-	//t, err := os.OpenFile("/etc/opendkim/TrustedHosts", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
-	//if err != nil {
-	//	fmt.Println("TrustedHosts", err)
-	//}
-	//defer t.Close()
-	//for key := range instanceInfo {
-	//	if _, err = t.WriteString("*." + key + "\n"); err != nil {
-	//		fmt.Println("TrustedHosts::WriteString", err)
-	//	}
-	//}
-	//k, err := os.OpenFile("/etc/opendkim/KeyTable", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-	//defer k.Close()
-	//for key := range instanceInfo {
-	//	if _, err = k.WriteString(fmt.Sprintf("mail._domainkey.%s %s:mail:/etc/opendkim/domainkeys/dkim.private\n", key, key)); err != nil {
-	//		fmt.Println("KeyTable::WriteString", err)
-	//	}
-	//}
-	//s, err := os.OpenFile("/etc/opendkim/SigningTable", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
-	//if err != nil {
-	//	fmt.Println("SigningTable::", err)
-	//}
-	//defer s.Close()
-	//for key := range instanceInfo {
-	//	if _, err = s.WriteString(fmt.Sprintf("*@%s mail._domainkey.%s\n", key, key)); err != nil {
-	//		fmt.Println("SigningTable::WriteString", err)
-	//	}
-	//}
+	t, err := os.OpenFile("/etc/opendkim/TrustedHosts", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
+	if err != nil {
+		fmt.Println("TrustedHosts", err)
+	}
+	defer t.Close()
+	for key := range instanceInfo {
+		if _, err = t.WriteString(key + "\n"); err != nil {
+			fmt.Println("TrustedHosts::WriteString", err)
+		}
+	}
+
+	k, err := os.OpenFile("/etc/opendkim/KeyTable", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer k.Close()
+	for key := range instanceInfo {
+		if _, err = k.WriteString(fmt.Sprintf("default._domainkey.%s %s:default:/etc/opendkim/domainkeys/%s/default.private\n", key, key, key)); err != nil {
+			fmt.Println("KeyTable::WriteString", err)
+		}
+	}
+
+	s, err := os.OpenFile("/etc/opendkim/SigningTable", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
+	if err != nil {
+		fmt.Println("SigningTable::", err)
+	}
+	defer s.Close()
+	for key := range instanceInfo {           //otherdomain.com default._domainkey.otherdomain.com
+		if _, err = s.WriteString(fmt.Sprintf("%s default._domainkey.%s\n", key, key)); err != nil {
+			fmt.Println("SigningTable::WriteString", err)
+		}
+	}
 
 	// run opendkim
-	//_, err = exec.Command("opendkim", "-A").Output()
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-	//
+	_, err = exec.Command("opendkim", "-A").Output()
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	//fmt.Println("mail-map::instanceInfo", instanceInfo)
 	go runEvery(time.Minute*time.Duration(_Config.GetInt("WATCHDOG_INTERVAL")), watchdog)
 	fmt.Println("mail-map::Start Listening tcp:2374")
