@@ -160,7 +160,7 @@ func main() {
 	}
 	defer s.Close()
 	for key := range instanceInfo {           //otherdomain.com default._domainkey.otherdomain.com
-		if _, err = s.WriteString(fmt.Sprintf("%s default._domainkey.%s\n", key, key)); err != nil {
+		if _, err = s.WriteString(fmt.Sprintf("*@%s default._domainkey.%s\n", key, key)); err != nil {
 			fmt.Println("SigningTable::WriteString", err)
 		}
 	}
