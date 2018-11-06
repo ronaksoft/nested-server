@@ -95,7 +95,7 @@ func (m *Mailer) Run() {
             req.Password = m.defaultSMTPPass
             req.Port = m.defaultSMTPPort
         }
-
+        log.Println("+++++++++++++++++++++++++++++++++++++++++++++++", req.Host, req.Port, req.Username, req.Password)
         d := mail.NewDialer(req.Host, req.Port, req.Username, req.Password)
         d.StartTLSPolicy = mail.MandatoryStartTLS
         d.TLSConfig = &tls.Config{
