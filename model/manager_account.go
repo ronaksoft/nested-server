@@ -188,7 +188,7 @@ func (am *AccountManager) AddPlaceToBookmarks(accountID, placeID string) {
             "$addToSet": bson.M{
                 "bookmarked_places": bson.M{
                     "$each":  []string{placeID},
-                    "$slice": -DEFAULT_MAX_BOOKMARKED_PLACES,
+                    //"$slice": -DEFAULT_MAX_BOOKMARKED_PLACES,
                 },
             },
         },
