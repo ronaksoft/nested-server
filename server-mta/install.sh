@@ -54,7 +54,7 @@ postconf -e smtp_tls_security_level=may
 postconf -e smtp_sasl_auth_enable=yes
 postconf -e smtp_sasl_password_maps=hash:/etc/postfix/sasl_passwd
 # leaving this empty will allow Postfix to use anonymous and plaintext authentication
-smtp_sasl_security_options=
+#smtp_sasl_security_options=
 ############
 
 # SASL SUPPORT FOR CLIENTS
@@ -67,7 +67,7 @@ postconf -e broken_sasl_auth_clients=yes
 postconf -e smtpd_recipient_restrictions=permit_sasl_authenticated,reject_unauth_destination
 
 # smtpd.conf
-cat >> /etc/postfix/sasl/smtpd.conf <<EOF
+cat >> /etc/sasl2/smtpd.conf <<EOF #/etc/postfix/sasl/smtpd.conf
 pwcheck_method: auxprop
 auxprop_plugin: sasldb
 mech_list: PLAIN LOGIN CRAM-MD5 DIGEST-MD5 NTLM
