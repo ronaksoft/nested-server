@@ -19,6 +19,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"runtime/debug"
 )
 
 type Model struct {
@@ -209,6 +210,8 @@ func initLogger() {
 func recoverPanic() {
 	r := recover()
 	if r != nil {
+		_LOG.Warn("panic log", zap.Any("", r))
+		debug.PrintStack()
 		_LOG.Error("*********PANIC RECOVERED*********")
 	}
 }
