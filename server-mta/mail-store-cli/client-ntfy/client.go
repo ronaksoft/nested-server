@@ -18,7 +18,7 @@ func NewNtfyClient(address, domain string) *NtfyClient {
 	c.Address = address
 	c.Domain = domain
 	if nat, err := nats.Connect(address); err != nil {
-		fmt.Println("NTFY::Client::NewClient::Error::", err.Error())
+		fmt.Println("NTFY::Client::NewClient::Error::","address", address, err.Error())
 		return nil
 	} else {
 		c.Nat = nat
