@@ -1,0 +1,76 @@
+stages:
+- test
+- build
+- deploy
+
+variables:
+  GATEWAY_VER:  "4.0"
+  MTA_VER: "2.0"
+  NTFY_VER: "3.0"
+  GO_SOURCE_DIR: /go/src/git.ronaksoftware.com/$CI_PROJECT_PATH   # CI_PROJECT_PATH: nested/server
+
+build:compile:
+  stage: build
+  image: golang:latest
+  script:
+  - go get github.com/kardianos/govendor
+  - mkdir -p $GO_SOURCE_DIR
+  - cp -r $CI_PROJECT_DIR/* $GO_SOURCE_DIR
+  - cd $GO_SOURCE_DIR
+  - mkdir -p $GO_SOURCE_DIR/server-gateway/_build
+  - mkdir -p $GO_SOURCE_DIR/server-ntfy/_build
+  - mkdir -p $GO_SOURCE_DIR/server-mta/_build
+  - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $CI_PROJECT_DIR/server-gateway/_build/server-gateway ./server-gateway
+  - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $CI_PROJECT_DIR/server-ntfy/_build/server-ntfy ./server-ntfy
+  - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $CI_PROJECT_DIR/server-mta/_build/mail-store-cli ./server-mta/mail-store-cli
+  - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $CI_PROJECT_DIR/server-mta/_build/mail-map ./server-mta/mail-map
+  - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $CI_PROJECT_DIR/server-mta/_build/mail-instances ./server-mta/mail-instances
+  artifacts:
+    untracked: true
+    expire_in: 1 hour
+
+
+deploy:production:
+  stage: deploy
+  only:
+  - master
+  image: docker:latest
+  services:
+  - docker:dind
+  when: manual
+  script:
+  - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
+  - cd ./server-gateway
+  - docker build --pull -t $CI_REGISTRY_IMAGE/gateway:$GATEWAY_VER .
+  - docker push $CI_REGISTRY_IMAGE/gateway:$GATEWAY_VER
+  - cd ../server-ntfy
+  - docker build --pull -t $CI_REGISTRY_IMAGE/ntfy:$NTFY_VER .
+  - docker push $CI_REGISTRY_IMAGE/ntfy:$NTFY_VER
+  - cd ../server-mta
+  - docker build --pull -t $CI_REGISTRY_IMAGE/mta:$MTA_VER .
+  - docker push $CI_REGISTRY_IMAGE/mta:$MTA_VER
+
+deploy:staging:
+  stage: deploy
+  only:
+  - behrooz
+<<<<<<< HEAD
+  - mta
+=======
+  - fix
+  - admin-add-place
+>>>>>>> 9339e98e2c7908d347455b779c5ca18f77ce52bc
+  image: docker:latest
+  services:
+  - docker:dind
+  script:
+  - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
+  - cd ./server-gateway
+  - docker build --pull -t $CI_REGISTRY_IMAGE/gateway:AAP .
+  - docker push $CI_REGISTRY_IMAGE/gateway:AAP
+  - cd ../server-ntfy
+  - docker build --pull -t $CI_REGISTRY_IMAGE/ntfy:TEST .
+  - docker push $CI_REGISTRY_IMAGE/ntfy:TEST
+  - cd ../server-mta
+  - docker build --pull -t $CI_REGISTRY_IMAGE/mta:centered .
+  - docker push $CI_REGISTRY_IMAGE/mta:centered

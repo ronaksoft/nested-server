@@ -20,6 +20,9 @@ build:compile:
     - cd ..
     - cd $GO_SOURCE_DIR/mail-map
     - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $BUILD_DIR/mail-map .
+    - cd ..
+    - cd $GO_SOURCE_DIR/mail-instances
+    - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $BUILD_DIR/mail-instances .
   artifacts:
     untracked: true
     expire_in: 1 hour

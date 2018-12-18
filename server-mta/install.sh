@@ -5,6 +5,10 @@ if [[ -a /etc/supervisor/conf.d/supervisord.conf ]]; then
   exit 0
 fi
 
+# add user mail to docker group
+groupadd -g 999 docker
+usermod -a -G docker mail
+
 #supervisor
 cat > /etc/supervisor/conf.d/supervisord.conf <<EOF
 [supervisord]
@@ -18,8 +22,16 @@ command=/usr/sbin/rsyslogd -n -c3
 
 [program:mail-map]
 command=/ronak/bin/mail-map
-EOF
+autorestart=true
+stdout_logfile=/dev/fd/1
+stdout_logfile_maxbytes=0
 
+[program:mail-store-cli]
+command=/ronak/bin/mail-store-cli
+autorestart=true
+stdout_logfile=/dev/fd/1
+stdout_logfile_maxbytes=0
+EOF
 ############
 #  postfix
 ############
@@ -56,6 +68,7 @@ while IFS=':' read -r _user _pwd; do
 done < /tmp/passwd
 chown postfix.sasl /etc/sasldb2
 
+
 ############
 # Enable TLS
 ############
@@ -78,8 +91,8 @@ fi
 #############
 postconf -e -M nested_mail/unix="\
 nested_mail unix    -       n       n       -       -       pipe \
-user=mail argv=/ronak/bin/mail-store-cli -v 3  -s \${sender} \${recipient}"
-postconf -e virtual_mailbox_domains=${NST_DOMAIN}
+user=mail:docker argv=/ronak/bin/mail-instances -d \${domain}  -s \${sender} \${recipient}"
+postconf -e virtual_mailbox_domains=/etc/postfix/virtual_domains #${NST_DOMAIN}
 postconf -e virtual_mailbox_maps=tcp:localhost:2374
 postconf -e virtual_uid_maps=static:5000
 postconf -e virtual_gid_maps=static:5000
@@ -99,11 +112,11 @@ NST_CYRUS_FILE_SYSTEM_KEY=${NST_CYRUS_FILE_SYSTEM_KEY}"
 if [[ -z "$(find /etc/opendkim/domainkeys -iname *.private)" ]]; then
   exit 0
 fi
-cat >> /etc/supervisor/conf.d/supervisord.conf <<EOF
+#cat >> /etc/supervisor/conf.d/supervisord.conf <<EOF
 
-[program:opendkim]
-command=/usr/sbin/opendkim -f
-EOF
+#[program:opendkim]
+#command=/usr/sbin/opendkim -f -A
+#EOF
 # /etc/postfix/main.cf
 postconf -e milter_protocol=2
 postconf -e milter_default_action=accept
@@ -136,19 +149,18 @@ EOF
 cat >> /etc/default/opendkim <<EOF
 SOCKET="inet:12301@localhost"
 EOF
-
-cat >> /etc/opendkim/TrustedHosts <<EOF
-127.0.0.1
-localhost
-192.168.0.1/24
-
-*.${NST_DOMAIN}
-EOF
-cat >> /etc/opendkim/KeyTable <<EOF
-mail._domainkey.${NST_DOMAIN} ${NST_DOMAIN}:mail:$(find /etc/opendkim/domainkeys -iname *.private)
-EOF
-cat >> /etc/opendkim/SigningTable <<EOF
-*@${NST_DOMAIN} mail._domainkey.${NST_DOMAIN}
-EOF
+#*.${NST_DOMAIN}
+#cat >> /etc/opendkim/TrustedHosts <<EOF
+#127.0.0.1
+#localhost
+#192.168.0.1/24
+#*.${NST_DOMAIN}
+#EOF
+#cat >> /etc/opendkim/KeyTable <<EOF
+#mail._domainkey.${NST_DOMAIN} ${NST_DOMAIN}:mail:$(find /etc/opendkim/domainkeys -iname *.private)
+#EOF
+#cat >> /etc/opendkim/SigningTable <<EOF
+#*@${NST_DOMAIN} mail._domainkey.${NST_DOMAIN}
+#EOF
 chown opendkim:opendkim $(find /etc/opendkim/domainkeys -iname *.private)
 chmod 400 $(find /etc/opendkim/domainkeys -iname *.private)
