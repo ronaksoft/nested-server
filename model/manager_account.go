@@ -35,6 +35,7 @@ type Account struct {
     AuthKey            string           `json:"auth_key" bson:"auth_key"`
     Type               string           `json:"acc_type" bson:"acc_type"`
     Disabled           bool             `json:"disabled" bson:"disabled"`
+    Username           string           `json:"username" bson:"username"`
     FirstName          string           `json:"fname" bson:"fname"`
     LastName           string           `json:"lname" bson:"lname"`
     FullName           string           `json:"full_name" bson:"full_name"`
@@ -187,8 +188,8 @@ func (am *AccountManager) AddPlaceToBookmarks(accountID, placeID string) {
         bson.M{
             "$addToSet": bson.M{
                 "bookmarked_places": bson.M{
-                    "$each":  []string{placeID},
-                    //"$slice": -DEFAULT_MAX_BOOKMARKED_PLACES,
+                    "$each": []string{placeID},
+                    // "$slice": -DEFAULT_MAX_BOOKMARKED_PLACES,
                 },
             },
         },
@@ -977,6 +978,18 @@ func (am *AccountManager) UpdateEmail(accountID string, email AccountMail) bool 
         bson.M{"$set": bson.M{"mail": email}},
     ); err != nil {
         log.Println("Model::AccountManager::UpdateEmail::Error 1::", err.Error())
+        return false
+    }
+    return true
+}
+
+func (am *AccountManager) UpdateUsername(accountID string, username string) bool {
+    defer _Manager.Account.removeCache(accountID)
+    if err := _MongoDB.C(COLLECTION_ACCOUNTS).UpdateId(
+        accountID,
+        bson.M{"$set": bson.M{"username": username}},
+    ); err != nil {
+        log.Println("Model::AccountManager::UpdateUsername::Error 1::", err.Error())
         return false
     }
     return true
