@@ -256,18 +256,6 @@ func SyncSystemCounters() {
 	)
 }
 
-// FixCompanyLogo
-func FixCompanyLogo() {
-	log.Println("--> Routine:: FixCompanyLogo")
-	defer log.Println("<-- Routine:: FixCompanyLogo")
-
-	systemStringConstants := _Manager.System.GetStringConstants()
-	_Manager.File.SetStatus(
-		UniversalID(systemStringConstants[SYSTEM_CONSTANTS_COMPANY_LOGO]),
-		FILE_STATUS_PUBLIC,
-	)
-}
-
 // CleanupSessions
 func CleanupSessions() {
 	log.Println("--> Routine:: CleanupSessions")

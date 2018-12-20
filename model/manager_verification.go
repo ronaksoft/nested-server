@@ -42,10 +42,6 @@ func NewVerificationManager() *VerificationManager {
 // Creates a verification object for 'phone' and return the verification object to caller
 // if verification object is nil then something has been wrong
 func (vm *VerificationManager) CreateByPhone(phone string) *Verification {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -71,10 +67,6 @@ func (vm *VerificationManager) CreateByPhone(phone string) *Verification {
 // Creates a verification object for 'email' and return the verification object to caller
 // if verification object is nil then something has been wrong
 func (vm *VerificationManager) CreateByEmail(email string) *Verification {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -100,10 +92,6 @@ func (vm *VerificationManager) CreateByEmail(email string) *Verification {
 // Returns the Verification object identified by ID, this function does not check any
 // extra parameter. It returns the Verification object even if it was expired or verified ...
 func (vm *VerificationManager) GetByID(verifyID string) *Verification {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -120,10 +108,6 @@ func (vm *VerificationManager) GetByID(verifyID string) *Verification {
 // Returns true if the code matches verification code otherwise if attempts are exceeded the limit
 // or expire time has been passed the verification object is expired.
 func (vm *VerificationManager) Verify(verifyID, code string) bool {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -170,10 +154,6 @@ func (vm *VerificationManager) Verify(verifyID, code string) bool {
 // Description:
 // Returns true if verification identified by verifyID is verified otherwise returns false
 func (vm *VerificationManager) Verified(verifyID string) bool {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -188,10 +168,6 @@ func (vm *VerificationManager) Verified(verifyID string) bool {
 
 // IncrementSmsCounter Increments the counter for number SMS messages have been sent for this Verification object.
 func (vm *VerificationManager) IncrementSmsCounter(verifyID string) {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -207,10 +183,6 @@ func (vm *VerificationManager) IncrementSmsCounter(verifyID string) {
 
 // IncrementCallCounter Increments the counter for number of calls have been made for this Verification object.
 func (vm *VerificationManager) IncrementCallCounter(verifyID string) {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -226,10 +198,6 @@ func (vm *VerificationManager) IncrementCallCounter(verifyID string) {
 
 // IncrementEmailCounter Increments the counter for the number of emails have been sent for this Verification object.
 func (vm *VerificationManager) IncrementEmailCounter(verifyID string) {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
@@ -245,10 +213,6 @@ func (vm *VerificationManager) IncrementEmailCounter(verifyID string) {
 
 // Expire expires the verification identified by "verifyID" and that Verification object cannot be verified anymore.
 func (vm *VerificationManager) Expire(verifyID string) {
-    // _funcName
-    // removed LOG Function
-    // removed LOG Function
-
     dbSession := _MongoSession.Clone()
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
