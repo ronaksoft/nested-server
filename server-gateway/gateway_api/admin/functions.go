@@ -1812,12 +1812,12 @@ func (s *AdminService) addDefaultPlaces(requester *nested.Account, request *nest
 // @Command:	admin/default_places_get
 func (s *AdminService) getDefaultPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	pg := s.Worker().Argument().GetPagination(request)
-	if placeIDs := s.Worker().Model().Place.GetDefaultPlacesWithPagination(pg); placeIDs == nil {
+	if placeIDs, total := s.Worker().Model().Place.GetDefaultPlacesWithPagination(pg); placeIDs == nil {
 		response.Error(nested.ERR_UNKNOWN, []string{""})
 		return
 	} else {
 		places := s.Worker().Model().Place.GetPlacesByIDs(placeIDs)
-		response.OkWithData(nested.M{"places": places})
+		response.OkWithData(nested.M{"places": places, "total": total})
 	}
 }
 
