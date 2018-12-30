@@ -1171,10 +1171,8 @@ func (s *PlaceService) remove(requester *nested.Account, request *nestedGateway.
         response.Error(nested.ERR_ACCESS, []string{"remove_children_first"})
         return
     }
-	if success := s.Worker().Model().Place.RemoveDefaultPlaces([]string{place.ID}); !success {
-		response.Error(nested.ERR_UNKNOWN, []string{""})
-		return
-	}
+	s.Worker().Model().Place.RemoveDefaultPlaces([]string{place.ID})
+
     if s.Worker().Model().Place.Remove(place.ID, requester.ID) {
         s.Worker().Model().Account.IncrementLimit(place.MainCreatorID, "grand_places", 1)
         response.Ok()
