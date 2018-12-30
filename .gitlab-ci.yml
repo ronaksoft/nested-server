@@ -53,7 +53,7 @@ deploy:production:
 deploy:staging:
   stage: deploy
   only:
-  - behrooz
+  - bugFix
   - mta
   image: docker:latest
   services:
