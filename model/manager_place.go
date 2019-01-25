@@ -1057,7 +1057,7 @@ func (pm *PlaceManager) AddDefaultPlaces(placeIDs []string) bool {
 }
 
 //	GetDefaultPlacesWithPagination gets initial placeIDs
-func (pm *PlaceManager) GetDefaultPlacesWithPagination(pg Pagination) []string {
+func (pm *PlaceManager) GetDefaultPlacesWithPagination(pg Pagination) ([]string, int) {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -1066,12 +1066,17 @@ func (pm *PlaceManager) GetDefaultPlacesWithPagination(pg Pagination) []string {
 	err := db.C(COLLECTION_PLACES_DEFAULT).Find(nil).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&defaultPlaces)
 	if err != nil {
 		_Log.Warn(err.Error())
-		return nil
+		return nil, 0
 	}
 	for _, placeID := range defaultPlaces {
 		ids = append(ids, placeID.PlaceID)
 	}
-	return ids
+    n, err := db.C(COLLECTION_PLACES_DEFAULT).Find(nil).Count()
+    if err != nil {
+        _Log.Warn(err.Error())
+        return nil, 0
+    }
+	return ids, n
 }
 
 //	GetDefaultPlaces gets default placeIDs
