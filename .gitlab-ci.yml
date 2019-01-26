@@ -49,6 +49,7 @@ deploy:production:
   - cd ../server-mta
   - docker build --pull -t $CI_REGISTRY_IMAGE/mta:$MTA_VER .
   - docker push $CI_REGISTRY_IMAGE/mta:$MTA_VER
+  dependencies: []
 
 deploy:staging:
   stage: deploy
@@ -69,3 +70,4 @@ deploy:staging:
   - cd ../server-mta
   - docker build --pull -t $CI_REGISTRY_IMAGE/mta:centered1 .
   - docker push $CI_REGISTRY_IMAGE/mta:centered1
+  dependencies: []
