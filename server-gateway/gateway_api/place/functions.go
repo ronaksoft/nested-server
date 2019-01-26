@@ -1380,7 +1380,7 @@ func (s *PlaceService) update(requester *nested.Account, request *nestedGateway.
         if v, ok := request.Data["privacy.search"].(bool); ok {
             placeUpdateRequest["privacy.search"] = v
             if v {
-                s.Worker().Model().Search.AddPlaceToSearchIndex(requester.ID, place.Name)
+                s.Worker().Model().Search.AddPlaceToSearchIndex(place.ID, place.Name)
             } else {
                 s.Worker().Model().Search.RemovePlaceFromSearchIndex(place.ID)
             }

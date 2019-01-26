@@ -55,7 +55,7 @@ deploy:staging:
   stage: deploy
   only:
   - bugFix
-  - mta
+  - fix/place-update
   image: docker:latest
   services:
   - docker:dind
