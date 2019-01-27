@@ -196,7 +196,7 @@ func migrate(currentModelVersion int) bool {
         place := new(Place)
         for iter.Next(place) {
             if place.Privacy.Search {
-               if err := _MongoDB.C(COLLECTION_SEARCH_INDEX_PLACES).Insert(bson.M{"_id":place.ID, "name": place.Name}); err != nil {
+               if err := _MongoDB.C(COLLECTION_SEARCH_INDEX_PLACES).Insert(bson.M{"_id":place.ID, "name": place.Name, "picture": place.Picture}); err != nil {
                    _Log.Warn(err.Error())
                }
             }

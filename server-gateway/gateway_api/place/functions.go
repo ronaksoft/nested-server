@@ -179,7 +179,7 @@ func (s *PlaceService) createGrandPlace(requester *nested.Account, request *nest
     if v, ok := request.Data["privacy.search"].(bool); ok {
         pcr.Privacy.Search = v
         if v {
-            s.Worker().Model().Search.AddPlaceToSearchIndex(pcr.ID, pcr.Name)
+            s.Worker().Model().Search.AddPlaceToSearchIndex(pcr.ID, pcr.Name, pcr.Picture)
         }
     }
 
@@ -314,7 +314,7 @@ func (s *PlaceService) createLockedPlace(requester *nested.Account, request *nes
     if v, ok := request.Data["privacy.search"].(bool); ok {
         pcr.Privacy.Search = v
         if v {
-            s.Worker().Model().Search.AddPlaceToSearchIndex(pcr.ID, pcr.Name)
+            s.Worker().Model().Search.AddPlaceToSearchIndex(pcr.ID, pcr.Name, pcr.Picture)
         }
     }
 
@@ -1339,6 +1339,9 @@ func (s *PlaceService) setPicture(requester *nested.Account, request *nestedGate
         return
     }
     s.Worker().Model().Place.SetPicture(place.ID, pic)
+    if place.Privacy.Search {
+        s.Worker().Model().Search.AddPlaceToSearchIndex(place.ID, place.Name, pic)
+    }
     response.Ok()
     return
 }
@@ -1380,7 +1383,7 @@ func (s *PlaceService) update(requester *nested.Account, request *nestedGateway.
         if v, ok := request.Data["privacy.search"].(bool); ok {
             placeUpdateRequest["privacy.search"] = v
             if v {
-                s.Worker().Model().Search.AddPlaceToSearchIndex(place.ID, place.Name)
+                s.Worker().Model().Search.AddPlaceToSearchIndex(place.ID, place.Name, place.Picture)
             } else {
                 s.Worker().Model().Search.RemovePlaceFromSearchIndex(place.ID)
             }
@@ -1392,7 +1395,7 @@ func (s *PlaceService) update(requester *nested.Account, request *nestedGateway.
                     placeUpdateRequest["privacy.receptive"] = v
                 case nested.PLACE_RECEPTIVE_INTERNAL, nested.PLACE_RECEPTIVE_OFF:
                     placeUpdateRequest["privacy.receptive"] = v
-                    s.Worker().Model().Search.RemovePlaceFromSearchIndex(requester.ID)
+                    s.Worker().Model().Search.RemovePlaceFromSearchIndex(place.ID)
                 default:
                     response.Error(nested.ERR_INVALID, []string{"privacy.receptive"})
                     return
@@ -1404,7 +1407,7 @@ func (s *PlaceService) update(requester *nested.Account, request *nestedGateway.
                 case nested.PLACE_RECEPTIVE_OFF:
                     placeUpdateRequest["privacy.receptive"] = v
                     placeUpdateRequest["privacy.search"] = false
-                    s.Worker().Model().Search.RemovePlaceFromSearchIndex(place.Name)
+                    s.Worker().Model().Search.RemovePlaceFromSearchIndex(place.ID)
                 default:
                     response.Error(nested.ERR_INVALID, []string{"privacy.receptive"})
                     return

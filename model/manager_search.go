@@ -732,7 +732,7 @@ func (sm *SearchManager) Tasks(keyword, accountID string, assignorIDs, assigneeI
 
 // 	AddPlaceToSearchIndex adds placeID and placeName into the search index, then all the users can find the place
 // 	info in the search result
-func (sm *SearchManager) AddPlaceToSearchIndex(placeID, placeName string) {
+func (sm *SearchManager) AddPlaceToSearchIndex(placeID, placeName string, p Picture) {
     // _funcName
     //
     // removed LOG Function
@@ -741,7 +741,11 @@ func (sm *SearchManager) AddPlaceToSearchIndex(placeID, placeName string) {
     db := dbSession.DB(DB_NAME)
     defer dbSession.Close()
 
-    db.C(COLLECTION_SEARCH_INDEX_PLACES).UpsertId(placeID, bson.M{"$set": bson.M{"name": placeName}})
+    if _, err := db.C(COLLECTION_SEARCH_INDEX_PLACES).UpsertId(placeID,
+        bson.M{"$set": bson.M{"name": placeName, "picture": p}},
+        ); err != nil {
+            _Log.Warn(err.Error())
+    }
 }
 
 // RemovePlaceFromSearchIndex removes placeID and placeName from the search index collection
