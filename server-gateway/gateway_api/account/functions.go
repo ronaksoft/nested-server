@@ -429,6 +429,9 @@ func (s *AccountService) setAccountPicture(requester *nested.Account, request *n
 	}
 	f := _Model.File.GetByID(uni_id, nil)
 	_Model.Account.SetPicture(requester.ID, f.Thumbnails)
+	if requester.Privacy.Searchable {
+		_Model.Search.AddPlaceToSearchIndex(requester.ID, fmt.Sprintf("%s %s", requester.FirstName, requester.LastName), f.Thumbnails)
+	}
 	response.Ok()
 	return
 }
@@ -552,7 +555,7 @@ func (s *AccountService) updateAccount(requester *nested.Account, request *neste
 	}
 	if searchable, ok := request.Data["searchable"].(bool); ok {
 		if searchable {
-			_Model.Search.AddPlaceToSearchIndex(requester.ID, fmt.Sprintf("%s %s", requester.FirstName, requester.LastName))
+			_Model.Search.AddPlaceToSearchIndex(requester.ID, fmt.Sprintf("%s %s", requester.FirstName, requester.LastName), requester.Picture)
 			placeUpdateRequest["privacy.search"] = true
 		} else {
 			_Model.Search.RemovePlaceFromSearchIndex(requester.ID)
@@ -564,7 +567,7 @@ func (s *AccountService) updateAccount(requester *nested.Account, request *neste
 	_Model.Place.Update(requester.ID, placeUpdateRequest)
 
 	if requester.Privacy.Searchable && (aur.FirstName != "" || aur.LastName != "") {
-		_Model.Search.AddPlaceToSearchIndex(requester.ID, fmt.Sprintf("%s %s", requester.FirstName, requester.LastName))
+		_Model.Search.AddPlaceToSearchIndex(requester.ID, fmt.Sprintf("%s %s", requester.FirstName, requester.LastName), requester.Picture)
 	}
 
 	response.Ok()

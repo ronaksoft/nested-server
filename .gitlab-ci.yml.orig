@@ -49,28 +49,38 @@ deploy:production:
   - cd ../server-mta
   - docker build --pull -t $CI_REGISTRY_IMAGE/mta:$MTA_VER .
   - docker push $CI_REGISTRY_IMAGE/mta:$MTA_VER
+<<<<<<< HEAD
+  dependencies:
+    - build:compile
+
+=======
+  dependencies: 
+  - build:compile
+>>>>>>> d0d8b018f84c8a19857c4043b26ac3587b8a3c4c
 
 deploy:staging:
   stage: deploy
   only:
-  - behrooz
-<<<<<<< HEAD
-  - mta
-=======
-  - fix
-  - admin-add-place
->>>>>>> 9339e98e2c7908d347455b779c5ca18f77ce52bc
+  - bugFix
+  - placeUpdate-fix
   image: docker:latest
   services:
   - docker:dind
   script:
   - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
   - cd ./server-gateway
-  - docker build --pull -t $CI_REGISTRY_IMAGE/gateway:AAP .
-  - docker push $CI_REGISTRY_IMAGE/gateway:AAP
+  - docker build --pull -t $CI_REGISTRY_IMAGE/gateway:TEST .
+  - docker push $CI_REGISTRY_IMAGE/gateway:TEST
   - cd ../server-ntfy
   - docker build --pull -t $CI_REGISTRY_IMAGE/ntfy:TEST .
   - docker push $CI_REGISTRY_IMAGE/ntfy:TEST
   - cd ../server-mta
-  - docker build --pull -t $CI_REGISTRY_IMAGE/mta:centered .
-  - docker push $CI_REGISTRY_IMAGE/mta:centered
+  - docker build --pull -t $CI_REGISTRY_IMAGE/mta:centered1 .
+  - docker push $CI_REGISTRY_IMAGE/mta:centered1
+  dependencies:
+<<<<<<< HEAD
+    - build:compile
+=======
+  - build:compile
+>>>>>>> d0d8b018f84c8a19857c4043b26ac3587b8a3c4c
+

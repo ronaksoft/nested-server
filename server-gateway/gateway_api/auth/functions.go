@@ -378,7 +378,7 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 	s.Worker().Model().Account.SetPlaceNotification(pcr.AccountID, pcr.ID, true)
 
 	// add user's account & place to search index
-	s.Worker().Model().Search.AddPlaceToSearchIndex(uid, fmt.Sprintf("%s %s", fname, lname))
+	s.Worker().Model().Search.AddPlaceToSearchIndex(uid, fmt.Sprintf("%s %s", fname, lname), pcr.Picture)
 
 	if placeIDs := s.Worker().Model().Place.GetDefaultPlaces(); len(placeIDs) > 0 {
 		for _, placeID := range placeIDs {
