@@ -21,7 +21,7 @@ var (
 )
 
 func init() {
-    _LogLevel = zap.NewAtomicLevelAt(zap.InfoLevel)
+    _LogLevel = zap.NewAtomicLevelAt(zap.DebugLevel)
     zap.NewProductionConfig()
     logConfig := zap.NewProductionConfig()
     logConfig.Encoding = "console"
