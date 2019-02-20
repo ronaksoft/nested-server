@@ -176,8 +176,10 @@ func FCM(d nested.Device, req ntfy.CMDPushExternal) {
     ctx := context.Background()
     if client, err := _FCM.Messaging(ctx); err != nil {
         _Log.Warn(err.Error())
-    } else if _, err := client.Send(ctx, &message); err != nil {
+    } else if res, err := client.Send(ctx, &message); err != nil {
         _Log.Warn(err.Error())
         _Model.Device.Remove(d.ID)
+    } else {
+        _Log.Debug("", zap.String("fcm result", res))
     }
 }
