@@ -20,12 +20,10 @@ func (s *AccountService) accountIDAvailable(requester *nested.Account, request *
 		response.Error(nested.ERR_INCOMPLETE, []string{"account_id"})
 		return
 	}
-	if requester.ID != "admin" {
-		if _Model.Account.Available(accountID) {
-			response.Ok()
-		} else {
-			response.Error(nested.ERR_UNAVAILABLE, []string{"account_id"})
-		}
+	if _Model.Account.Available(accountID) {
+		response.Ok()
+	} else {
+		response.Error(nested.ERR_UNAVAILABLE, []string{"account_id"})
 	}
 	return
 }
