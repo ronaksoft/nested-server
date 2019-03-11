@@ -69,8 +69,8 @@ deploy:staging:
   - docker build --pull -t $CI_REGISTRY_IMAGE/ntfy:TEST .
   - docker push $CI_REGISTRY_IMAGE/ntfy:TEST
   - cd ../server-mta
-  - docker build --pull -t $CI_REGISTRY_IMAGE/mta:centered1 .
-  - docker push $CI_REGISTRY_IMAGE/mta:centered1
+  - docker build --pull -t $CI_REGISTRY_IMAGE/mta:TEST .
+  - docker push $CI_REGISTRY_IMAGE/mta:TEST
   dependencies:
   - build:compile
 
