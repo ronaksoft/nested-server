@@ -56,7 +56,7 @@ deploy:staging:
   stage: deploy
   only:
   - bugFix
-  - placeUpdate-fix
+  - fixUsername
   image: docker:latest
   services:
   - docker:dind
