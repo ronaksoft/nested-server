@@ -15,7 +15,7 @@ func StartupCheckups() {
     _ = _MongoDB.C(COLLECTION_ACCOUNTS).EnsureIndex(mgo.Index{Key: []string{"email"}})
     _ = _MongoDB.C(COLLECTION_ACCOUNTS).EnsureIndex(mgo.Index{Key: []string{"phone"}})
     _ = _MongoDB.C(COLLECTION_ACCOUNTS).EnsureIndex(mgo.Index{Key: []string{"full_name"}})
-    _ = _MongoDB.C(COLLECTION_ACCOUNTS).EnsureIndex(mgo.Index{Key: []string{"username"}, Unique: true, Background: false})
+    //_ = _MongoDB.C(COLLECTION_ACCOUNTS).EnsureIndex(mgo.Index{Key: []string{"username"}, Unique: true, Background: false})
     _ = _MongoDB.C(COLLECTION_ACCOUNTS).EnsureIndex(mgo.Index{Key: []string{"access_places"}, Background: true})
     _ = _MongoDB.C(COLLECTION_ACCOUNTS_POSTS).EnsureIndex(mgo.Index{Key: []string{"account_id", "-pin_time"}, Background: true})
     _ = _MongoDB.C(COLLECTION_ACCOUNTS_PLACES).EnsureIndex(mgo.Index{Key: []string{"account_id", "-pts"}, Background: true})
@@ -182,26 +182,26 @@ func migrate(currentModelVersion int) bool {
         _MongoDB.C(COLLECTION_TASKS).DropIndex("watchers")
         _MongoDB.C(COLLECTION_TASKS).DropIndex("assignor")
         _MongoDB.C(COLLECTION_TASKS).DropIndex("assignee")
-    case 23:
-        iter := _MongoDB.C(COLLECTION_ACCOUNTS).Find(bson.M{}).Iter()
-        account := new(Account)
-        for iter.Next(account) {
-            _ = _MongoDB.C(COLLECTION_ACCOUNTS).UpdateId(account.ID, bson.M{"$set": bson.M{"username": account.ID}})
-        }
-    case 24:
-        if err := _MongoDB.C(COLLECTION_SEARCH_INDEX_PLACES).DropCollection(); err != nil {
-            _Log.Warn(err.Error())
-        }
-        iter := _MongoDB.C(COLLECTION_PLACES).Find(bson.M{}).Iter()
-        place := new(Place)
-        for iter.Next(place) {
-            if place.Privacy.Search {
-               if err := _MongoDB.C(COLLECTION_SEARCH_INDEX_PLACES).Insert(bson.M{"_id":place.ID, "name": place.Name, "picture": place.Picture}); err != nil {
-                   _Log.Warn(err.Error())
-               }
-            }
-        }
-        iter.Close()
+    //case 23:
+    //    iter := _MongoDB.C(COLLECTION_ACCOUNTS).Find(bson.M{}).Iter()
+    //    account := new(Account)
+    //    for iter.Next(account) {
+    //        _ = _MongoDB.C(COLLECTION_ACCOUNTS).UpdateId(account.ID, bson.M{"$set": bson.M{"username": account.ID}})
+    //    }
+    //case 24:
+    //    if err := _MongoDB.C(COLLECTION_SEARCH_INDEX_PLACES).DropCollection(); err != nil {
+    //        _Log.Warn(err.Error())
+    //    }
+    //    iter := _MongoDB.C(COLLECTION_PLACES).Find(bson.M{}).Iter()
+    //    place := new(Place)
+    //    for iter.Next(place) {
+    //        if place.Privacy.Search {
+    //           if err := _MongoDB.C(COLLECTION_SEARCH_INDEX_PLACES).Insert(bson.M{"_id":place.ID, "name": place.Name, "picture": place.Picture}); err != nil {
+    //               _Log.Warn(err.Error())
+    //           }
+    //        }
+    //    }
+    //    iter.Close()
 
     default:
         return false
