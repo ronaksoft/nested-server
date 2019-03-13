@@ -11,7 +11,6 @@ import (
 	"github.com/jhillyerd/enmime"
 	"go.uber.org/zap"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/mail"
 	"strings"
@@ -196,15 +195,15 @@ func store(domain, sender string, recipients []string, mailEnvelope *enmime.Enve
 				zap.Any("", att.Header),
 			)
 
-			attachmentContent, _ := ioutil.ReadAll(att)
-			if finfo, err := uploadFile(filename, senderID, nested.FILE_STATUS_ATTACHED, attachmentOwners, bytes.NewReader(attachmentContent), m.Storage); err != nil {
+
+			if finfo, err := uploadFile(filename, senderID, nested.FILE_STATUS_ATTACHED, attachmentOwners, bytes.NewReader(att.Content), m.Storage); err != nil {
 				_LOG.Error("ERROR::::::Error adding inline attachment:", zap.Error(err))
 			} else {
 				_LOG.Info("Gonna create file token for %s", zap.Any("", finfo.UniversalId))
 				if tk, err := m.CreateFileToken(finfo.UniversalId, "", ""); err != nil {
 					_LOG.Error("ERROR::::::Error creating file token for inline attachment: ", zap.Error(err))
-					benc := make([]byte, base64.StdEncoding.EncodedLen(len(attachmentContent)))
-					base64.StdEncoding.Encode(benc, attachmentContent)
+					benc := make([]byte, base64.StdEncoding.EncodedLen(len(att.Content)))
+					base64.StdEncoding.Encode(benc, att.Content)
 
 					chInlineAttachments <- multipartAttachment{
 						contentId: cid,
@@ -249,15 +248,15 @@ func store(domain, sender string, recipients []string, mailEnvelope *enmime.Enve
 				zap.String("", cid),
 				zap.Any("", att.Header),
 			)
-			attachmentContent, _ := ioutil.ReadAll(att)
-			if finfo, err := uploadFile(att.FileName, senderID, nested.FILE_STATUS_ATTACHED, attachmentOwners, bytes.NewReader(attachmentContent), m.Storage); err != nil {
+
+			if finfo, err := uploadFile(att.FileName, senderID, nested.FILE_STATUS_ATTACHED, attachmentOwners, bytes.NewReader(att.Content), m.Storage); err != nil {
 				_LOG.Error("ERROR::::::Error adding inline attachment:", zap.Error(err))
 			} else {
 				_LOG.Info("Gonna create file token for %s", zap.Any("", finfo.UniversalId))
 				if tk, err := m.CreateFileToken(finfo.UniversalId, "", ""); err != nil {
 					_LOG.Error("ERROR::::::Error creating file token for inline attachment: ", zap.Error(err))
-					benc := make([]byte, base64.StdEncoding.EncodedLen(len(attachmentContent)))
-					base64.StdEncoding.Encode(benc, attachmentContent)
+					benc := make([]byte, base64.StdEncoding.EncodedLen(len(att.Content)))
+					base64.StdEncoding.Encode(benc, att.Content)
 
 					chAttachments <- multipartAttachment{
 						contentId: cid,
