@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"git.ronaksoftware.com/common/server-protocol"
+	"git.ronaksoftware.com/nested/server/pkg/protocol"
 	"go.uber.org/zap"
 )
 

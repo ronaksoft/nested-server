@@ -5,8 +5,8 @@ import (
 
 	"firebase.google.com/go"
 	"git.ronaksoftware.com/nested/server/model"
+	"git.ronaksoftware.com/nested/server/pkg/rpc"
 	"git.ronaksoftware.com/ronak/toolbox"
-	"git.ronaksoftware.com/ronak/toolbox/rpc"
 	"github.com/nats-io/go-nats"
 	"go.uber.org/zap"
 )

@@ -8,7 +8,7 @@ import (
 	"firebase.google.com/go/messaging"
 	"git.ronaksoftware.com/nested/server/cmd/server-ntfy/client"
 	"git.ronaksoftware.com/nested/server/model"
-	"git.ronaksoftware.com/ronak/toolbox/rpc"
+	"git.ronaksoftware.com/nested/server/pkg/rpc"
 	"go.uber.org/zap"
 )
 

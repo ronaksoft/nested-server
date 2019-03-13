@@ -12,9 +12,9 @@ import (
 	"sync"
 	"time"
 
-	"git.ronaksoftware.com/common/server-protocol"
 	"git.ronaksoftware.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoftware.com/nested/server/model"
+	"git.ronaksoftware.com/nested/server/pkg/protocol"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 	"github.com/kataras/iris"

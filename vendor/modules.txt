@@ -84,6 +84,8 @@ github.com/gocql/gocql
 github.com/gocql/gocql/internal/lru
 github.com/gocql/gocql/internal/murmur
 github.com/gocql/gocql/internal/streams
+# github.com/gogo/protobuf v1.2.1
+github.com/gogo/protobuf/proto
 # github.com/gogs/chardet v0.0.0-20150115103509-2404f7772561
 github.com/gogs/chardet
 # github.com/golang/protobuf v1.2.0

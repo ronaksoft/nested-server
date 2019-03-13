@@ -8,7 +8,7 @@ import (
 	"os/exec"
 	"strconv"
 
-	"git.ronaksoftware.com/common/server-protocol"
+	"git.ronaksoftware.com/nested/server/pkg/protocol"
 )
 
 type Gif struct {
