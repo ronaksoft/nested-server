@@ -20,11 +20,11 @@ build:compile:
     - mkdir -p $GO_SOURCE_DIR/cmd/server-gateway/_build
     - mkdir -p $GO_SOURCE_DIR/cmd/server-ntfy/_build
     - mkdir -p $GO_SOURCE_DIR/cmd/server-mta/_build
-    - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $CI_PROJECT_DIR/cmd/server-gateway/_build/server-gateway ./server-gateway
-    - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $CI_PROJECT_DIR/cmd/server-ntfy/_build/server-ntfy ./server-ntfy
-    - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $CI_PROJECT_DIR/cmd/server-mta/_build/mail-store-cli ./server-mta/mail-store-cli
-    - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $CI_PROJECT_DIR/cmd/server-mta/_build/mail-map ./server-mta/mail-map
-    - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $CI_PROJECT_DIR/cmd/server-mta/_build/mail-instances ./server-mta/mail-instances
+    - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $CI_PROJECT_DIR/cmd/server-gateway/_build/server-gateway ./cmd/server-gateway
+    - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $CI_PROJECT_DIR/cmd/server-ntfy/_build/server-ntfy ./cmd/server-ntfy
+    - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $CI_PROJECT_DIR/cmd/server-mta/_build/mail-store-cli ./cmd/server-mta/mail-store-cli
+    - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $CI_PROJECT_DIR/cmd/server-mta/_build/mail-map ./cmd/server-mta/mail-map
+    - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags '-s' -o $CI_PROJECT_DIR/cmd/server-mta/_build/mail-instances ./cmd/server-mta/mail-instances
   artifacts:
     untracked: true
     expire_in: 1 hour
