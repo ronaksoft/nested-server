@@ -2,8 +2,8 @@ package main
 
 import (
 	"errors"
+	"git.ronaksoftware.com/nested/server/cmd/server-mta/mail-store-cli/client-storage"
 	"git.ronaksoftware.com/nested/server/model"
-	"git.ronaksoftware.com/nested/server/server-mta/mail-store-cli/client-storage"
 	"go.uber.org/zap"
 	"io"
 	"os"

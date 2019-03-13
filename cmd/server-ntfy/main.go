@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"firebase.google.com/go"
+	"git.ronaksoftware.com/nested/server/cmd/server-ntfy/v1"
 	"git.ronaksoftware.com/nested/server/model"
-	"git.ronaksoftware.com/nested/server/server-ntfy/v1"
 	"git.ronaksoftware.com/ronak/toolbox"
 	"git.ronaksoftware.com/ronak/toolbox/rpc"
 	"github.com/nats-io/go-nats"

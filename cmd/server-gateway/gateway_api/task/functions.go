@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	"git.ronaksoftware.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoftware.com/nested/server/model"
-	"git.ronaksoftware.com/nested/server/server-gateway/client"
 	"github.com/globalsign/mgo/bson"
 	"time"
 )

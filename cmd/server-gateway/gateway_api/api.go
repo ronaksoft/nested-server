@@ -4,8 +4,8 @@ import (
 	"os"
 	"sync"
 
+	"git.ronaksoftware.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoftware.com/nested/server/model"
-	"git.ronaksoftware.com/nested/server/server-gateway/client"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/fzerorubigd/onion.v3"

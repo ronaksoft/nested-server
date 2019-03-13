@@ -1,8 +1,8 @@
 package nestedServiceReport
 
 import (
+	"git.ronaksoftware.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoftware.com/nested/server/model"
-	"git.ronaksoftware.com/nested/server/server-gateway/client"
 )
 
 // @Command: report/get_ts_single_val

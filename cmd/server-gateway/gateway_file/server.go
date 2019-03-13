@@ -3,8 +3,8 @@ package file
 import (
 	"os"
 
+	"git.ronaksoftware.com/nested/server/cmd/server-gateway/gateway_file/convert"
 	"git.ronaksoftware.com/nested/server/model"
-	"git.ronaksoftware.com/nested/server/server-gateway/gateway_file/convert"
 	"go.uber.org/zap"
 	"gopkg.in/fzerorubigd/onion.v3"
 )

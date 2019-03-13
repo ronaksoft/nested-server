@@ -8,8 +8,8 @@ import (
 	"sync"
 
 	"git.ronaksoftware.com/common/server-protocol"
+	"git.ronaksoftware.com/nested/server/cmd/server-gateway/gateway_file/convert"
 	"git.ronaksoftware.com/nested/server/model"
-	"git.ronaksoftware.com/nested/server/server-gateway/gateway_file/convert"
 	"go.uber.org/zap"
 )
 

@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"strings"
 
+	"git.ronaksoftware.com/nested/server/cmd/server-ntfy/client"
 	"git.ronaksoftware.com/nested/server/model"
-	"git.ronaksoftware.com/nested/server/server-ntfy/client"
 	"github.com/globalsign/mgo/bson"
 )
 
