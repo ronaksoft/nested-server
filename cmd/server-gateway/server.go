@@ -190,9 +190,7 @@ func (gw *GatewayServer) Run() {
 			_Config.GetString("BIND_ADDRESS"),
 			_Config.GetString("TLS_CERT_FILE"),
 			_Config.GetString("TLS_KEY_FILE"),
-		),
-			iris.WithoutVersionChecker,
-		)
+		))
 	} else {
 		gw.iris.Run(iris.Addr(
 			_Config.GetString("BIND_ADDRESS"),
