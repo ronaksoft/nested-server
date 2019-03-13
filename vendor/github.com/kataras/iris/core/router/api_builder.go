@@ -9,20 +9,18 @@ import (
 
 	"github.com/kataras/iris/context"
 	"github.com/kataras/iris/core/errors"
-	"github.com/kataras/iris/core/router/macro"
+	"github.com/kataras/iris/macro"
 )
 
-const (
-	// MethodNone is a Virtual method
-	// to store the "offline" routes.
-	MethodNone = "NONE"
-)
+// MethodNone is a Virtual method
+// to store the "offline" routes.
+const MethodNone = "NONE"
 
 var (
 	// AllMethods contains the valid http methods:
 	// "GET", "POST", "PUT", "DELETE", "CONNECT", "HEAD",
 	// "PATCH", "OPTIONS", "TRACE".
-	AllMethods = [...]string{
+	AllMethods = []string{
 		"GET",
 		"POST",
 		"PUT",
@@ -68,7 +66,7 @@ func (r *repository) getAll() []*Route {
 // and child routers.
 type APIBuilder struct {
 	// the api builder global macros registry
-	macros *macro.Map
+	macros *macro.Macros
 	// the api builder global handlers per status code registry (used for custom http errors)
 	errorCodeHandlers *ErrorCodeHandlers
 	// the api builder global routes repository
@@ -116,7 +114,7 @@ var _ RoutesProvider = (*APIBuilder)(nil) // passed to the default request handl
 // which is responsible to build the API and the router handler.
 func NewAPIBuilder() *APIBuilder {
 	api := &APIBuilder{
-		macros:            defaultMacros(),
+		macros:            macro.Defaults,
 		errorCodeHandlers: defaultErrorCodeHandlers(),
 		reporter:          errors.NewReporter(),
 		relativePath:      "/",
@@ -246,7 +244,7 @@ func (api *APIBuilder) Handle(method string, relativePath string, handlers ...co
 	)
 
 	for _, m := range methods {
-		route, err = NewRoute(m, subdomain, path, possibleMainHandlerName, routeHandlers, api.macros)
+		route, err = NewRoute(m, subdomain, path, possibleMainHandlerName, routeHandlers, *api.macros)
 		if err != nil { // template path parser errors:
 			api.reporter.Add("%v -> %s:%s:%s", err, method, subdomain, path)
 			return nil // fail on first error.
@@ -270,10 +268,10 @@ func (api *APIBuilder) Handle(method string, relativePath string, handlers ...co
 // otherwise use `Party` which can handle many paths with different handlers and middlewares.
 //
 // Usage:
-// 	app.HandleMany("GET", "/user /user/{id:int} /user/me", genericUserHandler)
+// 	app.HandleMany("GET", "/user /user/{id:uint64} /user/me", genericUserHandler)
 // At the other side, with `Handle` we've had to write:
 // 	app.Handle("GET", "/user", userHandler)
-// 	app.Handle("GET", "/user/{id:int}", userByIDHandler)
+// 	app.Handle("GET", "/user/{id:uint64}", userByIDHandler)
 // 	app.Handle("GET", "/user/me", userMeHandler)
 //
 // This method is used behind the scenes at the `Controller` function
@@ -411,11 +409,11 @@ func (api *APIBuilder) WildcardSubdomain(middleware ...context.Handler) Party {
 	return api.Subdomain(SubdomainWildcardIndicator, middleware...)
 }
 
-// Macros returns the macro map which is responsible
-// to register custom macro functions for all routes.
+// Macros returns the macro collection that is responsible
+// to register custom macros with their own parameter types and their macro functions for all routes.
 //
 // Learn more at:  https://github.com/kataras/iris/tree/master/_examples/routing/dynamic-path
-func (api *APIBuilder) Macros() *macro.Map {
+func (api *APIBuilder) Macros() *macro.Macros {
 	return api.macros
 }
 
@@ -437,6 +435,7 @@ func (api *APIBuilder) GetRoute(routeName string) *Route {
 // One note: "routeName" should be case-sensitive. Used by the context to get the current route.
 // It returns an interface instead to reduce wrong usage and to keep the decoupled design between
 // the context and the routes.
+// Look `GetRoutesReadOnly` to fetch a list of all registered routes.
 //
 // Look `GetRoute` for more.
 func (api *APIBuilder) GetRouteReadOnly(routeName string) context.RouteReadOnly {
@@ -445,6 +444,24 @@ func (api *APIBuilder) GetRouteReadOnly(routeName string) context.RouteReadOnly 
 		return nil
 	}
 	return routeReadOnlyWrapper{r}
+}
+
+// GetRoutesReadOnly returns the registered routes with "read-only" access,
+// you cannot and you should not change any of these routes' properties on request state,
+// you can use the `GetRoutes()` for that instead.
+//
+// It returns interface-based slice instead of the real ones in order to apply
+// safe fetch between context(request-state) and the builded application.
+//
+// Look `GetRouteReadOnly` too.
+func (api *APIBuilder) GetRoutesReadOnly() []context.RouteReadOnly {
+	routes := api.GetRoutes()
+	readOnlyRoutes := make([]context.RouteReadOnly, len(routes))
+	for i, r := range routes {
+		readOnlyRoutes[i] = routeReadOnlyWrapper{r}
+	}
+
+	return readOnlyRoutes
 }
 
 // Use appends Handler(s) to the current Party's routes and child routes.

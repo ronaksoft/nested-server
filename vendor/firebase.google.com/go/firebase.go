@@ -18,22 +18,19 @@
 package firebase // import "firebase.google.com/go"
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"os"
 
-	"golang.org/x/net/context"
-
 	"cloud.google.com/go/firestore"
-
 	"firebase.google.com/go/auth"
 	"firebase.google.com/go/db"
 	"firebase.google.com/go/iid"
 	"firebase.google.com/go/internal"
 	"firebase.google.com/go/messaging"
 	"firebase.google.com/go/storage"
-
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 	"google.golang.org/api/transport"
@@ -42,7 +39,7 @@ import (
 var defaultAuthOverrides = make(map[string]interface{})
 
 // Version of the Firebase Go Admin SDK.
-const Version = "3.2.0"
+const Version = "3.6.0"
 
 // firebaseEnvName is the name of the environment variable with the Config.
 const firebaseEnvName = "FIREBASE_CONFIG"
@@ -79,11 +76,18 @@ func (a *App) Auth(ctx context.Context) (*auth.Client, error) {
 	return auth.NewClient(ctx, conf)
 }
 
-// Database returns an instance of db.Client.
+// Database returns an instance of db.Client to interact with the default Firebase Database
+// configured via Config.DatabaseURL.
 func (a *App) Database(ctx context.Context) (*db.Client, error) {
+	return a.DatabaseWithURL(ctx, a.dbURL)
+}
+
+// DatabaseWithURL returns an instance of db.Client to interact with the Firebase Database
+// identified by the given URL.
+func (a *App) DatabaseWithURL(ctx context.Context, url string) (*db.Client, error) {
 	conf := &internal.DatabaseConfig{
 		AuthOverride: a.authOverride,
-		URL:          a.dbURL,
+		URL:          url,
 		Opts:         a.opts,
 		Version:      Version,
 	}

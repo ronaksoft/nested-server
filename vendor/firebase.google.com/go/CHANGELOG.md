@@ -1,5 +1,34 @@
 # Unreleased
 
+# v3.6.0
+
+- [added] `messaging.Aps` type now supports critical sound in its payload.
+- [fixed] Public types in the `messaging` package now support correct
+  JSON marshalling and unmarshalling.
+- [fixed] The `VerifyIDToken()` function fnow tolerates a clock skew of up to
+  5 minutes when comparing JWT timestamps.
+
+# v3.5.0
+
+- [added] `messaging.AndroidNotification` type now supports `channel_id`.
+- [dropped] Dropped support for Go 1.8 and earlier.
+- [fixed] Fixing error handling in FCM. The SDK now checks the key
+  `type.googleapis.com/google.firebase.fcm.v1.FcmError` to set error code.
+- [added] `messaging.ApsAlert` type now supports subtitle in its payload.
+- [added] `messaging.WebpushConfig` type now supports fcmOptions in its payload.
+
+# v3.4.0
+
+- [added] `firebase.App` now provides a new `DatabaseWithURL()` function
+  for initializing a database client from a URL.
+
+# v3.3.0
+
+- [fixed] Fixing a regression introduced in 3.2.0, where `VerifyIDToken()`
+  cannot be used in App Engine.
+- [added] `messaging.WebpushNotification` type now supports arbitrary key-value
+  pairs in its payload.
+
 # v3.2.0
 
 - [added] Implemented the ability to create custom tokens without

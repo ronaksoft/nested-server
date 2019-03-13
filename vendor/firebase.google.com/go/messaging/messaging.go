@@ -17,17 +17,17 @@
 package messaging // import "firebase.google.com/go/messaging"
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
 	"firebase.google.com/go/internal"
-	"golang.org/x/net/context"
-
 	"google.golang.org/api/transport"
 )
 
@@ -150,16 +150,33 @@ type Message struct {
 
 // MarshalJSON marshals a Message into JSON (for internal use only).
 func (m *Message) MarshalJSON() ([]byte, error) {
-	// Create a new type to prevent infinite recursion.
+	// Create a new type to prevent infinite recursion. We use this technique whenever it is needed
+	// to customize how a subset of the fields in a struct should be serialized.
 	type messageInternal Message
-	s := &struct {
+	temp := &struct {
 		BareTopic string `json:"topic,omitempty"`
 		*messageInternal
 	}{
 		BareTopic:       strings.TrimPrefix(m.Topic, "/topics/"),
 		messageInternal: (*messageInternal)(m),
 	}
-	return json.Marshal(s)
+	return json.Marshal(temp)
+}
+
+// UnmarshalJSON unmarshals a JSON string into a Message (for internal use only).
+func (m *Message) UnmarshalJSON(b []byte) error {
+	type messageInternal Message
+	s := struct {
+		BareTopic string `json:"topic,omitempty"`
+		*messageInternal
+	}{
+		messageInternal: (*messageInternal)(m),
+	}
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+	m.Topic = s.BareTopic
+	return nil
 }
 
 // Notification is the basic notification template to use across all platforms.
@@ -192,14 +209,48 @@ func (a *AndroidConfig) MarshalJSON() ([]byte, error) {
 	}
 
 	type androidInternal AndroidConfig
-	s := &struct {
+	temp := &struct {
 		TTL string `json:"ttl,omitempty"`
 		*androidInternal
 	}{
 		TTL:             ttl,
 		androidInternal: (*androidInternal)(a),
 	}
-	return json.Marshal(s)
+	return json.Marshal(temp)
+}
+
+// UnmarshalJSON unmarshals a JSON string into an AndroidConfig (for internal use only).
+func (a *AndroidConfig) UnmarshalJSON(b []byte) error {
+	type androidInternal AndroidConfig
+	temp := struct {
+		TTL string `json:"ttl,omitempty"`
+		*androidInternal
+	}{
+		androidInternal: (*androidInternal)(a),
+	}
+	if err := json.Unmarshal(b, &temp); err != nil {
+		return err
+	}
+	if temp.TTL != "" {
+		segments := strings.Split(strings.TrimSuffix(temp.TTL, "s"), ".")
+		if len(segments) != 1 && len(segments) != 2 {
+			return fmt.Errorf("incorrect number of segments in ttl: %q", temp.TTL)
+		}
+		seconds, err := strconv.ParseInt(segments[0], 10, 64)
+		if err != nil {
+			return err
+		}
+		ttl := time.Duration(seconds) * time.Second
+		if len(segments) == 2 {
+			nanos, err := strconv.ParseInt(strings.TrimLeft(segments[1], "0"), 10, 64)
+			if err != nil {
+				return err
+			}
+			ttl += time.Duration(nanos) * time.Nanosecond
+		}
+		a.TTL = &ttl
+	}
+	return nil
 }
 
 // AndroidNotification is a notification to send to Android devices.
@@ -215,6 +266,7 @@ type AndroidNotification struct {
 	BodyLocArgs  []string `json:"body_loc_args,omitempty"`
 	TitleLocKey  string   `json:"title_loc_key,omitempty"`
 	TitleLocArgs []string `json:"title_loc_args,omitempty"`
+	ChannelID    string   `json:"channel_id,omitempty"`
 }
 
 // WebpushConfig contains messaging options specific to the WebPush protocol.
@@ -225,13 +277,115 @@ type WebpushConfig struct {
 	Headers      map[string]string    `json:"headers,omitempty"`
 	Data         map[string]string    `json:"data,omitempty"`
 	Notification *WebpushNotification `json:"notification,omitempty"`
+	FcmOptions   *WebpushFcmOptions   `json:"fcmOptions,omitempty"`
+}
+
+// WebpushNotificationAction represents an action that can be performed upon receiving a WebPush notification.
+type WebpushNotificationAction struct {
+	Action string `json:"action,omitempty"`
+	Title  string `json:"title,omitempty"`
+	Icon   string `json:"icon,omitempty"`
 }
 
 // WebpushNotification is a notification to send via WebPush protocol.
+//
+// See https://developer.mozilla.org/en-US/docs/Web/API/notification/Notification for additional
+// details.
 type WebpushNotification struct {
-	Title string `json:"title,omitempty"` // if specified, overrides the Title field of the Notification type
-	Body  string `json:"body,omitempty"`  // if specified, overrides the Body field of the Notification type
-	Icon  string `json:"icon,omitempty"`
+	Actions            []*WebpushNotificationAction `json:"actions,omitempty"`
+	Title              string                       `json:"title,omitempty"` // if specified, overrides the Title field of the Notification type
+	Body               string                       `json:"body,omitempty"`  // if specified, overrides the Body field of the Notification type
+	Icon               string                       `json:"icon,omitempty"`
+	Badge              string                       `json:"badge,omitempty"`
+	Direction          string                       `json:"dir,omitempty"` // one of 'ltr' or 'rtl'
+	Data               interface{}                  `json:"data,omitempty"`
+	Image              string                       `json:"image,omitempty"`
+	Language           string                       `json:"lang,omitempty"`
+	Renotify           bool                         `json:"renotify,omitempty"`
+	RequireInteraction bool                         `json:"requireInteraction,omitempty"`
+	Silent             bool                         `json:"silent,omitempty"`
+	Tag                string                       `json:"tag,omitempty"`
+	TimestampMillis    *int64                       `json:"timestamp,omitempty"`
+	Vibrate            []int                        `json:"vibrate,omitempty"`
+	CustomData         map[string]interface{}
+}
+
+// standardFields creates a map containing all the fields except the custom data.
+//
+// We implement a standardFields function whenever we want to add custom and arbitrary
+// fields to an object during its serialization. This helper function also comes in
+// handy during validation of the message (to detect duplicate specifications of
+// fields), and also during deserialization.
+func (n *WebpushNotification) standardFields() map[string]interface{} {
+	m := make(map[string]interface{})
+	addNonEmpty := func(key, value string) {
+		if value != "" {
+			m[key] = value
+		}
+	}
+	addTrue := func(key string, value bool) {
+		if value {
+			m[key] = value
+		}
+	}
+	if len(n.Actions) > 0 {
+		m["actions"] = n.Actions
+	}
+	addNonEmpty("title", n.Title)
+	addNonEmpty("body", n.Body)
+	addNonEmpty("icon", n.Icon)
+	addNonEmpty("badge", n.Badge)
+	addNonEmpty("dir", n.Direction)
+	addNonEmpty("image", n.Image)
+	addNonEmpty("lang", n.Language)
+	addTrue("renotify", n.Renotify)
+	addTrue("requireInteraction", n.RequireInteraction)
+	addTrue("silent", n.Silent)
+	addNonEmpty("tag", n.Tag)
+	if n.Data != nil {
+		m["data"] = n.Data
+	}
+	if n.TimestampMillis != nil {
+		m["timestamp"] = *n.TimestampMillis
+	}
+	if len(n.Vibrate) > 0 {
+		m["vibrate"] = n.Vibrate
+	}
+	return m
+}
+
+// MarshalJSON marshals a WebpushNotification into JSON (for internal use only).
+func (n *WebpushNotification) MarshalJSON() ([]byte, error) {
+	m := n.standardFields()
+	for k, v := range n.CustomData {
+		m[k] = v
+	}
+	return json.Marshal(m)
+}
+
+// UnmarshalJSON unmarshals a JSON string into a WebpushNotification (for internal use only).
+func (n *WebpushNotification) UnmarshalJSON(b []byte) error {
+	type webpushNotificationInternal WebpushNotification
+	var temp = (*webpushNotificationInternal)(n)
+	if err := json.Unmarshal(b, temp); err != nil {
+		return err
+	}
+	allFields := make(map[string]interface{})
+	if err := json.Unmarshal(b, &allFields); err != nil {
+		return err
+	}
+	for k := range n.standardFields() {
+		delete(allFields, k)
+	}
+	if len(allFields) > 0 {
+		n.CustomData = allFields
+	}
+	return nil
+}
+
+// WebpushFcmOptions contains additional options for features provided by the FCM web SDK.
+type WebpushFcmOptions struct {
+	Link string `json:"link,omitempty"`
 }
 
 // APNSConfig contains messaging options specific to the Apple Push Notification Service (APNS).
@@ -251,17 +405,42 @@ type APNSConfig struct {
 // See https://developer.apple.com/library/content/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/PayloadKeyReference.html
 // for a full list of supported payload fields.
 type APNSPayload struct {
-	Aps        *Aps
-	CustomData map[string]interface{}
+	Aps        *Aps                   `json:"aps,omitempty"`
+	CustomData map[string]interface{} `json:"-"`
+}
+
+// standardFields creates a map containing all the fields except the custom data.
+func (p *APNSPayload) standardFields() map[string]interface{} {
+	return map[string]interface{}{"aps": p.Aps}
 }
 
 // MarshalJSON marshals an APNSPayload into JSON (for internal use only).
 func (p *APNSPayload) MarshalJSON() ([]byte, error) {
-	m := map[string]interface{}{"aps": p.Aps}
+	m := p.standardFields()
 	for k, v := range p.CustomData {
 		m[k] = v
 	}
 	return json.Marshal(m)
+}
+
+// UnmarshalJSON unmarshals a JSON string into an APNSPayload (for internal use only).
+func (p *APNSPayload) UnmarshalJSON(b []byte) error {
+	type apnsPayloadInternal APNSPayload
+	var temp = (*apnsPayloadInternal)(p)
+	if err := json.Unmarshal(b, temp); err != nil {
+		return err
+	}
+	allFields := make(map[string]interface{})
+	if err := json.Unmarshal(b, &allFields); err != nil {
+		return err
+	}
+	for k := range p.standardFields() {
+		delete(allFields, k)
+	}
+	if len(allFields) > 0 {
+		p.CustomData = allFields
+	}
+	return nil
 }
 
 // Aps represents the aps dictionary that may be included in an APNSPayload.
@@ -269,15 +448,16 @@ func (p *APNSPayload) MarshalJSON() ([]byte, error) {
 // Alert may be specified as a string (via the AlertString field), or as a struct (via the Alert
 // field).
 type Aps struct {
-	AlertString      string
-	Alert            *ApsAlert
-	Badge            *int
-	Sound            string
-	ContentAvailable bool
-	MutableContent   bool
-	Category         string
-	ThreadID         string
-	CustomData       map[string]interface{}
+	AlertString      string                 `json:"-"`
+	Alert            *ApsAlert              `json:"-"`
+	Badge            *int                   `json:"badge,omitempty"`
+	Sound            string                 `json:"-"`
+	CriticalSound    *CriticalSound         `json:"-"`
+	ContentAvailable bool                   `json:"-"`
+	MutableContent   bool                   `json:"-"`
+	Category         string                 `json:"category,omitempty"`
+	ThreadID         string                 `json:"thread-id,omitempty"`
+	CustomData       map[string]interface{} `json:"-"`
 }
 
 // standardFields creates a map containing all the fields except the custom data.
@@ -297,7 +477,9 @@ func (a *Aps) standardFields() map[string]interface{} {
 	if a.Badge != nil {
 		m["badge"] = *a.Badge
 	}
-	if a.Sound != "" {
+	if a.CriticalSound != nil {
+		m["sound"] = a.CriticalSound
+	} else if a.Sound != "" {
 		m["sound"] = a.Sound
 	}
 	if a.Category != "" {
@@ -318,19 +500,107 @@ func (a *Aps) MarshalJSON() ([]byte, error) {
 	return json.Marshal(m)
 }
 
+// UnmarshalJSON unmarshals a JSON string into an Aps (for internal use only).
+func (a *Aps) UnmarshalJSON(b []byte) error {
+	type apsInternal Aps
+	temp := struct {
+		AlertObject         *json.RawMessage `json:"alert,omitempty"`
+		SoundObject         *json.RawMessage `json:"sound,omitempty"`
+		ContentAvailableInt int              `json:"content-available,omitempty"`
+		MutableContentInt   int              `json:"mutable-content,omitempty"`
+		*apsInternal
+	}{
+		apsInternal: (*apsInternal)(a),
+	}
+	if err := json.Unmarshal(b, &temp); err != nil {
+		return err
+	}
+	a.ContentAvailable = (temp.ContentAvailableInt == 1)
+	a.MutableContent = (temp.MutableContentInt == 1)
+	if temp.AlertObject != nil {
+		if err := json.Unmarshal(*temp.AlertObject, &a.Alert); err != nil {
+			a.Alert = nil
+			if err := json.Unmarshal(*temp.AlertObject, &a.AlertString); err != nil {
+				return fmt.Errorf("failed to unmarshal alert as a struct or a string: %v", err)
+			}
+		}
+	}
+	if temp.SoundObject != nil {
+		if err := json.Unmarshal(*temp.SoundObject, &a.CriticalSound); err != nil {
+			a.CriticalSound = nil
+			if err := json.Unmarshal(*temp.SoundObject, &a.Sound); err != nil {
+				return fmt.Errorf("failed to unmarshal sound as a struct or a string")
+			}
+		}
+	}
+
+	allFields := make(map[string]interface{})
+	if err := json.Unmarshal(b, &allFields); err != nil {
+		return err
+	}
+	for k := range a.standardFields() {
+		delete(allFields, k)
+	}
+	if len(allFields) > 0 {
+		a.CustomData = allFields
+	}
+	return nil
+}
+
+// CriticalSound is the sound payload that can be included in an Aps.
+type CriticalSound struct {
+	Critical bool    `json:"-"`
+	Name     string  `json:"name,omitempty"`
+	Volume   float64 `json:"volume,omitempty"`
+}
+
+// MarshalJSON marshals a CriticalSound into JSON (for internal use only).
+func (cs *CriticalSound) MarshalJSON() ([]byte, error) {
+	type criticalSoundInternal CriticalSound
+	temp := struct {
+		CriticalInt int `json:"critical,omitempty"`
+		*criticalSoundInternal
+	}{
+		criticalSoundInternal: (*criticalSoundInternal)(cs),
+	}
+	if cs.Critical {
+		temp.CriticalInt = 1
+	}
+	return json.Marshal(temp)
+}
+
+// UnmarshalJSON unmarshals a JSON string into a CriticalSound (for internal use only).
+func (cs *CriticalSound) UnmarshalJSON(b []byte) error {
+	type criticalSoundInternal CriticalSound
+	temp := struct {
+		CriticalInt int `json:"critical,omitempty"`
+		*criticalSoundInternal
+	}{
+		criticalSoundInternal: (*criticalSoundInternal)(cs),
+	}
+	if err := json.Unmarshal(b, &temp); err != nil {
+		return err
+	}
+	cs.Critical = (temp.CriticalInt == 1)
+	return nil
+}
+
 // ApsAlert is the alert payload that can be included in an Aps.
 //
 // See https://developer.apple.com/library/content/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/PayloadKeyReference.html
 // for supported fields.
 type ApsAlert struct {
-	Title        string   `json:"title,omitempty"` // if specified, overrides the Title field of the Notification type
-	Body         string   `json:"body,omitempty"`  // if specified, overrides the Body field of the Notification type
-	LocKey       string   `json:"loc-key,omitempty"`
-	LocArgs      []string `json:"loc-args,omitempty"`
-	TitleLocKey  string   `json:"title-loc-key,omitempty"`
-	TitleLocArgs []string `json:"title-loc-args,omitempty"`
-	ActionLocKey string   `json:"action-loc-key,omitempty"`
-	LaunchImage  string   `json:"launch-image,omitempty"`
+	Title           string   `json:"title,omitempty"` // if specified, overrides the Title field of the Notification type
+	SubTitle        string   `json:"subtitle,omitempty"`
+	Body            string   `json:"body,omitempty"` // if specified, overrides the Body field of the Notification type
+	LocKey          string   `json:"loc-key,omitempty"`
+	LocArgs         []string `json:"loc-args,omitempty"`
+	TitleLocKey     string   `json:"title-loc-key,omitempty"`
+	TitleLocArgs    []string `json:"title-loc-args,omitempty"`
+	SubTitleLocKey  string   `json:"subtitle-loc-key,omitempty"`
+	SubTitleLocArgs []string `json:"subtitle-loc-args,omitempty"`
+	ActionLocKey    string   `json:"action-loc-key,omitempty"`
+	LaunchImage     string   `json:"launch-image,omitempty"`
 }
 
 // ErrorInfo is a topic management error.
@@ -538,7 +808,9 @@ func (c *Client) makeSendRequest(ctx context.Context, req *fcmRequest) (string, 
 		Method: http.MethodPost,
 		URL:    fmt.Sprintf("%s/projects/%s/messages:send", c.fcmEndpoint, c.project),
 		Body:   internal.NewJSONEntity(req),
+		Opts:   []internal.HTTPOption{internal.WithHeader("X-GOOG-API-FORMAT-VERSION", "2")},
 	}
+
 	resp, err := c.client.Do(ctx, request)
 	if err != nil {
 		return "", err
@@ -554,7 +826,7 @@ func (c *Client) makeSendRequest(ctx context.Context, req *fcmRequest) (string, 
 	json.Unmarshal(resp.Body, &fe) // ignore any json parse errors at this level
 	var serverCode string
 	for _, d := range fe.Error.Details {
-		if d.Type == "type.googleapis.com/google.firebase.fcm.v1.FcmErrorCode" {
+		if d.Type == "type.googleapis.com/google.firebase.fcm.v1.FcmError" {
 			serverCode = d.ErrorCode
 			break
 		}

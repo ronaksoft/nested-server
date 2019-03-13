@@ -5,31 +5,33 @@ import (
 	"strings"
 
 	"github.com/kataras/iris/context"
-	"github.com/kataras/iris/core/router/macro"
+	"github.com/kataras/iris/macro"
+	"github.com/kataras/iris/macro/handler"
 )
 
 // Route contains the information about a registered Route.
 // If any of the following fields are changed then the
 // caller should Refresh the router.
 type Route struct {
-	Name      string          // "userRoute"
-	Method    string          // "GET"
-	Subdomain string          // "admin."
-	tmpl      *macro.Template // Tmpl().Src: "/api/user/{id:int}"
-	Path      string          // "/api/user/:id"
+	Name       string         `json:"name"`   // "userRoute"
+	Method     string         `json:"method"` // "GET"
+	methodBckp string         // if Method changed to something else (which is possible at runtime as well, via RefreshRouter) then this field will be filled with the old one.
+	Subdomain  string         `json:"subdomain"` // "admin."
+	tmpl       macro.Template // Tmpl().Src: "/api/user/{id:uint64}"
 	// temp storage, they're appended to the Handlers on build.
 	// Execution happens before Handlers, can be empty.
 	beginHandlers context.Handlers
 	// Handlers are the main route's handlers, executed by order.
 	// Cannot be empty.
-	Handlers        context.Handlers
-	MainHandlerName string
+	Handlers        context.Handlers `json:"-"`
+	MainHandlerName string           `json:"mainHandlerName"`
 	// temp storage, they're appended to the Handlers on build.
 	// Execution happens after Begin and main Handler(s), can be empty.
 	doneHandlers context.Handlers
+	Path         string `json:"path"` // "/api/user/:id"
 	// FormattedPath all dynamic named parameters (if any) replaced with %v,
 	// used by Application to validate param values of a Route based on its name.
-	FormattedPath string
+	FormattedPath string `json:"formattedPath"`
 }
 
 // NewRoute returns a new route based on its method,
@@ -38,16 +40,19 @@ type Route struct {
 // It parses the path based on the "macros",
 // handlers are being changed to validate the macros at serve time, if needed.
 func NewRoute(method, subdomain, unparsedPath, mainHandlerName string,
-	handlers context.Handlers, macros *macro.Map) (*Route, error) {
+	handlers context.Handlers, macros macro.Macros) (*Route, error) {
 
 	tmpl, err := macro.Parse(unparsedPath, macros)
 	if err != nil {
 		return nil, err
 	}
 
-	path, handlers, err := compileRoutePathAndHandlers(handlers, tmpl)
-	if err != nil {
-		return nil, err
+	path := convertMacroTmplToNodePath(tmpl)
+	// prepend the macro handler to the route, now,
+	// right before the register to the tree, so APIBuilder#UseGlobal will work as expected.
+	if handler.CanMakeHandler(tmpl) {
+		macroEvaluatorHandler := handler.MakeHandler(tmpl)
+		handlers = append(context.Handlers{macroEvaluatorHandler}, handlers...)
 	}
 
 	path = cleanPath(path) // maybe unnecessary here but who cares in this moment
@@ -57,6 +62,7 @@ func NewRoute(method, subdomain, unparsedPath, mainHandlerName string,
 	route := &Route{
 		Name:            defaultName,
 		Method:          method,
+		methodBckp:      method,
 		Subdomain:       subdomain,
 		tmpl:            tmpl,
 		Path:            path,
@@ -93,6 +99,33 @@ func (r *Route) done(handlers context.Handlers) {
 	r.doneHandlers = append(r.doneHandlers, handlers...)
 }
 
+// ChangeMethod will try to change the HTTP Method of this route instance.
+// A call of `RefreshRouter` is required after this type of change in order to change to be really applied.
+func (r *Route) ChangeMethod(newMethod string) bool {
+	if newMethod != r.Method {
+		r.methodBckp = r.Method
+		r.Method = newMethod
+		return true
+	}
+
+	return false
+}
+
+// SetStatusOffline will try make this route unavailable.
+// A call of `RefreshRouter` is required after this type of change in order to change to be really applied.
+func (r *Route) SetStatusOffline() bool {
+	return r.ChangeMethod(MethodNone)
+}
+
+// RestoreStatus will try to restore the status of this route instance, i.e if `SetStatusOffline` called on a "GET" route,
+// then this function will make this route available with "GET" HTTP Method.
+// Note if that you want to set status online for an offline registered route then you should call the `ChangeMethod` instead.
+// It will return true if the status restored, otherwise false.
+// A call of `RefreshRouter` is required after this type of change in order to change to be really applied.
+func (r *Route) RestoreStatus() bool {
+	return r.ChangeMethod(r.methodBckp)
+}
+
 // BuildHandlers is executed automatically by the router handler
 // at the `Application#Build` state. Do not call it manually, unless
 // you were defined your own request mux handler.
@@ -114,7 +147,7 @@ func (r Route) String() string {
 		r.Method, r.Subdomain, r.Tmpl().Src)
 }
 
-// Tmpl returns the path template, i
+// Tmpl returns the path template,
 // it contains the parsed template
 // for the route's path.
 // May contain zero named parameters.
@@ -123,7 +156,18 @@ func (r Route) String() string {
 // via Tmpl().Src, Route.Path is the path
 // converted to match the underline router's specs.
 func (r Route) Tmpl() macro.Template {
-	return *r.tmpl
+	return r.tmpl
+}
+
+// RegisteredHandlersLen returns the end-developer's registered handlers, all except the macro evaluator handler
+// if was required by the build process.
+func (r Route) RegisteredHandlersLen() int {
+	n := len(r.Handlers)
+	if handler.CanMakeHandler(r.tmpl) {
+		n--
+	}
+
+	return n
 }
 
 // IsOnline returns true if the route is marked as "online" (state).
@@ -169,7 +213,7 @@ func formatPath(path string) string {
 
 // StaticPath returns the static part of the original, registered route path.
 // if /user/{id} it will return /user
-// if /user/{id}/friend/{friendid:int} it will return /user too
+// if /user/{id}/friend/{friendid:uint64} it will return /user too
 // if /assets/{filepath:path} it will return /assets.
 func (r Route) StaticPath() string {
 	src := r.tmpl.Src
@@ -213,7 +257,8 @@ func (r Route) Trace() string {
 		printfmt += fmt.Sprintf(" %s", r.Subdomain)
 	}
 	printfmt += fmt.Sprintf(" %s ", r.Tmpl().Src)
-	if l := len(r.Handlers); l > 1 {
+
+	if l := r.RegisteredHandlersLen(); l > 1 {
 		printfmt += fmt.Sprintf("-> %s() and %d more", r.MainHandlerName, l-1)
 	} else {
 		printfmt += fmt.Sprintf("-> %s()", r.MainHandlerName)
@@ -248,4 +293,12 @@ func (rd routeReadOnlyWrapper) Path() string {
 
 func (rd routeReadOnlyWrapper) Trace() string {
 	return rd.Route.Trace()
+}
+
+func (rd routeReadOnlyWrapper) Tmpl() macro.Template {
+	return rd.Route.Tmpl()
+}
+
+func (rd routeReadOnlyWrapper) MainHandlerName() string {
+	return rd.Route.MainHandlerName
 }

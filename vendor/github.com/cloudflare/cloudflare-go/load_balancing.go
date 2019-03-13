@@ -15,15 +15,21 @@ type LoadBalancerPool struct {
 	Description       string               `json:"description"`
 	Name              string               `json:"name"`
 	Enabled           bool                 `json:"enabled"`
+	MinimumOrigins    int                  `json:"minimum_origins,omitempty"`
 	Monitor           string               `json:"monitor,omitempty"`
 	Origins           []LoadBalancerOrigin `json:"origins"`
 	NotificationEmail string               `json:"notification_email,omitempty"`
+
+	// CheckRegions defines the geographic region(s) from where to run health-checks from - e.g. "WNAM", "WEU", "SAF", "SAM".
+	// Providing a null/empty value means "all regions", which may not be available to all plan types.
+	CheckRegions []string `json:"check_regions"`
 }
 
 type LoadBalancerOrigin struct {
-	Name    string `json:"name"`
-	Address string `json:"address"`
-	Enabled bool   `json:"enabled"`
+	Name    string  `json:"name"`
+	Address string  `json:"address"`
+	Enabled bool    `json:"enabled"`
+	Weight  float64 `json:"weight"`
 }
 
 // LoadBalancerMonitor represents a load balancer monitor's properties.
@@ -56,6 +62,7 @@ type LoadBalancer struct {
 	RegionPools  map[string][]string `json:"region_pools"`
 	PopPools     map[string][]string `json:"pop_pools"`
 	Proxied      bool                `json:"proxied"`
+	Persistence  string              `json:"session_affinity,omitempty"`
 }
 
 // loadBalancerPoolResponse represents the response from the load balancer pool endpoints.

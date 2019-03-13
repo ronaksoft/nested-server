@@ -16,6 +16,7 @@ package messaging
 
 import (
 	"fmt"
+	"net/url"
 	"regexp"
 	"strings"
 )
@@ -45,6 +46,11 @@ func validateMessage(message *Message) error {
 
 	// validate AndroidConfig
 	if err := validateAndroidConfig(message.Android); err != nil {
+		return err
+	}
+
+	// validate WebpushConfig
+	if err := validateWebpushConfig(message.Webpush); err != nil {
 		return err
 	}
 
@@ -92,6 +98,12 @@ func validateAPNSConfig(config *APNSConfig) error {
 
 func validateAPNSPayload(payload *APNSPayload) error {
 	if payload != nil {
+		m := payload.standardFields()
+		for k := range payload.CustomData {
+			if _, contains := m[k]; contains {
+				return fmt.Errorf("multiple specifications for the key %q", k)
+			}
+		}
 		return validateAps(payload.Aps)
 	}
 	return nil
@@ -101,6 +113,14 @@ func validateAps(aps *Aps) error {
 	if aps != nil {
 		if aps.Alert != nil && aps.AlertString != "" {
 			return fmt.Errorf("multiple alert specifications")
+		}
+		if aps.CriticalSound != nil {
+			if aps.Sound != "" {
+				return fmt.Errorf("multiple sound specifications")
+			}
+			if aps.CriticalSound.Volume < 0 || aps.CriticalSound.Volume > 1 {
+				return fmt.Errorf("critical sound volume must be in the interval [0, 1]")
+			}
 		}
 		m := aps.standardFields()
 		for k := range aps.CustomData {
@@ -120,8 +140,37 @@ func validateApsAlert(alert *ApsAlert) error {
 	if len(alert.TitleLocArgs) > 0 && alert.TitleLocKey == "" {
 		return fmt.Errorf("titleLocKey is required when specifying titleLocArgs")
 	}
+	if len(alert.SubTitleLocArgs) > 0 && alert.SubTitleLocKey == "" {
+		return fmt.Errorf("subtitleLocKey is required when specifying subtitleLocArgs")
+	}
 	if len(alert.LocArgs) > 0 && alert.LocKey == "" {
 		return fmt.Errorf("locKey is required when specifying locArgs")
+	}
+	return nil
+}
+
+func validateWebpushConfig(webpush *WebpushConfig) error {
+	if webpush == nil || webpush.Notification == nil {
+		return nil
+	}
+	dir := webpush.Notification.Direction
+	if dir != "" && dir != "ltr" && dir != "rtl" && dir != "auto" {
+		return fmt.Errorf("direction must be 'ltr', 'rtl' or 'auto'")
+	}
+	m := webpush.Notification.standardFields()
+	for k := range webpush.Notification.CustomData {
+		if _, contains := m[k]; contains {
+			return fmt.Errorf("multiple specifications for the key %q", k)
+		}
+	}
+	if webpush.FcmOptions != nil {
+		link := webpush.FcmOptions.Link
+		p, err := url.ParseRequestURI(link)
+		if err != nil {
+			return fmt.Errorf("invalid link URL: %q", link)
+		} else if p.Scheme != "https" {
+			return fmt.Errorf("invalid link URL: %q; want scheme: %q", link, "https")
+		}
 	}
 	return nil
 }

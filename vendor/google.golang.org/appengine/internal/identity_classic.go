@@ -7,10 +7,14 @@
 package internal
 
 import (
-	"google.golang.org/appengine"
+	"appengine"
 
 	netcontext "golang.org/x/net/context"
 )
+
+func init() {
+	appengineStandard = true
+}
 
 func DefaultVersionHostname(ctx netcontext.Context) string {
 	c := fromContext(ctx)
@@ -20,7 +24,7 @@ func DefaultVersionHostname(ctx netcontext.Context) string {
 	return appengine.DefaultVersionHostname(c)
 }
 
-func Datacenter(_ netcontext.Context) string { return appengine.Datacenter(ctx) }
+func Datacenter(_ netcontext.Context) string { return appengine.Datacenter() }
 func ServerSoftware() string                 { return appengine.ServerSoftware() }
 func InstanceID() string                     { return appengine.InstanceID() }
 func IsDevAppServer() bool                   { return appengine.IsDevAppServer() }

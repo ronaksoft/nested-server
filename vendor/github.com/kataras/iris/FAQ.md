@@ -28,9 +28,10 @@ go get -u github.com/kataras/iris
 
 More than 100 practical examples, tutorials and articles at:
 
+- https://github.com/kataras/iris#iris-starter-kits
 - https://github.com/kataras/iris/tree/master/_examples
 - https://github.com/iris-contrib/examples
-- https://iris-go.com/v10/recipe
+- https://iris-go.com/v11/recipe
 - https://docs.iris-go.com (in-progress)
 - https://godoc.org/github.com/kataras/iris
 
@@ -105,8 +106,8 @@ Yes, https://chat.iris-go.com
 
 https://github.com/kataras/iris/issues/646
 
-## How this open-source project still active and shine?
+## How is the development of Iris supported?
 
-By normal people like you, who help us by donating small or larger amounts of money.
+By normal people, like you, who help us by donating small or large amounts of money.
 
-Help this project to continue deliver awesome and unique features with the highest possible code quality as possible by donating any amount via [PayPal](https://www.paypal.me/kataras). Your name will be published [here](https://iris-go.com/donate) after your approval via e-mail.
+Help this project deliver awesome and unique features with the highest possible code quality by donating any amount via [PayPal](https://www.paypal.me/kataras). Your name will be published [here](https://iris-go.com/donate) after your approval via e-mail.

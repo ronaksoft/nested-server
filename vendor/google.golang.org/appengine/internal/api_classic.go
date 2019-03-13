@@ -12,9 +12,9 @@ import (
 	"net/http"
 	"time"
 
+	"appengine"
 	"appengine_internal"
 	basepb "appengine_internal/base"
-	"google.golang.org/appengine"
 
 	"github.com/golang/protobuf/proto"
 	netcontext "golang.org/x/net/context"
@@ -24,13 +24,13 @@ var contextKey = "holds an appengine.Context"
 
 // fromContext returns the App Engine context or nil if ctx is not
 // derived from an App Engine context.
-func fromContext(ctx netcontext.Context) context.Context {
-	c, _ := ctx.Value(&contextKey).(context.Context)
+func fromContext(ctx netcontext.Context) appengine.Context {
+	c, _ := ctx.Value(&contextKey).(appengine.Context)
 	return c
 }
 
 // This is only for classic App Engine adapters.
-func ClassicContextFromContext(ctx netcontext.Context) (context.Context, error) {
+func ClassicContextFromContext(ctx netcontext.Context) (appengine.Context, error) {
 	c := fromContext(ctx)
 	if c == nil {
 		return nil, errNotAppEngineContext
@@ -38,7 +38,7 @@ func ClassicContextFromContext(ctx netcontext.Context) (context.Context, error) 
 	return c, nil
 }
 
-func withContext(parent netcontext.Context, c context.Context) netcontext.Context {
+func withContext(parent netcontext.Context, c appengine.Context) netcontext.Context {
 	ctx := netcontext.WithValue(parent, &contextKey, c)
 
 	s := &basepb.StringProto{}
@@ -69,7 +69,7 @@ func WithContext(parent netcontext.Context, req *http.Request) netcontext.Contex
 }
 
 type testingContext struct {
-	context.Context
+	appengine.Context
 
 	req *http.Request
 }
@@ -148,7 +148,7 @@ func handleHTTP(w http.ResponseWriter, r *http.Request) {
 	panic("handleHTTP called; this should be impossible")
 }
 
-func logf(c context.Context, level int64, format string, args ...interface{}) {
+func logf(c appengine.Context, level int64, format string, args ...interface{}) {
 	var fn func(format string, args ...interface{})
 	switch level {
 	case 0:
