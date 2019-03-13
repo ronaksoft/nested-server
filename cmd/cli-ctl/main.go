@@ -1,12 +1,12 @@
 package main
 
 import (
-  "os"
-  "git.ronaksoftware.com/nested/cli-ctl/cli/cmd"
+	"git.ronaksoftware.com/nested/cli-ctl/cli/cmd"
+	"os"
 )
 
 func main() {
-  if err := cmd.RootCmd.Execute(); err != nil {
-    os.Exit(1)
-  }
+	if err := cmd.RootCmd.Execute(); err != nil {
+		os.Exit(1)
+	}
 }
