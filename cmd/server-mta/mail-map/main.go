@@ -51,12 +51,13 @@ var instanceInfo = make(map[string]info)
 func main() {
 	_Config = readConfig()
 	fmt.Println("starting mail-map")
-	cli, err := client.NewClientWithOpts(client.WithVersion("1.37"))
+	cli, err := client.NewClient(client.DefaultDockerHost, "1.37", nil, nil)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 	ctx := context.Background()
-	args := filters.NewArgs(filters.Arg("name", "gateway"))
+	args := filters.NewArgs()
+	args.Add("name", "gateway")
 	containers, err := cli.ContainerList(ctx, types.ContainerListOptions{Filters: args})
 	if err != nil {
 		fmt.Println(err.Error())
@@ -257,14 +258,15 @@ func Get(conn net.Conn, email string) {
 }
 
 func watchdog(t time.Time) {
-	cli, err := client.NewClientWithOpts(client.WithVersion("1.37"))
+	cli, err := client.NewClient(client.DefaultDockerHost, "1.37", nil, nil)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
 	ctx := context.Background()
-	args := filters.NewArgs(
-		filters.Arg("name", "gateway"))
+	args := filters.NewArgs()
+	args.Add("name", "gateway")
+
 
 	containers, err := cli.ContainerList(ctx, types.ContainerListOptions{Filters: args})
 	if err != nil {
