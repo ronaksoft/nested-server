@@ -1,0 +1,93 @@
+# Nested Global Config File
+# Please setup the parameters carefully since if you provide incorrect information the nested service might not work
+# properly or at all.
+# Default values set in this config are for single-bundle nested. i.e. single-bundle nested means all the services
+# required by nested are on single server instance.
+
+#########################
+##  Common Parameters ##
+#######################
+Domain: ronaksoftware.com
+GoogleAPIKey:
+ClientSideIP:
+MongoDataDSN: mongodb://db-mongo.nst:27001
+MongoFileDSN: mongodb://db-mongo.nst:27001
+RedisCacheDSN: cache-redis.nst:6379
+ExternalJobUrl: nats://job.arsaces.nst:4222
+# XerxesKey is required for nested services which need access to xerxes servers.
+# In case of multiple servers then this key MUST be same on all servers
+XerxesKey:
+
+
+########################
+## Services          ##
+######################
+# Arsaces Service Config
+# if EnabledServices.Arsaces is false then you can comment out this section safely.
+Arsaces:
+  Port: 4222
+  PortExposed: false
+
+# Cyrus Service Config
+# if EnabledServices.Cyrus is false then you can comment out this section safely.
+Cyrus:
+  BundleID: CYRUS-001
+  WebsocketPort: 81
+  HttpPort: 82
+  Secure: false
+  DebugLevel: 0
+  WebappBaseUrl: https://webapp.ronaksoftware.com
+
+#  Xerxes Service Config
+# if EnabledServices.Xerxes is false then you can comment out this section safely.
+Xerxes:
+  BundleID: XERXES-001
+  Port: 83
+  Secure: false
+  CertificateCheck: false
+
+#  Gobryas Service Config
+# if EnabledServices.Gobryas is false then you can comment out this section safely.
+Gobryas:
+  BundleID: GOBRYAS-001
+  Port:
+  DKIMSelector: dkim
+  DKIMKey:
+  DKIMText:
+  SMTPPrivateKey:
+  SMTPPublicKey:
+  XerxesUrl:
+  WebappUrl:
+
+#  Mongo Service Config
+# if EnabledServices.Mongo is false then you can comment out this section safely.
+Mongo:
+  Port: 27001
+  PortExposed: false
+
+#  Redis Service Config
+# if EnabledServices.Redis is false then you can comment out this section safely.
+Redis:
+  Port: 6379
+  PortExposed: false
+
+#  Web Service Config (Web-app & Web-admin)
+# if EnabledServices.Web is false then you can comment out this section safely.
+Web:
+  AppPort: 80
+  AdminPort: 8080
+  AdminURL:
+  DefaultCyrusWebsocketUrl: ws://cyrus.nested.me:81
+  DefaultCyrusHttpUrl: http://cyrus.nested.me:82
+  DefaultXerxesUrl: http://xerxes.nested.me:83
+
+#  Services selects services which will be running on this server instance
+EnabledServices:
+  Arsaces: true
+  Cyrus: true
+  Gobryas: true
+  Mongo: true
+  Redis: true
+  Web: true
+  Xerxes: true
+

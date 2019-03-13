@@ -1,0 +1,17 @@
+version: '2'
+services:
+  dnsmasq:
+    image: registry.ronaksoftware.com/base/dnsmasq:latest
+    command: --hostsdir=/etc/dnsmasq.d --user=root --no-ping
+    volumes:
+      - ./hosts:/etc/dnsmasq.d/hosts
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+    cap_add:
+      - NET_ADMIN
+
+networks:
+  default:
+    external:
+      name: dns-net

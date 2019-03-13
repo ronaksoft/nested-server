@@ -1,0 +1,34 @@
+storage:
+  journal:
+    enabled: true
+  directoryPerDB: true
+#  dbPath:
+#  wiredTiger:
+#      engineConfig:
+#         cacheSizeGB: <number>
+#         journalCompressor: <string>
+#         directoryForIndexes: <boolean>
+#      collectionConfig:
+#         blockCompressor: <string>
+#      indexConfig:
+#         prefixCompression: <boolean>
+net:
+#  bindIp: 0.0.0.0
+  port: 27001
+#  ssl:
+#    mode: preferSSL
+#    PEMKeyFile: /ronak/certs/cert.pem
+  #  clusterFile: <string>
+  #  clusterPassword: <string>
+  #  CAFile: <string>
+  #  CRLFile: <string>
+  #  allowConnectionsWithoutCertificates: <boolean>
+  #  allowInvalidCertificates: <boolean>
+  #  allowInvalidHostnames: <boolean>
+#    disabledProtocols: TLS1_0,TLS1_1
+  #  FIPSMode: <boolean>
+setParameter:
+   enableLocalhostAuthBypass: true
+operationProfiling:
+  slowOpThresholdMs: 50
+  mode: slowOp

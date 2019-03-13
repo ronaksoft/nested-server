@@ -182,6 +182,12 @@
 			"revisionTime": "2018-07-23T12:58:55Z"
 		},
 		{
+			"checksumSHA1": "cqtptjmQvy8O0/YJeeucNYpCeJg=",
+			"path": "github.com/cloudflare/cloudflare-go",
+			"revision": "73188131583704facec77adbb1e666a7917f973c",
+			"revisionTime": "2017-08-09T21:49:21Z"
+		},
+		{
 			"checksumSHA1": "Gj+xR1VgFKKmFXYOJMnAczC3Znk=",
 			"path": "github.com/docker/distribution/digestset",
 			"revision": "3354cf98e3a55ca01d9712714f2c69531abc2347",
@@ -517,6 +523,12 @@
 			"revisionTime": "2018-07-16T21:50:31Z"
 		},
 		{
+			"checksumSHA1": "40vJyUB4ezQSn/NSadsKEOrudMc=",
+			"path": "github.com/inconshreveable/mousetrap",
+			"revision": "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75",
+			"revisionTime": "2014-10-17T20:07:13Z"
+		},
+		{
 			"checksumSHA1": "R8JkoEsr84IjUvngtp9ljjZXWVE=",
 			"origin": "github.com/kataras/iris/vendor/github.com/iris-contrib/formBinder",
 			"path": "github.com/iris-contrib/formBinder",
@@ -792,6 +804,18 @@
 			"revisionTime": "2018-07-23T12:58:55Z"
 		},
 		{
+			"checksumSHA1": "eOXF2PEvYLMeD8DSzLZJWbjYzco=",
+			"path": "github.com/kr/pretty",
+			"revision": "cfb55aafdaf3ec08f0db22699ab822c50091b1c4",
+			"revisionTime": "2016-08-23T17:07:15Z"
+		},
+		{
+			"checksumSHA1": "uulQHQ7IsRKqDudBC8Go9J0gtAc=",
+			"path": "github.com/kr/text",
+			"revision": "7cafcd837844e784b526369c9bce262804aebc60",
+			"revisionTime": "2016-05-04T02:26:26Z"
+		},
+		{
 			"checksumSHA1": "HIMDeysKGqDKh9a3N5lFLZRNHaU=",
 			"path": "github.com/mailru/easyjson",
 			"revision": "8b799c424f57fa123fc63a99d6383bc6e4c02578",
@@ -947,6 +971,18 @@
 			"path": "github.com/shurcooL/sanitized_anchor_name",
 			"revision": "7855963eae50bcb2b3846a680683b8b9d905eab3",
 			"revisionTime": "2018-07-23T12:58:55Z"
+		},
+		{
+			"checksumSHA1": "WYd7aI5YkeiRSv5pqr12emezBIg=",
+			"path": "github.com/spf13/cobra",
+			"revision": "7547e83b2d85fd1893c7d76916f67689d761fecb",
+			"revisionTime": "2019-01-09T00:34:09Z"
+		},
+		{
+			"checksumSHA1": "VK+UsykzUMkaKl2ankiyutolraE=",
+			"path": "github.com/spf13/pflag",
+			"revision": "24fa6976df40757dce6aea913e7b81ade90530e1",
+			"revisionTime": "2018-12-23T18:29:23Z"
 		},
 		{
 			"checksumSHA1": "qErubHtC7DAFBnEQkMTuKDtfFTU=",

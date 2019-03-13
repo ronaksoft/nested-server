@@ -1,0 +1,21 @@
+version: '2'
+services:
+  cache-redis:
+    restart:  always
+    image: registry.ronaksoftware.com/base/redis:latest
+    volumes:
+      - ./.vol:/data:rw
+    networks:
+      default:
+        aliases:
+          - cache-redis.nst
+    {{if .Redis.PortExposed}}
+    ports:
+      - {{.Redis.Port}}:{{.Redis.Port}}
+    {{end}}
+
+
+networks:
+  default:
+    external:
+      name: cache-redis-net

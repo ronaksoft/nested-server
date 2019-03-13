@@ -1,0 +1,19 @@
+version: '2'
+services:
+  webapp:
+    restart: always
+    image: registry.ronaksoftware.com/nested/web-app:business
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./certs:/ronak/certs
+    environment:
+      - NST_HTTP_CYRUS_URL={{.Web.DefaultCyrusHttpUrl}}
+      - NST_WS_CYRUS_URL={{.Web.DefaultCyrusWebsocketUrl}}
+      - NST_GOOGLE_ANALYTICS_TOKEN=
+      - NST_UPLOAD_SIZE_LIMIT=104857600
+      - NST_TLS_KEY_FILE=/ronak/certs/web.key
+      - NST_TLS_CERT_FILE=/ronak/certs/web.crt
+      - DISABLE_FCM={{.Web.DisableFcm}}
+      - NST_DOMAIN={{.Domain}}

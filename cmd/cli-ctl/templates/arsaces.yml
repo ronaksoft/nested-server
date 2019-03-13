@@ -1,0 +1,18 @@
+version: '2'
+services:
+  job:
+    restart: always
+    image: registry.ronaksoftware.com/base/nats:latest
+    command: -m 8222
+    networks:
+      default:
+        aliases:
+          - job.arsaces.nst
+    {{if .Arsaces.PortExposed}}
+    ports:
+      - {{.Arsaces.Port}}:{{.Arsaces.Port}}
+    {{end}}
+networks:
+  default:
+    external:
+      name: arsaces-net
