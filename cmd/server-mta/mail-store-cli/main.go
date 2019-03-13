@@ -130,12 +130,14 @@ func initMongo(mongoDSN string) (*mgo.Session, error) {
 }
 
 func detectInstances() {
-	cli, err := client.NewClientWithOpts(client.WithVersion("1.37"))
+
+	cli, err := client.NewClient(client.DefaultDockerHost, "1.37", nil, nil)
 	if err != nil {
 		_LOG.Error(err.Error())
 	}
 	ctx := context.Background()
-	args := filters.NewArgs(filters.Arg("name", "gateway"))
+	args := filters.NewArgs()
+	args.Add("name", "gateway")
 	containers, err := cli.ContainerList(ctx, types.ContainerListOptions{Filters: args})
 	if err != nil {
 		_LOG.Error(err.Error())
@@ -218,14 +220,14 @@ func recoverPanic() {
 
 // watchdog will catch newly added/removed nested containers and updates instanceInf map
 func watchdog(t time.Time) {
-	cli, err := client.NewClientWithOpts(client.WithVersion("1.37"))
+	cli, err := client.NewClient(client.DefaultDockerHost, "1.37", nil, nil)
 	if err != nil {
 		_LOG.Error(err.Error())
 		return
 	}
 	ctx := context.Background()
-	args := filters.NewArgs(
-		filters.Arg("name", "gateway"))
+	args := filters.NewArgs()
+	args.Add("name", "gateway")
 
 	containers, err := cli.ContainerList(ctx, types.ContainerListOptions{Filters: args})
 	if err != nil {
