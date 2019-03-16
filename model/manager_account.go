@@ -239,6 +239,7 @@ func (am *AccountManager) CreateUser(uid, pass, phone, country, fname, lname, em
 		Disabled: true,
 		Type:     ACCOUNT_TYPE_USER,
 		Phone:    phone,
+		Username: uid,
 		Country:  country,
 		JoinedOn: Timestamp(),
 		AuthKey:  RandomID(32),

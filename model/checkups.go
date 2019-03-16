@@ -15,7 +15,7 @@ func StartupCheckups() {
 	_ = _MongoDB.C(COLLECTION_ACCOUNTS).EnsureIndex(mgo.Index{Key: []string{"email"}})
 	_ = _MongoDB.C(COLLECTION_ACCOUNTS).EnsureIndex(mgo.Index{Key: []string{"phone"}})
 	_ = _MongoDB.C(COLLECTION_ACCOUNTS).EnsureIndex(mgo.Index{Key: []string{"full_name"}})
-	_ = _MongoDB.C(COLLECTION_ACCOUNTS).DropIndexName("username")
+	_ = _MongoDB.C(COLLECTION_ACCOUNTS).EnsureIndex(mgo.Index{Key: []string{"username"}, Unique: true, Background: false})
 	_ = _MongoDB.C(COLLECTION_ACCOUNTS).EnsureIndex(mgo.Index{Key: []string{"access_places"}, Background: true})
 	_ = _MongoDB.C(COLLECTION_ACCOUNTS_POSTS).EnsureIndex(mgo.Index{Key: []string{"account_id", "-pin_time"}, Background: true})
 	_ = _MongoDB.C(COLLECTION_ACCOUNTS_PLACES).EnsureIndex(mgo.Index{Key: []string{"account_id", "-pts"}, Background: true})
