@@ -31,7 +31,7 @@ type DeviceManager struct{}
 func NewDeviceManager() *DeviceManager { return new(DeviceManager) }
 
 func (dm *DeviceManager) GetByAccountID(accountID string) []Device {
-	dbSession := _MongoSession.Clone()
+	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
 
@@ -43,7 +43,7 @@ func (dm *DeviceManager) GetByAccountID(accountID string) []Device {
 }
 
 func (dm *DeviceManager) IncrementBadge(accountID string) {
-	dbSession := _MongoSession.Clone()
+	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
 
@@ -56,7 +56,7 @@ func (dm *DeviceManager) IncrementBadge(accountID string) {
 }
 
 func (dm *DeviceManager) Register(deviceID, deviceToken, deviceOS, accountID string) bool {
-	dbSession := _MongoSession.Clone()
+	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
 
@@ -79,7 +79,7 @@ func (dm *DeviceManager) Register(deviceID, deviceToken, deviceOS, accountID str
 		TotalUpdates: 0,
 	}
 	if err := db.C(COLLECTION_ACCOUNTS_DEVICES).Insert(d); err != nil {
-		db.C(COLLECTION_ACCOUNTS_DEVICES).UpdateId(
+		_ = db.C(COLLECTION_ACCOUNTS_DEVICES).UpdateId(
 			deviceID,
 			bson.M{
 				"$set": bson.M{
@@ -95,7 +95,7 @@ func (dm *DeviceManager) Register(deviceID, deviceToken, deviceOS, accountID str
 }
 
 func (dm *DeviceManager) Remove(deviceID string) bool {
-	dbSession := _MongoSession.Clone()
+	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
 
@@ -107,7 +107,7 @@ func (dm *DeviceManager) Remove(deviceID string) bool {
 }
 
 func (dm *DeviceManager) SetAsConnected(deviceID, accountID string) bool {
-	dbSession := _MongoSession.Clone()
+	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
 
@@ -128,7 +128,7 @@ func (dm *DeviceManager) SetAsConnected(deviceID, accountID string) bool {
 }
 
 func (dm *DeviceManager) SetAsDisconnected(deviceID string) bool {
-	dbSession := _MongoSession.Clone()
+	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
 
@@ -143,7 +143,7 @@ func (dm *DeviceManager) SetAsDisconnected(deviceID string) bool {
 }
 
 func (dm *DeviceManager) Update(deviceID, deviceToken, deviceOS, accountID string) bool {
-	dbSession := _MongoSession.Clone()
+	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
 

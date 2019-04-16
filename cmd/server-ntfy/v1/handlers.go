@@ -144,7 +144,6 @@ func pushExternal(in rpc.Message) rpc.Message {
 		}(uid)
 
 	}
-	_Model.RefreshDbConnection()
 	return ResultOk()
 }
 
