@@ -195,7 +195,6 @@ func store(domain, sender string, recipients []string, mailEnvelope *enmime.Enve
 				zap.Any("", att.Header),
 			)
 
-
 			if finfo, err := uploadFile(filename, senderID, nested.FILE_STATUS_ATTACHED, attachmentOwners, bytes.NewReader(att.Content), m.Storage); err != nil {
 				_LOG.Error("ERROR::::::Error adding inline attachment:", zap.Error(err))
 			} else {

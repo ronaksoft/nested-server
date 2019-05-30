@@ -306,6 +306,8 @@ gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 h1:qIbj1fsPNlZgppZ+VLlY7N33
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/fsnotify.v1 v1.4.7 h1:xOHLXZwVvI9hhs+cLKq5+I5onOuwQLhQwiu63xxlHs4=
 gopkg.in/fsnotify.v1 v1.4.7/go.mod h1:Tz8NjZHkW78fSQdbUxIjBTcgA1z1m8ZHf0WmKUhAMys=
+gopkg.in/fzerorubigd/onion.v2 v2.0.0-20160731134907-078930955df6 h1:denNGRjglx8L4bJwZOU7JlOSRQF2KS6pHyv1xWesJXg=
+gopkg.in/fzerorubigd/onion.v2 v2.0.0-20160731134907-078930955df6/go.mod h1:t3W84PhZlCCXmL64Crc6fAN8mvclgCrTlUP2cwicFL0=
 gopkg.in/fzerorubigd/onion.v3 v3.0.0-20181013165022-7b9c1b5d62cd h1:c3k3ecjlg8a7uZ4skulFIPzCgcHJ636ZTRuGqkl/sh0=
 gopkg.in/fzerorubigd/onion.v3 v3.0.0-20181013165022-7b9c1b5d62cd/go.mod h1:Cikz8f+w8PDeC+ZB0uWhKryBDXlYeQdvBpfK4rcP3cs=
 gopkg.in/inf.v0 v0.9.1 h1:73M5CoZyi3ZLMOyDlQh031Cx6N9NDJ2Vvfl76EDAgDc=

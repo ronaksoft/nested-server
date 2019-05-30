@@ -267,7 +267,6 @@ func watchdog(t time.Time) {
 	args := filters.NewArgs()
 	args.Add("name", "gateway")
 
-
 	containers, err := cli.ContainerList(ctx, types.ContainerListOptions{Filters: args})
 	if err != nil {
 		fmt.Println(err.Error())

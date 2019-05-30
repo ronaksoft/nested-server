@@ -81,21 +81,19 @@ func main() {
 		log.Panic(err.Error())
 	} else {
 		rpcWorker = v1.NewWorker(
-			rateLimiter, _Model, natsConn,
-			fcmClient,
+			rateLimiter, _Model, natsConn, fcmClient,
 			_Config.GetString("BUNDLE_ID"),
 		)
 	}
 
-	natsConn.Subscribe("NTFY.>", func(msg *nats.Msg) {
+	_, _ = natsConn.Subscribe("NTFY.>", func(msg *nats.Msg) {
 		in := rpc.Message{
 			Constructor: rpc.MessageConstructor(msg.Subject),
 			Data:        rpc.JsonMessageStream(msg.Data),
 		}
-		rpcWorker.Execute(in)
+		_, _ = rpcWorker.Execute(in)
 	})
 
 	// Waiting for exit signal
 	<-exit_ch
-
 }
