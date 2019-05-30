@@ -27,7 +27,7 @@ func NewClient(address, bundleId string) (*Client, error) {
 
 	// Extract BundleGroup & BundleIndex from the BundleID
 	if bidSpl := strings.SplitN(bundleId, BUNDLE_ID_SEPERATOR, 2); len(bidSpl) != 2 {
-		return nil, errors.New("Invalid Bundle ID")
+		return nil, errors.New("invalid bundle id")
 	} else {
 		c.bundleGroup = bidSpl[0]
 		c.bundleIndex = bidSpl[1]

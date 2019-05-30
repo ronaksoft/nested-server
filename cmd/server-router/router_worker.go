@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"go.uber.org/zap"
 	"strings"
 	"time"
 
-	"git.ronaksoftware.com/nested/server/cmd/s"
 	"github.com/nats-io/go-nats"
 )
 
@@ -35,8 +35,12 @@ func NewRouterWorker(jh *JobHandler) (*RouterWorker, error) {
 	rw.chIntToExt = make(chan *nats.Msg, jh.conf.GetInt("JOB_INT_BUFFER_SIZE"))
 	rw.chExtToInt = make(chan *nats.Msg, jh.conf.GetInt("JOB_EXT_BUFFER_SIZE"))
 
-	_Log.Infof("Internal Job Buffer Size: %d", jh.conf.GetInt("JOB_INT_BUFFER_SIZE"))
-	_Log.Infof("External Job Buffer Size: %d", jh.conf.GetInt("JOB_EXT_BUFFER_SIZE"))
+	_Log.Info("Internal Job Buffer Size",
+		zap.Int("BufferSize", jh.conf.GetInt("JOB_INT_BUFFER_SIZE")),
+	)
+	_Log.Info("External Job Buffer Size",
+		zap.Int("BufferSize", jh.conf.GetInt("JOB_EXT_BUFFER_SIZE")),
+	)
 
 	var subjInt bytes.Buffer
 	subjInt.WriteString(router.ROUTER_SUBJECT_PREFIX)
@@ -53,10 +57,6 @@ func NewRouterWorker(jh *JobHandler) (*RouterWorker, error) {
 		rw.BundleIndex = strings.ToUpper(s[1])
 	}
 
-	_Log.Infof("Internal Subject: %s", rw.subjInt)
-	_Log.Infof("Bundle Group: %s", rw.BundleGroup)
-	_Log.Infof("Bundle Index: %s", rw.BundleIndex)
-
 	var subjUniCast bytes.Buffer
 	subjUniCast.WriteString(rw.BundleGroup)
 	subjUniCast.WriteRune('-')
@@ -66,16 +66,12 @@ func NewRouterWorker(jh *JobHandler) (*RouterWorker, error) {
 	subjUniCast.WriteRune('>')
 	rw.subjExtUnicast = subjUniCast.String()
 
-	_Log.Infof("External Unicast Subject: %s", rw.subjExtUnicast)
-
 	var subjAnyCast bytes.Buffer
 	subjAnyCast.WriteString(rw.BundleGroup)
 	subjAnyCast.WriteRune('.')
 	rw.subjExtAnycastPrefix = subjAnyCast.String()
 	subjAnyCast.WriteRune('>')
 	rw.subjExtAnycast = subjAnyCast.String()
-
-	_Log.Infof("External Anycast Subject: %s", rw.subjExtAnycast)
 
 	return rw, nil
 }
@@ -85,25 +81,19 @@ func (rw *RouterWorker) RegisterWorker() error {
 		go func() {
 			for {
 				msg := <-rw.chIntToExt
-				_Log.Infof("Query received from Intern: %s", msg.Subject)
 				rw.toExtern(msg)
 			}
 		}()
 	}
 
-	_Log.Infof("Just ran %d internal workers", rw.jh.conf.GetInt("JOB_INT_WORKERS_COUNT"))
-
 	for i := 0; i < rw.jh.conf.GetInt("JOB_EXT_WORKERS_COUNT"); i++ {
 		go func() {
 			for {
 				msg := <-rw.chExtToInt
-				_Log.Infof("Query received from Extern: %s", msg.Subject)
 				rw.toIntern(msg)
 			}
 		}()
 	}
-
-	_Log.Infof("Just ran %d external workers", rw.jh.conf.GetInt("JOB_EXT_WORKERS_COUNT"))
 
 	if _, err := rw.jh.iconn.ChanSubscribe(rw.subjInt, rw.chIntToExt); err != nil {
 		return err
@@ -126,13 +116,9 @@ func (rw *RouterWorker) toExtern(msg *nats.Msg) {
 	}
 
 	xsubj := msg.Subject[len(rw.subjIntPrefix):]
-
-	_Log.Infof("Gonna send to: %s, %s", xsubj, string(msg.Data))
 	if response, err := rw.jh.xconn.Request(xsubj, msg.Data, time.Second*20); err != nil {
-		_Log.Errorf("Query to %s failed: %s", xsubj, err.Error())
 		rw.jh.iconn.PublishMsg(response)
 	} else {
-		_Log.Infof("Query to %s succeed: %v", xsubj, response)
 		rw.jh.iconn.PublishMsg(response)
 	}
 }
@@ -147,12 +133,9 @@ func (rw *RouterWorker) toIntern(msg *nats.Msg) {
 		return
 	}
 
-	_Log.Infof("Gonna send to: %s, %s", isubj, string(msg.Data))
 	if response, err := rw.jh.iconn.Request(isubj, msg.Data, time.Second*20); err != nil {
-		_Log.Errorf("Query to %s failed: %s", isubj, err.Error())
 		rw.jh.xconn.PublishMsg(response)
 	} else {
-		_Log.Infof("Query to %s succeed: %v", isubj, response)
 		rw.jh.xconn.PublishMsg(response)
 	}
 }
