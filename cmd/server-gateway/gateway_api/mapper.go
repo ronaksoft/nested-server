@@ -518,16 +518,20 @@ func (m *Mapper) Post(requester *nested.Account, post nested.Post, preview bool)
 
 	// present and sort post_attachments
 	files := m.worker.Model().File.GetFilesByIDs(post.AttachmentIDs)
-	attachmentMap := make(map[int]nested.FileInfo, len(files))
-	uplaodTimes := make([]int, 0, len(files))
-	for _, file := range files {
-		attachmentMap[int(file.UploadTimestamp)] = file
-		uplaodTimes = append(uplaodTimes, int(file.UploadTimestamp))
-	}
-	sort.Ints(uplaodTimes)
+	//attachmentMap := make(map[int]nested.FileInfo, len(files))
+	//uplaodTimes := make([]int, 0, len(files))
+	//for _, file := range files {
+	//	attachmentMap[int(file.UploadTimestamp)] = file
+	//	uplaodTimes = append(uplaodTimes, int(file.UploadTimestamp))
+	//}
+	sort.Slice(files, func(i,j int) bool {
+		return int(files[i].UploadTimestamp) < int(files[i].UploadTimestamp)
+	})
+
+	//sort.Ints(uplaodTimes)
 	postAttachments := make([]nested.M, 0, len(files))
-	for _, uploadTime := range uplaodTimes {
-		postAttachments = append(postAttachments, m.FileInfo(attachmentMap[uploadTime]))
+	for _, f := range files {
+		postAttachments = append(postAttachments, m.FileInfo(f))
 	}
 	r["post_attachments"] = postAttachments
 
