@@ -519,7 +519,7 @@ func (m *Mapper) Post(requester *nested.Account, post nested.Post, preview bool)
 	// present and sort post_attachments
 	files := m.worker.Model().File.GetFilesByIDs(post.AttachmentIDs)
 	sort.Slice(files, func(i,j int) bool {
-		return int(files[i].UploadTimestamp) < int(files[i].UploadTimestamp)
+		return int(files[i].UploadTimestamp) < int(files[j].UploadTimestamp)
 	})
 	postAttachments := make([]nested.M, 0, len(files))
 	for _, f := range files {
