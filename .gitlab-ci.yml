@@ -52,7 +52,7 @@ deploy:staging:
   stage: deploy
   only:
     - bugFix
-    - fix/sortfiles
+    - fix-sort-files
   image: docker:latest
   services:
     - docker:dind
