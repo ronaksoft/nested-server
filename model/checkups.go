@@ -182,27 +182,6 @@ func migrate(currentModelVersion int) bool {
 		_MongoDB.C(COLLECTION_TASKS).DropIndex("watchers")
 		_MongoDB.C(COLLECTION_TASKS).DropIndex("assignor")
 		_MongoDB.C(COLLECTION_TASKS).DropIndex("assignee")
-	//case 23:
-	//    iter := _MongoDB.C(COLLECTION_ACCOUNTS).Find(bson.M{}).Iter()
-	//    account := new(Account)
-	//    for iter.Next(account) {
-	//        _ = _MongoDB.C(COLLECTION_ACCOUNTS).UpdateId(account.ID, bson.M{"$set": bson.M{"username": account.ID}})
-	//    }
-	//case 24:
-	//    if err := _MongoDB.C(COLLECTION_SEARCH_INDEX_PLACES).DropCollection(); err != nil {
-	//        _Log.Warn(err.Error())
-	//    }
-	//    iter := _MongoDB.C(COLLECTION_PLACES).Find(bson.M{}).Iter()
-	//    place := new(Place)
-	//    for iter.Next(place) {
-	//        if place.Privacy.Search {
-	//           if err := _MongoDB.C(COLLECTION_SEARCH_INDEX_PLACES).Insert(bson.M{"_id":place.ID, "name": place.Name, "picture": place.Picture}); err != nil {
-	//               _Log.Warn(err.Error())
-	//           }
-	//        }
-	//    }
-	//    iter.Close()
-
 	default:
 		return false
 	}

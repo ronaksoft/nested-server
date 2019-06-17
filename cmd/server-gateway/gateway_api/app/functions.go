@@ -145,7 +145,11 @@ func (s *AppService) remove(requester *nested.Account, request *nestedGateway.Re
 		response.Error(nested.ERR_INVALID, []string{"app_id"})
 		return
 	}
+
 	if s.Worker().Model().App.UnRegister(appID) {
+		if requester.Authority.Admin {
+			s.Worker().Model().Token.RemoveAppTokenForAll(appID)
+		}
 		response.Ok()
 	} else {
 		response.Error(nested.ERR_UNKNOWN, []string{"internal_error"})

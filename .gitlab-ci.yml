@@ -52,7 +52,7 @@ deploy:staging:
   stage: deploy
   only:
     - bugFix
-    - fix-sort-files
+    - fix-search-place
   image: docker:latest
   services:
     - docker:dind
@@ -60,8 +60,8 @@ deploy:staging:
     - cd ./cmd
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
     - cd ./server-gateway
-    - docker build --pull -t $CI_REGISTRY_IMAGE/gateway:FIX_SORT .
-    - docker push $CI_REGISTRY_IMAGE/gateway:FIX_SORT
+    - docker build --pull -t $CI_REGISTRY_IMAGE/gateway:FIX_SEARCH .
+    - docker push $CI_REGISTRY_IMAGE/gateway:FIX_SEARCH
     - cd ../server-ntfy
     - docker build --pull -t $CI_REGISTRY_IMAGE/ntfy:TEST .
     - docker push $CI_REGISTRY_IMAGE/ntfy:TEST

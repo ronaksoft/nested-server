@@ -2,6 +2,7 @@ package nested
 
 import (
 	"fmt"
+	"github.com/globalsign/mgo"
 	"log"
 	"strings"
 	"time"
@@ -335,4 +336,24 @@ func FixReferredTmpFiles() {
 			)
 		}
 	}
+}
+
+// Fix file status of task attached files
+func FixSearchIndexPlacesCollection() {
+	log.Println("--> Routine:: FixSearchIndexPlacesCollection")
+	defer log.Println("<-- Routine:: FixSearchIndexPlacesCollection")
+	if err := _MongoDB.C(COLLECTION_SEARCH_INDEX_PLACES).DropCollection(); err != nil {
+		_Log.Warn(err.Error())
+	}
+	_ = _MongoDB.C(COLLECTION_SEARCH_INDEX_PLACES).EnsureIndex(mgo.Index{Key: []string{"name"}, Background: true})
+	iter := _MongoDB.C(COLLECTION_PLACES).Find(bson.M{}).Iter()
+	place := new(Place)
+	for iter.Next(place) {
+		if place.Privacy.Search {
+			if err := _MongoDB.C(COLLECTION_SEARCH_INDEX_PLACES).Insert(bson.M{"_id":place.ID, "name": place.Name, "picture": place.Picture}); err != nil {
+				_Log.Warn(err.Error())
+			}
+		}
+	}
+	iter.Close()
 }
