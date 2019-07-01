@@ -2,6 +2,7 @@ package nested
 
 import (
 	"fmt"
+	"github.com/PuerkitoBio/goquery"
 	"github.com/globalsign/mgo"
 	"log"
 	"strings"
@@ -350,10 +351,40 @@ func FixSearchIndexPlacesCollection() {
 	place := new(Place)
 	for iter.Next(place) {
 		if place.Privacy.Search {
-			if err := _MongoDB.C(COLLECTION_SEARCH_INDEX_PLACES).Insert(bson.M{"_id":place.ID, "name": place.Name, "picture": place.Picture}); err != nil {
+			if err := _MongoDB.C(COLLECTION_SEARCH_INDEX_PLACES).Insert(bson.M{"_id": place.ID, "name": place.Name, "picture": place.Picture}); err != nil {
 				_Log.Warn(err.Error())
 			}
 		}
 	}
 	iter.Close()
+}
+
+func AddContentToPost() {
+	log.Println("--> Routine:: AddContentToPost")
+	defer log.Println("<-- Routine:: AddContentToPost")
+	_ = _MongoDB.C(COLLECTION_POSTS).DropIndexName("body")
+	iter := _MongoDB.C(COLLECTION_POSTS).Find(bson.M{}).Iter()
+	defer iter.Close()
+	p := new(Post)
+
+	for iter.Next(p) {
+		var postContent string
+		switch p.ContentType {
+		case CONTENT_TYPE_TEXT_PLAIN:
+			postContent = p.Body
+		case CONTENT_TYPE_TEXT_HTML:
+			reader := strings.NewReader(p.Body)
+			doc, _ := goquery.NewDocumentFromReader(reader)
+			doc.Find("").Each(func(i int, el *goquery.Selection) {
+				el.Remove()
+			})
+			postContent = doc.Text()
+		default:
+			continue
+		}
+		err := _MongoDB.C(COLLECTION_POSTS).UpdateId(p.ID, bson.M{"$set": bson.M{"content": postContent}})
+		if err != nil {
+			_Log.Warn(err.Error())
+		}
+	}
 }
