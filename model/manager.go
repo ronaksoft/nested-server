@@ -48,7 +48,6 @@ func init() {
 
 	// Initialize Logger
 	_LogLevel = zap.NewAtomicLevelAt(zap.DebugLevel)
-	zap.NewProductionConfig()
 	config := zap.NewProductionConfig()
 	config.Encoding = "console"
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder

@@ -362,10 +362,20 @@ func FixSearchIndexPlacesCollection() {
 func AddContentToPost() {
 	log.Println("--> Routine:: AddContentToPost")
 	defer log.Println("<-- Routine:: AddContentToPost")
-	err := _MongoDB.C(COLLECTION_POSTS).DropIndexName("body")
+	err := _MongoDB.C(COLLECTION_POSTS).DropIndexName("body_text_subject_text")
 	if err != nil {
 		_Log.Warn(err.Error())
+		fmt.Println("DropIndexName", err)
 	}
+	_ = _MongoDB.C(COLLECTION_POSTS).EnsureIndex(mgo.Index{
+		Key: []string{"$text:content", "$text:subject"},
+		Weights: map[string]int{
+			"subject": 5,
+			"content": 1,
+		},
+		Background: true,
+	})
+
 	iter := _MongoDB.C(COLLECTION_POSTS).Find(bson.M{}).Iter()
 	defer iter.Close()
 	p := new(Post)
