@@ -52,7 +52,7 @@ func (ep *ExecPath) init() error {
 		cmdPath := fmt.Sprintf("%s/%s", path.Dir(vField.String()), cmd)
 
 		if execPath, err := exec.LookPath(cmd); err != nil {
-			_Log.Fatal(err.Error())
+			_Log.Warn(err.Error())
 			return err
 		} else {
 			cmdPath = execPath

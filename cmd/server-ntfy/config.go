@@ -22,14 +22,14 @@ func readConfig() *onion.Onion {
 	dl.SetDefault("LOG_LEVEL", zap.DebugLevel)
 
 	// External Services
-	dl.SetDefault("JOB_ADDRESS", "nats://qm.nst:4222")
+	dl.SetDefault("JOB_ADDRESS", "nats://localhost:4222")
 	dl.SetDefault("JOB_USER", "")
 	dl.SetDefault("JOB_PASS", "")
 	dl.SetDefault("JOB_WORKERS_COUNT", 1000)
-	dl.SetDefault("MONGO_DSN", "db-cass.river")
+	dl.SetDefault("MONGO_DSN", "localhost:27017")
 	dl.SetDefault("MONGO_USER", "ehsan")
 	dl.SetDefault("MONGO_PASS", "ehsan2374")
-	dl.SetDefault("REDIS_DSN", "cache-redis.river")
+	dl.SetDefault("REDIS_DSN", "localhost:6379")
 	dl.SetDefault("REDIS_PASS", "")
 
 	// NTFY Settings
