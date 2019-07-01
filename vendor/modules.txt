@@ -27,8 +27,12 @@ github.com/BurntSushi/toml
 github.com/Joker/jade
 # github.com/Microsoft/go-winio v0.4.12
 github.com/Microsoft/go-winio
+# github.com/PuerkitoBio/goquery v1.5.0
+github.com/PuerkitoBio/goquery
 # github.com/Shopify/goreferrer v0.0.0-20181106222321-ec9c9a553398
 github.com/Shopify/goreferrer
+# github.com/andybalholm/cascadia v1.0.0
+github.com/andybalholm/cascadia
 # github.com/aymerick/raymond v2.0.2+incompatible
 github.com/aymerick/raymond
 github.com/aymerick/raymond/ast
@@ -378,8 +382,6 @@ google.golang.org/grpc/binarylog/grpc_binarylog_v1
 google.golang.org/grpc/internal/syscall
 # gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc
 gopkg.in/alexcesaro/quotedprintable.v3
-# gopkg.in/fzerorubigd/onion.v2 v2.0.0-20160731134907-078930955df6
-gopkg.in/fzerorubigd/onion.v2
 # gopkg.in/fzerorubigd/onion.v3 v3.0.0-20181013165022-7b9c1b5d62cd
 gopkg.in/fzerorubigd/onion.v3
 gopkg.in/fzerorubigd/onion.v3/extraenv
