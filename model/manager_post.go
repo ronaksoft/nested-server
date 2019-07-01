@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"github.com/PuerkitoBio/goquery"
 	"io"
 	"strings"
 
@@ -39,10 +40,6 @@ func NewPostManager() *PostManager {
 }
 
 func (pm *PostManager) readFromCache(postID bson.ObjectId) *Post {
-	// _funcName
-
-	// removed LOG Function
-
 	post := new(Post)
 	c := _Cache.Pool.Get()
 	defer c.Close()
@@ -64,10 +61,6 @@ func (pm *PostManager) readFromCache(postID bson.ObjectId) *Post {
 }
 
 func (pm *PostManager) readCommentFromCache(commentID bson.ObjectId) *Comment {
-	// _funcName
-
-	// removed LOG Function
-
 	comment := new(Comment)
 	c := _Cache.Pool.Get()
 	defer c.Close()
@@ -190,9 +183,6 @@ func (pm *PostManager) sanitizePreview(input io.Reader) *bytes.Buffer {
 
 // AddComment adds new comment to post identified by postID and returns the comment object.
 func (pm *PostManager) AddComment(postID bson.ObjectId, senderID string, body string, attachmentID UniversalID) *Comment {
-	// _funcName
-
-	// removed LOG Function
 	defer _Manager.Post.removeCache(postID)
 
 	dbSession := _MongoSession.Clone()
@@ -283,10 +273,6 @@ func (pm *PostManager) AddComment(postID bson.ObjectId, senderID string, body st
 
 // AddPost creates a new post according with data provided by 'pcr'
 func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -357,6 +343,7 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 
 	switch pcr.ContentType {
 	case CONTENT_TYPE_TEXT_PLAIN:
+		post.Content = post.Body
 		if len(post.Body) > 256 {
 			post.Ellipsis = true
 			post.Preview = string(post.Body[:256])
@@ -365,7 +352,13 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 		}
 	default:
 		post.ContentType = CONTENT_TYPE_TEXT_HTML
-		strings.NewReader(pcr.Body)
+		// clear body text from html elements
+		p := strings.NewReader(pcr.Body)
+		doc, _ := goquery.NewDocumentFromReader(p)
+		doc.Find("").Each(func(i int, el *goquery.Selection) {
+			el.Remove()
+		})
+		post.Content = doc.Text()
 		post.Body = pm.sanitizeBody(strings.NewReader(pcr.Body), post.Internal).String()
 		if len(pcr.Body) > 256 {
 			post.Preview = pm.sanitizePreview(strings.NewReader(pcr.Body[:256])).String()
@@ -1509,6 +1502,7 @@ type Post struct {
 	Subject         string          `json:"subject" bson:"subject"`
 	ContentType     string          `json:"content_type" bson:"content_type"`
 	Body            string          `json:"body" bson:"body"`
+	Content         string          `json:"content" bson:"content"`
 	Preview         string          `json:"preview" bson:"preview"`
 	ReplyTo         bson.ObjectId   `json:"reply_to,omitempty" bson:"reply_to,omitempty"`
 	ForwardFrom     bson.ObjectId   `json:"forward_from,omitempty" bson:"forward_from,omitempty"`
@@ -1717,10 +1711,11 @@ func (p *Post) Update(postSubject, postBody string) bool {
 
 	defer _Manager.Post.removeCache(p.ID)
 
-	var postPreview string
+	var postPreview, postContent string
 	var ellipsis bool
 	switch p.ContentType {
 	case CONTENT_TYPE_TEXT_PLAIN:
+		postContent = postBody
 		if len(postBody) > 256 {
 			ellipsis = true
 			postPreview = string(postBody[:256])
@@ -1728,7 +1723,12 @@ func (p *Post) Update(postSubject, postBody string) bool {
 			postPreview = postBody
 		}
 	case CONTENT_TYPE_TEXT_HTML:
-		strings.NewReader(postBody)
+		reader := strings.NewReader(postBody)
+		doc, _ := goquery.NewDocumentFromReader(reader)
+		doc.Find("").Each(func(i int, el *goquery.Selection) {
+			el.Remove()
+		})
+		postContent = doc.Text()
 		postBody = _Manager.Post.sanitizeBody(strings.NewReader(postBody), p.Internal).String()
 		if len(postBody) > 256 {
 			postPreview = _Manager.Post.sanitizePreview(strings.NewReader(postBody[:256])).String()
@@ -1750,6 +1750,7 @@ func (p *Post) Update(postSubject, postBody string) bool {
 				"subject":  postSubject,
 				"preview":  postPreview,
 				"ellipsis": ellipsis,
+				"content": postContent,
 			},
 		},
 	); err != nil {

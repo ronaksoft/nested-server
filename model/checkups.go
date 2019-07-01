@@ -37,10 +37,10 @@ func StartupCheckups() {
 	_ = _MongoDB.C(COLLECTION_POSTS).EnsureIndex(mgo.Index{Key: []string{"recipients", "-timestamp"}, Background: true})
 	_ = _MongoDB.C(COLLECTION_POSTS).EnsureIndex(mgo.Index{Key: []string{"sender", "-timestamp"}, Background: true})
 	_ = _MongoDB.C(COLLECTION_POSTS).EnsureIndex(mgo.Index{
-		Key: []string{"$text:body", "$text:subject"},
+		Key: []string{"$text:content", "$text:subject"},
 		Weights: map[string]int{
 			"subject": 5,
-			"body":    1,
+			"content":    1,
 		},
 		Background: true,
 	})
