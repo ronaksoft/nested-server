@@ -379,7 +379,7 @@ func AddContentToPost() {
 	})
 
 
-	err := _MongoDB.C(COLLECTION_POSTS).DropIndexName("body_text_subject_text")
+	err = _MongoDB.C(COLLECTION_POSTS).DropIndexName("body_text_subject_text")
 	if err != nil {
 		_Log.Warn(err.Error())
 		fmt.Println("DropIndexName", err)
