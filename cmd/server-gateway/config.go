@@ -34,7 +34,7 @@ func readConfig() *onion.Onion {
 
 	dl.SetDefault(CONF_DOMAIN, "nested.me")
 	dl.SetDefault(CONF_BUNDLE_ID, "CYRUS.001")
-	dl.SetDefault(CONF_BIND_ADDRESS, "0.0.0.0:81")
+	dl.SetDefault(CONF_BIND_ADDRESS, "0.0.0.0:8080")
 	dl.SetDefault(CONF_CYRUS_URL, "http://storage.xerxes.nst")
 
 	// InstanceID
@@ -43,14 +43,14 @@ func readConfig() *onion.Onion {
 	// Security
 	dl.SetDefault(CONF_TLS_KEY_FILE, "")
 	dl.SetDefault(CONF_TLS_CERT_FILE, "")
-	dl.SetDefault(CONF_JOB_ADDRESS, "")
+	dl.SetDefault(CONF_JOB_ADDRESS, "nats://localhost:4222")
 
 	// Database (MongoDB)
 	dl.SetDefault(CONF_MONGO_TLS, true)
-	dl.SetDefault(CONF_MONGO_DSN, "")
+	dl.SetDefault(CONF_MONGO_DSN, "localhost:27017")
 
 	// Cache (Redis)
-	dl.SetDefault(CONF_REDIS_DSN, "redis.xerxes.nst:6379")
+	dl.SetDefault(CONF_REDIS_DSN, "localhost:6379")
 
 	// Debugging
 	dl.SetDefault(CONF_DEBUG_LEVEL, 2)

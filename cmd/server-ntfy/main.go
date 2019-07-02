@@ -71,14 +71,14 @@ func main() {
 		nil,
 		option.WithCredentialsFile("/ronak/certs/firebase-cred.json"),
 	); err != nil {
-		log.Panic(err.Error())
+		log.Println(err.Error())
 	} else {
 		fcmClient = c
 	}
 	// Initialize RPC Worker
 	var rpcWorker *rpc.SimpleWorker
 	if rateLimiter, err := ronak.NewSimpleRateLimiter(10*time.Second, _Config.GetInt("JOB_WORKERS_COUNT")); err != nil {
-		log.Panic(err.Error())
+		log.Println(err.Error())
 	} else {
 		rpcWorker = v1.NewWorker(
 			rateLimiter, _Model, natsConn, fcmClient,
