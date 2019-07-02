@@ -362,6 +362,23 @@ func FixSearchIndexPlacesCollection() {
 func AddContentToPost() {
 	log.Println("--> Routine:: AddContentToPost")
 	defer log.Println("<-- Routine:: AddContentToPost")
+
+	err := _MongoDB.C(COLLECTION_TASKS).DropIndexName("title_text_description_text_todos_text")
+	if err != nil {
+		_Log.Warn(err.Error())
+		fmt.Println("DropIndexName", err)
+	}
+	_ = _MongoDB.C(COLLECTION_TASKS).EnsureIndex(mgo.Index{
+		Key: []string{"$text:title", "$text:description", "$text:todos.txt"},
+		Weights: map[string]int{
+			"title":       5,
+			"description": 1,
+			"todos.txt":       1,
+		},
+		Background: true,
+	})
+
+
 	err := _MongoDB.C(COLLECTION_POSTS).DropIndexName("body_text_subject_text")
 	if err != nil {
 		_Log.Warn(err.Error())

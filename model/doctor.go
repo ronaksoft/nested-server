@@ -27,16 +27,16 @@ const (
 
 var (
 	_CheckupRoutines = map[string]func(){
-		CHECKUP_SYNC_PLACE_COUNTERS:    SyncPlaceCounters,
-		CHECKUP_SYNC_LABEL_COUNTERS:    SyncLabelCounters,
-		CHECKUP_SYNC_POST_COUNTERS:     SyncPostCounters,
-		CHECKUP_SYNC_TASK_COUNTERS:     SyncTaskCounters,
-		CHECKUP_SYNC_FILE_REF_COUNTERS: SyncFileRefCounters,
-		CHECKUP_SYNC_SYSTEM_COUNTERS:   SyncSystemCounters,
-		CHECKUP_CLEANUP_POSTS:          CleanupPosts,
-		CHECKUP_CLEANUP_SESSIONS:       CleanupSessions,
-		CHECKUP_CLEANUP_TASKS:          CleanupTasks,
-		CHECKUP_ADD_CONTENT_TO_POST:     AddContentToPost,
+		CHECKUP_SYNC_PLACE_COUNTERS:                SyncPlaceCounters,
+		CHECKUP_SYNC_LABEL_COUNTERS:                SyncLabelCounters,
+		CHECKUP_SYNC_POST_COUNTERS:                 SyncPostCounters,
+		CHECKUP_SYNC_TASK_COUNTERS:                 SyncTaskCounters,
+		CHECKUP_SYNC_FILE_REF_COUNTERS:             SyncFileRefCounters,
+		CHECKUP_SYNC_SYSTEM_COUNTERS:               SyncSystemCounters,
+		CHECKUP_CLEANUP_POSTS:                      CleanupPosts,
+		CHECKUP_CLEANUP_SESSIONS:                   CleanupSessions,
+		CHECKUP_CLEANUP_TASKS:                      CleanupTasks,
+		CHECKUP_ADD_CONTENT_TO_POST:                AddContentToPost,
 		CHECKUP_FIX_REFERRED_TEMP_FILES:            FixReferredTmpFiles,
 		CHECKUP_FIX_COLLECTION_SEARCH_INDEX_PLACES: FixSearchIndexPlacesCollection,
 	}
