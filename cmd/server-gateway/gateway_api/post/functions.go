@@ -255,12 +255,19 @@ func (s *PostService) createPost(requester *nested.Account, request *nestedGatew
 	mEmails := make(map[string]bool)
 	for _, v := range targets {
 		if idx := strings.Index(v, "@"); idx != -1 {
-			if strings.HasSuffix(strings.ToLower(v), fmt.Sprintf("@%s", s.Worker().Config().GetString("DOMAIN"))) {
-				mPlaces[v[:idx]] = true
-			} else {
+			domains := strings.Split(s.Worker().Config().GetString("DOMAINS"), ",")
+			isInternal := false
+			for _, domain := range domains {
+				if strings.HasSuffix(strings.ToLower(v), fmt.Sprintf("@%s", domain)) {
+					mPlaces[v[:idx]] = true
+					isInternal = true
+					break
+				}
+			}
+			if isInternal == false {
 				mEmails[v] = true
 			}
-		} else if _Model.Place.Exists(v) {
+		} else if s.Worker().Model().Place.Exists(v) {
 			mPlaces[v] = true
 		}
 	}

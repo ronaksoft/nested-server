@@ -73,7 +73,7 @@ func JobOverdueTasks(b *BackgroundJob) {
 		}
 		time.Sleep(5 * time.Second)
 	}
-	ntfyClient.SetDomain(b.Config().GetString("DOMAIN"))
+	ntfyClient.SetDomain(b.Config().GetString("SENDER_DOMAIN"))
 	defer ntfyClient.Close()
 
 	buckets := b.Model().TimeBucket.GetBucketsBefore(nested.Timestamp())

@@ -72,13 +72,16 @@ func main() {
 			envs[parts[0]] = parts[1]
 		}
 		session, _ := initMongo(envs["NST_MONGO_DSN"])
-		instanceInfo[envs["NST_DOMAIN"]] = info{
-			InstanceID:   envs["NST_INSTANCE_ID"],
-			SystemKey:    envs["NST_FILE_SYSTEM_KEY"],
-			CyrusURL:     envs["NST_CYRUS_URL"],
-			MongoSession: session,
-			SmtpUser:     envs["NST_SMTP_USER"],
-			SmtpPass:     envs["NST_SMTP_PASS"],
+		domains := strings.Split(envs["NST_DOMAINS"], "," )
+		for _, d := range domains {
+			instanceInfo[d] = info{
+				InstanceID:   envs["NST_INSTANCE_ID"],
+				SystemKey:    envs["NST_FILE_SYSTEM_KEY"],
+				CyrusURL:     envs["NST_CYRUS_URL"],
+				MongoSession: session,
+				SmtpUser:     envs["NST_SMTP_USER"],
+				SmtpPass:     envs["NST_SMTP_PASS"],
+			}
 		}
 	}
 
@@ -273,7 +276,7 @@ func watchdog(t time.Time) {
 		fmt.Println(err.Error())
 		return
 	}
-	domains := make([]string, 0, len(containers))
+	domains := make([]string, 0)
 	if len(containers) != len(instanceInfo) {
 		for _, container := range containers {
 			env, _ := cli.ContainerInspect(ctx, container.ID)
@@ -282,16 +285,19 @@ func watchdog(t time.Time) {
 				parts := strings.Split(item, "=")
 				envs[parts[0]] = parts[1]
 			}
-			domains = append(domains, envs["NST_DOMAIN"])
-			if _, ok := instanceInfo[envs["NST_DOMAIN"]]; ok {
-				continue
-			} else {
-				session, _ := initMongo(envs["NST_MONGO_DSN"])
-				instanceInfo[envs["NST_DOMAIN"]] = info{
-					InstanceID:   envs["NST_INSTANCE_ID"],
-					SystemKey:    envs["NST_FILE_SYSTEM_KEY"],
-					CyrusURL:     envs["NST_CYRUS_URL"],
-					MongoSession: session,
+			definedDomains := strings.Split(envs["NST_DOMAINS"], "," )
+			domains = append(domains, definedDomains...)
+			for _, d := range definedDomains {
+				if _, ok := instanceInfo[d]; ok {
+					continue
+				} else {
+					session, _ := initMongo(envs["NST_MONGO_DSN"])
+					instanceInfo[d] = info{
+						InstanceID:   envs["NST_INSTANCE_ID"],
+						SystemKey:    envs["NST_FILE_SYSTEM_KEY"],
+						CyrusURL:     envs["NST_CYRUS_URL"],
+						MongoSession: session,
+					}
 				}
 			}
 		}

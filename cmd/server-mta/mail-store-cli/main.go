@@ -144,27 +144,29 @@ func detectInstances() {
 	}
 	for _, container := range containers {
 		env, _ := cli.ContainerInspect(ctx, container.ID)
-		containerENV = make(map[string]string, len(env.Config.Env))
+		containerENV = make(map[string]string)
 		for _, item := range env.Config.Env {
 			parts := strings.Split(item, "=")
 			containerENV[parts[0]] = parts[1]
 		}
-		_LOG.Debug("containerENV :", zap.String("containerDomain", containerENV["NST_DOMAIN"]))
-		session, err := initMongo(containerENV["NST_MONGO_DSN"])
-		if err != nil {
-			_LOG.Error(err.Error())
+		definedDomain := strings.Split(containerENV["NST_DOMAINS"], ",")
+		for _, d := range definedDomain {
+			session, err := initMongo(containerENV["NST_MONGO_DSN"])
+			if err != nil {
+				_LOG.Error(err.Error())
+			}
+			ntfy := client_ntfy.NewNtfyClient(containerENV["NST_JOB_ADDRESS"], d)
+			storage, err := client_storage.NewClient(containerENV["NST_CYRUS_URL"], containerENV["NST_FILE_SYSTEM_KEY"], true)
+			if err != nil {
+				_LOG.Error(err.Error())
+			}
+			redisCache, err := cache.NewCacheManager(containerENV["NST_REDIS_DSN"])
+			if err != nil {
+				_LOG.Error(err.Error())
+			}
+			model := NewModel(session, ntfy, storage, redisCache, containerENV["NST_INSTANCE_ID"], containerENV["NST_CYRUS_URL"])
+			instanceInf[d] = model
 		}
-		ntfy := client_ntfy.NewNtfyClient(containerENV["NST_JOB_ADDRESS"], containerENV["NST_DOMAIN"])
-		storage, err := client_storage.NewClient(containerENV["NST_CYRUS_URL"], containerENV["NST_FILE_SYSTEM_KEY"], true)
-		if err != nil {
-			_LOG.Error(err.Error())
-		}
-		redisCache, err := cache.NewCacheManager(containerENV["NST_REDIS_DSN"])
-		if err != nil {
-			_LOG.Error(err.Error())
-		}
-		model := NewModel(session, ntfy, storage, redisCache, containerENV["NST_INSTANCE_ID"], containerENV["NST_CYRUS_URL"])
-		instanceInf[containerENV["NST_DOMAIN"]] = model
 	}
 }
 
@@ -234,35 +236,38 @@ func watchdog(t time.Time) {
 		_LOG.Error(err.Error())
 		return
 	}
-	domains := make([]string, 0, len(containers))
+	domains := make([]string, 0)
 	if len(containers) != len(instanceInf) {
 		for _, container := range containers {
 			env, _ := cli.ContainerInspect(ctx, container.ID)
-			containerENV = make(map[string]string, len(env.Config.Env))
+			containerENV = make(map[string]string)
 			for _, item := range env.Config.Env {
 				parts := strings.Split(item, "=")
 				containerENV[parts[0]] = parts[1]
 			}
-			domains = append(domains, containerENV["NST_DOMAIN"])
-			if _, ok := instanceInf[containerENV["NST_DOMAIN"]]; ok {
-				continue
-			} else {
-				session, err := initMongo(containerENV["NST_MONGO_DSN"])
-				if err != nil {
-					_LOG.Error(err.Error())
+			definedDomain := strings.Split(containerENV["NST_DOMAINS"], ",")
+			domains = append(domains, definedDomain...)
+			for _, d := range definedDomain {
+				if _, ok := instanceInf[d]; ok {
+					continue
+				} else {
+					session, err := initMongo(containerENV["NST_MONGO_DSN"])
+					if err != nil {
+						_LOG.Error(err.Error())
+					}
+					ntfy := client_ntfy.NewNtfyClient(containerENV["NST_JOB_ADDRESS"], d)
+					storage, err := client_storage.NewClient(containerENV["NST_CYRUS_URL"], containerENV["NST_FILE_SYSTEM_KEY"], true)
+					if err != nil {
+						_LOG.Error(err.Error())
+					}
+					redisCache, err := cache.NewCacheManager(containerENV["NST_REDIS_DSN"])
+					if err != nil {
+						_LOG.Error(err.Error())
+					}
+					model := NewModel(session, ntfy, storage, redisCache, containerENV["NST_INSTANCE_ID"], containerENV["NST_CYRUS_URL"])
+					instanceInf[d] = model
+					_LOG.Info("nested instance added: ", zap.String("DOMAIN", d))
 				}
-				ntfy := client_ntfy.NewNtfyClient(containerENV["NST_JOB_ADDRESS"], containerENV["NST_DOMAIN"])
-				storage, err := client_storage.NewClient(containerENV["NST_CYRUS_URL"], containerENV["NST_FILE_SYSTEM_KEY"], true)
-				if err != nil {
-					_LOG.Error(err.Error())
-				}
-				redisCache, err := cache.NewCacheManager(containerENV["NST_REDIS_DSN"])
-				if err != nil {
-					_LOG.Error(err.Error())
-				}
-				model := NewModel(session, ntfy, storage, redisCache, containerENV["NST_INSTANCE_ID"], containerENV["NST_CYRUS_URL"])
-				instanceInf[containerENV["NST_DOMAIN"]] = model
-				_LOG.Info("nested instance added: ", zap.String("DOMAIN", containerENV["NST_DOMAIN"]))
 			}
 		}
 		for domainBefore := range instanceInf {

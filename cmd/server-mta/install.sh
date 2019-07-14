@@ -41,7 +41,7 @@ service postfix start
 tail -f /var/log/mail.log
 EOF
 chmod +x /opt/postfix.sh
-postconf -e myhostname=${NST_DOMAIN}
+postconf -e myhostname=${NST_SENDER_DOMAIN}
 postconf -F '*/*/chroot = n'
 postconf -e message_size_limit=50000000
 postconf -e smtp_tls_security_level=may
@@ -64,7 +64,7 @@ EOF
 # sasldb2
 echo ${NST_SMTP_CRED} | tr , \\n > /tmp/passwd
 while IFS=':' read -r _user _pwd; do
-  echo $_pwd | saslpasswd2 -p -c -u ${NST_DOMAIN} $_user
+  echo $_pwd | saslpasswd2 -p -c -u ${NST_SENDER_DOMAIN} $_user
 done < /tmp/passwd
 chown postfix.sasl /etc/sasldb2
 
@@ -100,7 +100,7 @@ postconf -e virtual_transport=nested_mail
 postconf -e export_environment="\
 NST_CYRUS_URL=${NST_CYRUS_URL} \
 NST_INSTANCE_ID=${NST_INSTANCE_ID} \
-NST_DOMAIN=${NST_DOMAIN} \
+NST_DOMAIN=${NST_SENDER_DOMAIN} \
 NST_MONGO_DSN=${NST_MONGO_DSN} \
 NST_REDIS_CACHE=${NST_REDIS_CACHE} \
 NST_CYRUS_INSECURE_HTTPS=${NST_CYRUS_INSECURE_HTTPS} \

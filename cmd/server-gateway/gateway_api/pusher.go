@@ -17,7 +17,7 @@ type PushManager struct {
 func NewPushManager(worker *Worker) *PushManager {
 	pm := new(PushManager)
 	pm.Notification = ntfy.NewClient(worker.Config().GetString("JOB_ADDRESS"), worker.Model())
-	pm.Notification.SetDomain(worker.Config().GetString("DOMAIN"))
+	pm.Notification.SetDomain(worker.Config().GetString("SENDER_DOMAIN"))
 	pm.worker = worker
 	if pm.Notification == nil {
 		return nil

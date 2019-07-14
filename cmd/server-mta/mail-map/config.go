@@ -19,7 +19,8 @@ func readConfig() *onion.Onion {
 	dl.SetDefault("REDIS_DSN", "cache-redis.nst:6379")
 
 	// Mail
-	dl.SetDefault("DOMAIN", "nested.dev")
+	dl.SetDefault("DOMAINS", "nested.dev")
+	dl.SetDefault("SENDER_DOMAIN", "nested.dev")
 
 	cfg := onion.New()
 	cfg.AddLayer(dl)

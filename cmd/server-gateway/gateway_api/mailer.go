@@ -68,7 +68,7 @@ type Mailer struct {
 func NewMailer(worker *Worker) *Mailer {
 	m := new(Mailer)
 	m.worker = worker
-	m.domain = worker.Config().GetString("DOMAIN")
+	m.domain = worker.Config().GetString("SENDER_DOMAIN")
 	m.defaultSMTPHost = worker.Config().GetString("SMTP_HOST")
 	m.defaultSMTPPort = worker.Config().GetInt("SMTP_PORT")
 	m.defaultSMTPUser = worker.Config().GetString("SMTP_USER")

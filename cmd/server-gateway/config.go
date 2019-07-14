@@ -6,7 +6,8 @@ import (
 )
 
 const (
-	CONF_DOMAIN               = "DOMAIN"
+	CONF_DOMAINS              = "DOMAINS" // comma separated
+	CONF_SENDER_DOMAIN        = "SENDER_DOMAIN"
 	CONF_BUNDLE_ID            = "BUNDLE_ID"
 	CONF_BIND_ADDRESS         = "BIND_ADDRESS"
 	CONF_TLS_KEY_FILE         = "TLS_KEY_FILE"
@@ -32,7 +33,8 @@ const (
 func readConfig() *onion.Onion {
 	dl := onion.NewDefaultLayer()
 
-	dl.SetDefault(CONF_DOMAIN, "nested.me")
+	dl.SetDefault(CONF_DOMAINS, "nested.me") // comma separated
+	dl.SetDefault(CONF_SENDER_DOMAIN, "nested.me")
 	dl.SetDefault(CONF_BUNDLE_ID, "CYRUS.001")
 	dl.SetDefault(CONF_BIND_ADDRESS, "0.0.0.0:8080")
 	dl.SetDefault(CONF_CYRUS_URL, "http://storage.xerxes.nst")
