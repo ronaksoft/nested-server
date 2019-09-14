@@ -54,7 +54,7 @@ postconf -e smtp_tls_security_level=may
 # /etc/postfix/main.cf
 postconf -e smtpd_sasl_auth_enable=yes
 postconf -e broken_sasl_auth_clients=yes
-postconf -e smtpd_recipient_restrictions=permit_sasl_authenticated,reject_unauth_destination
+postconf -e smtpd_relay_restrictions=permit_mynetworks,permit_sasl_authenticated,defer_unauth_destination
 # smtpd.conf
 cat >> /etc/postfix/sasl/smtpd.conf <<EOF
 pwcheck_method: auxprop
