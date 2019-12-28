@@ -49,7 +49,7 @@ var LicenseGenerateCmd = &cobra.Command{
 		licenseYear, _ := strconv.Atoi(licenseExpireDate[:4])
 		licenseMonth, _ := strconv.Atoi(licenseExpireDate[5:7])
 		licenseDay, _ := strconv.Atoi(licenseExpireDate[8:10])
-		license.ExpireDate = uint64(time.Date(licenseYear, time.Month(licenseMonth), licenseDay, 0, 0, 0, 0, nil).Unix() * 1000)
+		license.ExpireDate = uint64(time.Date(licenseYear, time.Month(licenseMonth), licenseDay, 0, 0, 0, 0, time.Local).Unix() * 1000)
 
 		// Ask for Max Active Users
 		fmt.Print("Max Active Users: ")

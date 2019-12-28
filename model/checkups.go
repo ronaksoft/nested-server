@@ -139,17 +139,15 @@ func StartupCheckups() {
 		if err := _MongoDB.C(COLLECTION_SYSTEM_INTERNAL).Insert(
 			bson.M{
 				"_id": "constants",
-				"$set": bson.M{
-					fmt.Sprintf("strings.%s", SYSTEM_CONSTANTS_COMPANY_NAME):              DEFAULT_COMPANY_NAME,
-					fmt.Sprintf("strings.%s", SYSTEM_CONSTANTS_COMPANY_DESC):              DEFAULT_COMPANY_DESC,
-					fmt.Sprintf("strings.%s", SYSTEM_CONSTANTS_COMPANY_LOGO):              DEFAULT_COMPANY_LOGO,
-					fmt.Sprintf("integers.%s", SYSTEM_CONSTANTS_REGISTER_MODE):            REGISTER_MODE,
-					fmt.Sprintf("integers.%s", SYSTEM_CONSTANTS_LABEL_MAX_MEMBERS):        DEFAULT_LABEL_MAX_MEMBERS,
-					fmt.Sprintf("integers.%s", SYSTEM_CONSTANTS_ACCOUNT_GRANDPLACE_LIMIT): DEFAULT_ACCOUNT_GRAND_PLACES,
-					fmt.Sprintf("integers.%s", SYSTEM_CONSTANTS_PLACE_MAX_LEVEL):          DEFAULT_PLACE_MAX_LEVEL,
-					fmt.Sprintf("integers.%s", SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS):     DEFAULT_PLACE_MAX_KEYHOLDERS,
-					fmt.Sprintf("integers.%s", SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN):       DEFAULT_PLACE_MAX_CHILDREN,
-				},
+				fmt.Sprintf("strings.%s", SYSTEM_CONSTANTS_COMPANY_NAME):              DEFAULT_COMPANY_NAME,
+				fmt.Sprintf("strings.%s", SYSTEM_CONSTANTS_COMPANY_DESC):              DEFAULT_COMPANY_DESC,
+				fmt.Sprintf("strings.%s", SYSTEM_CONSTANTS_COMPANY_LOGO):              DEFAULT_COMPANY_LOGO,
+				fmt.Sprintf("integers.%s", SYSTEM_CONSTANTS_REGISTER_MODE):            REGISTER_MODE,
+				fmt.Sprintf("integers.%s", SYSTEM_CONSTANTS_LABEL_MAX_MEMBERS):        DEFAULT_LABEL_MAX_MEMBERS,
+				fmt.Sprintf("integers.%s", SYSTEM_CONSTANTS_ACCOUNT_GRANDPLACE_LIMIT): DEFAULT_ACCOUNT_GRAND_PLACES,
+				fmt.Sprintf("integers.%s", SYSTEM_CONSTANTS_PLACE_MAX_LEVEL):          DEFAULT_PLACE_MAX_LEVEL,
+				fmt.Sprintf("integers.%s", SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS):     DEFAULT_PLACE_MAX_KEYHOLDERS,
+				fmt.Sprintf("integers.%s", SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN):       DEFAULT_PLACE_MAX_CHILDREN,
 			},
 		); err != nil {
 			log.Println("StartupChecks::", err.Error())
