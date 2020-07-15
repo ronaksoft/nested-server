@@ -88,10 +88,6 @@ func (cm *ContactManager) AddContactToFavorite(accountID, contactID string) bool
 }
 
 func (cm *ContactManager) IsContact(accountID, contactID string) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -150,10 +146,6 @@ func (cm *ContactManager) RemoveContactFromFavorite(accountID, contactID string)
 }
 
 func (cm *ContactManager) GetContacts(accountID string) Contacts {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()

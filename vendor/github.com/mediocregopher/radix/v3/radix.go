@@ -19,8 +19,9 @@
 // Commands
 //
 // Any redis command can be performed by passing a Cmd into a Client's Do
-// method. The return from the Cmd can be captured into any appopriate go
-// primitive type, or a slice or map if the command returns an array.
+// method. Each Cmd should only be used once. The return from the Cmd can be
+// captured into any appopriate go primitive type, or a slice, map, or struct,
+// if the command returns an array.
 //
 //	err := client.Do(radix.Cmd(nil, "SET", "foo", "someval"))
 //
@@ -45,9 +46,9 @@
 //
 // Struct Scanning
 //
-// Cmd and FlatCmd can also unmarshal results into a struct. The results must be
-// a key/value array, such as that returned by HGETALL. Exported field names
-// will be used as keys, unless the fields have the "redis" tag:
+// Cmd and FlatCmd can unmarshal results into a struct. The results must be a
+// key/value array, such as that returned by HGETALL. Exported field names will
+// be used as keys, unless the fields have the "redis" tag:
 //
 //	type MyType struct {
 //		Foo string               // Will be populated with the value for key "Foo"
@@ -55,7 +56,7 @@
 //		Baz string `redis:"-"`   // Will not be populated
 //	}
 //
-// Embedded struct will inline that struct's fields into the parent's:
+// Embedded structs will inline that struct's fields into the parent's:
 //
 //	type MyOtherType struct {
 //		// adds fields "Foo" and "BAR" (from above example) to MyOtherType
@@ -127,18 +128,42 @@
 // interface be implemented by a particular underlying type, so feel free to
 // create your own Pools or Conns or Actions or whatever makes your life easier.
 //
+// Errors
+//
+// Errors returned from redis can be explicitly checked for using the the
+// resp2.Error type. Note that the errors.As function, introduced in go 1.13,
+// should be used.
+//
+//	var redisErr resp2.Error
+//	err := client.Do(radix.Cmd(nil, "AUTH", "wrong password"))
+//	if errors.As(err, &redisErr) {
+//		log.Printf("redis error returned: %s", redisErr.E)
+//	}
+//
+// Use the golang.org/x/xerrors package if you're using an older version of go.
+//
+// Implicit pipelining
+//
+// Implicit pipelining is an optimization implemented and enabled in the default
+// Pool implementation (and therefore also used by Cluster and Sentinel) which
+// involves delaying concurrent Cmds and FlatCmds a small amount of time and
+// sending them to redis in a single batch, similar to manually using a Pipeline.
+// By doing this radix significantly reduces the I/O and CPU overhead for
+// concurrent requests.
+//
+// Note that only commands which do not block are eligible for implicit pipelining.
+//
+// See the documentation on Pool for more information about the current
+// implementation of implicit pipelining and for how to configure or disable
+// the feature.
+//
+// For a performance comparisons between Clients with and without implicit
+// pipelining see the benchmark results in the README.md.
+//
 package radix
 
 import (
-	"bufio"
-	"errors"
-	"net"
-	"net/url"
-	"strconv"
-	"strings"
-	"time"
-
-	"github.com/mediocregopher/radix/v3/resp"
+	errors "golang.org/x/xerrors"
 )
 
 var errClientClosed = errors.New("client is closed")
@@ -164,292 +189,5 @@ type ClientFunc func(network, addr string) (Client, error)
 // DefaultClientFunc is a ClientFunc which will return a Client for a redis
 // instance using sane defaults.
 var DefaultClientFunc = func(network, addr string) (Client, error) {
-	return NewPool(network, addr, 20)
-}
-
-// Conn is a Client wrapping a single network connection which synchronously
-// reads/writes data using the redis resp protocol.
-//
-// A Conn can be used directly as a Client, but in general you probably want to
-// use a *Pool instead
-type Conn interface {
-	// The Do method of a Conn is _not_ expected to be thread-safe.
-	Client
-
-	// Encode and Decode may be called at the same time by two different
-	// go-routines, but each should only be called once at a time (i.e. two
-	// routines shouldn't call Encode at the same time, same with Decode).
-	//
-	// Encode and Decode should _not_ be called at the same time as Do.
-	//
-	// If either Encode or Decode encounter a net.Error the Conn will be
-	// automatically closed.
-	//
-	// Encode is expected to encode an entire resp message, not a partial one.
-	// In other words, when sending commands to redis, Encode should only be
-	// called once per command. Similarly, Decode is expected to decode an
-	// entire resp response.
-	Encode(resp.Marshaler) error
-	Decode(resp.Unmarshaler) error
-
-	// Returns the underlying network connection, as-is. Read, Write, and Close
-	// should not be called on the returned Conn.
-	NetConn() net.Conn
-}
-
-// a wrapper around net.Conn which prevents Read, Write, and Close from being
-// called
-type connLimited struct {
-	net.Conn
-}
-
-func (cl connLimited) Read(b []byte) (int, error) {
-	return 0, errors.New("Read not allowed to be called on net.Conn returned from radix")
-}
-
-func (cl connLimited) Write(b []byte) (int, error) {
-	return 0, errors.New("Write not allowed to be called on net.Conn returned from radix")
-}
-
-func (cl connLimited) Close() error {
-	return errors.New("Close not allowed to be called on net.Conn returned from radix")
-}
-
-type connWrap struct {
-	net.Conn
-	brw *bufio.ReadWriter
-}
-
-// NewConn takes an existing net.Conn and wraps it to support the Conn interface
-// of this package. The Read and Write methods on the original net.Conn should
-// not be used after calling this method.
-func NewConn(conn net.Conn) Conn {
-	return &connWrap{
-		Conn: conn,
-		brw:  bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn)),
-	}
-}
-
-func (cw *connWrap) Do(a Action) error {
-	return a.Run(cw)
-}
-
-func (cw *connWrap) Encode(m resp.Marshaler) error {
-	if err := m.MarshalRESP(cw.brw); err != nil {
-		return err
-	}
-	return cw.brw.Flush()
-}
-
-func (cw *connWrap) Decode(u resp.Unmarshaler) error {
-	return u.UnmarshalRESP(cw.brw.Reader)
-}
-
-func (cw *connWrap) NetConn() net.Conn {
-	return connLimited{cw.Conn}
-}
-
-// ConnFunc is a function which returns an initialized, ready-to-be-used Conn.
-// Functions like NewPool or NewCluster take in a ConnFunc in order to allow for
-// things like calls to AUTH on each new connection, setting timeouts, custom
-// Conn implementations, etc... See the package docs for more details.
-type ConnFunc func(network, addr string) (Conn, error)
-
-// DefaultConnFunc is a ConnFunc which will return a Conn for a redis instance
-// using sane defaults.
-var DefaultConnFunc = func(network, addr string) (Conn, error) {
-	return Dial(network, addr)
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-type dialOpts struct {
-	connectTimeout, readTimeout, writeTimeout time.Duration
-	authPass                                  string
-	selectDB                                  string
-}
-
-// DialOpt is an optional behavior which can be applied to the Dial function to
-// effect its behavior, or the behavior of the Conn it creates.
-type DialOpt func(*dialOpts)
-
-// DialConnectTimeout determines the timeout value to pass into net.DialTimeout
-// when creating the connection. If not set then net.Dial is called instead.
-func DialConnectTimeout(d time.Duration) DialOpt {
-	return func(do *dialOpts) {
-		do.connectTimeout = d
-	}
-}
-
-// DialReadTimeout determines the deadline to set when reading from a dialed
-// connection. If not set then SetReadDeadline is never called.
-func DialReadTimeout(d time.Duration) DialOpt {
-	return func(do *dialOpts) {
-		do.readTimeout = d
-	}
-}
-
-// DialWriteTimeout determines the deadline to set when writing to a dialed
-// connection. If not set then SetWriteDeadline is never called.
-func DialWriteTimeout(d time.Duration) DialOpt {
-	return func(do *dialOpts) {
-		do.writeTimeout = d
-	}
-}
-
-// DialTimeout is the equivalent to using DialConnectTimeout, DialReadTimeout,
-// and DialWriteTimeout all with the same value.
-func DialTimeout(d time.Duration) DialOpt {
-	return func(do *dialOpts) {
-		DialConnectTimeout(d)(do)
-		DialReadTimeout(d)(do)
-		DialWriteTimeout(d)(do)
-	}
-}
-
-// DialAuthPass will cause Dial to perform an AUTH command once the connection
-// is created, using the given pass.
-//
-// If this is set and a redis URI is passed to Dial which also has a password
-// set, this takes precedence.
-func DialAuthPass(pass string) DialOpt {
-	return func(do *dialOpts) {
-		do.authPass = pass
-	}
-}
-
-// DialSelectDB will cause Dial to perform a SELECT command once the connection
-// is created, using the given database index.
-//
-// If this is set and a redis URI is passed to Dial which also has a database
-// index set, this takes precedence.
-func DialSelectDB(db int) DialOpt {
-	return func(do *dialOpts) {
-		do.selectDB = strconv.Itoa(db)
-	}
-}
-
-type timeoutConn struct {
-	net.Conn
-	readTimeout, writeTimeout time.Duration
-}
-
-func (tc *timeoutConn) Read(b []byte) (int, error) {
-	if tc.readTimeout > 0 {
-		tc.Conn.SetReadDeadline(time.Now().Add(tc.readTimeout))
-	}
-	return tc.Conn.Read(b)
-}
-
-func (tc *timeoutConn) Write(b []byte) (int, error) {
-	if tc.writeTimeout > 0 {
-		tc.Conn.SetWriteDeadline(time.Now().Add(tc.writeTimeout))
-	}
-	return tc.Conn.Write(b)
-}
-
-var defaultDialOpts = []DialOpt{
-	DialTimeout(10 * time.Second),
-}
-
-// Dial is a ConnFunc which creates a Conn using net.Dial and NewConn. It takes
-// in a number of options which can overwrite its default behavior as well.
-//
-// In place of a host:port address, Dial also accepts a URI, as per:
-// 	https://www.iana.org/assignments/uri-schemes/prov/redis
-// If the URI has an AUTH password or db specified Dial will attempt to perform
-// the AUTH and/or SELECT as well.
-//
-// If either DialAuthPass or DialSelectDB is used it overwrites the associated
-// value passed in by the URI.
-//
-// The default options Dial uses are:
-//
-//	DialTimeout(10 * time.Second)
-//
-func Dial(network, addr string, opts ...DialOpt) (Conn, error) {
-	var do dialOpts
-	for _, opt := range defaultDialOpts {
-		opt(&do)
-	}
-	for _, opt := range opts {
-		opt(&do)
-	}
-
-	// do a quick check before we bust out url.Parse, in case that is very
-	// unperformant
-	if strings.HasPrefix(addr, "redis://") {
-		if u, err := url.Parse(addr); err == nil {
-			addr = u.Host
-			q := u.Query()
-			if do.authPass == "" {
-				if p, ok := u.User.Password(); ok {
-					do.authPass = p
-				} else if qpw := q.Get("password"); qpw != "" {
-					do.authPass = qpw
-				}
-			}
-			if do.selectDB == "" {
-				if u.Path != "" && u.Path != "/" {
-					do.selectDB = u.Path[1:]
-				} else if qdb := q.Get("db"); qdb != "" {
-					do.selectDB = qdb
-				}
-			}
-		}
-	}
-
-	var netConn net.Conn
-	var err error
-	if do.connectTimeout > 0 {
-		netConn, err = net.DialTimeout(network, addr, do.connectTimeout)
-	} else {
-		netConn, err = net.Dial(network, addr)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	// If the netConn is a net.TCPConn (or some wrapper for it) and so can have
-	// keepalive enabled, do so with a sane (though slightly aggressive)
-	// default.
-	{
-		type keepaliveConn interface {
-			SetKeepAlive(bool) error
-			SetKeepAlivePeriod(time.Duration) error
-		}
-
-		if kaConn, ok := netConn.(keepaliveConn); ok {
-			if err = kaConn.SetKeepAlive(true); err != nil {
-				netConn.Close()
-				return nil, err
-			} else if err = kaConn.SetKeepAlivePeriod(10 * time.Second); err != nil {
-				netConn.Close()
-				return nil, err
-			}
-		}
-	}
-
-	conn := NewConn(&timeoutConn{
-		readTimeout:  do.readTimeout,
-		writeTimeout: do.writeTimeout,
-		Conn:         netConn,
-	})
-
-	if do.authPass != "" {
-		if err := conn.Do(Cmd(nil, "AUTH", do.authPass)); err != nil {
-			conn.Close()
-			return nil, err
-		}
-	}
-
-	if do.selectDB != "" {
-		if err := conn.Do(Cmd(nil, "SELECT", do.selectDB)); err != nil {
-			conn.Close()
-			return nil, err
-		}
-	}
-
-	return conn, nil
+	return NewPool(network, addr, 4)
 }

@@ -37,17 +37,17 @@ func NewLabelService(worker *api.Worker) *LabelService {
 	s.worker = worker
 
 	s.serviceCommands = api.ServiceCommands{
-		CMD_CREATE:         {api.AUTH_LEVEL_USER, s.CreateLabel},
-		CMD_GET_MANY:       {api.AUTH_LEVEL_USER, s.GetManyLabels},
-		CMD_MEMBER_GET_ALL: {api.AUTH_LEVEL_USER, s.GetLabelMembers},
-		CMD_MEMBER_ADD:     {api.AUTH_LEVEL_USER, s.AddMemberToLabel},
-		CMD_MEMBER_REMOVE:  {api.AUTH_LEVEL_USER, s.RemoveMemberFromLabel},
-		CMD_REMOVE:         {api.AUTH_LEVEL_USER, s.RemoveLabel},
-		CMD_REQUEST:        {api.AUTH_LEVEL_USER, s.CreateLabelRequest},
-		CMD_REQUEST_UPDATE: {api.AUTH_LEVEL_USER, s.UpdateLabelRequest},
-		CMD_REQUEST_LIST:   {api.AUTH_LEVEL_USER, s.ListLabelRequests},
-		CMD_REQUEST_REMOVE: {api.AUTH_LEVEL_USER, s.RemoveLabelRequest},
-		CMD_UPDATE:         {api.AUTH_LEVEL_USER, s.UpdateLabel},
+		CMD_CREATE:         {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.CreateLabel},
+		CMD_GET_MANY:       {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.GetManyLabels},
+		CMD_MEMBER_GET_ALL: {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.GetLabelMembers},
+		CMD_MEMBER_ADD:     {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.AddMemberToLabel},
+		CMD_MEMBER_REMOVE:  {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.RemoveMemberFromLabel},
+		CMD_REMOVE:         {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.RemoveLabel},
+		CMD_REQUEST:        {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.CreateLabelRequest},
+		CMD_REQUEST_UPDATE: {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.UpdateLabelRequest},
+		CMD_REQUEST_LIST:   {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.ListLabelRequests},
+		CMD_REQUEST_REMOVE: {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.RemoveLabelRequest},
+		CMD_UPDATE:         {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.UpdateLabel},
 	}
 
 	_Model = s.worker.Model()

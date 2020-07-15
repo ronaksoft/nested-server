@@ -1,9 +1,13 @@
 package radix
 
 import (
-	"errors"
+	"bufio"
 	"strconv"
 	"strings"
+
+	errors "golang.org/x/xerrors"
+
+	"github.com/mediocregopher/radix/v3/resp/resp2"
 )
 
 // Scanner is used to iterate through the results of a SCAN call (or HSCAN,
@@ -34,11 +38,18 @@ type ScanOpts struct {
 	// return per call. This does not affect the actual results of the scan
 	// command, but it may be useful for optimizing certain datasets
 	Count int
+
+	// An optional type name to filter for values of the given type.
+	// The type names are the same as returned by the "TYPE" command.
+	// This if only available in Redis 6 or newer and only works with "SCAN".
+	// If used with an older version of Redis or with a Command other than
+	// "SCAN", scanning will fail.
+	Type string
 }
 
 func (o ScanOpts) cmd(rcv interface{}, cursor string) CmdAction {
 	cmdStr := strings.ToUpper(o.Command)
-	var args []string
+	args := make([]string, 0, 8)
 	if cmdStr != "SCAN" {
 		args = append(args, o.Key)
 	}
@@ -49,6 +60,9 @@ func (o ScanOpts) cmd(rcv interface{}, cursor string) CmdAction {
 	}
 	if o.Count > 0 {
 		args = append(args, "COUNT", strconv.Itoa(o.Count))
+	}
+	if o.Type != "" {
+		args = append(args, "TYPE", o.Type)
 	}
 
 	return Cmd(rcv, cmdStr, args...)
@@ -62,9 +76,9 @@ var ScanAllKeys = ScanOpts{
 type scanner struct {
 	Client
 	ScanOpts
-	res []string
-	cur string
-	err error
+	res    scanResult
+	resIdx int
+	err    error
 }
 
 // NewScanner creates a new Scanner instance which will iterate over the redis
@@ -76,7 +90,9 @@ func NewScanner(c Client, o ScanOpts) Scanner {
 	return &scanner{
 		Client:   c,
 		ScanOpts: o,
-		cur:      "0",
+		res: scanResult{
+			cur: "0",
+		},
 	}
 }
 
@@ -86,35 +102,47 @@ func (s *scanner) Next(res *string) bool {
 			return false
 		}
 
-		if len(s.res) > 0 {
-			*res, s.res = s.res[0], s.res[1:]
-			if *res == "" {
-				continue
+		for s.resIdx < len(s.res.keys) {
+			*res = s.res.keys[s.resIdx]
+			s.resIdx++
+			if *res != "" {
+				return true
 			}
-			return true
 		}
 
-		if s.cur == "0" && s.res != nil {
+		if s.res.cur == "0" && s.res.keys != nil {
 			return false
 		}
 
-		var parts []interface{}
-		if s.err = s.Client.Do(s.cmd(&parts, s.cur)); s.err != nil {
-			return false
-		} else if len(parts) < 2 {
-			s.err = errors.New("not enough parts returned")
-			return false
-		} else if s.res == nil {
-			s.res = make([]string, 0, len(parts[1].([]interface{})))
-		}
-		s.cur = string(parts[0].([]byte))
-		s.res = s.res[:0]
-		for _, res := range parts[1].([]interface{}) {
-			s.res = append(s.res, string(res.([]byte)))
-		}
+		s.err = s.Client.Do(s.cmd(&s.res, s.res.cur))
+		s.resIdx = 0
 	}
 }
 
 func (s *scanner) Close() error {
 	return s.err
+}
+
+type scanResult struct {
+	cur  string
+	keys []string
+}
+
+func (s *scanResult) UnmarshalRESP(br *bufio.Reader) error {
+	var ah resp2.ArrayHeader
+	if err := ah.UnmarshalRESP(br); err != nil {
+		return err
+	} else if ah.N != 2 {
+		return errors.New("not enough parts returned")
+	}
+
+	var c resp2.BulkString
+	if err := c.UnmarshalRESP(br); err != nil {
+		return err
+	}
+
+	s.cur = c.S
+	s.keys = s.keys[:0]
+
+	return (resp2.Any{I: &s.keys}).UnmarshalRESP(br)
 }

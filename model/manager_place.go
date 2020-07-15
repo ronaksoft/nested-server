@@ -79,8 +79,6 @@ func NewPlaceManager() *PlaceManager {
 }
 
 func (pm *PlaceManager) readFromCache(placeID string) *Place {
-	// _funcName
-
 	place := new(Place)
 	c := _Cache.Pool.Get()
 	defer c.Close()
@@ -136,9 +134,6 @@ func (pm *PlaceManager) removeCache(placeID string) bool {
 // AddKeyHolder add the accountID to the list of placeID key holders, if he/she was not
 // a member of that place before (i.e. he/she is not creator or key holder of the placeID)
 func (pm *PlaceManager) AddKeyholder(placeID, accountID string) *PlaceManager {
-	// _funcName
-
-	// removed LOG Function
 	defer _Manager.Place.removeCache(placeID)
 	defer _Manager.Account.removeCache(accountID)
 
@@ -224,10 +219,6 @@ func (pm *PlaceManager) AddKeyholder(placeID, accountID string) *PlaceManager {
 //	Available returns true if the placeID is available to be created. It means that this placeID
 //	is not reserved or not already taken.
 func (pm *PlaceManager) Available(placeID string) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -257,10 +248,6 @@ func (pm *PlaceManager) Available(placeID string) bool {
 
 //	CountUnreadPosts counts all the unread posts for accountID in all placeIDs
 func (pm *PlaceManager) CountUnreadPosts(placeIDs []string, accountID string) int {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -282,10 +269,6 @@ func (pm *PlaceManager) CountUnreadPosts(placeIDs []string, accountID string) in
 
 //	CreatePersonalPlace creates personal grand place and sub places.  The difference between this function and
 func (pm *PlaceManager) CreatePersonalPlace(pcr PlaceCreateRequest) *Place {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -349,9 +332,6 @@ func (pm *PlaceManager) CreatePersonalPlace(pcr PlaceCreateRequest) *Place {
 //	overrides. We used separate functions for creating different place for more code clarity and better
 //	maintainability.
 func (pm *PlaceManager) CreateGrandPlace(pcr PlaceCreateRequest) *Place {
-	// _funcName
-
-	// removed LOG Function
 	defer _Manager.Account.removeCache(pcr.AccountID)
 
 	dbSession := _MongoSession.Copy()
@@ -401,10 +381,6 @@ func (pm *PlaceManager) CreateGrandPlace(pcr PlaceCreateRequest) *Place {
 //	overrides. We used separate functions for creating different place for more code clarity and better
 //	maintainability.
 func (pm *PlaceManager) CreateLockedPlace(pcr PlaceCreateRequest) *Place {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -463,10 +439,6 @@ func (pm *PlaceManager) CreateLockedPlace(pcr PlaceCreateRequest) *Place {
 //	overrides. We used separate functions for creating different place for more code clarity and better
 //	maintainability.
 func (pm *PlaceManager) CreateUnlockedPlace(pcr PlaceCreateRequest) *Place {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -535,10 +507,6 @@ func (pm *PlaceManager) CreateUnlockedPlace(pcr PlaceCreateRequest) *Place {
 
 //	Demote change user level from creator to key holder
 func (pm *PlaceManager) Demote(placeID, accountID string) *PlaceManager {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -1231,9 +1199,7 @@ func (p *Place) HasCreatorLimit() bool {
 }
 
 func (p *Place) IsCreator(accountID string) bool {
-	// _funcName
 
-	// removed LOG Function
 
 	for _, creatorID := range p.CreatorIDs {
 		if creatorID == accountID {
@@ -1245,9 +1211,7 @@ func (p *Place) IsCreator(accountID string) bool {
 }
 
 func (p *Place) IsKeyholder(accountID string) bool {
-	// _funcName
 
-	// removed LOG Function
 
 	for _, keyholderID := range p.KeyholderIDs {
 		if keyholderID == accountID {
@@ -1258,9 +1222,7 @@ func (p *Place) IsKeyholder(accountID string) bool {
 }
 
 func (p *Place) IsMember(accountID string) bool {
-	// _funcName
 
-	// removed LOG Function
 
 	for _, creatorID := range p.CreatorIDs {
 		if creatorID == accountID {
@@ -1276,9 +1238,7 @@ func (p *Place) IsMember(accountID string) bool {
 }
 
 func (p *Place) HasReadAccess(accountID string) bool {
-	// _funcName
 
-	// removed LOG Function
 
 	if p.IsMember(accountID) {
 		return true
@@ -1292,9 +1252,7 @@ func (p *Place) HasReadAccess(accountID string) bool {
 }
 
 func (p *Place) HasWriteAccess(accountID string) bool {
-	// _funcName
 
-	// removed LOG Function
 
 	if p.IsMember(accountID) && p.Policy.AddPost == PLACE_POLICY_EVERYONE {
 		return true
@@ -1316,9 +1274,7 @@ func (p *Place) HasWriteAccess(accountID string) bool {
 }
 
 func (p *Place) GetAccess(accountID string) MB {
-	// _funcName
 
-	// removed LOG Function
 
 	acl := MB{}
 	acl[PLACE_ACCESS_READ_POST] = false

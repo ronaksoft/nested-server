@@ -3,12 +3,12 @@ package radix
 import (
 	"bufio"
 	"bytes"
-	"errors"
-	"fmt"
 	"io"
 	"net"
 	"sync"
 	"time"
+
+	errors "golang.org/x/xerrors"
 
 	"github.com/mediocregopher/radix/v3/resp"
 	"github.com/mediocregopher/radix/v3/resp/resp2"
@@ -22,8 +22,7 @@ type PubSubMessage struct {
 	Message []byte
 }
 
-// MarshalRESP implements the Marshaler interface. It will assume the
-// PubSubMessage is a PMESSAGE if Pattern is non-empty.
+// MarshalRESP implements the Marshaler interface.
 func (m PubSubMessage) MarshalRESP(w io.Writer) error {
 	var err error
 	marshal := func(m resp.Marshaler) {
@@ -47,37 +46,82 @@ func (m PubSubMessage) MarshalRESP(w io.Writer) error {
 	return err
 }
 
+var errNotPubSubMessage = errors.New("message is not a PubSubMessage")
+
 // UnmarshalRESP implements the Unmarshaler interface
 func (m *PubSubMessage) UnmarshalRESP(br *bufio.Reader) error {
-	bb := make([][]byte, 0, 4)
-	if err := (resp2.Any{I: &bb}).UnmarshalRESP(br); err != nil {
+	// This method will fully consume the message on the wire, regardless of if
+	// it is a PubSubMessage or not. If it is not then errNotPubSubMessage is
+	// returned.
+
+	// When in subscribe mode redis only allows (P)(UN)SUBSCRIBE commands, which
+	// all return arrays, and PING, which returns an array when in subscribe
+	// mode. HOWEVER, when all channels have been unsubscribed from then the
+	// connection will be taken _out_ of subscribe mode. This is theoretically
+	// fine, since the driver will still only allow the 5 commands, except PING
+	// will return a simple string when in the non-subscribed state. So this
+	// needs to check for that.
+	if prefix, err := br.Peek(1); err != nil {
+		return err
+	} else if bytes.Equal(prefix, resp2.SimpleStringPrefix) {
+		// if it's a simple string, discard it (it's probably PONG) and error
+		if err := (resp2.Any{}).UnmarshalRESP(br); err != nil {
+			return err
+		}
+		return resp.ErrDiscarded{Err: errNotPubSubMessage}
+	}
+
+	var ah resp2.ArrayHeader
+	if err := ah.UnmarshalRESP(br); err != nil {
+		return err
+	} else if ah.N < 2 {
+		return errors.New("message has too few elements")
+	}
+
+	var msgType resp2.BulkStringBytes
+	if err := msgType.UnmarshalRESP(br); err != nil {
 		return err
 	}
 
-	if len(bb) < 3 {
-		return errors.New("message has too few elements")
+	switch string(msgType.B) {
+	case "message":
+		m.Type = "message"
+		if ah.N != 3 {
+			return errors.New("message has wrong number of elements")
+		}
+	case "pmessage":
+		m.Type = "pmessage"
+		if ah.N != 4 {
+			return errors.New("message has wrong number of elements")
+		}
+
+		var pattern resp2.BulkString
+		if err := pattern.UnmarshalRESP(br); err != nil {
+			return err
+		}
+		m.Pattern = pattern.S
+	default:
+		// if it's not a PubSubMessage then discard the rest of the array
+		for i := 1; i < ah.N; i++ {
+			if err := (resp2.Any{}).UnmarshalRESP(br); err != nil {
+				return err
+			}
+		}
+		return errNotPubSubMessage
 	}
 
-	m.Type = string(bytes.ToLower(bb[0]))
-	isPat := m.Type == "pmessage"
-	if isPat && len(bb) < 4 {
-		return errors.New("message has too few elements")
-	} else if !isPat && m.Type != "message" {
-		return fmt.Errorf("not message or pmessage: %q", m.Type)
+	var channel resp2.BulkString
+	if err := channel.UnmarshalRESP(br); err != nil {
+		return err
 	}
+	m.Channel = channel.S
 
-	pop := func() []byte {
-		b := bb[0]
-		bb = bb[1:]
-		return b
+	var msg resp2.BulkStringBytes
+	if err := msg.UnmarshalRESP(br); err != nil {
+		return err
 	}
+	m.Message = msg.B
 
-	pop() // discard (p)message
-	if isPat {
-		m.Pattern = string(pop())
-	}
-	m.Channel = string(pop())
-	m.Message = pop()
 	return nil
 }
 
@@ -108,7 +152,7 @@ func (cs chanSet) del(s string, ch chan<- PubSubMessage) bool {
 }
 
 func (cs chanSet) missing(ss []string) []string {
-	out := ss[:0]
+	out := make([]string, 0, len(ss))
 	for _, s := range ss {
 		if _, ok := cs[s]; !ok {
 			out = append(out, s)
@@ -135,10 +179,12 @@ func (cs chanSet) inverse() map[chan<- PubSubMessage][]string {
 //
 // If any methods return an error it means the PubSubConn has been Close'd and
 // subscribed msgCh's will no longer receive PubSubMessages from it. All methods
-// are threadsafe and non-blocking.
+// are threadsafe, but should be called in a different go-routine than that
+// which is reading from the PubSubMessage channels.
 //
-// NOTE if any channels block when being written to they will block all other
-// channels from receiving a publish.
+// NOTE the PubSubMessage channels should never block. If any channels block
+// when being written to they will block all other channels from receiving a
+// publish and block methods from returning.
 type PubSubConn interface {
 	// Subscribe subscribes the PubSubConn to the given set of channels. msgCh
 	// will receieve a PubSubMessage for every publish written to any of the
@@ -149,6 +195,10 @@ type PubSubConn interface {
 
 	// Unsubscribe unsubscribes the msgCh from the given set of channels, if it
 	// was subscribed at all.
+	//
+	// NOTE even if msgCh is not subscribed to any other redis channels, it
+	// should still be considered "active", and therefore still be having
+	// messages read from it, until Unsubscribe has returned
 	Unsubscribe(msgCh chan<- PubSubMessage, channels ...string) error
 
 	// PSubscribe is like Subscribe, but it subscribes msgCh to a set of
@@ -157,6 +207,10 @@ type PubSubConn interface {
 
 	// PUnsubscribe is like Unsubscribe, but it unsubscribes msgCh from a set of
 	// patterns and not individual channels.
+	//
+	// NOTE even if msgCh is not subscribed to any other redis channels, it
+	// should still be considered "active", and therefore still be having
+	// messages read from it, until PUnsubscribe has returned
 	PUnsubscribe(msgCh chan<- PubSubMessage, patterns ...string) error
 
 	// Ping performs a simple Ping command on the PubSubConn, returning an error
@@ -166,6 +220,9 @@ type PubSubConn interface {
 	// Close closes the PubSubConn so it can't be used anymore. All subscribed
 	// channels will stop receiving PubSubMessages from this Conn (but will not
 	// themselves be closed).
+	//
+	// NOTE all msgChs should be considered "active", and therefore still be
+	// having messages read from them, until Close has returned.
 	Close() error
 }
 
@@ -236,10 +293,11 @@ func (c *pubSubConn) publish(m PubSubMessage) {
 	c.csL.RLock()
 	defer c.csL.RUnlock()
 
-	subs := c.subs[m.Channel]
-
+	var subs map[chan<- PubSubMessage]bool
 	if m.Type == "pmessage" {
 		subs = c.psubs[m.Pattern]
+	} else {
+		subs = c.subs[m.Channel]
 	}
 
 	for ch := range subs {
@@ -249,29 +307,24 @@ func (c *pubSubConn) publish(m PubSubMessage) {
 
 func (c *pubSubConn) spin() {
 	for {
-		var rm resp2.RawMessage
-		err := c.conn.Decode(&rm)
+		var m PubSubMessage
+		err := c.conn.Decode(&m)
 		if nerr, ok := err.(net.Error); ok && nerr.Timeout() {
 			c.testEvent("timeout")
+			continue
+		} else if errors.Is(err, errNotPubSubMessage) {
+			c.cmdResCh <- nil
 			continue
 		} else if err != nil {
 			c.closeInner(err)
 			return
 		}
-
-		var m PubSubMessage
-		if err := rm.UnmarshalInto(&m); err == nil {
-			c.publish(m)
-		} else {
-			c.cmdResCh <- nil
-		}
+		c.publish(m)
 	}
 }
 
+// NOTE cmdL _must_ be held to use do
 func (c *pubSubConn) do(exp int, cmd string, args ...string) error {
-	c.cmdL.Lock()
-	defer c.cmdL.Unlock()
-
 	rcmd := Cmd(nil, cmd, args...)
 	if err := c.conn.Encode(rcmd); err != nil {
 		return err
@@ -316,31 +369,40 @@ func (c *pubSubConn) Close() error {
 }
 
 func (c *pubSubConn) Subscribe(msgCh chan<- PubSubMessage, channels ...string) error {
-	c.csL.Lock()
-	defer c.csL.Unlock()
+	c.cmdL.Lock()
+	defer c.cmdL.Unlock()
+
+	c.csL.RLock()
 	missing := c.subs.missing(channels)
+	c.csL.RUnlock()
+
 	if len(missing) > 0 {
 		if err := c.do(len(missing), "SUBSCRIBE", missing...); err != nil {
 			return err
 		}
 	}
 
+	c.csL.Lock()
 	for _, channel := range channels {
 		c.subs.add(channel, msgCh)
 	}
+	c.csL.Unlock()
+
 	return nil
 }
 
 func (c *pubSubConn) Unsubscribe(msgCh chan<- PubSubMessage, channels ...string) error {
-	c.csL.Lock()
-	defer c.csL.Unlock()
+	c.cmdL.Lock()
+	defer c.cmdL.Unlock()
 
+	c.csL.Lock()
 	emptyChannels := make([]string, 0, len(channels))
 	for _, channel := range channels {
 		if empty := c.subs.del(channel, msgCh); empty {
 			emptyChannels = append(emptyChannels, channel)
 		}
 	}
+	c.csL.Unlock()
 
 	if len(emptyChannels) == 0 {
 		return nil
@@ -350,31 +412,40 @@ func (c *pubSubConn) Unsubscribe(msgCh chan<- PubSubMessage, channels ...string)
 }
 
 func (c *pubSubConn) PSubscribe(msgCh chan<- PubSubMessage, patterns ...string) error {
-	c.csL.Lock()
-	defer c.csL.Unlock()
+	c.cmdL.Lock()
+	defer c.cmdL.Unlock()
+
+	c.csL.RLock()
 	missing := c.psubs.missing(patterns)
+	c.csL.RUnlock()
+
 	if len(missing) > 0 {
 		if err := c.do(len(missing), "PSUBSCRIBE", missing...); err != nil {
 			return err
 		}
 	}
 
+	c.csL.Lock()
 	for _, pattern := range patterns {
 		c.psubs.add(pattern, msgCh)
 	}
+	c.csL.Unlock()
+
 	return nil
 }
 
 func (c *pubSubConn) PUnsubscribe(msgCh chan<- PubSubMessage, patterns ...string) error {
-	c.csL.Lock()
-	defer c.csL.Unlock()
+	c.cmdL.Lock()
+	defer c.cmdL.Unlock()
 
+	c.csL.Lock()
 	emptyPatterns := make([]string, 0, len(patterns))
 	for _, pattern := range patterns {
 		if empty := c.psubs.del(pattern, msgCh); empty {
 			emptyPatterns = append(emptyPatterns, pattern)
 		}
 	}
+	c.csL.Unlock()
 
 	if len(emptyPatterns) == 0 {
 		return nil
@@ -384,5 +455,8 @@ func (c *pubSubConn) PUnsubscribe(msgCh chan<- PubSubMessage, patterns ...string
 }
 
 func (c *pubSubConn) Ping() error {
+	c.cmdL.Lock()
+	defer c.cmdL.Unlock()
+
 	return c.do(1, "PING")
 }

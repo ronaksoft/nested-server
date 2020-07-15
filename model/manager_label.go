@@ -195,10 +195,6 @@ func (lm *LabelManager) CreateRequest(requesterID, labelID, title, colourCode st
 
 // GetByID returns a Label object identified by 'id'
 func (lm *LabelManager) GetByID(id string) *Label {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -373,10 +369,6 @@ func (lm *LabelManager) RemoveMember(labelID, memberID string) bool {
 
 // SanitizeLabelCode if input code is not a valid code then it returns the default colour code
 func (lm *LabelManager) SanitizeLabelCode(code string) string {
-	// _funcName
-
-	// removed LOG Function
-
 	switch code {
 	case LABEL_COLOUR_CODE_A, LABEL_COLOUR_CODE_B, LABEL_COLOUR_CODE_C,
 		LABEL_COLOUR_CODE_D, LABEL_COLOUR_CODE_E, LABEL_COLOUR_CODE_F,
@@ -389,10 +381,6 @@ func (lm *LabelManager) SanitizeLabelCode(code string) string {
 
 // TitleExists check if title is already used or not
 func (lm *LabelManager) TitleExists(title string) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -406,10 +394,6 @@ func (lm *LabelManager) TitleExists(title string) bool {
 
 // UpdateRequestStatus updates the status of the request
 func (lm *LabelManager) UpdateRequestStatus(updaterAccountID string, requestID bson.ObjectId, status string) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -431,10 +415,6 @@ func (lm *LabelManager) UpdateRequestStatus(updaterAccountID string, requestID b
 // Update updates labelID by values in LabelUpdateRequest
 // labelID must exists and if colourCode and title are not empty strings then they will be applied
 func (lm *LabelManager) Update(labelID, colourCode, title string) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()

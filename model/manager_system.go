@@ -373,7 +373,6 @@ func (sm *SystemManager) LoadStringConstants() {
 }
 
 func (sm *SystemManager) SetMessageTemplate(msgID, msgSubject, msgBody string) bool {
-	// _funcName
 	if _, err := _MongoDB.C(COLLECTION_SYSTEM_INTERNAL).UpsertId(
 		"message_templates",
 		bson.M{"$set": bson.M{
@@ -389,8 +388,6 @@ func (sm *SystemManager) SetMessageTemplate(msgID, msgSubject, msgBody string) b
 }
 
 func (sm *SystemManager) GetMessageTemplates() map[string]MessageTemplate {
-	// _funcName
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -403,8 +400,6 @@ func (sm *SystemManager) GetMessageTemplates() map[string]MessageTemplate {
 }
 
 func (sm *SystemManager) RemoveMessageTemplate(msgID string) {
-	// _funcName
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -420,7 +415,6 @@ func (sm *SystemManager) RemoveMessageTemplate(msgID string) {
 }
 
 func (sm *SystemManager) SetSystemInfo(key, bundleID string, info M) bool {
-	// _funcName
 	switch key {
 	case SYS_INFO_GATEWAY, SYS_INFO_MSGAPI, SYS_INFO_ROUTER,
 		SYS_INFO_STORAGE, SYS_INFO_USERAPI:
@@ -439,8 +433,6 @@ func (sm *SystemManager) SetSystemInfo(key, bundleID string, info M) bool {
 }
 
 func (sm *SystemManager) GetSystemInfo(key string) MS {
-	// _funcName
-
 	keyID := fmt.Sprintf("sysinfo.%s", key)
 	c := _Cache.getConn()
 	defer c.Close()

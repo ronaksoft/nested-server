@@ -33,7 +33,6 @@ func dispatch(domain, sender string, recipients []string, buf []byte, m *Model) 
 
 	switch sender {
 	case _Config.GetString("MAILER_DAEMON"):
-		fmt.Sprintf("System Message: %s", subject)
 		pmSubject := mailEnvelope.GetHeader("Postmaster-Subject")
 
 		switch pmSubject {
@@ -234,7 +233,6 @@ func store(domain, sender string, recipients []string, mailEnvelope *enmime.Enve
 			var cid string
 			if c := att.Header.Get("Content-Id"); len(c) > 0 {
 				cid = c[1 : len(c)-1]
-				fmt.Sprintf("CID: %s --> %s", c, cid)
 			}
 
 			filename := att.FileName
@@ -284,7 +282,6 @@ func store(domain, sender string, recipients []string, mailEnvelope *enmime.Enve
 	attachments := make(map[string]nested.FileInfo, len(mailEnvelope.Attachments)+len(mailEnvelope.Inlines))
 	for att := range chInlineAttachments {
 		if len(att.contentId) > 0 && strings.Count(bodyHtml, att.contentId)+strings.Count(bodyPlain, att.contentId) > 0 {
-			fmt.Sprintf("Found %s in body: %d", att.contentId, strings.Count(bodyHtml, att.contentId)+strings.Count(bodyPlain, att.contentId))
 			inlineAttachments[att.contentId] = att.content
 		} else {
 			_LOG.Info("Not found %s in body", zap.String("", att.contentId))
@@ -298,7 +295,6 @@ func store(domain, sender string, recipients []string, mailEnvelope *enmime.Enve
 	}
 	for att := range chAttachments {
 		if len(att.contentId) > 0 && strings.Count(bodyHtml, att.contentId)+strings.Count(bodyPlain, att.contentId) > 0 {
-			fmt.Sprintf("Found %s in body: %d", att.contentId, strings.Count(bodyHtml, att.contentId)+strings.Count(bodyPlain, att.contentId))
 			inlineAttachments[att.contentId] = att.content
 		} else {
 			_LOG.Info("Not found %s in body", zap.String("", att.contentId))
@@ -361,7 +357,7 @@ func store(domain, sender string, recipients []string, mailEnvelope *enmime.Enve
 				_LOG.Debug("fmt.Sprintf(@%s, domain)", zap.String("", fmt.Sprintf("@%s", domain)))
 
 				if strings.HasSuffix(strings.ToLower(v), fmt.Sprintf("@%s", domain)) && !m.IsBlocked(v[:idx], senderID) {
-					_LOG.Debug("", zap.String("", fmt.Sprintf("v[:idx]", v[:idx])))
+					_LOG.Debug("", zap.String("", fmt.Sprintf("%s", v[:idx])))
 					mapPlaceIDs[v[:idx]] = true
 				} else {
 					mapEmails[v] = true

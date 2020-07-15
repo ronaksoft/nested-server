@@ -28,12 +28,12 @@ func NewSessionService(worker *api.Worker) *SessionService {
 	s.worker = worker
 
 	s.serviceCommands = api.ServiceCommands{
-		CMD_CLOSE:             {api.AUTH_LEVEL_USER, s.close},
-		CMD_CLOSE_ACTIVE:      {api.AUTH_LEVEL_USER, s.closeActive},
-		CMD_CLOSE_ALL_ACTIVES: {api.AUTH_LEVEL_USER, s.closeAllActives},
-		CMD_RECALL:            {api.AUTH_LEVEL_UNAUTHORIZED, s.recall},
-		CMD_REGISTER:          {api.AUTH_LEVEL_UNAUTHORIZED, s.register},
-		CMD_GET_ACTIVES:       {api.AUTH_LEVEL_USER, s.getAllActives},
+		CMD_CLOSE:             {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.close},
+		CMD_CLOSE_ACTIVE:      {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.closeActive},
+		CMD_CLOSE_ALL_ACTIVES: {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.closeAllActives},
+		CMD_RECALL:            {MinAuthLevel: api.AUTH_LEVEL_UNAUTHORIZED,Execute: s.recall},
+		CMD_REGISTER:          {MinAuthLevel: api.AUTH_LEVEL_UNAUTHORIZED,Execute: s.register},
+		CMD_GET_ACTIVES:       {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.getAllActives},
 	}
 
 	return s

@@ -106,9 +106,8 @@ func (n *Notification) incrementCounter() {
 func (nm *NotificationManager) GetByAccountID(
 	accountID string, pg Pagination, only_unread bool, subject string,
 ) []Notification {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -148,9 +147,8 @@ func (nm *NotificationManager) GetByAccountID(
 
 // GetByID returns a pointer to Notification object identified by notificationID
 func (nm *NotificationManager) GetByID(notificationID string) (n *Notification) {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -163,9 +161,8 @@ func (nm *NotificationManager) GetByID(notificationID string) (n *Notification) 
 
 // MarkAsRead set the notificationID as read, if notificationID = 'all' then mark all the unread notifications as read
 func (nm *NotificationManager) MarkAsRead(notificationID, accountID string) {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -207,9 +204,8 @@ func (nm *NotificationManager) MarkAsRead(notificationID, accountID string) {
 
 //MarkAsReadByPostID set all notifications related to postID as read. Useful when clients read comments
 func (nm *NotificationManager) MarkAsReadByPostID(postID bson.ObjectId, accountID string) []string {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -248,9 +244,8 @@ func (nm *NotificationManager) MarkAsReadByPostID(postID bson.ObjectId, accountI
 
 // Remove removes notification from user notifications' list
 func (nm *NotificationManager) Remove(notificationID string) bool {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -268,9 +263,8 @@ func (nm *NotificationManager) Remove(notificationID string) bool {
 
 // Post Notifications
 func (nm *NotificationManager) AddMention(senderID, mentionedID string, postID, commentID bson.ObjectId) *Notification {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -298,9 +292,8 @@ func (nm *NotificationManager) AddMention(senderID, mentionedID string, postID, 
 }
 
 func (nm *NotificationManager) JoinedPlace(adderID, addedID, placeID string) *Notification {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -327,9 +320,8 @@ func (nm *NotificationManager) JoinedPlace(adderID, addedID, placeID string) *No
 }
 
 func (nm *NotificationManager) Comment(accountID, commenterID string, postID, commentID bson.ObjectId) *Notification {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -383,9 +375,8 @@ func (nm *NotificationManager) Comment(accountID, commenterID string, postID, co
 }
 
 func (nm *NotificationManager) Promoted(promotedID, promoterID, placeID string) *Notification {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -412,9 +403,8 @@ func (nm *NotificationManager) Promoted(promotedID, promoterID, placeID string) 
 }
 
 func (nm *NotificationManager) Demoted(demotedID, demoterID, placeID string) *Notification {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -441,9 +431,8 @@ func (nm *NotificationManager) Demoted(demotedID, demoterID, placeID string) *No
 }
 
 func (nm *NotificationManager) PlaceSettingsChanged(accountID, changerID, placeID string) *Notification {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -486,9 +475,8 @@ func (nm *NotificationManager) PlaceSettingsChanged(accountID, changerID, placeI
 }
 
 func (nm *NotificationManager) NewSession(accountID, clientID string) *Notification {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -517,9 +505,8 @@ func (nm *NotificationManager) NewSession(accountID, clientID string) *Notificat
 func (nm *NotificationManager) LabelRequestApproved(
 	accountID, labelID, deciderID string, labelRequestID bson.ObjectId,
 ) *Notification {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -550,9 +537,8 @@ func (nm *NotificationManager) LabelRequestApproved(
 func (nm *NotificationManager) LabelRequestRejected(
 	accountID, labelID, deciderID string, labelRequestID bson.ObjectId,
 ) *Notification {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -581,9 +567,8 @@ func (nm *NotificationManager) LabelRequestRejected(
 }
 
 func (nm *NotificationManager) LabelRequest(accountID, requesterID string) *Notification {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -631,9 +616,8 @@ func (nm *NotificationManager) LabelRequest(accountID, requesterID string) *Noti
 }
 
 func (nm *NotificationManager) LabelJoined(accountID, labelID, adderID string) *Notification {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -661,9 +645,8 @@ func (nm *NotificationManager) LabelJoined(accountID, labelID, adderID string) *
 
 // Task Notifications
 func (nm *NotificationManager) TaskAssigned(accountID, assignorID string, task *Task) *Notification {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -692,7 +675,6 @@ func (nm *NotificationManager) TaskAssigned(accountID, assignorID string, task *
 }
 
 func (nm *NotificationManager) TaskWatcherAdded(accountID, adderID string, task *Task) *Notification {
-	// _funcName
 	//
 	// removed LOG Function
 
@@ -722,7 +704,6 @@ func (nm *NotificationManager) TaskWatcherAdded(accountID, adderID string, task 
 }
 
 func (nm *NotificationManager) TaskEditorAdded(accountID, adderID string, task *Task) *Notification {
-	// _funcName
 	//
 	// removed LOG Function
 
@@ -752,7 +733,6 @@ func (nm *NotificationManager) TaskEditorAdded(accountID, adderID string, task *
 }
 
 func (nm *NotificationManager) TaskCandidateAdded(accountID, adderID string, task *Task) *Notification {
-	// _funcName
 	//
 	// removed LOG Function
 
@@ -783,7 +763,6 @@ func (nm *NotificationManager) TaskCandidateAdded(accountID, adderID string, tas
 }
 
 func (nm *NotificationManager) TaskAssigneeChanged(accountID, newAssigneeID, actorID string, task *Task) *Notification {
-	// _funcName
 	// removed LOG Function
 	// removed LOG Function
 
@@ -814,7 +793,6 @@ func (nm *NotificationManager) TaskAssigneeChanged(accountID, newAssigneeID, act
 func (nm *NotificationManager) TaskUpdated(
 	accountID string, changerID string, task *Task, newTitle, newDesc string,
 ) *Notification {
-	// _funcName
 	// removed LOG Function
 	// removed LOG Function
 
@@ -844,7 +822,6 @@ func (nm *NotificationManager) TaskUpdated(
 }
 
 func (nm *NotificationManager) TaskOverdue(accountID string, task *Task) *Notification {
-	// _funcName
 	// removed LOG Function
 	// removed LOG Function
 
@@ -875,7 +852,6 @@ func (nm *NotificationManager) TaskOverdue(accountID string, task *Task) *Notifi
 }
 
 func (nm *NotificationManager) TaskDueTimeUpdated(accountID string, task *Task) *Notification {
-	// _funcName
 	// removed LOG Function
 	// removed LOG Function
 
@@ -906,7 +882,6 @@ func (nm *NotificationManager) TaskDueTimeUpdated(accountID string, task *Task) 
 }
 
 func (nm *NotificationManager) TaskRejected(accountID, actorID string, task *Task) *Notification {
-	// _funcName
 	// removed LOG Function
 	// removed LOG Function
 
@@ -937,7 +912,6 @@ func (nm *NotificationManager) TaskRejected(accountID, actorID string, task *Tas
 }
 
 func (nm *NotificationManager) TaskAccepted(accountID, actorID string, task *Task) *Notification {
-	// _funcName
 	// removed LOG Function
 	// removed LOG Function
 
@@ -968,7 +942,6 @@ func (nm *NotificationManager) TaskAccepted(accountID, actorID string, task *Tas
 }
 
 func (nm *NotificationManager) TaskCompleted(accountID, actorID string, task *Task) *Notification {
-	// _funcName
 	// removed LOG Function
 	// removed LOG Function
 
@@ -999,7 +972,6 @@ func (nm *NotificationManager) TaskCompleted(accountID, actorID string, task *Ta
 }
 
 func (nm *NotificationManager) TaskHold(accountID, actorID string, task *Task) *Notification {
-	// _funcName
 	// removed LOG Function
 	// removed LOG Function
 
@@ -1030,7 +1002,6 @@ func (nm *NotificationManager) TaskHold(accountID, actorID string, task *Task) *
 }
 
 func (nm *NotificationManager) TaskInProgress(accountID, actorID string, task *Task) *Notification {
-	// _funcName
 	// removed LOG Function
 	// removed LOG Function
 
@@ -1061,7 +1032,6 @@ func (nm *NotificationManager) TaskInProgress(accountID, actorID string, task *T
 }
 
 func (nm *NotificationManager) TaskFailed(accountID, actorID string, task *Task) *Notification {
-	// _funcName
 	// removed LOG Function
 	// removed LOG Function
 
@@ -1094,7 +1064,6 @@ func (nm *NotificationManager) TaskFailed(accountID, actorID string, task *Task)
 func (nm *NotificationManager) TaskCommentMentioned(
 	mentionedID, actorID string, task *Task, activityID bson.ObjectId,
 ) *Notification {
-	// _funcName
 	// removed LOG Function
 	// removed LOG Function
 
@@ -1125,7 +1094,6 @@ func (nm *NotificationManager) TaskCommentMentioned(
 }
 
 func (nm *NotificationManager) TaskComment(accountID, actorID string, task *Task, activityID bson.ObjectId) *Notification {
-	// _funcName
 	// removed LOG Function
 	// removed LOG Function
 

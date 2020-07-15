@@ -28,7 +28,7 @@ type NewPostEvent struct {
 	PostID           bson.ObjectId `json:"post_id"`
 	PostTitle        string        `json:"post_title"`
 	AttachmentsCount int           `json:"attachments_count"`
-	retries          int           `json:"-"`
+	retries          int
 }
 
 func (e NewPostEvent) GetType() HookEventType {
@@ -46,7 +46,7 @@ type NewPostCommentEvent struct {
 	SenderID  string        `json:"sender_id"`
 	PostID    bson.ObjectId `json:"post_id"`
 	CommentID bson.ObjectId `json:"comment_id"`
-	retries   int           `json:"-"`
+	retries   int
 }
 
 func (e NewPostCommentEvent) GetType() HookEventType {
@@ -65,7 +65,7 @@ type NewMemberEvent struct {
 	MemberName      string `json:"member_name"`
 	ProfilePicSmall string `json:"profile_pic"`
 	ProfilePicLarge string `json:"profile_pic"`
-	retries         int    `json:"-"`
+	retries         int
 }
 
 func (e NewMemberEvent) GetType() HookEventType {
@@ -84,7 +84,7 @@ type AccountTaskAssignedEvent struct {
 	TaskTitle    string        `json:"task_title"`
 	AssignorID   string        `json:"assignor_id"`
 	AssignorName string        `json:"assignor_name"`
-	retries      int           `json:"-"`
+	retries      int
 }
 
 func (e AccountTaskAssignedEvent) GetType() HookEventType {
@@ -130,10 +130,6 @@ func NewHookManager() *HookManager {
 //      2. account_id
 //      3. task_id
 func (m *HookManager) AddHook(setterID, hookName string, anchorID interface{}, hookType int, url string) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -154,10 +150,6 @@ func (m *HookManager) AddHook(setterID, hookName string, anchorID interface{}, h
 }
 
 func (m *HookManager) RemoveHook(hookID bson.ObjectId) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -171,10 +163,6 @@ func (m *HookManager) RemoveHook(hookID bson.ObjectId) bool {
 }
 
 func (m *HookManager) GetHooksBySetterID(setterID string, pg Pagination) []Hook {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -191,10 +179,6 @@ func (m *HookManager) GetHooksBySetterID(setterID string, pg Pagination) []Hook 
 // hooker will be run in background and listens to chEvents channel and run the appropriate function
 // according with the incoming hook event it receives from the channel
 func (m *HookManager) hooker() {
-	// _funcName
-
-	// removed LOG Function
-
 	for event := range m.chEvents {
 		m.chLimit <- true
 		go m.hHook(event)
@@ -203,10 +187,6 @@ func (m *HookManager) hooker() {
 }
 
 func (m *HookManager) hHook(e HookEvent) {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()

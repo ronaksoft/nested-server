@@ -106,10 +106,6 @@ func (tm *TaskManager) removeCache(taskID bson.ObjectId) bool {
 
 // CreateTask creates the task object in database based on the date of TaskCreateRequest
 func (tm *TaskManager) CreateTask(tcr TaskCreateRequest) *Task {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -221,9 +217,7 @@ func (tm *TaskManager) GetTasksByIDs(taskIDs []bson.ObjectId) []Task {
 
 // GetByAssigneeID returns an array of tasks filtered by Assignee of the task
 func (tm *TaskManager) GetByAssigneeID(accountID string, pg Pagination, filter []TaskStatus) []Task {
-	// _funcName
 
-	// removed LOG Function
 
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
@@ -246,9 +240,7 @@ func (tm *TaskManager) GetByAssigneeID(accountID string, pg Pagination, filter [
 
 // GetByAssignorID returns an array of tasks filtered by Assignor of the task
 func (tm *TaskManager) GetByAssignorID(accountID string, pg Pagination, filter []TaskStatus) []Task {
-	// _funcName
 
-	// removed LOG Function
 
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
@@ -271,9 +263,7 @@ func (tm *TaskManager) GetByAssignorID(accountID string, pg Pagination, filter [
 
 // GetByWatcherID returns an array of tasks filtered by Watcher of the task
 func (tm *TaskManager) GetByWatcherEditorID(accountID string, pg Pagination, filter []TaskStatus) []Task {
-	// _funcName
 
-	// removed LOG Function
 
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
@@ -299,9 +289,7 @@ func (tm *TaskManager) GetByWatcherEditorID(accountID string, pg Pagination, fil
 
 // GetByCandidateID returns an array of tasks filtered by Candidate of the task
 func (tm *TaskManager) GetByCandidateID(accountID string, pg Pagination, filter []TaskStatus) []Task {
-	// _funcName
 
-	// removed LOG Function
 
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
@@ -330,9 +318,7 @@ func (tm *TaskManager) GetByCustomFilter(
 	accountID string, assignorIDs, assigneeIDs, labelIDs []string, labelLogic, keyword string,
 	pg Pagination, filter []TaskStatus, dueDate uint64, createdAt uint64,
 ) []Task {
-	// _funcName
 
-	// removed LOG Function
 
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
@@ -395,9 +381,7 @@ func (tm *TaskManager) GetByCustomFilter(
 
 // GetUpcomingTasks returns an array of tasks assigned to accountID and have their due date set
 func (tm *TaskManager) GetUpcomingTasks(accountID string, pg Pagination) []Task {
-	// _funcName
 
-	// removed LOG Function
 
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
@@ -417,9 +401,7 @@ func (tm *TaskManager) GetUpcomingTasks(accountID string, pg Pagination) []Task 
 
 // RemoveTask soft-removes the task and all of its activities. This function sets _removed to TRUE
 func (tm *TaskManager) RemoveTask(taskID bson.ObjectId) bool {
-	// _funcName
 
-	// removed LOG Function
 	defer _Manager.Task.removeCache(taskID)
 
 	dbSession := _MongoSession.Copy()
@@ -1271,8 +1253,6 @@ func (t *Task) HasAccess(accountID string, a int) bool {
 
 // HasActivity returns TRUE if the activityID is for t otherwise returns FALSE
 func (t *Task) HasActivity(activityID bson.ObjectId) bool {
-	// _funcName
-
 	// removed LOG Function
 
 	dbSession := _MongoSession.Clone()

@@ -23,9 +23,8 @@ func NewPostActivityManager() *PostActivityManager {
 	return new(PostActivityManager)
 }
 func (pm *PostActivityManager) Remove(activityID bson.ObjectId) bool {
-	// _funcName
-	// removed LOG Function
-	// removed LOG Function
+
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -41,9 +40,8 @@ func (pm *PostActivityManager) Remove(activityID bson.ObjectId) bool {
 	return true
 }
 func (pm *PostActivityManager) GetActivityByID(activityID bson.ObjectId) *PostActivity {
-	// _funcName
-	// removed LOG Function
-	// removed LOG Function
+
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -57,9 +55,8 @@ func (pm *PostActivityManager) GetActivityByID(activityID bson.ObjectId) *PostAc
 	return postActivity
 }
 func (pm *PostActivityManager) GetActivitiesByIDs(activityIDs []bson.ObjectId) []PostActivity {
-	// _funcName
-	// removed LOG Function
-	// removed LOG Function
+
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -75,9 +72,8 @@ func (pm *PostActivityManager) GetActivitiesByIDs(activityIDs []bson.ObjectId) [
 	return postActivities
 }
 func (pm *PostActivityManager) GetActivitiesByPostID(postID bson.ObjectId, pg Pagination, filter []PostAction) []PostActivity {
-	// _funcName
-	// removed LOG Function
-	// removed LOG Function
+
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -111,9 +107,8 @@ func (pm *PostActivityManager) GetActivitiesByPostID(postID bson.ObjectId, pg Pa
 }
 
 func (pm *PostActivityManager) CommentAdd(postID bson.ObjectId, actorID string, commentID bson.ObjectId) {
-	// _funcName
-	// removed LOG Function
-	// removed LOG Function
+
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -136,9 +131,8 @@ func (pm *PostActivityManager) CommentAdd(postID bson.ObjectId, actorID string, 
 }
 
 func (pm *PostActivityManager) CommentRemove(postID bson.ObjectId, actorID string, commentID bson.ObjectId) {
-	// _funcName
-	// removed LOG Function
-	// removed LOG Function
+
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -161,9 +155,8 @@ func (pm *PostActivityManager) CommentRemove(postID bson.ObjectId, actorID strin
 }
 
 func (pm *PostActivityManager) LabelAdd(postID bson.ObjectId, actorID string, labelID string) {
-	// _funcName
-	// removed LOG Function
-	// removed LOG Function
+
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -186,9 +179,8 @@ func (pm *PostActivityManager) LabelAdd(postID bson.ObjectId, actorID string, la
 }
 
 func (pm *PostActivityManager) LabelRemove(postID bson.ObjectId, actorID string, labelID string) {
-	// _funcName
-	// removed LOG Function
-	// removed LOG Function
+
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -211,9 +203,8 @@ func (pm *PostActivityManager) LabelRemove(postID bson.ObjectId, actorID string,
 }
 
 func (pm *PostActivityManager) PlaceMove(postID bson.ObjectId, actorID string, oldPlaceID string, newPlaceID string) {
-	// _funcName
-	// removed LOG Function
-	// removed LOG Function
+
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -237,9 +228,8 @@ func (pm *PostActivityManager) PlaceMove(postID bson.ObjectId, actorID string, o
 }
 
 func (pm *PostActivityManager) PlaceAttached(postID bson.ObjectId, actorID string, newPlaceID string) {
-	// _funcName
-	// removed LOG Function
-	// removed LOG Function
+
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -262,9 +252,8 @@ func (pm *PostActivityManager) PlaceAttached(postID bson.ObjectId, actorID strin
 }
 
 func (pm *PostActivityManager) Edit(postID bson.ObjectId, actorID string) {
-	// _funcName
-	// removed LOG Function
-	// removed LOG Function
+
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)

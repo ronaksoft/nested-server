@@ -31,15 +31,15 @@ func NewAppService(worker *api.Worker) *AppService {
 	s.worker = worker
 
 	s.serviceCommands = api.ServiceCommands{
-		CMD_CREATE_TOKEN:   {api.AUTH_LEVEL_USER, s.generateAppToken},
-		CMD_SET_FAV_STATUS: {api.AUTH_LEVEL_USER, s.setFavStatus},
-		CMD_REVOKE_TOKEN:   {api.AUTH_LEVEL_USER, s.revokeAppToken},
-		CMD_GET_TOKENS:     {api.AUTH_LEVEL_USER, s.getTokensByAccountID},
-		CMD_REMOVE_APP:     {api.AUTH_LEVEL_APP_L3, s.remove},
-		CMD_GET_MANY:       {api.AUTH_LEVEL_APP_L3, s.getManyApps},
-		CMD_EXISTS:         {api.AUTH_LEVEL_APP_L3, s.exists},
-		CMD_REGISTER_APP:   {api.AUTH_LEVEL_APP_L3, s.register},
-		CMD_HAS_TOKEN:      {api.AUTH_LEVEL_APP_L1, s.hasToken},
+		CMD_CREATE_TOKEN:   {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.generateAppToken},
+		CMD_SET_FAV_STATUS: {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.setFavStatus},
+		CMD_REVOKE_TOKEN:   {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.revokeAppToken},
+		CMD_GET_TOKENS:     {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.getTokensByAccountID},
+		CMD_REMOVE_APP:     {MinAuthLevel: api.AUTH_LEVEL_APP_L3, Execute: s.remove},
+		CMD_GET_MANY:       {MinAuthLevel: api.AUTH_LEVEL_APP_L3, Execute: s.getManyApps},
+		CMD_EXISTS:         {MinAuthLevel: api.AUTH_LEVEL_APP_L3, Execute: s.exists},
+		CMD_REGISTER_APP:   {MinAuthLevel: api.AUTH_LEVEL_APP_L3, Execute: s.register},
+		CMD_HAS_TOKEN:      {MinAuthLevel: api.AUTH_LEVEL_APP_L1, Execute: s.hasToken},
 	}
 	return s
 }

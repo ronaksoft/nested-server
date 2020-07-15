@@ -150,7 +150,6 @@ func (am *AccountManager) readKeyFromCache(keyID string) string {
 	} else {
 		return keyValue
 	}
-	return ""
 }
 
 func (am *AccountManager) removeCache(accountID string) bool {
@@ -751,9 +750,8 @@ func (am *AccountManager) SetPassword(accountID, newPass string) bool {
 
 // Verify verifies if the username and password match and returns true if they were matched
 func (am *AccountManager) Verify(accountID, pass string) bool {
-	// _funcName
 	//
-	// removed LOG Function
+
 	acc := new(Account)
 	ch := mgo.Change{
 		Update:    bson.M{"$inc": bson.M{"counters.incorrect_attempts": 1}},
@@ -779,9 +777,8 @@ func (am *AccountManager) Verify(accountID, pass string) bool {
 
 // Update updates some fields of the account document, it cannot update all account's properties.
 func (am *AccountManager) Update(accountID string, aur AccountUpdateRequest) bool {
-	// _funcName
 	//
-	// removed LOG Function
+
 	defer _Manager.Account.removeCache(accountID)
 	defer _Manager.Place.removeCache(accountID)
 	q := bson.M{}

@@ -23,9 +23,8 @@ func NewPlaceActivityManager() *PlaceActivityManager {
 }
 
 func (tm *PlaceActivityManager) Exists(activityID bson.ObjectId) bool {
-	// _funcName
-	// removed LOG Function
-	// removed LOG Function
+
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -37,9 +36,8 @@ func (tm *PlaceActivityManager) Exists(activityID bson.ObjectId) bool {
 }
 
 func (tm *PlaceActivityManager) GetByID(activityID bson.ObjectId) *PlaceActivity {
-	// _funcName
-	// removed LOG Function
-	// removed LOG Function
+
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -54,9 +52,8 @@ func (tm *PlaceActivityManager) GetByID(activityID bson.ObjectId) *PlaceActivity
 }
 
 func (tm *PlaceActivityManager) GetActivitiesByPlace(placeID string, pg Pagination) []PlaceActivity {
-	// _funcName
-	// removed LOG Function
-	// removed LOG Function
+
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -79,9 +76,8 @@ func (tm *PlaceActivityManager) GetActivitiesByPlace(placeID string, pg Paginati
 }
 
 func (tm *PlaceActivityManager) PostAdd(actorID string, placeIDs []string, postID bson.ObjectId) {
-	// _funcName
-	// removed LOG Function
-	// removed LOG Function
+
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -110,9 +106,8 @@ func (tm *PlaceActivityManager) PostAdd(actorID string, placeIDs []string, postI
 }
 
 func (tm *PlaceActivityManager) PostAttachPlace(actorID, newPlaceID string, postID bson.ObjectId) {
-	// _funcName
-	// removed LOG Function
-	// removed LOG Function
+
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -136,9 +131,8 @@ func (tm *PlaceActivityManager) PostAttachPlace(actorID, newPlaceID string, post
 }
 
 func (tm *PlaceActivityManager) PostMove(actorID, oldPlaceID, newPlaceID string, postID bson.ObjectId) {
-	// _funcName
-	// removed LOG Function
-	// removed LOG Function
+
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -174,9 +168,8 @@ func (tm *PlaceActivityManager) PostMove(actorID, oldPlaceID, newPlaceID string,
 }
 
 func (tm *PlaceActivityManager) PostRemove(actorID, placeID string, postID bson.ObjectId) {
-	// _funcName
-	// removed LOG Function
-	// removed LOG Function
+
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -198,9 +191,8 @@ func (tm *PlaceActivityManager) PostRemove(actorID, placeID string, postID bson.
 }
 
 func (tm *PlaceActivityManager) PlaceAdd(actor, placeID string) {
-	// _funcName
-	// removed LOG Function
-	// removed LOG Function
+
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -220,9 +212,8 @@ func (tm *PlaceActivityManager) PlaceAdd(actor, placeID string) {
 }
 
 func (tm *PlaceActivityManager) PlaceRemove(placeID string) {
-	// _funcName
-	// removed LOG Function
-	// removed LOG Function
+
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -249,9 +240,8 @@ func (tm *PlaceActivityManager) PlaceRemove(placeID string) {
 }
 
 func (tm *PlaceActivityManager) MemberRemove(actor, placeID, memberID string, reason string) {
-	// _funcName
-	// removed LOG Function
-	// removed LOG Function
+
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -272,8 +262,7 @@ func (tm *PlaceActivityManager) MemberRemove(actor, placeID, memberID string, re
 }
 
 func (tm *PlaceActivityManager) MemberJoin(actor, placeID, by string) {
-	// _funcName
-	// removed LOG Function
+
 	// removed LOG Function
 
 	dbSession := _MongoSession.Clone()

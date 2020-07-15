@@ -467,10 +467,6 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 
 // Adds accountID to postID's watcher list of placeID
 func (pm *PostManager) AddAccountToWatcherList(postID bson.ObjectId, accountID string) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -487,10 +483,6 @@ func (pm *PostManager) AddAccountToWatcherList(postID bson.ObjectId, accountID s
 
 // AttachPlace adds a new place to the post, and changes the last_update of the post
 func (pm *PostManager) AttachPlace(postID bson.ObjectId, placeID, accountID string) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -533,10 +525,6 @@ func (pm *PostManager) AttachPlace(postID bson.ObjectId, placeID, accountID stri
 
 // AddRelatedTask adds a task to post
 func (pm *PostManager) AddRelatedTask(postID, taskID bson.ObjectId) {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -559,9 +547,7 @@ func (pm *PostManager) AddRelatedTask(postID, taskID bson.ObjectId) {
 
 // RemoveRelatedTask removes the task from the post
 func (pm *PostManager) RemoveRelatedTask(postID, taskID bson.ObjectId) {
-	// _funcName
 
-	// removed LOG Function
 	defer _Manager.Post.removeCache(postID)
 
 	dbSession := _MongoSession.Clone()
@@ -584,10 +570,6 @@ func (pm *PostManager) RemoveRelatedTask(postID, taskID bson.ObjectId) {
 
 // CommentHasAccess if accountID has READ ACCESS to the postID of the commentID it returns TRUE
 func (pm *PostManager) CommentHasAccess(commentID bson.ObjectId, accountID string) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	if comment := pm.GetCommentByID(commentID); comment != nil {
 		if pm.HasAccess(comment.PostID, accountID) {
 			return true
@@ -598,10 +580,6 @@ func (pm *PostManager) CommentHasAccess(commentID bson.ObjectId, accountID strin
 
 // Exists returns true if post exists and it is not deleted
 func (pm *PostManager) Exists(postID bson.ObjectId) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -615,18 +593,11 @@ func (pm *PostManager) Exists(postID bson.ObjectId) bool {
 
 // GetPostByID returns Post by postID, if postID does not exists it returns nil
 func (pm *PostManager) GetPostByID(postID bson.ObjectId) *Post {
-	// _funcName
-
-	// removed LOG Function
-
 	return _Manager.Post.readFromCache(postID)
 }
 
 // GetPostsByIDs returns an array of posts identified by postIDs, it returns an empty slice if nothing was found
 func (pm *PostManager) GetPostsByIDs(postIDs []bson.ObjectId) []Post {
-	// _funcName
-
-	// removed LOG Function
 	return _Manager.Post.readMultiFromCache(postIDs)
 }
 
@@ -636,10 +607,6 @@ func (pm *PostManager) GetPostsByIDs(postIDs []bson.ObjectId) []Post {
 //		POST_SORT_TIMESTAMP
 // this function is preferred to be called instead of GetPostsOfPlaces
 func (pm *PostManager) GetPostsByPlace(placeID, sortItem string, pg Pagination) []Post {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -673,10 +640,6 @@ func (pm *PostManager) GetPostsByPlace(placeID, sortItem string, pg Pagination) 
 //		POST_SORT_LAST_UPDATE
 //		POST_SORT_TIMESTAMP
 func (pm *PostManager) GetPostsBySender(accountID, sortItem string, pg Pagination) []Post {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -711,10 +674,6 @@ func (pm *PostManager) GetPostsBySender(accountID, sortItem string, pg Paginatio
 //		POST_SORT_LAST_UPDATE
 //		POST_SORT_TIMESTAMP
 func (pm *PostManager) GetPostsOfPlaces(places []string, sortItem string, pg Pagination) []Post {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -744,10 +703,6 @@ func (pm *PostManager) GetPostsOfPlaces(places []string, sortItem string, pg Pag
 
 // GetPostWatchers returns an array of accountIDs who listen to post notifications
 func (pm *PostManager) GetPostWatchers(postID bson.ObjectId) []string {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -768,10 +723,6 @@ func (pm *PostManager) GetPostWatchers(postID bson.ObjectId) []string {
 // that accountID is member of.
 // return an empty slice if there is no unseen/unread post
 func (pm *PostManager) GetUnreadPostsByPlace(placeID, accountID string, subPlaces bool, pg Pagination) []Post {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -811,10 +762,6 @@ func (pm *PostManager) GetUnreadPostsByPlace(placeID, accountID string, subPlace
 
 // GetAccountsWhoReadThis returns a list of members who have read this post
 func (pm *PostManager) GetAccountsWhoReadThis(postID bson.ObjectId, pg Pagination) []PostRead {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -830,10 +777,6 @@ func (pm *PostManager) GetAccountsWhoReadThis(postID bson.ObjectId, pg Paginatio
 
 // GetCommentByID returns Comment by the given commentID and return nil if commentID does not exists
 func (pm *PostManager) GetCommentByID(commentID bson.ObjectId) *Comment {
-	// _funcName
-
-	// removed LOG Function
-
 	comment := _Manager.Post.readCommentFromCache(commentID)
 	if comment != nil {
 		return comment
@@ -845,10 +788,6 @@ func (pm *PostManager) GetCommentByID(commentID bson.ObjectId) *Comment {
 //	found then they will be ignored silently. Caller may compare the length of result with length of
 //	input to detect if any comment was missing
 func (pm *PostManager) GetCommentsByIDs(commentIDs []bson.ObjectId) []Comment {
-	// _funcName
-
-	// removed LOG Function
-
 	comments := _Manager.Post.readMultiCommentsFromCache(commentIDs)
 	return comments
 
@@ -856,10 +795,6 @@ func (pm *PostManager) GetCommentsByIDs(commentIDs []bson.ObjectId) []Comment {
 
 // GetCommentsByPostID returns an array of Comments of postID, if postID has no comments then it returns an empty slice.
 func (pm *PostManager) GetCommentsByPostID(postID bson.ObjectId, pg Pagination) []Comment {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -885,10 +820,6 @@ func (pm *PostManager) GetCommentsByPostID(postID bson.ObjectId, pg Pagination) 
 
 // GetPinnedPosts returns an array of Posts which are pinned by accountID
 func (pm *PostManager) GetPinnedPosts(accountID string, pg Pagination) []Post {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -925,10 +856,6 @@ func (pm *PostManager) GetPinnedPosts(accountID string, pg Pagination) []Post {
 
 // HasBeenReadBy returns TRUE if postID has been seen/read by accountID
 func (pm *PostManager) HasBeenReadBy(postID bson.ObjectId, accountID string) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -948,10 +875,6 @@ func (pm *PostManager) HasBeenReadBy(postID bson.ObjectId, accountID string) boo
 
 // HasBeenWatchedBy returns TRUE if postID has accountID in its watchers list
 func (pm *PostManager) HasBeenWatchedBy(postID bson.ObjectId, accountID string) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -971,9 +894,6 @@ func (pm *PostManager) HasBeenWatchedBy(postID bson.ObjectId, accountID string) 
 // HasAccess checks if accountID has READ ACCESS to any of the postID places then it return TRUE otherwise
 // it return FALSE
 func (pm *PostManager) HasAccess(postID bson.ObjectId, accountID string) bool {
-	// _funcName
-
-	// removed LOG Function
 	if post := pm.GetPostByID(postID); post != nil {
 		for _, placeID := range post.PlaceIDs {
 			if placeID == "*" {
@@ -992,10 +912,6 @@ func (pm *PostManager) HasAccess(postID bson.ObjectId, accountID string) bool {
 // it does not remove the time-line activity of the post, only hides the comments and
 // identifies accountID as the remover of the commentID
 func (pm *PostManager) HideComment(commentID bson.ObjectId, accountID string) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -1051,10 +967,6 @@ func (pm *PostManager) HideComment(commentID bson.ObjectId, accountID string) bo
 
 // MarkAsRead marks the postID as seen/read by accountID
 func (pm *PostManager) MarkAsRead(postID bson.ObjectId, accountID string) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -1106,10 +1018,6 @@ func (pm *PostManager) MarkAsRead(postID bson.ObjectId, accountID string) bool {
 
 // MarsAsReadByPlace marks all the posts in the placeID as seen/read by accountID
 func (pm *PostManager) MarkAsReadByPlace(placeID, accountID string) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -1136,9 +1044,6 @@ func (pm *PostManager) MarkAsReadByPlace(placeID, accountID string) bool {
 
 // Move moves post from one place to another place
 func (pm *PostManager) Move(postID bson.ObjectId, oldPlaceID, newPlaceID, accountID string) bool {
-	// _funcName
-
-	// removed LOG Function
 	defer _Manager.Post.removeCache(postID)
 	defer _Manager.Place.removeCache(oldPlaceID)
 	defer _Manager.Place.removeCache(newPlaceID)
@@ -1221,10 +1126,6 @@ func (pm *PostManager) Move(postID bson.ObjectId, oldPlaceID, newPlaceID, accoun
 
 // BookmarkPost adds postID to the pinned posts list of the accountID
 func (pm *PostManager) BookmarkPost(accountID string, postID bson.ObjectId) {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -1244,9 +1145,6 @@ func (pm *PostManager) BookmarkPost(accountID string, postID bson.ObjectId) {
 // Removes removes the postID from the placeID.
 // if placeID is the last place that postID are in, then removes the comments of the postID too.
 func (pm *PostManager) Remove(accountID string, postID bson.ObjectId, placeID string) bool {
-	// _funcName
-
-	// removed LOG Function
 	defer _Manager.Post.removeCache(postID)
 	defer _Manager.Place.removeCache(placeID)
 
@@ -1326,10 +1224,6 @@ func (pm *PostManager) Remove(accountID string, postID bson.ObjectId, placeID st
 // RemoveComment removes the commentID from its post.
 // also removes the time-line activity of the comment
 func (pm *PostManager) RemoveComment(accountID string, commentID bson.ObjectId) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -1386,10 +1280,6 @@ func (pm *PostManager) RemoveComment(accountID string, commentID bson.ObjectId) 
 
 // RemoveAccountFromWatcherList removes accountID from postID's watchers list of the placeID
 func (pm *PostManager) RemoveAccountFromWatcherList(postID bson.ObjectId, accountID string) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -1406,10 +1296,6 @@ func (pm *PostManager) RemoveAccountFromWatcherList(postID bson.ObjectId, accoun
 
 // SetEmailMessageID set MessageID for the post, this function will be used by Gobryas service
 func (pm *PostManager) SetEmailMessageID(postID bson.ObjectId, messageID string) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -1427,10 +1313,6 @@ func (pm *PostManager) SetEmailMessageID(postID bson.ObjectId, messageID string)
 
 // UnpinPost removes the postID from accountID's pinned posts list
 func (pm *PostManager) UnpinPost(accountID string, postID bson.ObjectId) {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -1445,10 +1327,6 @@ func (pm *PostManager) UnpinPost(accountID string, postID bson.ObjectId) {
 
 // IsPinned returns true if postID has been pinned by accountID
 func (pm *PostManager) IsPinned(accountID string, postID bson.ObjectId) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -1565,10 +1443,6 @@ func (p *Post) IsInPlace(placeID string) bool {
 
 // HasAccess checks if accountID has access to the post, if he/she has access it returns TRUE otherwise FALSE
 func (p *Post) HasAccess(accountID string) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	for _, placeID := range p.PlaceIDs {
 		if placeID == "*" {
 			return true
@@ -1584,9 +1458,6 @@ func (p *Post) HasAccess(accountID string) bool {
 
 // AddLabel add new label to the post
 func (p *Post) AddLabel(accountID, labelID string) bool {
-	// _funcName
-
-	// removed LOG Function
 	defer _Manager.Post.removeCache(p.ID)
 
 	dbSession := _MongoSession.Clone()
@@ -1615,9 +1486,6 @@ func (p *Post) AddLabel(accountID, labelID string) bool {
 
 // LabelRemoved removes label off the post
 func (p *Post) RemoveLabel(accountID, labelID string) bool {
-	// _funcName
-
-	// removed LOG Function
 	defer _Manager.Post.removeCache(p.ID)
 
 	dbSession := _MongoSession.Clone()
@@ -1645,10 +1513,6 @@ func (p *Post) RemoveLabel(accountID, labelID string) bool {
 
 // MarkAsRead marks the postID as seen/read by accountID
 func (p *Post) MarkAsRead(accountID string) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -1701,10 +1565,6 @@ func (p *Post) MarkAsRead(accountID string) bool {
 
 // Update updates the post
 func (p *Post) Update(postSubject, postBody string) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()

@@ -28,9 +28,8 @@ func (bm *TimeBucketManager) GetBucketID(timestamp uint64) string {
 }
 
 func (bm *TimeBucketManager) GetBucketsBefore(timestamp uint64) []TimeBucket {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -47,9 +46,8 @@ func (bm *TimeBucketManager) GetBucketsBefore(timestamp uint64) []TimeBucket {
 }
 
 func (bm *TimeBucketManager) GetByID(bucketID string) *TimeBucket {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -64,9 +62,8 @@ func (bm *TimeBucketManager) GetByID(bucketID string) *TimeBucket {
 }
 
 func (bm *TimeBucketManager) AddOverdueTask(timestamp uint64, taskID bson.ObjectId) bool {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -84,9 +81,8 @@ func (bm *TimeBucketManager) AddOverdueTask(timestamp uint64, taskID bson.Object
 }
 
 func (bm *TimeBucketManager) RemoveOverdueTask(timestamp uint64, taskID bson.ObjectId) bool {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -104,9 +100,8 @@ func (bm *TimeBucketManager) RemoveOverdueTask(timestamp uint64, taskID bson.Obj
 }
 
 func (bm *TimeBucketManager) Remove(bucketID string) bool {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)

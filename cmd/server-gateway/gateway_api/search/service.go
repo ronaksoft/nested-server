@@ -37,21 +37,21 @@ func NewSearchService(worker *api.Worker) *SearchService {
 	s.worker = worker
 
 	s.serviceCommands = api.ServiceCommands{
-		CMD_ACCOUNTS:                  {api.AUTH_LEVEL_APP_L1, s.accounts},
-		CMD_ACCOUNTS_FOR_ADMIN:        {api.AUTH_LEVEL_USER, s.accountsForAdmin},
-		CMD_ACCOUNTS_FOR_SEARCH:       {api.AUTH_LEVEL_USER, s.accountsForSearch},
-		CMD_ACCOUNTS_FOR_ADD:          {api.AUTH_LEVEL_USER, s.accountsForAdd},
-		CMD_ACCOUNTS_FOR_INVITE:       {api.AUTH_LEVEL_USER, s.accountsForInvite},
-		CMD_ACCOUNTS_FOR_MENTION:      {api.AUTH_LEVEL_USER, s.accountsForMention},
-		CMD_ACCOUNTS_FOR_TASK_MENTION: {api.AUTH_LEVEL_USER, s.accountsForTaskMention},
-		CMD_LABELS:                    {api.AUTH_LEVEL_USER, s.labels},
-		CMD_PLACES_FOR_COMPOSE:        {api.AUTH_LEVEL_APP_L1, s.placesForCompose},
-		CMD_PLACES_FOR_SEARCH:         {api.AUTH_LEVEL_APP_L1, s.placesForSearch},
-		CMD_POSTS:                     {api.AUTH_LEVEL_USER, s.posts},
-		CMD_POSTS_CONVERSATION:        {api.AUTH_LEVEL_USER, s.conversation},
-		CMD_SUGGESTIONS:               {api.AUTH_LEVEL_USER, s.suggestions},
-		CMD_TASKS:                     {api.AUTH_LEVEL_USER, s.tasks},
-		CMD_APPS:                      {api.AUTH_LEVEL_USER, s.apps},
+		CMD_ACCOUNTS:                  {MinAuthLevel: api.AUTH_LEVEL_APP_L1,Execute: s.accounts},
+		CMD_ACCOUNTS_FOR_ADMIN:        {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.accountsForAdmin},
+		CMD_ACCOUNTS_FOR_SEARCH:       {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.accountsForSearch},
+		CMD_ACCOUNTS_FOR_ADD:          {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.accountsForAdd},
+		CMD_ACCOUNTS_FOR_INVITE:       {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.accountsForInvite},
+		CMD_ACCOUNTS_FOR_MENTION:      {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.accountsForMention},
+		CMD_ACCOUNTS_FOR_TASK_MENTION: {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.accountsForTaskMention},
+		CMD_LABELS:                    {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.labels},
+		CMD_PLACES_FOR_COMPOSE:        {MinAuthLevel: api.AUTH_LEVEL_APP_L1,Execute: s.placesForCompose},
+		CMD_PLACES_FOR_SEARCH:         {MinAuthLevel: api.AUTH_LEVEL_APP_L1,Execute: s.placesForSearch},
+		CMD_POSTS:                     {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.posts},
+		CMD_POSTS_CONVERSATION:        {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.conversation},
+		CMD_SUGGESTIONS:               {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.suggestions},
+		CMD_TASKS:                     {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.tasks},
+		CMD_APPS:                      {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.apps},
 	}
 
 	return s

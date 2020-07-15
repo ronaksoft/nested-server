@@ -1,7 +1,7 @@
 package rpc
 
 import (
-	"git.ronaksoftware.com/ronak/toolbox"
+	"git.ronaksoftware.com/nested/server/pkg/toolbox"
 	"sync"
 )
 
@@ -17,12 +17,12 @@ import (
 // SimpleWorker
 type SimpleWorker struct {
 	sync.Mutex
-	rateLimiter         ronak.RateLimiter
+	rateLimiter         tools.RateLimiter
 	handlers            map[MessageConstructor]MessageHandler
 	handlersWithSession map[MessageConstructor]MessageHandlerWithSession
 }
 
-func NewSimpleRPCWorker(rateLimiter ronak.RateLimiter) *SimpleWorker {
+func NewSimpleRPCWorker(rateLimiter tools.RateLimiter) *SimpleWorker {
 	w := new(SimpleWorker)
 	w.rateLimiter = rateLimiter
 	w.handlers = make(map[MessageConstructor]MessageHandler)

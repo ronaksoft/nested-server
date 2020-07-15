@@ -72,7 +72,6 @@ func NewFileManager() *FileManager {
 }
 
 func (fm *FileManager) readFromCache(fileID UniversalID) *FileInfo {
-	// _funcName
 	file := new(FileInfo)
 	c := _Cache.Pool.Get()
 	defer c.Close()
@@ -126,10 +125,6 @@ func (fm *FileManager) removeCache(fileID UniversalID) bool {
 }
 
 func (fm *FileManager) AddFile(f FileInfo) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -144,10 +139,6 @@ func (fm *FileManager) AddFile(f FileInfo) bool {
 }
 
 func (fm *FileManager) AddPostAsOwner(uniID UniversalID, postID bson.ObjectId) {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -170,10 +161,6 @@ func (fm *FileManager) AddPostAsOwner(uniID UniversalID, postID bson.ObjectId) {
 }
 
 func (fm *FileManager) AddTaskAsOwner(uniID UniversalID, taskID bson.ObjectId) {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -199,10 +186,6 @@ func (fm *FileManager) AddTaskAsOwner(uniID UniversalID, taskID bson.ObjectId) {
 // Exists
 // check if universalID exists
 func (fm *FileManager) Exists(uniID UniversalID) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -215,10 +198,6 @@ func (fm *FileManager) Exists(uniID UniversalID) bool {
 // SetStatus
 // Updates the status of the universalID
 func (fm *FileManager) SetStatus(uniID UniversalID, fileStatus string) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -258,10 +237,6 @@ func (fm *FileManager) SetStatus(uniID UniversalID, fileStatus string) bool {
 // Description:
 // Set
 func (fm *FileManager) SetMetadata(uniID UniversalID, meta interface{}) {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -277,10 +252,6 @@ func (fm *FileManager) SetMetadata(uniID UniversalID, meta interface{}) {
 // Description:
 // Get file's type
 func (fm *FileManager) GetType(filename string) (ft string) {
-	// _funcName
-
-	// removed LOG Function
-
 	ext := strings.ToLower(filepath.Ext(filename))
 	switch ext {
 	case "bmp", "jpg", "jpeg", "gif", "jpe", "ief", "png":
@@ -301,20 +272,12 @@ func (fm *FileManager) GetType(filename string) (ft string) {
 // Get file by universalID and returns only keys identified by "pj", if pj is set to NIL then
 // it returns all the keys of the document
 func (fm *FileManager) GetByID(uniID UniversalID, pj M) *FileInfo {
-	// _funcName
-
-	// removed LOG Function
-
 	return _Manager.File.readFromCache(uniID)
 }
 
 // Description:
 //	Get files by universalIDs
 func (fm *FileManager) GetFilesByIDs(uniIDs []UniversalID) (files []FileInfo) {
-	// _funcName
-
-	// removed LOG Function
-
 	return _Manager.File.readMultiFromCache(uniIDs)
 }
 
@@ -322,10 +285,6 @@ func (fm *FileManager) GetFilesByIDs(uniIDs []UniversalID) (files []FileInfo) {
 // Get files by placeID and types are filtered by "filter" and name is filtered by "filename"
 // "pg" is also used for pagination
 func (fm *FileManager) GetFilesByPlace(placeID, filter, filename string, pg Pagination) (sortedList []SortedFilesWithPost) {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -389,10 +348,6 @@ func (fm *FileManager) GetFilesByPlace(placeID, filter, filename string, pg Pagi
 //	Get files which are in placeIDs and types are filtered by "filter" and name is filtered by "filename"
 //	"pg" is also used for pagination
 func (fm *FileManager) GetFilesByPlaces(placeIDs []string, pg Pagination) []FileInfo {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -417,10 +372,6 @@ func (fm *FileManager) GetFilesByPlaces(placeIDs []string, pg Pagination) []File
 
 // RemoveTaskAsOwner removes the connection between uniID and fileID
 func (fm *FileManager) RemoveTaskAsOwner(uniID UniversalID, taskID bson.ObjectId) {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -442,10 +393,6 @@ func (fm *FileManager) RemoveTaskAsOwner(uniID UniversalID, taskID bson.ObjectId
 
 // RemovePostAsOwner removes the file from post
 func (fm *FileManager) RemovePostAsOwner(uniID UniversalID, postID bson.ObjectId) {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -468,10 +415,6 @@ func (fm *FileManager) RemovePostAsOwner(uniID UniversalID, postID bson.ObjectId
 // Description:
 // Update a file dimensions
 func (fm *FileManager) SetDimension(uniID UniversalID, width, height int64) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -493,10 +436,6 @@ func (fm *FileManager) SetDimension(uniID UniversalID, width, height int64) bool
 // Description:
 // Set a file thumbnails
 func (fm *FileManager) SetThumbnails(uniID UniversalID, thumbs Picture) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -516,10 +455,6 @@ func (fm *FileManager) SetThumbnails(uniID UniversalID, thumbs Picture) bool {
 // Description:
 // Increments the download counter of the file identified by "uniID"
 func (fm *FileManager) IncrementDownloadCounter(uniID UniversalID, count int) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -534,10 +469,6 @@ func (fm *FileManager) IncrementDownloadCounter(uniID UniversalID, count int) bo
 
 // IsTaskOwner returns true if "taskID" is one of the owners of the file identified by "uniID"
 func (fm *FileManager) IsTaskOwner(uniID UniversalID, taskID bson.ObjectId) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -553,10 +484,6 @@ func (fm *FileManager) IsTaskOwner(uniID UniversalID, taskID bson.ObjectId) bool
 
 // IsPostOwner returns true if "postID" is one of the owners of the file identified by "uniID"
 func (fm *FileManager) IsPostOwner(uniID UniversalID, postID bson.ObjectId) bool {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()

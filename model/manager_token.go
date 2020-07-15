@@ -155,10 +155,6 @@ func (tm *TokenManager) GetFileByToken(token string) (UniversalID, error) {
 
 // GetFileToken returns a pointer to FileToken struct and if any error happens it return nil
 func (tm *TokenManager) GetFileToken(token string) *FileToken {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()

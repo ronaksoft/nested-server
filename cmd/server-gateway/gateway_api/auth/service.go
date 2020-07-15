@@ -30,14 +30,14 @@ func NewAuthService(worker *api.Worker) *AuthService {
 	s.worker = worker
 
 	s.serviceCommands = api.ServiceCommands{
-		CMD_GET_VERIFICATION_CODE:       {api.AUTH_LEVEL_UNAUTHORIZED, s.getPhoneVerificationCode},
-		CMD_GET_EMAIL_VERIFICATION_CODE: {api.AUTH_LEVEL_UNAUTHORIZED, s.getEmailVerificationCode},
-		CMD_VERIFY_CODE:                 {api.AUTH_LEVEL_UNAUTHORIZED, s.verifyCode},
-		CMD_SEND_CODE_SMS:               {api.AUTH_LEVEL_UNAUTHORIZED, s.sendCodeByText},
-		CMD_RECOVER_PASSWORD:            {api.AUTH_LEVEL_UNAUTHORIZED, s.recoverPassword},
-		CMD_RECOVER_USERNAME:            {api.AUTH_LEVEL_UNAUTHORIZED, s.recoverUsername},
-		CMD_PHONE_AVAILABLE:             {api.AUTH_LEVEL_UNAUTHORIZED, s.phoneAvailable},
-		CMD_REGISTER_USER:               {api.AUTH_LEVEL_UNAUTHORIZED, s.registerUserAccount},
+		CMD_GET_VERIFICATION_CODE:       {MinAuthLevel: api.AUTH_LEVEL_UNAUTHORIZED,Execute: s.getPhoneVerificationCode},
+		CMD_GET_EMAIL_VERIFICATION_CODE: {MinAuthLevel: api.AUTH_LEVEL_UNAUTHORIZED,Execute: s.getEmailVerificationCode},
+		CMD_VERIFY_CODE:                 {MinAuthLevel: api.AUTH_LEVEL_UNAUTHORIZED,Execute: s.verifyCode},
+		CMD_SEND_CODE_SMS:               {MinAuthLevel: api.AUTH_LEVEL_UNAUTHORIZED,Execute: s.sendCodeByText},
+		CMD_RECOVER_PASSWORD:            {MinAuthLevel: api.AUTH_LEVEL_UNAUTHORIZED,Execute: s.recoverPassword},
+		CMD_RECOVER_USERNAME:            {MinAuthLevel: api.AUTH_LEVEL_UNAUTHORIZED,Execute: s.recoverUsername},
+		CMD_PHONE_AVAILABLE:             {MinAuthLevel: api.AUTH_LEVEL_UNAUTHORIZED,Execute: s.phoneAvailable},
+		CMD_REGISTER_USER:               {MinAuthLevel: api.AUTH_LEVEL_UNAUTHORIZED,Execute: s.registerUserAccount},
 	}
 
 	return s

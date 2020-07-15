@@ -384,7 +384,6 @@ func (rcm *ReportManager) GetCounters() M {
 	return m
 }
 func (rcm *ReportManager) resetAllCounters() {
-	// _funcName
 	c := _Cache.getConn()
 	defer c.Close()
 
@@ -418,10 +417,6 @@ func (rcm *ReportManager) resetAllCounters() {
 
 }
 func (rcm *ReportManager) FlushToDB() {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -531,10 +526,6 @@ func (rcm *ReportManager) FlushToDB() {
 	rcm.resetAllCounters()
 }
 func (rcm *ReportManager) GetTimeSeriesSingleValue(from, to, key, resolution string) []TimeSeriesSingleValueHourly {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -572,10 +563,6 @@ func (rcm *ReportManager) GetTimeSeriesSingleValue(from, to, key, resolution str
 }
 
 func (rcm *ReportManager) GetAPICounters() MI {
-	// _funcName
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()

@@ -34,9 +34,8 @@ func NewWebsocketManager() *WebsocketManager { return new(WebsocketManager) }
 //	SetKey is used to find accountIDs by [bundleID]
 //	DHKey is used to find accountID but [bundleID],[websocketID]
 func (wm *WebsocketManager) Register(websocketID, bundleID, deviceID, accountID string) bool {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	c := _Cache.Pool.Get()
 	defer c.Close()
@@ -65,9 +64,8 @@ func (wm *WebsocketManager) Register(websocketID, bundleID, deviceID, accountID 
 // Returns an array of Websocket, if bundleID != "" then it only returns websockets
 // which are in the bundleID
 func (wm *WebsocketManager) GetWebsocketsByAccountID(accountID, bundleID string) []Websocket {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	c := _Cache.Pool.Get()
 	defer c.Close()
@@ -100,9 +98,8 @@ func (wm *WebsocketManager) GetWebsocketsByAccountID(accountID, bundleID string)
 
 // GetAccountsByBundleID
 func (wm *WebsocketManager) GetAccountsByBundleID(bundleID string) []string {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	c := _Cache.Pool.Get()
 	defer c.Close()
@@ -122,9 +119,8 @@ func (wm *WebsocketManager) GetAccountsByBundleID(bundleID string) []string {
 // Remove
 // Removes the websocketID in the bundleID
 func (wm *WebsocketManager) Remove(websocketID, bundleID string) *Websocket {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	c := _Cache.Pool.Get()
 	defer c.Close()
@@ -168,9 +164,8 @@ func (wm *WebsocketManager) Remove(websocketID, bundleID string) *Websocket {
 
 // RemoveByBundleID
 func (wm *WebsocketManager) RemoveByBundleID(bundleID string) {
-	// _funcName
 	//
-	// removed LOG Function
+
 
 	c := _Cache.Pool.Get()
 	defer c.Close()
@@ -198,9 +193,8 @@ func (wm *WebsocketManager) RemoveByBundleID(bundleID string) {
 // IsConnected
 // Returns a map of accountIDs with TRUE value for each accountID which has at least one open socket
 func (wm *WebsocketManager) IsConnected(accountIDs []string) MB {
-	// _funcName
 	//
-	// removed LOG Function
+
 	res := MB{}
 	c := _Cache.Pool.Get()
 	defer c.Close()

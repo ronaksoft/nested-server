@@ -1,10 +1,12 @@
 package radix
 
 import (
-	"fmt"
 	"net"
 	"sync"
+	"sync/atomic"
 	"time"
+
+	errors "golang.org/x/xerrors"
 )
 
 type sentinelOpts struct {
@@ -18,6 +20,12 @@ type SentinelOpt func(*sentinelOpts)
 
 // SentinelConnFunc tells the Sentinel to use the given ConnFunc when connecting
 // to sentinel instances.
+//
+// NOTE that if SentinelConnFunc is not used then Sentinel will attempt to
+// retrieve AUTH and SELECT information from the address provided to
+// NewSentinel, and use that for dialing all Sentinels. If SentinelConnFunc is
+// provided, however, those options must be given through
+// DialAuthPass/DialSelectDB within the ConnFunc.
 func SentinelConnFunc(cf ConnFunc) SentinelOpt {
 	return func(so *sentinelOpts) {
 		so.cf = cf
@@ -73,6 +81,10 @@ type Sentinel struct {
 	// only used by tests to ensure certain actions have happened before
 	// continuing on during the test
 	testEventCh chan string
+
+	// only used by tests to delay updates after event on pconnCh
+	// contains time in milliseconds
+	testSleepBeforeSwitch uint32
 }
 
 // NewSentinel creates and returns a *Sentinel instance. NewSentinel takes in a
@@ -98,8 +110,11 @@ func NewSentinel(primaryName string, sentinelAddrs []string, opts ...SentinelOpt
 		testEventCh:   make(chan string, 1),
 	}
 
+	// If the given sentinelAddrs have AUTH/SELECT info encoded into them then
+	// use that for all sentinel connections going forward (unless overwritten
+	// by a SentinelConnFunc in opts).
+	sc.so.cf = wrapDefaultConnFunc(sentinelAddrs[0])
 	defaultSentinelOpts := []SentinelOpt{
-		SentinelConnFunc(DefaultConnFunc),
 		SentinelPoolFunc(DefaultClientFunc),
 	}
 
@@ -190,6 +205,22 @@ func (sc *Sentinel) Do(a Action) error {
 	return sc.clients[sc.primAddr].Do(a)
 }
 
+// DoSecondary is like Do but executes the Action on a random replica if possible.
+//
+// For DoSecondary to work, replicas must be configured with replica-read-only
+// enabled, otherwise calls to DoSecondary may by rejected by the replica.
+//
+// NOTE it's possible that in between DoSecondary being called and the Action being
+// actually carried out that there could be a failover event. In that case, the
+// Action will likely fail and return an error.
+func (sc *Sentinel) DoSecondary(a Action) error {
+	c, err := sc.clientInner("")
+	if err != nil {
+		return err
+	}
+	return c.Do(a)
+}
+
 // Addrs returns the currently known network address of the current primary
 // instance and the addresses of the secondaries.
 func (sc *Sentinel) Addrs() (string, []string) {
@@ -205,6 +236,18 @@ func (sc *Sentinel) Addrs() (string, []string) {
 	return sc.primAddr, secAddrs
 }
 
+// SentinelAddrs returns the addresses of all known sentinels.
+func (sc *Sentinel) SentinelAddrs() []string {
+	sc.l.RLock()
+	defer sc.l.RUnlock()
+
+	sentAddrs := make([]string, 0, len(sc.sentinelAddrs))
+	for addr := range sc.sentinelAddrs {
+		sentAddrs = append(sentAddrs, addr)
+	}
+	return sentAddrs
+}
+
 // Client returns a Client for the given address, which could be either the
 // primary or one of the secondaries (see Addrs method for retrieving known
 // addresses).
@@ -215,14 +258,32 @@ func (sc *Sentinel) Addrs() (string, []string) {
 //
 // NOTE the Client should _not_ be closed.
 func (sc *Sentinel) Client(addr string) (Client, error) {
+	if addr == "" {
+		return nil, errUnknownAddress
+	}
+	return sc.clientInner(addr)
+}
+
+func (sc *Sentinel) clientInner(addr string) (Client, error) {
+	var client Client
+
 	sc.l.RLock()
-	client, ok := sc.clients[addr]
+	if addr == "" {
+		for addr, client = range sc.clients {
+			if addr != sc.primAddr {
+				break
+			}
+		}
+	} else {
+		var ok bool
+		if client, ok = sc.clients[addr]; !ok {
+			return nil, errUnknownAddress
+		}
+	}
 	sc.l.RUnlock()
 
 	if client != nil {
 		return client, nil
-	} else if !ok {
-		return nil, errUnknownAddress
 	}
 
 	// if client was nil but ok was true it means the address is a secondary but
@@ -252,13 +313,13 @@ func (sc *Sentinel) Client(addr string) (Client, error) {
 
 // Close implements the method for the Client interface.
 func (sc *Sentinel) Close() error {
-	sc.l.Lock()
-	defer sc.l.Unlock()
 	closeErr := errClientClosed
 	sc.closeOnce.Do(func() {
 		close(sc.closeCh)
 		sc.closeWG.Wait()
 		closeErr = nil
+		sc.l.Lock()
+		defer sc.l.Unlock()
 		for _, client := range sc.clients {
 			if client != nil {
 				client.Close()
@@ -271,7 +332,7 @@ func (sc *Sentinel) Close() error {
 // cmd should be the command called which generated m
 func sentinelMtoAddr(m map[string]string, cmd string) (string, error) {
 	if m["ip"] == "" || m["port"] == "" {
-		return "", fmt.Errorf("malformed %s response", cmd)
+		return "", errors.Errorf("malformed %q response: %#v", cmd, m)
 	}
 	return net.JoinHostPort(m["ip"], m["port"]), nil
 }
@@ -446,9 +507,18 @@ func (sc *Sentinel) innerSpin() error {
 			// loop
 		case <-sc.pconnCh:
 			switchMaster = true
+			if waitFor := atomic.SwapUint32(&sc.testSleepBeforeSwitch, 0); waitFor > 0 {
+				time.Sleep(time.Duration(waitFor) * time.Millisecond)
+			}
 			// loop
 		case <-sc.closeCh:
 			return nil
 		}
 	}
+}
+
+func (sc *Sentinel) forceMasterSwitch(waitFor time.Duration) {
+	// can not use waitFor.Milliseconds() here since it was only introduced in Go 1.13 and we still support 1.12
+	atomic.StoreUint32(&sc.testSleepBeforeSwitch, uint32(waitFor.Nanoseconds()/1e6))
+	sc.pconnCh <- PubSubMessage{}
 }

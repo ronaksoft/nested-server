@@ -11,30 +11,33 @@ import (
 	"strings"
 	"sync"
 
+	"golang.org/x/xerrors"
+
 	"github.com/mediocregopher/radix/v3/resp"
 	"github.com/mediocregopher/radix/v3/resp/resp2"
 )
 
-// Action can perform one or more tasks using a Conn
+// Action performs a task using a Conn.
 type Action interface {
 	// Keys returns the keys which will be acted on. Empty slice or nil may be
-	// returned if no keys are being acted on.
-	// The returned slice must not be modified.
+	// returned if no keys are being acted on. The returned slice must not be
+	// modified.
 	Keys() []string
 
-	// Run actually performs the Action using the given Conn
+	// Run actually performs the Action using the given Conn.
 	Run(c Conn) error
 }
 
-// CmdAction is a specific type of Action for which a command is marshaled and
-// sent to the server and the command's response is read and unmarshaled into a
-// receiver within the CmdAction.
+// CmdAction is a sub-class of Action which can be used in two different ways.
+// The first is as a normal Action, where Run is called with a Conn and returns
+// once the Action has been completed.
 //
-// A CmdAction can be used like an Action, but it can also be used by marshaling
-// the command and unmarshaling the response manually.
+// The second way is as a Pipeline-able command, where one or more commands are
+// written in one step (via the MarshalRESP method) and their results are read
+// later (via the UnmarshalRESP method).
 //
-// A CmdAction should not be used again once UnmarshalRESP returns successfully
-// from it.
+// When used directly with Do then MarshalRESP/UnmarshalRESP are not called, and
+// when used in a Pipeline the Run method is not called.
 type CmdAction interface {
 	Action
 	resp.Marshaler
@@ -148,22 +151,13 @@ func getCmdAction() *cmdAction {
 	return new(cmdAction)
 }
 
-// Cmd is used to perform a redis command and retrieve a result. See the package
-// docs on how results are unmarshaled into the receiver.
+// Cmd is used to perform a redis command and retrieve a result. It should not
+// be passed into Do more than once.
 //
-//	if err := client.Do(radix.Cmd(nil, "SET", "foo", "bar")); err != nil {
-//		panic(err)
-//	}
-//
-//	var fooVal string
-//	if err := client.Do(radix.Cmd(&fooVal, "GET", "foo")); err != nil {
-//		panic(err)
-//	}
-//	fmt.Println(fooVal) // "bar"
-//
-// If the receiver value of Cmd is a primitive or slice/map a pointer must be
-// passed in. It may also be an io.Writer, an encoding.Text/BinaryUnmarshaler,
-// or a resp.Unmarshaler.
+// If the receiver value of Cmd is a primitive, a slice/map, or a struct then a
+// pointer must be passed in. It may also be an io.Writer, an
+// encoding.Text/BinaryUnmarshaler, or a resp.Unmarshaler. See the package docs
+// for more on how results are unmarshaled into the receiver.
 func Cmd(rcv interface{}, cmd string, args ...string) CmdAction {
 	c := getCmdAction()
 	*c = cmdAction{
@@ -175,27 +169,15 @@ func Cmd(rcv interface{}, cmd string, args ...string) CmdAction {
 }
 
 // FlatCmd is like Cmd, but the arguments can be of almost any type, and FlatCmd
-// will automatically flatten them into a single array of strings.
+// will automatically flatten them into a single array of strings. Like Cmd, a
+// FlatCmd should not be passed into Do more than once.
 //
-// FlatCmd does _not_ work for commands whose first parameter isn't a key. Use
-// Cmd for those.
+// FlatCmd does _not_ work for commands whose first parameter isn't a key, or
+// (generally) for MSET. Use Cmd for those.
 //
-//	client.Do(radix.FlatCmd(nil, "SET", "foo", 1))
-//	// performs "SET" "foo" "1"
-//
-//	client.Do(radix.FlatCmd(nil, "SADD", "fooSet", []string{"1", "2", "3"}))
-//	// performs "SADD" "fooSet" "1" "2" "3"
-//
-//	m := map[string]int{"a":1, "b":2, "c":3}
-//	client.Do(radix.FlatCmd(nil, "HMSET", "fooHash", m))
-//	// performs "HMSET" "foohash" "a" "1" "b" "2" "c" "3"
-//
-//	// FlatCmd also supports using a resp.LenReader (an io.Reader with a Len()
-//	// method) as an argument. *bytes.Buffer is an example of a LenReader,
-//	// and the resp package has a NewLenReader function which can wrap an
-//	// existing io.Reader. For example, if writing an http.Request body:
-//	bl := resp.NewLenReader(req.Body, req.ContentLength)
-//	client.Do(radix.FlatCmd(nil, "SET", "fooReq", bl))
+// FlatCmd supports using a resp.LenReader (an io.Reader with a Len() method) as
+// an argument. *bytes.Buffer is an example of a LenReader, and the resp package
+// has a NewLenReader function which can wrap an existing io.Reader.
 //
 // FlatCmd also supports encoding.Text/BinaryMarshalers. It does _not_ currently
 // support resp.Marshaler.
@@ -310,24 +292,31 @@ func (c *cmdAction) ClusterCanRetry() bool {
 
 // MaybeNil is a type which wraps a receiver. It will first detect if what's
 // being received is a nil RESP type (either bulk string or array), and if so
-// set Nil to true. If not the return value will be unmarshaled into Rcv
-// normally.
+// set Nil to true. If not the return value will be unmarshalled into Rcv
+// normally. If the response being received is an empty array then the EmptyArray
+// field will be set and Rcv unmarshalled into normally.
 type MaybeNil struct {
-	Nil bool
-	Rcv interface{}
+	Nil        bool
+	EmptyArray bool
+	Rcv        interface{}
 }
 
 // UnmarshalRESP implements the method for the resp.Unmarshaler interface.
 func (mn *MaybeNil) UnmarshalRESP(br *bufio.Reader) error {
 	var rm resp2.RawMessage
-	if err := rm.UnmarshalRESP(br); err != nil {
+	err := rm.UnmarshalRESP(br)
+	switch {
+	case err != nil:
 		return err
-	} else if rm.IsNil() {
+	case rm.IsNil():
 		mn.Nil = true
 		return nil
+	case rm.IsEmptyArray():
+		mn.EmptyArray = true
+		fallthrough // to not break backwards compatibility
+	default:
+		return rm.UnmarshalInto(resp2.Any{I: mn.Rcv})
 	}
-
-	return rm.UnmarshalInto(resp2.Any{I: mn.Rcv})
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -433,10 +422,12 @@ type pipeline []CmdAction
 // a single write, then reads their responses in a single read. This reduces
 // network delay into a single round-trip.
 //
+// Run will not be called on any of the passed in CmdActions.
+//
 // NOTE that, while a Pipeline performs all commands on a single Conn, it
-// shouldn't be used for MULTI/EXEC transactions, because if there's an error it
-// won't discard the incomplete transaction. Use WithConn or EvalScript for
-// transactional functionality instead.
+// shouldn't be used by itself for MULTI/EXEC transactions, because if there's
+// an error it won't discard the incomplete transaction. Use WithConn or
+// EvalScript for transactional functionality instead.
 func Pipeline(cmds ...CmdAction) Action {
 	return pipeline(cmds)
 }
@@ -459,23 +450,50 @@ func (p pipeline) Run(c Conn) error {
 	if err := c.Encode(p); err != nil {
 		return err
 	}
-	for _, cmd := range p {
+
+	for i, cmd := range p {
 		if err := c.Decode(cmd); err != nil {
-			return err
+			p.drain(c, len(p)-i-1)
+			return decodeErr(cmd, err)
 		}
 	}
 	return nil
 }
 
-// MarshalRESP implements the resp.Marshaler interface, so that the pipeline can pass itself to the Conn.Encode method
-// instead of calling Conn.Encode for each CmdAction in the pipeline.
+func (p pipeline) drain(c Conn, n int) {
+	rcv := resp2.Any{I: nil}
+	for i := 0; i < n; i++ {
+		_ = c.Decode(&rcv)
+	}
+}
+
+func decodeErr(cmd CmdAction, err error) error {
+	c, ok := cmd.(*cmdAction)
+	if ok {
+		return xerrors.Errorf(
+			"failed to decode pipeline CmdAction '%v' with keys %v: %w",
+			c.cmd,
+			c.Keys(),
+			err)
+	}
+	return xerrors.Errorf(
+		"failed to decode pipeline CmdAction '%v': %w",
+		cmd,
+		err)
+}
+
+// MarshalRESP implements the resp.Marshaler interface, so that the pipeline can
+// pass itself to the Conn.Encode method instead of calling Conn.Encode for each
+// CmdAction in the pipeline.
 //
-// This helps with Conn implementations that flush their underlying buffers after each call to Encode, like the default
-// default Conn implementation (connWrap) does, making better use of internal buffering and automatic flushing as well
-// as reducing the number of syscalls that both the client and Redis need to do.
+// This helps with Conn implementations that flush their underlying buffers
+// after each call to Encode, like the default default Conn implementation
+// (connWrap) does, making better use of internal buffering and automatic
+// flushing as well as reducing the number of syscalls that both the client and
+// Redis need to do.
 //
-// Without this, using the default Conn implementation, big pipelines can easily spend much of their time just in
-// flushing (in one case measured, up to 40%).
+// Without this, using the default Conn implementation, big pipelines can easily
+// spend much of their time just in flushing (in one case measured, up to 40%).
 func (p pipeline) MarshalRESP(w io.Writer) error {
 	for _, cmd := range p {
 		if err := cmd.MarshalRESP(w); err != nil {
@@ -494,10 +512,13 @@ type withConn struct {
 }
 
 // WithConn is used to perform a set of independent Actions on the same Conn.
-// key should be a key which one or more of the inner Actions is acting on, or
-// "" if no keys are being acted on. The callback function is what should
-// actually carry out the inner actions, and the error it returns will be
-// passed back up immediately.
+//
+// key should be a key which one or more of the inner Actions is going to act
+// on, or "" if no keys are being acted on or the keys aren't yet known. key is
+// generally only necessary when using Cluster.
+//
+// The callback function is what should actually carry out the inner actions,
+// and the error it returns will be passed back up immediately.
 //
 // NOTE that WithConn only ensures all inner Actions are performed on the same
 // Conn, it doesn't make them transactional. Use MULTI/WATCH/EXEC within a

@@ -1,14 +1,17 @@
 package radix
 
 import (
-	"errors"
-	"fmt"
+	"reflect"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
+
+	errors "golang.org/x/xerrors"
 
 	"github.com/mediocregopher/radix/v3/resp"
 	"github.com/mediocregopher/radix/v3/resp/resp2"
+	"github.com/mediocregopher/radix/v3/trace"
 )
 
 // dedupe is used to deduplicate a function invocation, so if multiple
@@ -54,8 +57,10 @@ type ClusterCanRetryAction interface {
 ////////////////////////////////////////////////////////////////////////////////
 
 type clusterOpts struct {
-	pf        ClientFunc
-	syncEvery time.Duration
+	pf              ClientFunc
+	clusterDownWait time.Duration
+	syncEvery       time.Duration
+	ct              trace.ClusterTrace
 }
 
 // ClusterOpt is an optional behavior which can be applied to the NewCluster
@@ -64,6 +69,11 @@ type ClusterOpt func(*clusterOpts)
 
 // ClusterPoolFunc tells the Cluster to use the given ClientFunc when creating
 // pools of connections to cluster members.
+//
+// This can be used to allow for secondary reads via the Cluster.DoSecondary
+// method by specifying a ClientFunc that internally creates connections using
+// DefaultClusterConnFunc or a custom ConnFunc that enables READONLY mode on each
+// connection.
 func ClusterPoolFunc(pf ClientFunc) ClusterOpt {
 	return func(co *clusterOpts) {
 		co.pf = pf
@@ -79,10 +89,37 @@ func ClusterSyncEvery(d time.Duration) ClusterOpt {
 	}
 }
 
+// ClusterOnDownDelayActionsBy tells the Cluster to delay all commands by the given
+// duration while the cluster is seen to be in the CLUSTERDOWN state. This
+// allows fewer actions to be affected by brief outages, e.g. during a failover.
+//
+// If the given duration is 0 then Cluster will not delay actions during the
+// CLUSTERDOWN state. Note that calls to Sync will not be delayed regardless
+// of this option.
+func ClusterOnDownDelayActionsBy(d time.Duration) ClusterOpt {
+	return func(co *clusterOpts) {
+		co.clusterDownWait = d
+	}
+}
+
+// ClusterWithTrace tells the Cluster to trace itself with the given
+// ClusterTrace. Note that ClusterTrace will block every point that you set to
+// trace.
+func ClusterWithTrace(ct trace.ClusterTrace) ClusterOpt {
+	return func(co *clusterOpts) {
+		co.ct = ct
+	}
+}
+
 // Cluster contains all information about a redis cluster needed to interact
 // with it, including a set of pools to each of its instances. All methods on
 // Cluster are thread-safe
 type Cluster struct {
+	// Atomic fields must be at the beginning of the struct since they must be
+	// correctly aligned or else access may cause panics on 32-bit architectures
+	// See https://golang.org/pkg/sync/atomic/#pkg-note-BUG
+	lastClusterdown int64 // unix timestamp in milliseconds, atomic
+
 	co clusterOpts
 
 	// used to deduplicate calls to sync
@@ -91,6 +128,7 @@ type Cluster struct {
 	l              sync.RWMutex
 	pools          map[string]Client
 	primTopo, topo ClusterTopo
+	secondaries    map[string]map[string]ClusterNode
 
 	closeCh   chan struct{}
 	closeWG   sync.WaitGroup
@@ -98,8 +136,24 @@ type Cluster struct {
 
 	// Any errors encountered internally will be written to this channel. If
 	// nothing is reading the channel the errors will be dropped. The channel
-	// will be closed when the Close is called.
+	// will be closed when the Close method is called.
 	ErrCh chan error
+}
+
+// DefaultClusterConnFunc is a ConnFunc which will return a Conn for a node in a
+// redis cluster using sane defaults and which has READONLY mode enabled, allowing
+// read-only commands on the connection even if the connected instance is currently
+// a replica, either by explicitly sending commands on the connection or by using
+// the DoSecondary method on the Cluster that owns the connection.
+var DefaultClusterConnFunc = func(network, addr string) (Conn, error) {
+	c, err := DefaultConnFunc(network, addr)
+	if err != nil {
+		return nil, err
+	} else if err := c.Do(Cmd(nil, "READONLY")); err != nil {
+		c.Close()
+		return nil, err
+	}
+	return c, nil
 }
 
 // NewCluster initializes and returns a Cluster instance. It will try every
@@ -109,8 +163,9 @@ type Cluster struct {
 // NewCluster takes in a number of options which can overwrite its default
 // behavior. The default options NewCluster uses are:
 //
-//	ClusterPoolFunc(DefaultClientFunc)
-//	ClusterSyncEvery(5 * time.Second)
+//     ClusterPoolFunc(DefaultClientFunc)
+//     ClusterSyncEvery(5 * time.Second)
+//     ClusterOnDownDelayActionsBy(100 * time.Millisecond)
 //
 func NewCluster(clusterAddrs []string, opts ...ClusterOpt) (*Cluster, error) {
 	c := &Cluster{
@@ -123,6 +178,7 @@ func NewCluster(clusterAddrs []string, opts ...ClusterOpt) (*Cluster, error) {
 	defaultClusterOpts := []ClusterOpt{
 		ClusterPoolFunc(DefaultClientFunc),
 		ClusterSyncEvery(5 * time.Second),
+		ClusterOnDownDelayActionsBy(100 * time.Millisecond),
 	}
 
 	for _, opt := range append(defaultClusterOpts, opts...) {
@@ -172,7 +228,7 @@ func assertKeysSlot(keys []string) error {
 		if !ok {
 			ok = true
 		} else if slot != thisSlot {
-			return fmt.Errorf("keys %q and %q do not belong to the same slot", prevKey, key)
+			return errors.Errorf("keys %q and %q do not belong to the same slot", prevKey, key)
 		}
 		prevKey = key
 		slot = thisSlot
@@ -263,6 +319,11 @@ func (c *Cluster) Topo() ClusterTopo {
 func (c *Cluster) getTopo(p Client) (ClusterTopo, error) {
 	var tt ClusterTopo
 	err := p.Do(Cmd(&tt, "CLUSTER", "SLOTS"))
+	if len(tt) == 0 && err == nil {
+		//This will happen between when nodes starts coming up after cluster goes down and
+		//Cluster swarm yet not ready using those nodes.
+		err = errors.New("no cluster slots assigned")
+	}
 	return tt, err
 }
 
@@ -281,6 +342,55 @@ func (c *Cluster) Sync() error {
 	return err
 }
 
+func nodeInfoFromNode(node ClusterNode) trace.ClusterNodeInfo {
+	return trace.ClusterNodeInfo{
+		Addr:      node.Addr,
+		Slots:     node.Slots,
+		IsPrimary: node.SecondaryOfAddr == "",
+	}
+}
+
+func (c *Cluster) traceTopoChanged(prevTopo ClusterTopo, newTopo ClusterTopo) {
+	if c.co.ct.TopoChanged != nil {
+		var addedNodes []trace.ClusterNodeInfo
+		var removedNodes []trace.ClusterNodeInfo
+		var changedNodes []trace.ClusterNodeInfo
+
+		prevTopoMap := prevTopo.Map()
+		newTopoMap := newTopo.Map()
+
+		for addr, newNode := range newTopoMap {
+			if prevNode, ok := prevTopoMap[addr]; ok {
+				// Check whether two nodes which have the same address changed its value or not
+				if !reflect.DeepEqual(prevNode, newNode) {
+					changedNodes = append(changedNodes, nodeInfoFromNode(newNode))
+				}
+				// No need to handle this address for finding removed nodes
+				delete(prevTopoMap, addr)
+			} else {
+				// The node's address not found from prevTopo is newly added node
+				addedNodes = append(addedNodes, nodeInfoFromNode(newNode))
+			}
+		}
+
+		// Find removed nodes, prevTopoMap has reduced
+		for addr, prevNode := range prevTopoMap {
+			if _, ok := newTopoMap[addr]; !ok {
+				removedNodes = append(removedNodes, nodeInfoFromNode(prevNode))
+			}
+		}
+
+		// Callback when any changes detected
+		if len(addedNodes) != 0 || len(removedNodes) != 0 || len(changedNodes) != 0 {
+			c.co.ct.TopoChanged(trace.ClusterTopoChanged{
+				Added:   addedNodes,
+				Removed: removedNodes,
+				Changed: changedNodes,
+			})
+		}
+	}
+}
+
 // while this method is normally deduplicated by the Sync method's use of
 // dedupe it is perfectly thread-safe on its own and can be used whenever.
 func (c *Cluster) sync(p Client) error {
@@ -292,23 +402,42 @@ func (c *Cluster) sync(p Client) error {
 	for _, t := range tt {
 		// call pool just to ensure one exists for this addr
 		if _, err := c.pool(t.Addr); err != nil {
-			return fmt.Errorf("error connecting to %s: %s", t.Addr, err)
+			return errors.Errorf("error connecting to %s: %w", t.Addr, err)
 		}
 	}
 
-	// this is a big bit of code to totally lockdown the cluster for, but at the
-	// same time Close _shouldn't_ block significantly
-	c.l.Lock()
-	defer c.l.Unlock()
-	c.topo = tt
-	c.primTopo = tt.Primaries()
+	c.traceTopoChanged(c.topo, tt)
 
-	tm := tt.Map()
-	for addr, p := range c.pools {
-		if _, ok := tm[addr]; !ok {
-			p.Close()
-			delete(c.pools, addr)
+	var toclose []Client
+	func() {
+		c.l.Lock()
+		defer c.l.Unlock()
+		c.topo = tt
+		c.primTopo = tt.Primaries()
+
+		c.secondaries = make(map[string]map[string]ClusterNode, len(c.primTopo))
+		for _, node := range c.topo {
+			if node.SecondaryOfAddr != "" {
+				m := c.secondaries[node.SecondaryOfAddr]
+				if m == nil {
+					m = make(map[string]ClusterNode, len(c.topo)/len(c.primTopo))
+					c.secondaries[node.SecondaryOfAddr] = m
+				}
+				m[node.Addr] = node
+			}
 		}
+
+		tm := tt.Map()
+		for addr, p := range c.pools {
+			if _, ok := tm[addr]; !ok {
+				toclose = append(toclose, p)
+				delete(c.pools, addr)
+			}
+		}
+	}()
+
+	for _, p := range toclose {
+		p.Close()
 	}
 
 	return nil
@@ -346,6 +475,16 @@ func (c *Cluster) addrForKey(key string) string {
 		}
 	}
 	return ""
+}
+
+func (c *Cluster) secondaryAddrForKey(key string) string {
+	c.l.RLock()
+	defer c.l.RUnlock()
+	primAddr := c.addrForKey(key)
+	for addr := range c.secondaries[primAddr] {
+		return addr
+	}
+	return primAddr
 }
 
 type askConn struct {
@@ -392,7 +531,118 @@ func (c *Cluster) Do(a Action) error {
 	return c.doInner(a, addr, key, false, doAttempts)
 }
 
+// DoSecondary is like Do but executes the Action on a random secondary for the affected keys.
+//
+// For DoSecondary to work, all connections must be created in read-only mode, by using a
+// custom ClusterPoolFunc that executes the READONLY command on each new connection.
+//
+// See ClusterPoolFunc for an example using the global DefaultClusterConnFunc.
+//
+// If the Action can not be handled by a secondary the Action will be send to the primary instead.
+func (c *Cluster) DoSecondary(a Action) error {
+	var addr, key string
+	keys := a.Keys()
+	if len(keys) == 0 {
+		// that's ok, key will then just be ""
+	} else if err := assertKeysSlot(keys); err != nil {
+		return err
+	} else {
+		key = keys[0]
+		addr = c.secondaryAddrForKey(key)
+	}
+
+	return c.doInner(a, addr, key, false, doAttempts)
+}
+
+func (c *Cluster) getClusterDownSince() int64 {
+	return atomic.LoadInt64(&c.lastClusterdown)
+}
+
+func (c *Cluster) setClusterDown(down bool) (changed bool) {
+	// There is a race when calling this method concurrently when the cluster
+	// healed after being down.
+	//
+	// If we have 2 goroutines, one that sends a command before the cluster
+	// heals and once that sends a command after the cluster healed, both
+	// goroutines will call this method, but with different values
+	// (down == true and down == false).
+	//
+	// Since there is bi ordering between the two goroutines, it can happen
+	// that the call to setClusterDown in the second goroutine runs before
+	// the call in the first goroutine. In that case the state would be
+	// changed from down to up by the second goroutine, as it should, only
+	// for the first goroutine to set it back to down a few microseconds later.
+	//
+	// If this happens other commands will be needlessly delayed until
+	// another goroutine sets the state to up again and we will trace two
+	// unnecessary state transitions.
+	//
+	// We can not reliably avoid this race without more complex tracking of
+	// previous states, which would be rather complex and possibly expensive.
+
+	// Swapping values is expensive (on amd64, an uncontended swap can be 10x
+	// slower than a load) and can easily become quite contended when we have
+	// many goroutines trying to update the value concurrently, which would
+	// slow it down even more.
+	//
+	// We avoid the overhead of swapping when not necessary by loading the
+	// value first and checking if the value is already what we want it to be.
+	//
+	// Since atomic loads are fast (on amd64 an atomic load can be as fast as
+	// a non-atomic load, and is perfectly scalable as long as there are no
+	// writes to the same cache line), we can safely do this without adding
+	// unnecessary extra latency.
+	prevVal := atomic.LoadInt64(&c.lastClusterdown)
+
+	var newVal int64
+	if down {
+		newVal = time.Now().UnixNano() / 1000 / 1000
+		// Since the exact value is only used for delaying commands small
+		// differences don't matter much and we can avoid many updates by
+		// ignoring small differences (<5ms).
+		if prevVal != 0 && newVal-prevVal < 5 {
+			return false
+		}
+	} else {
+		if prevVal == 0 {
+			return false
+		}
+	}
+
+	prevVal = atomic.SwapInt64(&c.lastClusterdown, newVal)
+
+	changed = (prevVal == 0 && newVal != 0) || (prevVal != 0 && newVal == 0)
+
+	if changed && c.co.ct.StateChange != nil {
+		c.co.ct.StateChange(trace.ClusterStateChange{IsDown: down})
+	}
+
+	return changed
+}
+
+func (c *Cluster) traceRedirected(addr, key string, moved, ask bool, count int, final bool) {
+	if c.co.ct.Redirected != nil {
+		c.co.ct.Redirected(trace.ClusterRedirected{
+			Addr:          addr,
+			Key:           key,
+			Moved:         moved,
+			Ask:           ask,
+			RedirectCount: count,
+			Final:         final,
+		})
+	}
+}
+
 func (c *Cluster) doInner(a Action, addr, key string, ask bool, attempts int) error {
+	if downSince := c.getClusterDownSince(); downSince > 0 && c.co.clusterDownWait > 0 {
+		// only wait when the last command was not too long, because
+		// otherwise the chance it high that the cluster already healed
+		elapsed := (time.Now().UnixNano() / 1000 / 1000) - downSince
+		if elapsed < int64(c.co.clusterDownWait/time.Millisecond) {
+			time.Sleep(c.co.clusterDownWait)
+		}
+	}
+
 	p, err := c.pool(addr)
 	if err != nil {
 		return err
@@ -410,12 +660,24 @@ func (c *Cluster) doInner(a Action, addr, key string, ask bool, attempts int) er
 		})
 	}
 
-	if err = p.Do(thisA); err == nil {
+	err = p.Do(thisA)
+	if err == nil {
+		c.setClusterDown(false)
 		return nil
 	}
 
-	// if the error was a MOVED or ASK we can potentially retry
+	if !errors.As(err, new(resp2.Error)) {
+		return err
+	}
 	msg := err.Error()
+
+	clusterDown := strings.HasPrefix(msg, "CLUSTERDOWN ")
+	clusterDownChanged := c.setClusterDown(clusterDown)
+	if clusterDown && c.co.clusterDownWait > 0 && clusterDownChanged {
+		return c.doInner(a, addr, key, ask, 1)
+	}
+
+	// if the error was a MOVED or ASK we can potentially retry
 	moved := strings.HasPrefix(msg, "MOVED ")
 	ask = strings.HasPrefix(msg, "ASK ")
 	if !moved && !ask {
@@ -441,10 +703,11 @@ func (c *Cluster) doInner(a Action, addr, key string, ask bool, attempts int) er
 
 	msgParts := strings.Split(msg, " ")
 	if len(msgParts) < 3 {
-		return fmt.Errorf("malformed MOVED/ASK error %q", msg)
+		return errors.Errorf("malformed MOVED/ASK error %q", msg)
 	}
-	addr = msgParts[2]
+	ogAddr, addr := addr, msgParts[2]
 
+	c.traceRedirected(ogAddr, key, moved, ask, doAttempts-attempts+1, attempts <= 1)
 	if attempts--; attempts <= 0 {
 		return errors.New("cluster action redirected too many times")
 	}

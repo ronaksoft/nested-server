@@ -1059,7 +1059,6 @@ func (s *TaskService) setState(requester *nested.Account, request *nestedGateway
 		response.Error(nested.ERR_INVALID, []string{"state"})
 		return
 	}
-	response.Error(nested.ERR_UNKNOWN, []string{"internal_error"})
 }
 
 // @Command: task/update

@@ -1,9 +1,13 @@
 package radix
 
 import (
+	"bufio"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/mediocregopher/radix/v3/resp"
 )
 
 var blockingCmds = map[string]bool{
@@ -20,7 +24,7 @@ var blockingCmds = map[string]bool{
 	"XREAD":      true,
 	"XREADGROUP": true,
 
-	"SAVE":  true,
+	"SAVE": true,
 }
 
 type pipeliner struct {
@@ -110,7 +114,7 @@ func (p *pipeliner) Do(a Action) error {
 // Close closes the pipeliner and makes sure that all background goroutines
 // are stopped before returning.
 //
-// Close does *not* close the underyling Client.
+// Close does *not* close the underlying Client.
 func (p *pipeliner) Close() error {
 	p.l.Lock()
 	defer p.l.Unlock()
@@ -126,7 +130,7 @@ func (p *pipeliner) Close() error {
 		<-p.reqsBufCh
 	}
 
-	p.c = nil
+	p.c, p.closed = nil, true
 	return nil
 }
 
@@ -175,14 +179,11 @@ func (p *pipeliner) flush(reqs []CmdAction) []CmdAction {
 			p.reqsBufCh <- reqs[:0]
 		}()
 
-		pipe := pipelinerPipeline{
-			pipeline: pipeline(reqs),
-		}
+		pp := &pipelinerPipeline{pipeline: pipeline(reqs)}
+		defer pp.flush()
 
-		if err := p.c.Do(pipe); err != nil {
-			for _, req := range reqs {
-				req.(*pipelinerCmd).resCh <- err
-			}
+		if err := p.c.Do(pp); err != nil {
+			pp.doErr = err
 		}
 	}()
 
@@ -191,7 +192,25 @@ func (p *pipeliner) flush(reqs []CmdAction) []CmdAction {
 
 type pipelinerCmd struct {
 	CmdAction
+
 	resCh chan error
+
+	unmarshalCalled bool
+	unmarshalErr    error
+}
+
+var (
+	_ resp.Unmarshaler = (*pipelinerCmd)(nil)
+)
+
+func (p *pipelinerCmd) sendRes(err error) {
+	p.resCh <- err
+}
+
+func (p *pipelinerCmd) UnmarshalRESP(br *bufio.Reader) error {
+	p.unmarshalErr = p.CmdAction.UnmarshalRESP(br)
+	p.unmarshalCalled = true // important: we set this after unmarshalErr in case the call to UnmarshalRESP panics
+	return p.unmarshalErr
 }
 
 var pipelinerCmdPool sync.Pool
@@ -199,7 +218,10 @@ var pipelinerCmdPool sync.Pool
 func getPipelinerCmd(cmd CmdAction) *pipelinerCmd {
 	req, _ := pipelinerCmdPool.Get().(*pipelinerCmd)
 	if req != nil {
-		req.CmdAction = cmd
+		*req = pipelinerCmd{
+			CmdAction: cmd,
+			resCh:     req.resCh,
+		}
 		return req
 	}
 	return &pipelinerCmd{
@@ -216,14 +238,37 @@ func poolPipelinerCmd(req *pipelinerCmd) {
 
 type pipelinerPipeline struct {
 	pipeline
+	doErr error
 }
 
-func (p pipelinerPipeline) Run(c Conn) error {
+func (p *pipelinerPipeline) flush() {
+	for _, req := range p.pipeline {
+		var err error
+
+		cmd := req.(*pipelinerCmd)
+		if cmd.unmarshalCalled {
+			err = cmd.unmarshalErr
+		} else {
+			err = p.doErr
+		}
+		cmd.sendRes(err)
+	}
+}
+
+func (p *pipelinerPipeline) Run(c Conn) (err error) {
+	defer func() {
+		if v := recover(); v != nil {
+			err = fmt.Errorf("%s", v)
+		}
+	}()
 	if err := c.Encode(p); err != nil {
 		return err
 	}
+	errConn := ioErrConn{Conn: c}
 	for _, req := range p.pipeline {
-		req.(*pipelinerCmd).resCh <- c.Decode(req)
+		if _ = errConn.Decode(req); errConn.lastIOErr != nil {
+			return errConn.lastIOErr
+		}
 	}
 	return nil
 }

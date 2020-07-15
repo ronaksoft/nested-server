@@ -1,12 +1,12 @@
 package v1
 
 import (
+	tools "git.ronaksoftware.com/nested/server/pkg/toolbox"
 	"os"
 
 	"firebase.google.com/go"
 	"git.ronaksoftware.com/nested/server/model"
 	"git.ronaksoftware.com/nested/server/pkg/rpc"
-	"git.ronaksoftware.com/ronak/toolbox"
 	"github.com/nats-io/go-nats"
 	"go.uber.org/zap"
 )
@@ -33,7 +33,7 @@ func init() {
 	}
 }
 
-func NewWorker(rateLimiter ronak.RateLimiter, model *nested.Manager, natsConn *nats.Conn, fcmClient *firebase.App,
+func NewWorker(rateLimiter tools.RateLimiter, model *nested.Manager, natsConn *nats.Conn, fcmClient *firebase.App,
 	bundleID string) *rpc.SimpleWorker {
 	worker := rpc.NewSimpleRPCWorker(rateLimiter)
 	worker.AddHandler("NTFY.REGISTER.DEVICE", registerDevice)
