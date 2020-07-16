@@ -63,8 +63,8 @@ type NewMemberEvent struct {
 	PlaceID         string `json:"place_id"`
 	MemberID        string `json:"member_id"`
 	MemberName      string `json:"member_name"`
-	ProfilePicSmall string `json:"profile_pic"`
-	ProfilePicLarge string `json:"profile_pic"`
+	ProfilePicSmall string `json:"profile_pic_small"`
+	ProfilePicLarge string `json:"profile_pic_large"`
 	retries         int
 }
 
