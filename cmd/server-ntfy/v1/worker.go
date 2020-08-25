@@ -1,12 +1,12 @@
 package v1
 
 import (
-	tools "git.ronaksoftware.com/nested/server/pkg/toolbox"
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"os"
 
 	"firebase.google.com/go"
-	"git.ronaksoftware.com/nested/server/model"
-	"git.ronaksoftware.com/nested/server/pkg/rpc"
+	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/pkg/rpc"
 	"github.com/nats-io/go-nats"
 	"go.uber.org/zap"
 )

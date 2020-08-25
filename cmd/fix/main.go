@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
-	nested "git.ronaksoftware.com/nested/server/model"
+	nested "git.ronaksoft.com/nested/server/model"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 	"strings"

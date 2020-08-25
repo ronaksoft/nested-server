@@ -5,7 +5,7 @@ stages:
 
 variables:
   IMAGE_TAG:  "3.0"
-  GO_SOURCE_DIR: /go/src/git.ronaksoftware.com/$CI_PROJECT_PATH   # CI_PROJECT_PATH: nested/server-ntfy
+  GO_SOURCE_DIR: /go/src/git.ronaksoft.com/$CI_PROJECT_PATH   # CI_PROJECT_PATH: nested/server-ntfy
   BUILD_DIR: $CI_PROJECT_DIR/build
 
 build:compile:

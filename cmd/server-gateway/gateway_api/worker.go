@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"git.ronaksoftware.com/nested/server/cmd/server-gateway/client"
-	"git.ronaksoftware.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
+	"git.ronaksoft.com/nested/server/model"
 	"github.com/globalsign/mgo/bson"
 	"gopkg.in/fzerorubigd/onion.v3"
 )

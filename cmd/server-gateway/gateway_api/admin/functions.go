@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"git.ronaksoftware.com/nested/server/cmd/server-gateway/client"
-	"git.ronaksoftware.com/nested/server/cmd/server-gateway/gateway_api"
-	"git.ronaksoftware.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
+	"git.ronaksoft.com/nested/server/cmd/server-gateway/gateway_api"
+	"git.ronaksoft.com/nested/server/model"
 )
 
 // @Command: admin/set_message_template

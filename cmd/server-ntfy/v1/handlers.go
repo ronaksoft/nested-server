@@ -6,9 +6,9 @@ import (
 	"fmt"
 
 	"firebase.google.com/go/messaging"
-	"git.ronaksoftware.com/nested/server/cmd/server-ntfy/client"
-	"git.ronaksoftware.com/nested/server/model"
-	"git.ronaksoftware.com/nested/server/pkg/rpc"
+	"git.ronaksoft.com/nested/server/cmd/server-ntfy/client"
+	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/pkg/rpc"
 	"go.uber.org/zap"
 )
 

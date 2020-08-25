@@ -1,4 +1,4 @@
-module git.ronaksoftware.com/nested/server
+module git.ronaksoft.com/nested/server
 
 go 1.14
 

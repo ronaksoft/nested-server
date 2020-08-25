@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"git.ronaksoftware.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/model"
 	"github.com/globalsign/mgo/bson"
 	"github.com/microcosm-cc/bluemonday"
 	"go.uber.org/zap"

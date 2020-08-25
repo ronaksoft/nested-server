@@ -2,7 +2,7 @@ package cache
 
 import (
 	"fmt"
-	"git.ronaksoftware.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/model"
 	"github.com/gomodule/redigo/redis"
 )
 

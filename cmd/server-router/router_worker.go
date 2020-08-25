@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	router "git.ronaksoftware.com/nested/server/cmd/server-router/client"
+	router "git.ronaksoft.com/nested/server/cmd/server-router/client"
 	"go.uber.org/zap"
 	"strings"
 	"time"

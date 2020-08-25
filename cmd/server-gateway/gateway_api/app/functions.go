@@ -3,8 +3,8 @@ package nestedServiceApp
 import (
 	"strings"
 
-	"git.ronaksoftware.com/nested/server/cmd/server-gateway/client"
-	"git.ronaksoftware.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
+	"git.ronaksoft.com/nested/server/model"
 )
 
 // @Command: app/exists

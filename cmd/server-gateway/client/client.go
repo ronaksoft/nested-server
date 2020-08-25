@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"os"
 
-	"git.ronaksoftware.com/nested/server/model"
-	"git.ronaksoftware.com/nested/server/pkg/protocol"
+	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/pkg/protocol"
 
 	"go.uber.org/zap"
 )

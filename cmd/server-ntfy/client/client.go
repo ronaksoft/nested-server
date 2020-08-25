@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"git.ronaksoftware.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/model"
 	"github.com/globalsign/mgo/bson"
 	"github.com/nats-io/go-nats"
 )

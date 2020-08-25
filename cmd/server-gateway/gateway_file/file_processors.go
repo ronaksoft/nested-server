@@ -7,9 +7,9 @@ import (
 	"path"
 	"sync"
 
-	"git.ronaksoftware.com/nested/server/cmd/server-gateway/gateway_file/convert"
-	"git.ronaksoftware.com/nested/server/model"
-	"git.ronaksoftware.com/nested/server/pkg/protocol"
+	"git.ronaksoft.com/nested/server/cmd/server-gateway/gateway_file/convert"
+	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/pkg/protocol"
 	"go.uber.org/zap"
 )
 

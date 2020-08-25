@@ -9,7 +9,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"git.ronaksoftware.com/nested/server/pkg/protocol"
+	"git.ronaksoft.com/nested/server/pkg/protocol"
 )
 
 type Preview struct {

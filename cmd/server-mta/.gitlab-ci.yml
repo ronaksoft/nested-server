@@ -4,7 +4,7 @@ stages:
   - deploy
 
 variables:
-  GO_SOURCE_DIR: /go/src/git.ronaksoftware.com/$CI_PROJECT_PATH   # CI_PROJECT_PATH: nested/server-userapi
+  GO_SOURCE_DIR: /go/src/git.ronaksoft.com/$CI_PROJECT_PATH   # CI_PROJECT_PATH: nested/server-userapi
   BUILD_DIR: $CI_PROJECT_DIR/build
 
 build:compile:

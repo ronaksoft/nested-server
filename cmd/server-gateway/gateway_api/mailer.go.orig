@@ -10,7 +10,7 @@ import (
     "strings"
     "time"
 
-    "git.ronaksoftware.com/nested/server/model"
+    "git.ronaksoft.com/nested/server/model"
     "github.com/dustin/go-humanize"
     "github.com/globalsign/mgo/bson"
     "github.com/jaytaylor/html2text"

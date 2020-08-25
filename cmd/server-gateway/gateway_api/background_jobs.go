@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"git.ronaksoftware.com/nested/server/cmd/server-ntfy/client"
-	"git.ronaksoftware.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/cmd/server-ntfy/client"
+	"git.ronaksoft.com/nested/server/model"
 	"gopkg.in/fzerorubigd/onion.v3"
 )
 

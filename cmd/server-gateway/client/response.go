@@ -3,7 +3,7 @@ package nestedGateway
 import (
 	"encoding/json"
 
-	"git.ronaksoftware.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/model"
 )
 
 // Response

@@ -1,7 +1,7 @@
 package rpc
 
 import (
-	"git.ronaksoftware.com/nested/server/pkg/toolbox"
+	"git.ronaksoft.com/nested/server/pkg/toolbox"
 	"sync"
 )
 

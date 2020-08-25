@@ -1,7 +1,7 @@
 package api
 
 import (
-	"git.ronaksoftware.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/model"
 	"github.com/globalsign/mgo/bson"
 	"sort"
 )
