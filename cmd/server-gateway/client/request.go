@@ -33,10 +33,6 @@ func (r *Request) UnMarshalJSON(b []byte) error {
 	return err
 }
 
-func (r *Request) MarshalJSON() []byte {
-	if b, err := json.Marshal(r); err != nil {
-		return []byte{}
-	} else {
-		return b
-	}
+func (r *Request) MarshalJSON() ([]byte, error) {
+	return json.Marshal(r)
 }

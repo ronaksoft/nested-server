@@ -298,7 +298,7 @@ func (gw *GatewayServer) websocketOnConnection(c websocket.Connection) {
 				zap.String("Status", userResponse.Status),
 				zap.Duration("Duration", time.Now().Sub(startTime)),
 			)
-			bytes := userResponse.MarshalJSON()
+			bytes, _ := userResponse.MarshalJSON()
 			c.EmitMessage(bytes)
 			gw.model.Report.CountDataOut(len(bytes))
 		}

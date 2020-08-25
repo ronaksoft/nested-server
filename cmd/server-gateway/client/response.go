@@ -79,12 +79,8 @@ func (r *Response) SetLate(reqID string) {
 	r.Late = true
 	r.RequestID = reqID
 }
-func (r *Response) MarshalJSON() []byte {
-	if b, err := json.Marshal(r); err != nil {
-		return []byte{}
-	} else {
-		return b
-	}
+func (r *Response) MarshalJSON() ([]byte, error) {
+	return json.Marshal(r)
 }
 func (r *Response) UnMarshalJSON(b []byte) error {
 	err := json.Unmarshal(b, r)
