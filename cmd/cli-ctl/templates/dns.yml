@@ -1,7 +1,7 @@
 version: '2'
 services:
   dnsmasq:
-    image: registry.ronaksoftware.com/base/dnsmasq:latest
+    image: registry.ronaksoft.com/base/dnsmasq:latest
     command: --hostsdir=/etc/dnsmasq.d --user=root --no-ping
     volumes:
       - ./hosts:/etc/dnsmasq.d/hosts

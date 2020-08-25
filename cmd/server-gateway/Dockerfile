@@ -1,4 +1,4 @@
-FROM registry.ronaksoftware.com/base/alpine
+FROM registry.ronaksoft.com/base/alpine
 MAINTAINER Ehsan N. Moosa <ehsan@ronaksoft.com>
 
 

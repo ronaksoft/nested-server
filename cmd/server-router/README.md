@@ -6,8 +6,8 @@ Every Nested *Bundle* needs a router in order to have ability to communicate to 
 ## <a name="usage">Usage
 ### <a name="as-a-docker-container">As a docker container
 ```sh
-docker pull registry.ronaksoftware.com/nested/server-router
-docker run --env NST_BUNDLE_ID=GOBRYAS-0001 registry.ronaksoftware.com/nested/server-router
+docker pull registry.ronaksoft.com/nested/server-router
+docker run --env NST_BUNDLE_ID=GOBRYAS-0001 registry.ronaksoft.com/nested/server-router
 ```
 
 ## <a name="configuration">Configuration

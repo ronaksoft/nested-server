@@ -2,7 +2,7 @@ version: '2'
 services:
   db-mongo:
     restart: always
-    image: registry.ronaksoftware.com/base/mongo:latest
+    image: registry.ronaksoft.com/base/mongo:latest
     command: mongod --config /ronak/config.yml
     volumes:
       - ./certs:/ronak/certs/

@@ -2,7 +2,7 @@ version: '2'
 services:
   job:
     restart: always
-    image: registry.ronaksoftware.com/base/nats:latest
+    image: registry.ronaksoft.com/base/nats:latest
     command: -m 8222
     networks:
       default:

@@ -11,8 +11,8 @@ access to Model we can create a mirror project of the 'model' to be accessible b
 
 
 ## Docker Images
-This project will create 3 docker image in `registry.ronaksoftware.com`:
-1. registry.ronaksoftware.com/nested/server/gateway:4.0
-2. registry.ronaksoftware.com/nested/server/ntfy:3.0
-3. registry.ronaksoftware.com/nested/server/mta:2.0
+This project will create 3 docker image in `registry.ronaksoft.com`:
+1. registry.ronaksoft.com/nested/server/gateway:4.0
+2. registry.ronaksoft.com/nested/server/ntfy:3.0
+3. registry.ronaksoft.com/nested/server/mta:2.0
 

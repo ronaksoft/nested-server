@@ -2,7 +2,7 @@ version: '2'
 services:
   cache-redis:
     restart:  always
-    image: registry.ronaksoftware.com/base/redis:latest
+    image: registry.ronaksoft.com/base/redis:latest
     volumes:
       - ./.vol:/data:rw
     networks:

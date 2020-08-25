@@ -17,7 +17,7 @@ cp -r ./templates/ ${INSTALL_PATH}
 cp -r ./config ${INSTALL_PATH}
 
 # Docker login to registry
-docker login registry.ronaksoftware.com -u docker -p sLxDKdMuNpit_dL3YTPg
+docker login registry.ronaksoft.com -u docker -p sLxDKdMuNpit_dL3YTPg
 
 # Prepare system for MongoDB
 # Reboot required

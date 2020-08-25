@@ -2,7 +2,7 @@ version: '2'
 services:
 # JOB service
   job:
-    image: registry.ronaksoftware.com/base/nats
+    image: registry.ronaksoft.com/base/nats
     networks:
       default:
         aliases:
@@ -11,7 +11,7 @@ services:
 # NTFY service
   ntfy:
     restart: always
-    image: registry.ronaksoftware.com/nested/server-ntfy:3
+    image: registry.ronaksoft.com/nested/server-ntfy:3
     networks:
       - default
       - db-mongo-net
@@ -31,7 +31,7 @@ services:
 # GATEWAY service
   gateway:
     restart: always
-    image: registry.ronaksoftware.com/nested/server-gateway:3.0
+    image: registry.ronaksoft.com/nested/server-gateway:3.0
     depends_on:
       - ntfy
     volumes:
@@ -66,7 +66,7 @@ services:
 # MTA Service
  mta:
     restart: always
-    image: registry.ronaksoftware.com/nested/server-mta:1.0
+    image: registry.ronaksoft.com/nested/server-mta:1.0
     ports:
       - "25:25"
       - "587:587"
@@ -89,7 +89,7 @@ services:
 # ROUTER service
  router:
     restart: always
-    image: registry.ronaksoftware.com/nested/server-router:1.0
+    image: registry.ronaksoft.com/nested/server-router:1.0
     command: -v 3
     depends_on:
       - gateway

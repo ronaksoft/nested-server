@@ -1,4 +1,4 @@
-FROM registry.ronaksoftware.com/base/alpine:latest
+FROM registry.ronaksoft.com/base/alpine:latest
 
 # Maintainer
 MAINTAINER Pouyan Heyratpour <pouyan@ronaksoft.com>

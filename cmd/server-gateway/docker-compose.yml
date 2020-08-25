@@ -2,7 +2,7 @@ version: '2'
 services:
 # JOB service
   job:
-    image: registry.ronaksoftware.com/base/nats
+    image: registry.ronaksoft.com/base/nats
     networks:
       default:
         aliases:
@@ -11,7 +11,7 @@ services:
 # GATEWAY service
   gateway:
     restart: always
-    image: registry.ronaksoftware.com/nested/server-gateway:1.0
+    image: registry.ronaksoft.com/nested/server-gateway:1.0
     volumes:
       - ./certs/:/ronak/certs
     networks:

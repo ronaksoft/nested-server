@@ -2,7 +2,7 @@ version: '2'
 services:
   webapp:
     restart: always
-    image: registry.ronaksoftware.com/nested/web-app:business
+    image: registry.ronaksoft.com/nested/web-app:business
     ports:
       - 80:80
       - 443:443
