@@ -1,4 +1,4 @@
-FROM registry.ronaksoft.com/base/alpine
+FROM registry.ronaksoft.com/base/docker/alpine
 MAINTAINER Ehsan N. Moosa <ehsan@ronaksoft.com>
 
 # Add contents from root directory to the docker
