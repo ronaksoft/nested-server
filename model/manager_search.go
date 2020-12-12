@@ -543,12 +543,22 @@ func (sm *SearchManager) Posts(keyword, accountID string, placeIDs, senderIDs, l
 			"$diacriticSensitive": false,
 		}
 	}
-	if pg.After > 0 {
+	if pg.After > 0 && pg.Before > 0 {
+		switch x := q["$and"].(type) {
+		case []bson.M:
+			q["$and"] = append(x, bson.M{"$gt": pg.After}, bson.M{"$lt": pg.Before})
+		default:
+			q["$and"] = []bson.M{
+				{"$gt": pg.After}, {"$lt": pg.Before},
+			}
+		}
+	} else if pg.After > 0 {
 		q[sortItem] = bson.M{"$gt": pg.After}
-	}
-	if pg.Before > 0 {
+	} else if pg.Before > 0 {
 		q[sortItem] = bson.M{"$lt": pg.Before}
 	}
+
+
 	if hasAttachments {
 		q["counters.attaches"] = bson.M{"$gt": 0}
 	}
@@ -599,9 +609,18 @@ func (sm *SearchManager) PostsConversations(peerID1, peerID2, keywords string, p
 			"$diacriticSensitive": true,
 		}
 	}
-	if pg.After > 0 {
+	if pg.After > 0 && pg.Before > 0 {
+		switch x := q["$and"].(type) {
+		case []bson.M:
+			q["$and"] = append(x, bson.M{"$gt": pg.After}, bson.M{"$lt": pg.Before})
+		default:
+			q["$and"] = []bson.M{
+				{"$gt": pg.After}, {"$lt": pg.Before},
+			}
+		}
+	} else if pg.After > 0 {
+		sortDir = sortItem
 		q[sortItem] = bson.M{"$gt": pg.After}
-		sortDir = fmt.Sprintf("%s", sortItem)
 	} else if pg.Before > 0 {
 		q[sortItem] = bson.M{"$lt": pg.Before}
 	}
@@ -648,12 +667,22 @@ func (sm *SearchManager) Tasks(keyword, accountID string, assignorIDs, assigneeI
 			"$diacriticSensitive": false,
 		}
 	}
-	if pg.After > 0 {
+	if pg.After > 0 && pg.Before > 0 {
+		switch x := q["$and"].(type) {
+		case []bson.M:
+			q["$and"] = append(x, bson.M{"$gt": pg.After}, bson.M{"$lt": pg.Before})
+		default:
+			q["$and"] = []bson.M{
+				{"$gt": pg.After}, {"$lt": pg.Before},
+			}
+		}
+	} else if pg.After > 0 {
+		sortDir = sortItem
 		q[sortItem] = bson.M{"$gt": pg.After}
-	}
-	if pg.Before > 0 {
+	} else if pg.Before > 0 {
 		q[sortItem] = bson.M{"$lt": pg.Before}
 	}
+
 	if hasAttachments {
 		q["counters.attachments"] = bson.M{"$gt": 0}
 	}
@@ -675,7 +704,6 @@ func (sm *SearchManager) Tasks(keyword, accountID string, assignorIDs, assigneeI
 func (sm *SearchManager) AddPlaceToSearchIndex(placeID, placeName string, p Picture) {
 	//
 
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -691,7 +719,6 @@ func (sm *SearchManager) AddPlaceToSearchIndex(placeID, placeName string, p Pict
 func (sm *SearchManager) RemovePlaceFromSearchIndex(placeID string) {
 	//
 
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -702,7 +729,6 @@ func (sm *SearchManager) RemovePlaceFromSearchIndex(placeID string) {
 // 	AddSearchHistory adds searched terms of users in an object with an array inside it.
 func (sm *SearchManager) AddSearchHistory(accountID, keyword string) bool {
 	//
-
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
@@ -730,7 +756,6 @@ func (sm *SearchManager) AddSearchHistory(accountID, keyword string) bool {
 func (sm *SearchManager) GetSearchHistory(accountID, keyword string) []string {
 	//
 
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -757,7 +782,6 @@ func (sm *SearchManager) GetSearchHistory(accountID, keyword string) []string {
 // 					ACCOUNT_SEARCH_FILTER_ALL
 func (sm *SearchManager) AccountIDs(filter string) []string {
 	//
-
 
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(DB_NAME)

@@ -52,9 +52,6 @@ func (tm *PlaceActivityManager) GetByID(activityID bson.ObjectId) *PlaceActivity
 }
 
 func (tm *PlaceActivityManager) GetActivitiesByPlace(placeID string, pg Pagination) []PlaceActivity {
-
-
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(DB_NAME)
 	defer dbSession.Close()
@@ -64,12 +61,23 @@ func (tm *PlaceActivityManager) GetActivitiesByPlace(placeID string, pg Paginati
 	q := bson.M{
 		"place_id": placeID,
 	}
-	if pg.After > 0 {
-		q[sortItem] = bson.M{"$gt": pg.After}
+
+	if pg.After > 0 && pg.Before > 0 {
+		switch x := q["$and"].(type) {
+		case []bson.M:
+			q["$and"] = append(x, bson.M{"$gt": pg.After}, bson.M{"$lt": pg.Before})
+		default:
+			q["$and"] = []bson.M{
+				{"$gt": pg.After}, {"$lt": pg.Before},
+			}
+		}
+	} else if pg.After > 0 {
 		sortDir = sortItem
+		q[sortItem] = bson.M{"$gt": pg.After}
 	} else if pg.Before > 0 {
 		q[sortItem] = bson.M{"$lt": pg.Before}
 	}
+
 	a := make([]PlaceActivity, 0, pg.GetLimit())
 	db.C(COLLECTION_PLACES_ACTIVITIES).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&a)
 	return a
