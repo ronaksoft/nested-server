@@ -87,3 +87,5 @@ require (
 	gopkg.in/yaml.v2 v2.3.0
 	moul.io/http2curl v1.0.0 // indirect
 )
+
+go 1.13
