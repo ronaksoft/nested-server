@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strconv"
 
 	"git.ronaksoft.com/nested/server/model"
 	"github.com/globalsign/mgo/bson"
@@ -519,7 +520,7 @@ func (c *Client) ExternalPushPlaceActivityPostAdded(post *nested.Post) {
 func (c *Client) ExternalPushPlaceActivityPostAttached(post *nested.Post, placeIDs []string) {
 	pushData := nested.MS{
 		"type":   "a",
-		"action": string(nested.PLACE_ACTIVITY_ACTION_POST_ADD),
+		"action": strconv.Itoa(nested.PLACE_ACTIVITY_ACTION_POST_ADD),
 	}
 
 	if post.Internal {

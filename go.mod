@@ -1,6 +1,6 @@
 module git.ronaksoft.com/nested/server
 
-go 1.14
+go 1.15
 
 require (
 	firebase.google.com/go v3.6.0+incompatible
@@ -87,5 +87,3 @@ require (
 	gopkg.in/yaml.v2 v2.3.0
 	moul.io/http2curl v1.0.0 // indirect
 )
-
-go 1.13
