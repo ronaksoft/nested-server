@@ -243,7 +243,9 @@ func (gw *GatewayServer) httpOnConnection(ctx iris.Context) {
 		zap.String("Status", userResponse.Status),
 		zap.Duration("Duration", time.Now().Sub(startTime)),
 	)
-	n, _ := ctx.JSON(userResponse)
+
+	responseBytes, _ := userResponse.MarshalJSON()
+	n, _ := ctx.Write(responseBytes)
 	gw.model.Report.CountDataOut(n)
 }
 
