@@ -1,4 +1,4 @@
-FROM registry.ronaksoftware.com/base/docker/ubuntu:18.04
+FROM registry.ronaksoft.com/base/docker/ubuntu:18.04
 MAINTAINER Ehsan N. Moosa
 
 # Set noninteractive mode for apt-get
