@@ -2,8 +2,9 @@ package nestedGateway
 
 import (
 	"encoding/json"
-
+	"fmt"
 	"git.ronaksoft.com/nested/server/model"
+	"log"
 )
 
 // Response
@@ -80,6 +81,10 @@ func (r *Response) SetLate(reqID string) {
 	r.RequestID = reqID
 }
 func (r *Response) MarshalJSON() ([]byte, error) {
+	log.Println("Response:", r)
+	if r == nil {
+		return nil, fmt.Errorf("response is nil")
+	}
 	return json.Marshal(r)
 }
 func (r *Response) UnMarshalJSON(b []byte) error {
