@@ -237,14 +237,15 @@ func (gw *GatewayServer) httpOnConnection(ctx iris.Context) {
 	userResponse := new(nestedGateway.Response)
 	gw.api.Worker().Execute(userRequest, userResponse)
 
-	_Log.Debug("HTTP Request Received",
+	_Log.Info("HTTP Request Received",
 		zap.String("AppID", userRequest.AppID),
 		zap.String("Cmd", userRequest.Command),
 		zap.String("Status", userResponse.Status),
 		zap.Duration("Duration", time.Now().Sub(startTime)),
+		zap.Any("Response", userResponse.Data),
 	)
 
-	responseBytes, _ := userResponse.MarshalJSON()
+	responseBytes, _ := json.Marshal(userResponse)
 	n, _ := ctx.Write(responseBytes)
 	gw.model.Report.CountDataOut(n)
 }
@@ -300,9 +301,9 @@ func (gw *GatewayServer) websocketOnConnection(c websocket.Connection) {
 				zap.String("Status", userResponse.Status),
 				zap.Duration("Duration", time.Now().Sub(startTime)),
 			)
-			bytes, _ := userResponse.MarshalJSON()
-			c.EmitMessage(bytes)
-			gw.model.Report.CountDataOut(len(bytes))
+			// bytes, _ := userResponse.MarshalJSON()
+			// c.EmitMessage(bytes)
+			// gw.model.Report.CountDataOut(len(bytes))
 		}
 	})
 
