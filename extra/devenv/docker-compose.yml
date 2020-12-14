@@ -1,0 +1,39 @@
+version: '2'
+services:
+
+  edge-01:
+    restart: always
+    image: registry.ronaksoft.com/nested/server-gateway:4.0
+    container_name: nested-server-edge1
+    ports:
+      - 6061:6060
+      - 80:8080
+    environment:
+      - NST_BUNDLE_ID=EDGE
+      - NST_INSTANCE_ID=001
+      - NST_JOB_ADDRESS=nats://nats:4222
+      - NST_REDIS_DSN=cache:6379
+      - NST_REDIS_PASS=ehsan2374
+      - NST_REDIS_POOL_MAX_SIZE=500
+      - NST_REDIS_POOL_SIZE=500
+      - NST_ADP_MESSAGE_URL=https://ws.adpdigital.com/url/send
+      - NST_ADP_USERNAME=ronak
+      - NST_ADP_PASSWORD=E2e2374k19743
+      - NST_MAX_CONCURRENCY=4000
+      - NST_TEST_MODE=true
+      - NST_LOG_LEVEL=-1
+      - NST_MONGO_DSN=mongodb://nested-mongo:27001/nested
+      - NST_MONGO_TLS=false
+    volumes:
+      - ./_hdd/ranger.so:/ronak/ranger.so
+    networks:
+      test-nested:
+        aliases:
+          - "test-edge-01"
+
+
+
+networks:
+  test-nested:
+    external:
+      name: test-nested

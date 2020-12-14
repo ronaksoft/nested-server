@@ -1,0 +1,50 @@
+version: '2'
+services:
+
+  # KeyDB Permanent/Counter/Temp Cache
+  cache:
+    restart: always
+    image: registry.ronaksoft.com/base/docker/redis:latest
+    container_name: nested-redis
+    privileged: true
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - test-nested
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+      - ./_hdd/cache/:/data:rw
+    ports:
+      - 6379:6379
+
+  # NATS Message Broker
+  nats:
+    restart: always
+    image: registry.ronaksoft.com/base/docker/nats-streaming
+    container_name: nested-nats
+    networks:
+      - test-nested
+    ports:
+      - 8224:8222
+      - 4222:4222
+
+
+  # MONGO FILE STORAGE
+  mongodb:
+    restart: always
+    image: registry.ronaksoft.com/base/docker/mongo:4.2.6
+    container_name: nested-mongo
+    command: mongod --config /ronak/config.yml
+    ports:
+      - 27001:27001
+    volumes:
+      - ./_hdd/mongo:/data/db:rw
+      - ./mongo-config.yml:/ronak/config.yml
+    networks:
+      test-nested:
+        aliases:
+          - docker
+
+networks:
+  test-nested:
+    external:
+      name: test-nested

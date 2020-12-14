@@ -110,7 +110,7 @@ func NewManager(instanceID, mongoDSN, redisDSN string, logLevel int) (*Manager, 
 		if mongoSession, err := mgo.DialWithInfo(dialInfo); err != nil {
 			_Log.Warn(err.Error())
 			if mongoSession, err = mgo.Dial(mongoDSN); err != nil {
-				_Log.Warn(err.Error())
+				_Log.Warn(err.Error(), zap.String("DSN", mongoDSN))
 				return nil, err
 			} else {
 				_Log.Info("Model::NewManager::MongoDB Connected")

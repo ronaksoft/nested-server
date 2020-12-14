@@ -1,4 +1,5 @@
 .idea
 *.iml
 _*
+_hdd
 server-gateway/build.sh

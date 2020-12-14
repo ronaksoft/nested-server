@@ -1,0 +1,14 @@
+storage:
+  journal:
+    enabled: true
+  directoryPerDB: true
+
+net:
+  port: 27001
+
+setParameter:
+  enableLocalhostAuthBypass: true
+
+operationProfiling:
+  slowOpThresholdMs: 50
+  mode: slowOp
