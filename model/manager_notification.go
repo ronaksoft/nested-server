@@ -128,21 +128,8 @@ func (nm *NotificationManager) GetByAccountID(
 	default:
 
 	}
-	if pg.After > 0 && pg.Before > 0 {
-		switch x := query["$and"].(type) {
-		case []bson.M:
-			query["$and"] = append(x, bson.M{"$gt": pg.After}, bson.M{"$lt": pg.Before})
-		default:
-			query["$and"] = []bson.M{
-				{"$gt": pg.After}, {"$lt": pg.Before},
-			}
-		}
-	} else if pg.After > 0 {
-		sortDir = sortItem
-		query[sortItem] = bson.M{"$gt": pg.After}
-	} else if pg.Before > 0 {
-		query[sortItem] = bson.M{"$lt": pg.Before}
-	}
+
+	query, sortDir = pg.FillQuery(query, sortItem, sortDir)
 
 	if only_unread {
 		query["read"] = false

@@ -86,21 +86,7 @@ func (pm *PostActivityManager) GetActivitiesByPostID(postID bson.ObjectId, pg Pa
 		"post_id":  postID,
 		"_removed": false,
 	}
-	if pg.After > 0 && pg.Before > 0 {
-		switch x := q["$and"].(type) {
-		case []bson.M:
-			q["$and"] = append(x, bson.M{"$gt": pg.After}, bson.M{"$lt": pg.Before})
-		default:
-			q["$and"] = []bson.M{
-				{"$gt": pg.After}, {"$lt": pg.Before},
-			}
-		}
-	} else if pg.After > 0 {
-		sortDir = sortItem
-		q[sortItem] = bson.M{"$gt": pg.After}
-	} else if pg.Before > 0 {
-		q[sortItem] = bson.M{"$lt": pg.Before}
-	}
+	q, sortDir = pg.FillQuery(q, sortItem, sortDir)
 
 	if len(filter) > 0 {
 		q["action"] = bson.M{"$in": filter}

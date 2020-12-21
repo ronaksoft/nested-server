@@ -278,16 +278,16 @@ func (gw *GatewayServer) websocketOnConnection(c websocket.Connection) {
 	)
 
 	// Send Welcome Message to the Client
-	c.EmitMessage(_WelcomeMsgBytes)
+	_ = c.EmitMessage(_WelcomeMsgBytes)
 
 	// Websocket Message Handler
 	c.OnMessage(func(m []byte) {
 		if strings.HasPrefix(string(m), "PING!") {
-			c.EmitMessage([]byte(strings.Replace(string(m), "PING!", "PONG!", 1)))
+			_ = c.EmitMessage([]byte(strings.Replace(string(m), "PING!", "PONG!", 1)))
 		} else {
 			startTime := time.Now()
 			userRequest := new(nestedGateway.Request)
-			json.Unmarshal(m, userRequest)
+			_ = json.Unmarshal(m, userRequest)
 			userRequest.ClientIP = c.Context().RemoteAddr()
 			userRequest.UserAgent = c.Context().GetHeader("User-Agent")
 			userRequest.WebsocketID = c.ID()
@@ -302,7 +302,7 @@ func (gw *GatewayServer) websocketOnConnection(c websocket.Connection) {
 				zap.Duration("Duration", time.Now().Sub(startTime)),
 			)
 			bytes, _ := json.Marshal(userResponse)
-			c.EmitMessage(bytes)
+			_ = c.EmitMessage(bytes)
 			gw.model.Report.CountDataOut(len(bytes))
 		}
 	})

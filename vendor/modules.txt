@@ -102,8 +102,6 @@ github.com/globalsign/mgo/bson
 github.com/globalsign/mgo/internal/json
 github.com/globalsign/mgo/internal/sasl
 github.com/globalsign/mgo/internal/scram
-# github.com/go-stack/stack v1.8.0
-github.com/go-stack/stack
 # github.com/gogo/protobuf v1.2.1
 ## explicit
 github.com/gogo/protobuf/proto
@@ -119,8 +117,6 @@ github.com/golang/protobuf/ptypes/empty
 github.com/golang/protobuf/ptypes/struct
 github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/protobuf/ptypes/wrappers
-# github.com/golang/snappy v0.0.1
-github.com/golang/snappy
 # github.com/gomodule/redigo v2.0.0+incompatible
 ## explicit
 github.com/gomodule/redigo/internal
@@ -132,6 +128,8 @@ github.com/gomodule/redigo/redis
 # github.com/googleapis/gax-go v2.0.2+incompatible
 ## explicit
 github.com/googleapis/gax-go
+# github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1
+github.com/gopherjs/gopherjs/js
 # github.com/gorilla/websocket v1.4.0
 ## explicit
 github.com/gorilla/websocket
@@ -165,6 +163,8 @@ github.com/jhillyerd/enmime/internal/stringutil
 # github.com/json-iterator/go v1.1.6
 ## explicit
 github.com/json-iterator/go
+# github.com/jtolds/gls v4.20.0+incompatible
+github.com/jtolds/gls
 # github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88
 ## explicit
 # github.com/kataras/golog v0.0.0-20180321173939-03be10146386
@@ -203,12 +203,7 @@ github.com/kataras/pio
 github.com/kataras/pio/terminal
 # github.com/klauspost/compress v1.10.7
 github.com/klauspost/compress/flate
-github.com/klauspost/compress/fse
 github.com/klauspost/compress/gzip
-github.com/klauspost/compress/huff0
-github.com/klauspost/compress/snappy
-github.com/klauspost/compress/zstd
-github.com/klauspost/compress/zstd/internal/xxhash
 # github.com/klauspost/cpuid v1.2.0
 ## explicit
 # github.com/kr/pretty v0.1.0
@@ -291,8 +286,15 @@ github.com/ryanuber/columnize
 # github.com/shurcooL/sanitized_anchor_name v1.0.0
 ## explicit
 github.com/shurcooL/sanitized_anchor_name
+# github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d
+github.com/smartystreets/assertions
+github.com/smartystreets/assertions/internal/go-render/render
+github.com/smartystreets/assertions/internal/oglematchers
 # github.com/smartystreets/goconvey v1.6.4
 ## explicit
+github.com/smartystreets/goconvey/convey
+github.com/smartystreets/goconvey/convey/gotest
+github.com/smartystreets/goconvey/convey/reporting
 # github.com/spf13/cobra v0.0.3
 ## explicit
 github.com/spf13/cobra
@@ -308,10 +310,6 @@ github.com/ssor/bom
 github.com/valyala/bytebufferpool
 # github.com/valyala/fasthttp v1.15.1
 ## explicit
-# github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c
-github.com/xdg/scram
-# github.com/xdg/stringprep v0.0.0-20180714160509-73f8eece6fdc
-github.com/xdg/stringprep
 # github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
 ## explicit
 # github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415
@@ -328,37 +326,6 @@ github.com/xdg/stringprep
 ## explicit
 # go.mongodb.org/mongo-driver v1.3.5
 ## explicit
-go.mongodb.org/mongo-driver/bson
-go.mongodb.org/mongo-driver/bson/bsoncodec
-go.mongodb.org/mongo-driver/bson/bsonoptions
-go.mongodb.org/mongo-driver/bson/bsonrw
-go.mongodb.org/mongo-driver/bson/bsontype
-go.mongodb.org/mongo-driver/bson/primitive
-go.mongodb.org/mongo-driver/event
-go.mongodb.org/mongo-driver/internal
-go.mongodb.org/mongo-driver/mongo
-go.mongodb.org/mongo-driver/mongo/options
-go.mongodb.org/mongo-driver/mongo/readconcern
-go.mongodb.org/mongo-driver/mongo/readpref
-go.mongodb.org/mongo-driver/mongo/writeconcern
-go.mongodb.org/mongo-driver/tag
-go.mongodb.org/mongo-driver/version
-go.mongodb.org/mongo-driver/x/bsonx
-go.mongodb.org/mongo-driver/x/bsonx/bsoncore
-go.mongodb.org/mongo-driver/x/mongo/driver
-go.mongodb.org/mongo-driver/x/mongo/driver/address
-go.mongodb.org/mongo-driver/x/mongo/driver/auth
-go.mongodb.org/mongo-driver/x/mongo/driver/auth/internal/gssapi
-go.mongodb.org/mongo-driver/x/mongo/driver/connstring
-go.mongodb.org/mongo-driver/x/mongo/driver/description
-go.mongodb.org/mongo-driver/x/mongo/driver/dns
-go.mongodb.org/mongo-driver/x/mongo/driver/mongocrypt
-go.mongodb.org/mongo-driver/x/mongo/driver/mongocrypt/options
-go.mongodb.org/mongo-driver/x/mongo/driver/operation
-go.mongodb.org/mongo-driver/x/mongo/driver/session
-go.mongodb.org/mongo-driver/x/mongo/driver/topology
-go.mongodb.org/mongo-driver/x/mongo/driver/uuid
-go.mongodb.org/mongo-driver/x/mongo/driver/wiremessage
 # go.opencensus.io v0.18.0
 go.opencensus.io
 go.opencensus.io/exemplar
@@ -396,7 +363,6 @@ golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/ed25519
 golang.org/x/crypto/ed25519/internal/edwards25519
-golang.org/x/crypto/pbkdf2
 # golang.org/x/net v0.0.0-20200602114024-627f9648deb9
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
@@ -417,8 +383,6 @@ golang.org/x/oauth2/google
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
-# golang.org/x/sync v0.0.0-20190423024810-112230192c58
-golang.org/x/sync/semaphore
 # golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix

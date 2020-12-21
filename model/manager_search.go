@@ -543,21 +543,8 @@ func (sm *SearchManager) Posts(keyword, accountID string, placeIDs, senderIDs, l
 			"$diacriticSensitive": false,
 		}
 	}
-	if pg.After > 0 && pg.Before > 0 {
-		switch x := q["$and"].(type) {
-		case []bson.M:
-			q["$and"] = append(x, bson.M{"$gt": pg.After}, bson.M{"$lt": pg.Before})
-		default:
-			q["$and"] = []bson.M{
-				{"$gt": pg.After}, {"$lt": pg.Before},
-			}
-		}
-	} else if pg.After > 0 {
-		q[sortItem] = bson.M{"$gt": pg.After}
-	} else if pg.Before > 0 {
-		q[sortItem] = bson.M{"$lt": pg.Before}
-	}
 
+	q, sortDir = pg.FillQuery(q, sortItem, sortDir)
 
 	if hasAttachments {
 		q["counters.attaches"] = bson.M{"$gt": 0}
@@ -609,21 +596,7 @@ func (sm *SearchManager) PostsConversations(peerID1, peerID2, keywords string, p
 			"$diacriticSensitive": true,
 		}
 	}
-	if pg.After > 0 && pg.Before > 0 {
-		switch x := q["$and"].(type) {
-		case []bson.M:
-			q["$and"] = append(x, bson.M{"$gt": pg.After}, bson.M{"$lt": pg.Before})
-		default:
-			q["$and"] = []bson.M{
-				{"$gt": pg.After}, {"$lt": pg.Before},
-			}
-		}
-	} else if pg.After > 0 {
-		sortDir = sortItem
-		q[sortItem] = bson.M{"$gt": pg.After}
-	} else if pg.Before > 0 {
-		q[sortItem] = bson.M{"$lt": pg.Before}
-	}
+	q, sortDir = pg.FillQuery(q, sortItem, sortDir)
 
 	posts := make([]Post, 0, pg.GetLimit())
 	if err := db.C(COLLECTION_POSTS).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&posts); err != nil {

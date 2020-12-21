@@ -262,6 +262,24 @@ func (p *Pagination) GetSkip() int {
 func (p *Pagination) GetLimit() int {
 	return p.limit
 }
+func (p *Pagination) FillQuery(q bson.M, sortItem, sortDir string) (bson.M, string) {
+	if p.After > 0 && p.Before > 0 {
+		switch x := q["$and"].(type) {
+		case []bson.M:
+			q["$and"] = append(x, bson.M{sortItem: bson.M{"$gt": p.After}}, bson.M{sortItem: bson.M{"$lt": p.Before}})
+		default:
+			q["$and"] = []bson.M{
+				{sortItem: bson.M{"$gt": p.After}}, {sortItem: bson.M{"$lt": p.Before}},
+			}
+		}
+	} else if p.After > 0 {
+		sortDir = sortItem
+		q[sortItem] = bson.M{"$gt": p.After}
+	} else if p.Before > 0 {
+		q[sortItem] = bson.M{"$lt": p.Before}
+	}
+	return q, sortDir
+}
 
 // Generic Map
 type M map[string]interface{}

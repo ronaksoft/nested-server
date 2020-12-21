@@ -28,7 +28,7 @@ services:
       - 4222:4222
 
 
-  # MONGO FILE STORAGE
+  # MONGO DB
   mongodb:
     restart: always
     image: registry.ronaksoft.com/base/docker/mongo:4.2.6

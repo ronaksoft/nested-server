@@ -619,21 +619,8 @@ func (pm *PostManager) GetPostsByPlace(placeID, sortItem string, pg Pagination) 
 		sortItem = POST_SORT_TIMESTAMP
 	}
 	sortDir := fmt.Sprintf("-%s", sortItem)
-	if pg.After > 0 && pg.Before > 0 {
-		switch x := q["$and"].(type) {
-		case []bson.M:
-			q["$and"] = append(x, bson.M{"$gt": pg.After}, bson.M{"$lt": pg.Before})
-		default:
-			q["$and"] = []bson.M{
-				{"$gt": pg.After}, {"$lt": pg.Before},
-			}
-		}
-	} else if pg.After > 0 {
-		sortDir = sortItem
-		q[sortItem] = bson.M{"$gt": pg.After}
-	} else if pg.Before > 0 {
-		q[sortItem] = bson.M{"$lt": pg.Before}
-	}
+	q, sortDir = pg.FillQuery(q, sortItem, sortDir)
+
 	q["places"] = placeID
 	Q := db.C(COLLECTION_POSTS).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
 	// Log Explain Query
@@ -660,21 +647,8 @@ func (pm *PostManager) GetPostsBySender(accountID, sortItem string, pg Paginatio
 	}
 	sortDir := fmt.Sprintf("-%s", sortItem)
 	q := bson.M{"_removed": false}
-	if pg.After > 0 && pg.Before > 0 {
-		switch x := q["$and"].(type) {
-		case []bson.M:
-			q["$and"] = append(x, bson.M{"$gt": pg.After}, bson.M{"$lt": pg.Before})
-		default:
-			q["$and"] = []bson.M{
-				{"$gt": pg.After}, {"$lt": pg.Before},
-			}
-		}
-	} else if pg.After > 0 {
-		sortDir = sortItem
-		q[sortItem] = bson.M{"$gt": pg.After}
-	} else if pg.Before > 0 {
-		q[sortItem] = bson.M{"$lt": pg.Before}
-	}
+	q, sortDir = pg.FillQuery(q, sortItem, sortDir)
+
 	if pg.GetLimit() == 0 || pg.GetLimit() > DEFAULT_MAX_RESULT_LIMIT {
 		pg.SetLimit(DEFAULT_MAX_RESULT_LIMIT)
 	}
@@ -704,21 +678,7 @@ func (pm *PostManager) GetPostsOfPlaces(places []string, sortItem string, pg Pag
 
 	q := bson.M{"_removed": false}
 	posts := make([]Post, 0, pg.GetLimit())
-	if pg.After > 0 && pg.Before > 0 {
-		switch x := q["$and"].(type) {
-		case []bson.M:
-			q["$and"] = append(x, bson.M{"$gt": pg.After}, bson.M{"$lt": pg.Before})
-		default:
-			q["$and"] = []bson.M{
-				{"$gt": pg.After}, {"$lt": pg.Before},
-			}
-		}
-	} else if pg.After > 0 {
-		sortDir = sortItem
-		q[sortItem] = bson.M{"$gt": pg.After}
-	} else if pg.Before > 0 {
-		q[sortItem] = bson.M{"$lt": pg.Before}
-	}
+	q, sortDir = pg.FillQuery(q, sortItem, sortDir)
 	q["places"] = bson.M{"$in": places}
 	Q := db.C(COLLECTION_POSTS).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
 	// Log Explain Query
@@ -765,21 +725,7 @@ func (pm *PostManager) GetUnreadPostsByPlace(placeID, accountID string, subPlace
 	} else {
 		mq["place_id"] = placeID
 	}
-	if pg.After > 0 && pg.Before > 0 {
-		switch x := mq["$and"].(type) {
-		case []bson.M:
-			mq["$and"] = append(x, bson.M{"$gt": pg.After}, bson.M{"$lt": pg.Before})
-		default:
-			mq["$and"] = []bson.M{
-				{"$gt": pg.After}, {"$lt": pg.Before},
-			}
-		}
-	} else if pg.After > 0 {
-		sortDir = sortItem
-		mq[sortItem] = bson.M{"$gt": pg.After}
-	} else if pg.Before > 0 {
-		mq[sortItem] = bson.M{"$lt": pg.Before}
-	}
+	mq, sortDir = pg.FillQuery(mq, sortItem, sortDir)
 
 	Q := db.C(COLLECTION_POSTS_READS).Find(mq).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
 	// Log Explain Query
@@ -840,22 +786,7 @@ func (pm *PostManager) GetCommentsByPostID(postID bson.ObjectId, pg Pagination) 
 	}
 	sortItem := POST_SORT_TIMESTAMP
 	sortDir := fmt.Sprintf("-%s", sortItem)
-	if pg.After > 0 && pg.Before > 0 {
-		switch x := q["$and"].(type) {
-		case []bson.M:
-			q["$and"] = append(x, bson.M{"$gt": pg.After}, bson.M{"$lt": pg.Before})
-		default:
-			q["$and"] = []bson.M{
-				{"$gt": pg.After}, {"$lt": pg.Before},
-			}
-		}
-	} else if pg.After > 0 {
-		sortDir = sortItem
-		q[sortItem] = bson.M{"$gt": pg.After}
-	} else if pg.Before > 0 {
-		q[sortItem] = bson.M{"$lt": pg.Before}
-	}
-
+	q, sortDir = pg.FillQuery(q, sortItem, sortDir)
 	Q := db.C(COLLECTION_POSTS_COMMENTS).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
 	// Log Explain Query
 	res := make([]Comment, 0)
@@ -874,21 +805,8 @@ func (pm *PostManager) GetPinnedPosts(accountID string, pg Pagination) []Post {
 	}
 	sortItem := POST_SORT_PIN_TIME
 	sortDir := fmt.Sprintf("-%s", sortItem)
-	if pg.After > 0 && pg.Before > 0 {
-		switch x := q["$and"].(type) {
-		case []bson.M:
-			q["$and"] = append(x, bson.M{"$gt": pg.After}, bson.M{"$lt": pg.Before})
-		default:
-			q["$and"] = []bson.M{
-				{"$gt": pg.After}, {"$lt": pg.Before},
-			}
-		}
-	} else if pg.After > 0 {
-		sortDir = sortItem
-		q[sortItem] = bson.M{"$gt": pg.After}
-	} else if pg.Before > 0 {
-		q[sortItem] = bson.M{"$lt": pg.Before}
-	}
+	q, sortDir = pg.FillQuery(q, sortItem, sortDir)
+
 	Q := db.C(COLLECTION_ACCOUNTS_POSTS).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
 	// Log Explain Query
 	iter := Q.Iter()
