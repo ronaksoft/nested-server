@@ -2,6 +2,7 @@ package convert
 
 import (
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/log"
 	"io"
 	"io/ioutil"
 	"math"
@@ -60,19 +61,19 @@ func (c Preview) Thumbnail(r io.Reader, mimeType string, maxWidth, maxHeight uin
 
 	case "video":
 		if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_preview_"); err != nil {
-			_Log.Warn(err.Error())
+			log.Warn(err.Error())
 			return nil, nil, protocol.NewUnknownError(err)
 
 		} else if s, err := f.Stat(); err != nil {
-			_Log.Warn(err.Error())
+			log.Warn(err.Error())
 			return nil, nil, protocol.NewUnknownError(err)
 
 		} else if n, err := io.Copy(f, r); err != nil {
-			_Log.Warn(err.Error())
+			log.Warn(err.Error())
 			return nil, nil, protocol.NewUnknownError(err)
 
 		} else if 0 == n {
-			_Log.Warn(err.Error())
+			log.Warn(err.Error())
 			return nil, nil, protocol.NewUnknownError(nil)
 
 		} else {
@@ -156,7 +157,7 @@ func (c Preview) Thumbnail(r io.Reader, mimeType string, maxWidth, maxHeight uin
 	// Command Stdout: Output io.Reader
 	var output io.ReadCloser
 	if pOut, err := cmd.StdoutPipe(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, nil, err
 
 	} else {
@@ -165,7 +166,7 @@ func (c Preview) Thumbnail(r io.Reader, mimeType string, maxWidth, maxHeight uin
 
 	// Start Command
 	if err := cmd.Start(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, nil, err
 	}
 
@@ -225,19 +226,19 @@ func (c Preview) Resized(r io.Reader, mimeType string, maxWidth, maxHeight uint)
 
 	case "video":
 		if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_preview_"); err != nil {
-			_Log.Warn(err.Error())
+			log.Warn(err.Error())
 			return nil, nil, protocol.NewUnknownError(err)
 
 		} else if s, err := f.Stat(); err != nil {
-			_Log.Warn(err.Error())
+			log.Warn(err.Error())
 			return nil, nil, protocol.NewUnknownError(err)
 
 		} else if n, err := io.Copy(f, r); err != nil {
-			_Log.Warn(err.Error())
+			log.Warn(err.Error())
 			return nil, nil, protocol.NewUnknownError(err)
 
 		} else if 0 == n {
-			_Log.Warn("Nothing was written into temp file")
+			log.Warn("Nothing was written into temp file")
 			return nil, nil, protocol.NewUnknownError(nil)
 
 		} else {
@@ -324,7 +325,7 @@ func (c Preview) Resized(r io.Reader, mimeType string, maxWidth, maxHeight uint)
 	// Command Stdout: Output io.Reader
 	var output io.ReadCloser
 	if pOut, err := cmd.StdoutPipe(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, nil, err
 
 	} else {
@@ -333,7 +334,7 @@ func (c Preview) Resized(r io.Reader, mimeType string, maxWidth, maxHeight uint)
 
 	// Start Command
 	if err := cmd.Start(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, nil, err
 	}
 

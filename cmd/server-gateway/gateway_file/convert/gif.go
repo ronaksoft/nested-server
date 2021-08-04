@@ -2,6 +2,7 @@ package convert
 
 import (
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/log"
 	"io"
 	"io/ioutil"
 	"os"
@@ -33,11 +34,11 @@ func (c Gif) Meta(r io.Reader) (*GifMeta, error) {
 	// --Start Commands
 
 	if b, err := cmdMain.Output(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 
 	} else if _, err := fmt.Sscanf(string(b), "%dx%dx%d", &output.Frames, &output.Width, &output.Height); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 
 		return nil, err
 	}
@@ -50,19 +51,19 @@ func (c Gif) ToMp4(r io.Reader, vQuality, maxWidth, maxHeight uint) (io.Reader, 
 	oFilename := "pipe:" // STDIN
 
 	if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_gif_"); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, protocol.NewUnknownError(err)
 
 	} else if s, err := f.Stat(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, protocol.NewUnknownError(err)
 
 	} else if n, err := io.Copy(f, r); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, protocol.NewUnknownError(err)
 
 	} else if 0 == n {
-		_Log.Warn("Gif::ToMp4 Nothing was written into temp file")
+		log.Warn("Gif::ToMp4 Nothing was written into temp file")
 		return nil, protocol.NewUnknownError(nil)
 
 	} else {
@@ -71,11 +72,11 @@ func (c Gif) ToMp4(r io.Reader, vQuality, maxWidth, maxHeight uint) (io.Reader, 
 	}
 
 	if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_gif_out_"); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, protocol.NewUnknownError(err)
 
 	} else if s, err := f.Stat(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, protocol.NewUnknownError(err)
 
 	} else {
@@ -112,17 +113,17 @@ func (c Gif) ToMp4(r io.Reader, vQuality, maxWidth, maxHeight uint) (io.Reader, 
 	cmdMain.Stdin = r // Command Stdin: Input io.Reader
 
 	if _, err := cmdMain.CombinedOutput(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 
 	}
 
 	if err := os.Remove(iFilename); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 	}
 
 	if f, err := os.Open(oFilename); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 
 	} else {

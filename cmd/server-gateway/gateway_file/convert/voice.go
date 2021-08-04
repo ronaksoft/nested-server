@@ -3,14 +3,14 @@ package convert
 import (
 	"encoding/json"
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/log"
+	"git.ronaksoft.com/nested/server/pkg/protocol"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strconv"
 	"time"
-
-	"git.ronaksoft.com/nested/server/pkg/protocol"
 )
 
 type Voice struct{}
@@ -43,7 +43,7 @@ func (c Voice) Meta(r io.Reader) (*VoiceMeta, error) {
 	// --Read command output
 	var decoder *json.Decoder
 	if pout, err := cmdMain.StdoutPipe(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 
 	} else {
@@ -52,13 +52,13 @@ func (c Voice) Meta(r io.Reader) (*VoiceMeta, error) {
 	}
 
 	if err := cmdMain.Start(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 	}
 
 	result := streams{}
 	if err := decoder.Decode(&result); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 	}
 	// --Create output
@@ -82,19 +82,19 @@ func (c Voice) ToMp3(r io.Reader, aQuality uint) (io.Reader, error) {
 	oFilename := "-"     // STDIN
 
 	if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_voice_"); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, protocol.NewUnknownError(err)
 
 	} else if s, err := f.Stat(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, protocol.NewUnknownError(err)
 
 	} else if n, err := io.Copy(f, r); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, protocol.NewUnknownError(err)
 
 	} else if 0 == n {
-		_Log.Warn("Voice::ToMp3 Nothing was written into temp file")
+		log.Warn("Voice::ToMp3 Nothing was written into temp file")
 		return nil, protocol.NewUnknownError(nil)
 
 	} else {
@@ -121,7 +121,7 @@ func (c Voice) ToMp3(r io.Reader, aQuality uint) (io.Reader, error) {
 
 	var or io.Reader
 	if pout, err := cmdMain.StdoutPipe(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 
 	} else {
@@ -129,7 +129,7 @@ func (c Voice) ToMp3(r io.Reader, aQuality uint) (io.Reader, error) {
 	}
 
 	if err := cmdMain.Start(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 	}
 

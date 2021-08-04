@@ -2,6 +2,7 @@ package convert
 
 import (
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/log"
 	"io"
 	"os/exec"
 )
@@ -28,7 +29,7 @@ func (c Pdf) Meta(r io.Reader) (*PdfMeta, error) {
 	// Pipe 1: grep "Pages:\|Page size:"
 	cmdPipe1 := exec.Command(_Commands.Grep, "Pages:\\|Page size:")
 	if pin, err := cmdMain.StdoutPipe(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 
 	} else {
@@ -38,7 +39,7 @@ func (c Pdf) Meta(r io.Reader) (*PdfMeta, error) {
 	// Pipe 2: sed "s/.\+://"
 	cmdPipe2 := exec.Command(_Commands.Sed, "s/.\\+://")
 	if pin, err := cmdPipe1.StdoutPipe(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 
 	} else {
@@ -48,7 +49,7 @@ func (c Pdf) Meta(r io.Reader) (*PdfMeta, error) {
 	// Pipe 3: awk '{$1=$1};1'
 	cmdPipe3 := exec.Command(_Commands.Awk, "{$1=$1};1")
 	if pin, err := cmdPipe2.StdoutPipe(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 
 	} else {
@@ -58,7 +59,7 @@ func (c Pdf) Meta(r io.Reader) (*PdfMeta, error) {
 	// Pipe 4: tr "\n" " "
 	cmdPipe4 := exec.Command(_Commands.Tr, "\n", " ")
 	if pin, err := cmdPipe3.StdoutPipe(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 
 	} else {
@@ -68,31 +69,31 @@ func (c Pdf) Meta(r io.Reader) (*PdfMeta, error) {
 	// --Start Commands
 
 	if err := cmdMain.Start(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 	}
 
 	if err := cmdPipe1.Start(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 	}
 
 	if err := cmdPipe2.Start(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 	}
 
 	if err := cmdPipe3.Start(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 	}
 
 	if b, err := cmdPipe4.Output(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 
 	} else if _, err := fmt.Sscanf(string(b), "%d %f x %f", &output.PageCount, &output.Width, &output.Height); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 	}
 

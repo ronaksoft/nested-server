@@ -3,6 +3,7 @@ package file
 import (
 	"errors"
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/log"
 	"io"
 	"path"
 	"sync"
@@ -52,7 +53,7 @@ func (p *thumbGenerator) Process(r io.Reader) error {
 	var rThumb io.Reader
 	var metaPreview *convert.PreviewMeta
 	if rOut, m, err := _FileConverter.Preview.Thumbnail(r, p.MimeType, p.MaxDimension, p.MaxDimension); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return err
 
 	} else {
@@ -76,7 +77,7 @@ func (p *thumbGenerator) Process(r io.Reader) error {
 	// Save File in Files Model
 	if thumb := _NestedModel.Store.Save(rThumb, fileInfo); thumb == nil {
 		err := errors.New("nested model save failed")
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return err
 
 	} else {
@@ -95,7 +96,7 @@ func (p *thumbGenerator) Process(r io.Reader) error {
 
 		// Save File in Nested Model
 		if _NestedModel.File.AddFile(thumbInfo) != true {
-			_Log.Warn("File info submit failed")
+			log.Warn("File info submit failed")
 			return protocol.NewUnknownError(nil)
 
 		} else {
@@ -127,7 +128,7 @@ func (p *previewGenerator) Process(r io.Reader) error {
 	var rPreview io.Reader
 	var metaPreview *convert.PreviewMeta
 	if rOut, m, err := _FileConverter.Preview.Resized(r, p.MimeType, p.MaxWidth, 0); err != nil {
-		_Log.Warn(err.Error(),
+		log.Warn(err.Error(),
 			zap.String("FILENAME", p.Filename),
 			zap.String("ThumbName", p.ThumbName),
 		)
@@ -155,7 +156,7 @@ func (p *previewGenerator) Process(r io.Reader) error {
 	// Save File in Files Model
 	if thumb := _NestedModel.Store.Save(rPreview, finfo); thumb == nil {
 		err := errors.New("file content submit failed")
-		_Log.Warn(err.Error(),
+		log.Warn(err.Error(),
 			zap.String("FILENAME", finfo.Name),
 			zap.String("ThumbName", string(finfo.ID)),
 		)
@@ -198,7 +199,7 @@ func (p *imageMetaReader) Process(r io.Reader) error {
 	defer p.WaitGroup.Done()
 
 	if m, err := _FileConverter.Image.Meta(r); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return err
 
 	} else {
@@ -232,7 +233,7 @@ func (p *videoMetaReader) Process(r io.Reader) error {
 	defer p.WaitGroup.Done()
 
 	if m, err := _FileConverter.Video.Meta(r); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return err
 
 	} else {
@@ -266,7 +267,7 @@ func (p *audioMetaReader) Process(r io.Reader) error {
 	defer p.WaitGroup.Done()
 
 	if m, err := _FileConverter.Audio.Meta(r); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return err
 
 	} else {
@@ -297,7 +298,7 @@ func (p *voiceMetaReader) Process(r io.Reader) error {
 	defer p.WaitGroup.Done()
 
 	if m, err := _FileConverter.Voice.Meta(r); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return err
 
 	} else {
@@ -331,7 +332,7 @@ func (p *documentMetaReader) Process(r io.Reader) error {
 	switch p.MimeType {
 	case "application/pdf":
 		if m, err := _FileConverter.Pdf.Meta(r); err != nil {
-			_Log.Warn(err.Error())
+			log.Warn(err.Error())
 			return err
 
 		} else {
@@ -359,7 +360,7 @@ func (p *gifMetaReader) Process(r io.Reader) error {
 	defer p.WaitGroup.Done()
 
 	if m, err := _FileConverter.Gif.Meta(r); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return err
 
 	} else {

@@ -3,6 +3,7 @@ package convert
 import (
 	"encoding/json"
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/log"
 	"io"
 	"io/ioutil"
 	"os"
@@ -50,7 +51,7 @@ func (c Video) Meta(r io.Reader) (*VideoMeta, error) {
 
 	var decoder *json.Decoder
 	if pout, err := cmdMain.StdoutPipe(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 
 	} else {
@@ -59,13 +60,13 @@ func (c Video) Meta(r io.Reader) (*VideoMeta, error) {
 	}
 
 	if err := cmdMain.Start(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 	}
 
 	result := streams{}
 	if err := decoder.Decode(&result); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 
 	}
@@ -95,19 +96,19 @@ func (c Video) ToMp4(r io.Reader, vQuality, maxWidth, maxHeight, aBitRate uint) 
 	oFilename := "pipe:" // STDIN
 
 	if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_video_"); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, protocol.NewUnknownError(err)
 
 	} else if s, err := f.Stat(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, protocol.NewUnknownError(err)
 
 	} else if n, err := io.Copy(f, r); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, protocol.NewUnknownError(err)
 
 	} else if 0 == n {
-		_Log.Warn("Video::ToMp4 Nothing was written into temp file")
+		log.Warn("Video::ToMp4 Nothing was written into temp file")
 		return nil, protocol.NewUnknownError(nil)
 
 	} else {
@@ -116,11 +117,11 @@ func (c Video) ToMp4(r io.Reader, vQuality, maxWidth, maxHeight, aBitRate uint) 
 	}
 
 	if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_video_out_"); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, protocol.NewUnknownError(err)
 
 	} else if s, err := f.Stat(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, protocol.NewUnknownError(err)
 
 	} else {
@@ -161,16 +162,16 @@ func (c Video) ToMp4(r io.Reader, vQuality, maxWidth, maxHeight, aBitRate uint) 
 	cmdMain.Stdin = r // Command Stdin: Input io.Reader
 
 	if _, err := cmdMain.CombinedOutput(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 	}
 
 	if err := os.Remove(iFilename); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 	}
 
 	if f, err := os.Open(oFilename); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 
 	} else {

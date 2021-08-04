@@ -5,6 +5,7 @@ import (
 	"fmt"
 	nestedGateway "git.ronaksoft.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/log"
 	"git.ronaksoft.com/nested/server/pkg/rpc"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"io"
@@ -556,7 +557,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 
 	case nested.UploadTypePlacePicture, nested.UploadTypeProfilePicture:
 		if nested.FileTypeImage != storedFileInfo.Metadata.Type {
-			_Log.Warn("Invalid file uploaded as place/profile picture")
+			log.Warn("Invalid file uploaded as place/profile picture")
 			return nil, protocol.NewInvalidError([]string{"mime_type"}, nil)
 
 		}
@@ -574,7 +575,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 
 	case nested.UploadTypeVideo:
 		if nested.FileTypeVideo != storedFileInfo.Metadata.Type {
-			_Log.Warn("Invalid file uploaded as Video")
+			log.Warn("Invalid file uploaded as Video")
 			return nil, protocol.NewInvalidError([]string{"mime_type"}, nil)
 
 		}
@@ -604,7 +605,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 
 	case nested.UploadTypeAudio:
 		if nested.FileTypeAudio != storedFileInfo.Metadata.Type {
-			_Log.Warn("Invalid file uploaded as Audio")
+			log.Warn("Invalid file uploaded as Audio")
 			return nil, protocol.NewInvalidError([]string{"mime_type"}, nil)
 		}
 
@@ -633,7 +634,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 
 	case nested.UploadTypeVoice:
 		if nested.FileTypeAudio != storedFileInfo.Metadata.Type {
-			_Log.Warn("Invalid file uploaded as Voice")
+			log.Warn("Invalid file uploaded as Voice")
 			return nil, protocol.NewInvalidError([]string{"mime_type"}, nil)
 
 		}
@@ -664,7 +665,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 
 	case nested.UploadTypeImage:
 		if nested.FileTypeImage != storedFileInfo.Metadata.Type {
-			_Log.Warn("Invalid file uploaded as Image")
+			log.Warn("Invalid file uploaded as Image")
 			return nil, protocol.NewInvalidError([]string{"mime_type"}, nil)
 
 		}
@@ -695,7 +696,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 
 	case nested.UploadTypeGif:
 		if nested.FileTypeGif != storedFileInfo.Metadata.Type {
-			_Log.Warn("Invalid file uploaded as Gif")
+			log.Warn("Invalid file uploaded as Gif")
 			return nil, protocol.NewInvalidError([]string{"mime_type"}, nil)
 
 		}
@@ -746,11 +747,11 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 
 			go func(w *io.PipeWriter, r *io.PipeReader) {
 				if n, err := savePreprocessor(w, r); err != nil {
-					_Log.Warn(err.Error())
+					log.Warn(err.Error())
 					r.CloseWithError(err) // Occur error on multi-writer write
 					w.CloseWithError(err) // Occur error on save read
 				} else if 0 == n {
-					_Log.Warn("Save Pre-Processor returned empty")
+					log.Warn("Save Pre-Processor returned empty")
 					err := protocol.NewInvalidError([]string{"input"}, nil)
 					chErr <- err
 					r.CloseWithError(err) // Occur error on multi-writer write
@@ -771,13 +772,13 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 
 		if info := _NestedModel.Store.Save(r, storedFileInfo); info == nil {
 			err := errors.New("file insertion in storage database failed")
-			_Log.Warn(err.Error())
+			log.Warn(err.Error())
 			r.(*io.PipeReader).CloseWithError(err)
 		} else {
 			fileInfo.Size = int64(info.Size)
 			if !_NestedModel.File.AddFile(fileInfo) {
 				err := errors.New("file submit fail")
-				_Log.Warn(err.Error())
+				log.Warn(err.Error())
 				r.(*io.PipeReader).CloseWithError(err)
 			}
 		}
@@ -790,7 +791,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 			defer wgProcess.Done()
 
 			if err := process.Process(r); err != nil {
-				_Log.Warn(err.Error())
+				log.Warn(err.Error())
 				// TODO: Retry
 			}
 
@@ -811,7 +812,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 		if storedFileInfo.Metadata.Meta != nil {
 			// Update Files Model
 			if err := _NestedModel.Store.SetMeta(storedFileInfo.ID, storedFileInfo.Metadata); err != nil {
-				_Log.Warn(err.Error())
+				log.Warn(err.Error())
 				// TODO: Retry
 			}
 
@@ -835,7 +836,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 			}
 
 			if _NestedModel.File.SetDimension(fileInfo.ID, fileInfo.Width, fileInfo.Height) != true {
-				_Log.Warn("file dimension update failed")
+				log.Warn("file dimension update failed")
 				// TODO: Retry
 			}
 		}
@@ -843,7 +844,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 		if len(metaData.Thumbnails) > 0 {
 			// Update Files Model
 			if err := _NestedModel.Store.SetThumbnails(storedFileInfo.ID, metaData.Thumbnails); err != nil {
-				_Log.Warn(err.Error())
+				log.Warn(err.Error())
 				// TODO: Retry
 			}
 
@@ -869,7 +870,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 
 			// Update FileInfo Thumbnails in Nested DB
 			if _NestedModel.File.SetThumbnails(fileInfo.ID, fileInfo.Thumbnails) != true {
-				_Log.Warn("File thumbnail update failed for")
+				log.Warn("File thumbnail update failed for")
 				// TODO: Retry
 				return
 
@@ -891,7 +892,7 @@ upload:
 				switch err {
 				case io.EOF:
 				default:
-					_Log.Warn(err.Error())
+					log.Warn(err.Error())
 					select {
 					case chErr <- err:
 					default:

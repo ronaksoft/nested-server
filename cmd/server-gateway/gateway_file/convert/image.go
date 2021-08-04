@@ -2,6 +2,7 @@ package convert
 
 import (
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/log"
 	"io"
 	"math"
 	"os/exec"
@@ -32,15 +33,15 @@ func (c Image) Meta(r io.Reader) (*ImageMeta, error) {
 
 	var a int
 	if b, err := cmdMain.Output(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 
 	} else if _, err := fmt.Sscanf(string(b), "%dx%d", &output.Width, &output.Height); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 
 	} else if _, err := fmt.Sscanf(string(b), "%vx%v:%d", &a, &a, &output.Orientation); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 	}
 
 	switch output.Orientation {
@@ -91,7 +92,7 @@ func (c Image) ToJpeg(r io.Reader, maxWidth, maxHeight uint) (io.Reader, error) 
 
 	var or io.Reader
 	if pout, err := cmdMain.StdoutPipe(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 
 		return nil, err
 	} else {
@@ -99,7 +100,7 @@ func (c Image) ToJpeg(r io.Reader, maxWidth, maxHeight uint) (io.Reader, error) 
 	}
 
 	if err := cmdMain.Start(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 	}
 
