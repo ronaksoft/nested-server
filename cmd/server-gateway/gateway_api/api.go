@@ -5,6 +5,7 @@ import (
 	"git.ronaksoft.com/nested/server/pkg/log"
 	"git.ronaksoft.com/nested/server/pkg/pusher"
 	"git.ronaksoft.com/nested/server/pkg/rpc"
+	"go.uber.org/zap"
 	"gopkg.in/fzerorubigd/onion.v3"
 	"sync"
 )
@@ -69,7 +70,7 @@ func NewServer(config *onion.Onion, wg *sync.WaitGroup, pushFunc pusher.PushFunc
 		config.GetString("REDIS_DSN"),
 		config.GetInt("DEBUG_LEVEL"),
 	); err != nil {
-		log.Fatal(err.Error())
+		log.Fatal("we got error on initializing nested.Manager", zap.Error(err))
 	} else {
 		s.model = model
 	}

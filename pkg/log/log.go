@@ -27,7 +27,9 @@ func init() {
 	config.Encoding = "console"
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	config.Level = _LogLevel
-	if v, err := config.Build(); err != nil {
+	if v, err := config.Build(
+		zap.AddCallerSkip(1),
+	); err != nil {
 		os.Exit(1)
 	} else {
 		_Log = v

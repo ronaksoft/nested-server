@@ -96,11 +96,11 @@ func NewManager(instanceID, mongoDSN, redisDSN string, logLevel int) (*Manager, 
 				log.Warn(err.Error(), zap.String("DSN", mongoDSN))
 				return nil, err
 			} else {
-				log.Info("Model::NewManager::MongoDB Connected")
+				log.Info("MongoDB Connected")
 				_MongoSession = mongoSession
 			}
 		} else {
-			log.Info("Model::NewManager::MongoDB(TLS) Connected")
+			log.Info("MongoDB(TLS) Connected")
 			_MongoSession = mongoSession
 		}
 	}
@@ -113,7 +113,7 @@ func NewManager(instanceID, mongoDSN, redisDSN string, logLevel int) (*Manager, 
 
 	// Initialize Cache Redis
 	if c, err := cache.New(redisDSN); err != nil {
-		log.Info("Redis Pool Connection Error")
+		log.Warn("Redis Pool Connection Error", zap.Error(err))
 		return nil, err
 	} else {
 		_Cache = c

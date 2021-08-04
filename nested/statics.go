@@ -10,6 +10,7 @@ import (
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"github.com/dustin/go-humanize"
 	"github.com/globalsign/mgo/bson"
+	"go.uber.org/zap"
 	"math/rand"
 	"path/filepath"
 	"regexp"
@@ -75,7 +76,7 @@ func Encrypt(keyText, text string) string {
 	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
 	iv := ciphertext[:aes.BlockSize]
 	if _, err := rand.Read(iv); err != nil {
-		log.Info(err.Error())
+		log.Warn("We got error on encrypting", zap.Error(err))
 		return ""
 	}
 

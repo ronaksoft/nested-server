@@ -80,7 +80,7 @@ func (p *Pusher) RegisterDevice(id, token, os, userID string) error {
 
 	if !p.dev.Update(req.DeviceID, req.DeviceToken, req.DeviceOS, req.UserID) {
 		if !p.dev.Register(req.DeviceID, req.DeviceToken, req.DeviceOS, req.UserID) {
-			log.Warn("register device was not successful")
+			log.Warn("We could not register device was not successful")
 		}
 	}
 
@@ -129,12 +129,17 @@ func (p *Pusher) UnregisterWebsocket(websocketID, bundleID string) error {
 	return nil
 }
 
-func (p *Pusher) internalPush(targets []string, msg string, localonly bool) error {
+func (p *Pusher) internalPush(targets []string, msg string, localOnly bool) error {
 	req := CMDPushInternal{
 		Targets:   targets,
 		Message:   msg,
-		LocalOnly: localonly,
+		LocalOnly: localOnly,
 	}
+	log.Debug("Push Internal",
+		zap.Strings("Targets", req.Targets),
+		zap.Bool("LocalOnly", localOnly),
+		zap.String("MSG", msg),
+	)
 
 	if req.LocalOnly {
 		for _, uid := range req.Targets {
@@ -319,6 +324,7 @@ func (p *Pusher) externalPush(targets []string, data map[string]string) {
 
 	log.Debug("Push External",
 		zap.Strings("Targets", req.Targets),
+		zap.Any("Data", req.Data),
 	)
 
 	// for _, uid := range req.Targets {

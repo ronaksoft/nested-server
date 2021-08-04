@@ -230,7 +230,7 @@ func (gw *APP) httpOnConnection(ctx iris.Context) {
 	userResponse := new(rpc.Response)
 	gw.api.Worker().Execute(userRequest, userResponse)
 
-	log.Info("HTTP Request Received",
+	log.Debug("HTTP Request Received",
 		zap.String("AppID", userRequest.AppID),
 		zap.String("Cmd", userRequest.Command),
 		zap.String("Status", userResponse.Status),
@@ -265,7 +265,7 @@ func (gw *APP) httpCheckAuth(ctx iris.Context) {
 // websocketOnConnection
 // This function will be called once in each websocket connection life-time
 func (gw *APP) websocketOnConnection(c websocket.Connection) {
-	log.Debug("websocket Connected",
+	log.Debug("Websocket Connected",
 		zap.String("ConnID", c.ID()),
 		zap.String("RemoteIP", c.Context().Request().RemoteAddr),
 	)
@@ -288,7 +288,7 @@ func (gw *APP) websocketOnConnection(c websocket.Connection) {
 			// Send to Server
 			userResponse := &rpc.Response{}
 			gw.api.Worker().Execute(userRequest, userResponse)
-			log.Debug("websocket Request Received",
+			log.Debug("Websocket Request Received",
 				zap.String("AppID", userRequest.AppID),
 				zap.String("Cmd", userRequest.Command),
 				zap.String("Status", userResponse.Status),
