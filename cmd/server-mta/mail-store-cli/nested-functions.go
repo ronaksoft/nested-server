@@ -413,7 +413,7 @@ func (m *Model) SetFileStatus(uniID nested.UniversalID, fileStatus string) bool 
 	defer dbSession.Close()
 
 	switch fileStatus {
-	case nested.FILE_STATUS_PUBLIC, nested.FILE_STATUS_TEMP, nested.FILE_STATUS_THUMBNAIL:
+	case nested.FileStatusPublic, nested.FileStatusTemp, nested.FileStatusThumbnail:
 		if err := db.C(nested.COLLECTION_FILES).UpdateId(
 			uniID,
 			bson.M{"$set": bson.M{
@@ -424,15 +424,15 @@ func (m *Model) SetFileStatus(uniID nested.UniversalID, fileStatus string) bool 
 			_LOG.Error(err.Error(), zapcore.Field{Interface: uniID}, zap.Any("fileStatus", fileStatus))
 			return false
 		}
-	case nested.FILE_STATUS_ATTACHED:
+	case nested.FileStatusAttached:
 		if err := db.C(nested.COLLECTION_FILES).Update(
-			bson.M{"_id": uniID, "status": bson.M{"$ne": nested.FILE_STATUS_PUBLIC}},
+			bson.M{"_id": uniID, "status": bson.M{"$ne": nested.FileStatusPublic}},
 			bson.M{"$set": bson.M{"status": fileStatus}},
 		); err != nil {
 			_LOG.Error(err.Error(), zap.Any("uniID", uniID), zap.Any("fileStatus", fileStatus))
 			return false
 		}
-	case nested.FILE_STATUS_INTERNAL:
+	case nested.FileStatusInternal:
 		if err := db.C(nested.COLLECTION_FILES).Update(
 			bson.M{"_id": uniID},
 			bson.M{"$set": bson.M{"status": fileStatus}},
@@ -516,7 +516,7 @@ func (m *Model) AddPost(pcr nested.PostCreateRequest) *nested.Post {
 	if len(pcr.AttachmentIDs) > 0 {
 		for _, uniID := range pcr.AttachmentIDs {
 			m.AddPostAsOwner(uniID, post.ID)
-			success := m.SetFileStatus(uniID, nested.FILE_STATUS_ATTACHED)
+			success := m.SetFileStatus(uniID, nested.FileStatusAttached)
 			if !success {
 				return nil
 			}

@@ -1,6 +1,10 @@
 package nested
 
-import "github.com/globalsign/mgo/bson"
+import (
+	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/log"
+	"github.com/globalsign/mgo/bson"
+)
 
 type AppManager struct{}
 type App struct {
@@ -43,6 +47,7 @@ func (m *AppManager) Register(appID, appName, homepage, callbackURL, developer, 
 	if appID == _AppStore.ID {
 		return false
 	}
+
 	if err := _MongoDB.C(global.COLLECTION_APPS).Insert(a); err != nil {
 		log.Warn(err.Error())
 		return false

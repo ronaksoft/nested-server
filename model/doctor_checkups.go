@@ -309,7 +309,7 @@ func CleanupTempFiles() {
 	file := new(FileInfo)
 	for iter.Next(file) {
 		uploadTime := time.Unix(int64(file.UploadTimestamp)/1000, 0)
-		if file.Status == FILE_STATUS_TEMP {
+		if file.Status == FileStatusTemp {
 			if time.Now().Sub(uploadTime).Hours() > 24 {
 				log.Sugar().Info("File Removed:", file.ID, file.Filename, uploadTime.String())
 				_MongoStore.RemoveId(file.ID)
@@ -327,10 +327,10 @@ func FixReferredTmpFiles() {
 	defer iter.Close()
 	file := new(FileInfo)
 	for iter.Next(file) {
-		if file.Status == FILE_STATUS_TEMP {
+		if file.Status == FileStatusTemp {
 			_MongoDB.C(global.COLLECTION_FILES).Update(
 				bson.M{"_id": file.ID},
-				bson.M{"$set": bson.M{"status": FILE_STATUS_ATTACHED}},
+				bson.M{"$set": bson.M{"status": FileStatusAttached}},
 			)
 		}
 	}

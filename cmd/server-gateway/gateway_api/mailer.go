@@ -189,7 +189,7 @@ func (m *Mailer) createMessage(postID bson.ObjectId) *mail.Message {
 			Ext:       strings.ToUpper(path.Ext(fileInfo.Filename)[1:]),
 			HumanSize: humanize.Bytes(uint64(fileInfo.Size)),
 		}
-		if fileInfo.Type == nested.FILE_TYPE_IMAGE {
+		if fileInfo.Type == nested.FileTypeImage {
 			attachmentTemplate.Src = template.URL(fmt.Sprintf("%s/file/view/x/%s", m.cyrusUrl, fileInfo.Thumbnails.X64))
 			attachmentTemplate.HasThumbnail = true
 		} else {
@@ -218,11 +218,11 @@ func (m *Mailer) createMessage(postID bson.ObjectId) *mail.Message {
 
 func (m *Mailer) fileGroup(info *nested.FileInfo) string {
 	switch info.Type {
-	case nested.FILE_TYPE_AUDIO, nested.FILE_TYPE_VIDEO:
+	case nested.FileTypeAudio, nested.FileTypeVideo:
 		return "MULTIMEDIA"
-	case nested.FILE_TYPE_IMAGE:
+	case nested.FileTypeImage:
 		return "IMAGE"
-	case nested.FILE_TYPE_DOCUMENT:
+	case nested.FileTypeDocument:
 		switch info.MimeType {
 		case "application/pdf":
 			return "PDF"
@@ -230,7 +230,7 @@ func (m *Mailer) fileGroup(info *nested.FileInfo) string {
 		default:
 			return "DOCUMENT"
 		}
-	case nested.FILE_TYPE_OTHER:
+	case nested.FileTypeOther:
 		switch info.MimeType {
 		case "application/zip", "application/x-rar-compressed":
 			return "ZIP"

@@ -561,7 +561,7 @@ func (t *Task) AddAttachments(accountID string, fileIDs []UniversalID) bool {
 	// Set task as the owner of the fileIDs
 	for _, fileID := range fileIDs {
 		_Manager.File.AddTaskAsOwner(fileID, t.ID)
-		_Manager.File.SetStatus(fileID, FILE_STATUS_ATTACHED)
+		_Manager.File.SetStatus(fileID, FileStatusAttached)
 	}
 
 	// Create the appropriate activity

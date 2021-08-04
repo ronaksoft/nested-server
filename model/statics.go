@@ -163,7 +163,7 @@ func UseDownloadToken(token string) (bool, UniversalID) {
 	// Remove the expire timestamp from the token
 	token = string(token[:strings.LastIndex(token, "-")])
 
-	ct := Decrypt(TOKEN_SEED_SALT, token)
+	ct := Decrypt(TokenSeedSalt, token)
 	p := strings.Split(ct, "/")
 
 	if len(p) > 3 {
@@ -184,7 +184,7 @@ func UseDownloadToken(token string) (bool, UniversalID) {
 // UseUploadToken validates upload token and returns the maximum upload size
 func UseUploadToken(token string, sk bson.ObjectId) (bool, string) {
 	token = string(token[:strings.LastIndex(token, "-")])
-	ct := Decrypt(TOKEN_SEED_SALT, token)
+	ct := Decrypt(TokenSeedSalt, token)
 	p := strings.Split(ct, "/")
 
 	if len(p) > 2 {
@@ -208,10 +208,10 @@ func UseUploadToken(token string, sk bson.ObjectId) (bool, string) {
 // 2. Maximum Upload Size
 // 3. Expiry time
 func GenerateUploadToken(sk bson.ObjectId) (string, error) {
-	et := Timestamp() + TOKEN_LIFETIME
+	et := Timestamp() + TokenLifetime
 	tv := fmt.Sprintf("%s/%s/%s", sk.String(), global.DEFAULT_MAX_UPLOAD_SIZE, strconv.Itoa(int(et)))
 
-	token := fmt.Sprintf("%s-%d", Encrypt(TOKEN_SEED_SALT, tv), et)
+	token := fmt.Sprintf("%s-%d", Encrypt(TokenSeedSalt, tv), et)
 	return token, nil
 }
 
@@ -221,10 +221,10 @@ func GenerateUploadToken(sk bson.ObjectId) (string, error) {
 // 3. Session DHKey
 // 4. Expiry Time
 func GenerateDownloadToken(uniID UniversalID, sk bson.ObjectId, accountID string) (string, error) {
-	et := Timestamp() + TOKEN_LIFETIME
+	et := Timestamp() + TokenLifetime
 	tv := fmt.Sprintf("%s/%s/%s/%s", accountID, string(uniID), sk.String(), strconv.Itoa(int(et)))
 
-	token := fmt.Sprintf("%s-%d", Encrypt(TOKEN_SEED_SALT, tv), et)
+	token := fmt.Sprintf("%s-%d", Encrypt(TokenSeedSalt, tv), et)
 	return token, nil
 }
 
@@ -322,23 +322,23 @@ func GetMimeTypeByFilename(filename string) string {
 
 func GetTypeByFilename(filename string) string {
 	ext := strings.ToLower(filepath.Ext(filename))
-	fileType := FILE_TYPE_OTHER
+	fileType := FileTypeOther
 
 	switch ext {
 	case ".bmp", ".tif", ".tiff", ".jpg", ".jpeg", ".jpe", ".ief", ".png", ".webp", ".svg":
-		fileType = FILE_TYPE_IMAGE
+		fileType = FileTypeImage
 
 	case ".gif":
-		fileType = FILE_TYPE_GIF
+		fileType = FileTypeGif
 
 	case ".aac", ".mp1", ".mp2", ".mp3", ".mpg", ".wma", ".m4a", ".oga", ".ogg", ".opus", ".spx", ".flac", ".mka":
-		fileType = FILE_TYPE_AUDIO
+		fileType = FileTypeAudio
 
 	case ".doc", ".docx", ".xls", ".xlsx", ".pdf":
-		fileType = FILE_TYPE_DOCUMENT
+		fileType = FileTypeDocument
 
 	case ".mp4", ".m4v", ".3gp", ".ogv", ".webm", ".mov", ".mkv", ".mk3d":
-		fileType = FILE_TYPE_VIDEO
+		fileType = FileTypeVideo
 	}
 
 	return fileType

@@ -1,6 +1,7 @@
 package nested
 
 import (
+	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
 	"github.com/globalsign/mgo/bson"
 )
@@ -19,7 +20,7 @@ func NewContactManager() *ContactManager { return new(ContactManager) }
 
 func (cm *ContactManager) AddContact(accountID, contactID string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.global.DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	if cm.IsContact(contactID, accountID) {
@@ -44,7 +45,7 @@ func (cm *ContactManager) AddContact(accountID, contactID string) bool {
 
 func (cm *ContactManager) AddMutualContact(accountID1, accountID2 string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.global.DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	bulk := db.C(global.COLLECTION_CONTACTS).Bulk()

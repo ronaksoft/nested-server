@@ -263,7 +263,7 @@ func (pm *PostManager) AddComment(postID bson.ObjectId, senderID string, body st
 
 	if len(attachmentID) > 0 {
 		_Manager.File.AddPostAsOwner(attachmentID, post.ID)
-		_Manager.File.SetStatus(attachmentID, FILE_STATUS_ATTACHED)
+		_Manager.File.SetStatus(attachmentID, FileStatusAttached)
 	}
 
 	// Add Post Activity
@@ -316,7 +316,7 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 	var attach_size int64
 	for _, uniID := range pcr.AttachmentIDs {
 		_Manager.File.AddPostAsOwner(uniID, post.ID)
-		_Manager.File.SetStatus(uniID, FILE_STATUS_ATTACHED)
+		_Manager.File.SetStatus(uniID, FileStatusAttached)
 		f := _Manager.File.GetByID(uniID, nil)
 		attach_size += f.Size
 	}

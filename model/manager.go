@@ -108,9 +108,9 @@ func NewManager(instanceID, mongoDSN, redisDSN string, logLevel int) (*Manager, 
 	}
 
 	// Set connection pool limit
-	global.global.global.DB_NAME = fmt.Sprintf("nested-%s", instanceID)
+	global.DB_NAME = fmt.Sprintf("nested-%s", instanceID)
 	global.STORE_NAME = fmt.Sprintf("nested_store-%s", instanceID)
-	_MongoDB = _MongoSession.DB(global.global.global.DB_NAME)
+	_MongoDB = _MongoSession.DB(global.DB_NAME)
 	_MongoStore = _MongoSession.DB(global.STORE_NAME).GridFS("fs")
 
 	// Initialize Cache Redis

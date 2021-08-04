@@ -64,7 +64,7 @@ func (p *thumbGenerator) Process(r io.Reader) error {
 	fileInfo := nested.GenerateFileInfo(
 		filename,
 		p.Uploader,
-		nested.FILE_TYPE_THUMBNAIL,
+		nested.FileTypeThumbnail,
 		nil,
 		nested.MetaImage{
 			Width:  metaPreview.Width,
@@ -86,7 +86,7 @@ func (p *thumbGenerator) Process(r io.Reader) error {
 			Filename:        thumb.Name,
 			Type:            thumb.Metadata.Type,
 			MimeType:        thumb.MimeType,
-			Status:          nested.FILE_STATUS_THUMBNAIL,
+			Status:          nested.FileStatusThumbnail,
 			UploadTimestamp: nested.Timestamp(),
 			Width:           meta.Width,
 			Height:          meta.Height,
@@ -143,7 +143,7 @@ func (p *previewGenerator) Process(r io.Reader) error {
 	finfo := nested.GenerateFileInfo(
 		filename,
 		p.Uploader,
-		nested.FILE_TYPE_THUMBNAIL,
+		nested.FileTypeThumbnail,
 		nil,
 		nested.MetaImage{
 			Width:  metaPreview.Width,
@@ -167,7 +167,7 @@ func (p *previewGenerator) Process(r io.Reader) error {
 			Filename:        thumb.Name,
 			Type:            thumb.Metadata.Type,
 			MimeType:        thumb.MimeType,
-			Status:          nested.FILE_STATUS_THUMBNAIL,
+			Status:          nested.FileStatusThumbnail,
 			UploadTimestamp: nested.Timestamp(),
 			Width:           meta.Width,
 			Height:          meta.Height,

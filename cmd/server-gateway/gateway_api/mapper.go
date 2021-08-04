@@ -123,7 +123,7 @@ func (m *Mapper) Contact(requester *nested.Account, account nested.Account) nest
 func (m *Mapper) FileInfo(f nested.FileInfo) nested.M {
 	// if UploadType is not set then set upload type as FILE
 	if f.UploadType == "" {
-		f.UploadType = nested.UPLOAD_TYPE_FILE
+		f.UploadType = nested.UploadTypeFile
 	}
 	r := nested.M{
 		"_id":         f.ID,

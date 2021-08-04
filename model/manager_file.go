@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"path/filepath"
 	"strings"
 	"time"
@@ -15,42 +17,42 @@ import (
 
 // File Status
 const (
-	FILE_STATUS_TEMP      string = "tmp"
-	FILE_STATUS_PUBLIC    string = "pub"
-	FILE_STATUS_ATTACHED  string = "attached"
-	FILE_STATUS_THUMBNAIL string = "thumb"
-	FILE_STATUS_INTERNAL  string = "internal"
+	FileStatusTemp      string = "tmp"
+	FileStatusPublic    string = "pub"
+	FileStatusAttached  string = "attached"
+	FileStatusThumbnail string = "thumb"
+	FileStatusInternal  string = "internal"
 )
 
 // File Type
 const (
-	FILE_TYPE_GIF       = "GIF"
-	FILE_TYPE_VOICE     = "VOC"
-	FILE_TYPE_IMAGE     = "IMG"
-	FILE_TYPE_AUDIO     = "AUD"
-	FILE_TYPE_DOCUMENT  = "DOC"
-	FILE_TYPE_OTHER     = "OTH"
-	FILE_TYPE_VIDEO     = "VID"
-	FILE_TYPE_THUMBNAIL = "THU"
-	FILE_TYPE_ALL       = "all"
+	FileTypeGif       = "GIF"
+	FileTypeVoice     = "VOC"
+	FileTypeImage     = "IMG"
+	FileTypeAudio     = "AUD"
+	FileTypeDocument  = "DOC"
+	FileTypeOther     = "OTH"
+	FileTypeVideo     = "VID"
+	FileTypeThumbnail = "THU"
+	FileTypeAll       = "all"
 )
 
 // Upload Type
 const (
-	UPLOAD_TYPE_FILE            = "FILE"
-	UPLOAD_TYPE_IMAGE           = "IMAGE"
-	UPLOAD_TYPE_VIDEO           = "VIDEO"
-	UPLOAD_TYPE_VOICE           = "VOICE"
-	UPLOAD_TYPE_GIF             = "GIF"
-	UPLOAD_TYPE_AUDIO           = "AUDIO"
-	UPLOAD_TYPE_PLACE_PICTURE   = "PLACE_PIC"
-	UPLOAD_TYPE_PROFILE_PICTURE = "PROFILE_PIC"
+	UploadTypeFile    = "FILE"
+	UploadTypeImage   = "IMAGE"
+	UploadTypeVideo = "VIDEO"
+	UploadTypeVoice   = "VOICE"
+	UploadTypeGif             = "GIF"
+	UploadTypeAudio             = "AUDIO"
+	UploadTypePlacePicture   = "PLACE_PIC"
+	UploadTypeProfilePicture = "PROFILE_PIC"
 )
 
 // Token
 const (
-	TOKEN_LIFETIME  uint64 = 86400000
-	TOKEN_SEED_SALT string = "NREGS431DTED#$!!"
+	TokenLifetime uint64 = 86400000
+	TokenSeedSalt string = "NREGS431DTED#$!!"
 )
 
 type SortedFilesWithPost struct {
@@ -65,7 +67,6 @@ type DownloadToken struct {
 	ExpireTime  uint64        `json:"et" bson:"et"`
 }
 
-// FileManager
 type FileManager struct{}
 
 func NewFileManager() *FileManager {
@@ -204,7 +205,7 @@ func (fm *FileManager) SetStatus(uniID UniversalID, fileStatus string) bool {
 	defer dbSession.Close()
 
 	switch fileStatus {
-	case FILE_STATUS_PUBLIC, FILE_STATUS_TEMP, FILE_STATUS_THUMBNAIL:
+	case FileStatusPublic, FileStatusTemp, FileStatusThumbnail:
 		if err := db.C(global.COLLECTION_FILES).UpdateId(
 			uniID,
 			bson.M{"$set": bson.M{
@@ -214,14 +215,14 @@ func (fm *FileManager) SetStatus(uniID UniversalID, fileStatus string) bool {
 		); err != nil {
 			log.Warn(err.Error())
 		}
-	case FILE_STATUS_ATTACHED:
+	case FileStatusAttached:
 		if err := db.C(global.COLLECTION_FILES).Update(
-			bson.M{"_id": uniID, "status": bson.M{"$ne": FILE_STATUS_PUBLIC}},
+			bson.M{"_id": uniID, "status": bson.M{"$ne": FileStatusPublic}},
 			bson.M{"$set": bson.M{"status": fileStatus}},
 		); err != nil {
 			log.Warn(err.Error())
 		}
-	case FILE_STATUS_INTERNAL:
+	case FileStatusInternal:
 		if err := db.C(global.COLLECTION_FILES).Update(
 			bson.M{"_id": uniID},
 			bson.M{"$set": bson.M{"status": fileStatus}},
@@ -235,8 +236,6 @@ func (fm *FileManager) SetStatus(uniID UniversalID, fileStatus string) bool {
 	return true
 }
 
-// Description:
-// Set
 func (fm *FileManager) SetMetadata(uniID UniversalID, meta interface{}) {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -250,41 +249,31 @@ func (fm *FileManager) SetMetadata(uniID UniversalID, meta interface{}) {
 	}
 }
 
-// Description:
-// Get file's type
 func (fm *FileManager) GetType(filename string) (ft string) {
 	ext := strings.ToLower(filepath.Ext(filename))
 	switch ext {
 	case "bmp", "jpg", "jpeg", "gif", "jpe", "ief", "png":
-		ft = FILE_TYPE_IMAGE
+		ft = FileTypeImage
 	case "aac", "mp1", "mp2", "mp3", "mpg", "wma", "m4a", "ogg", "oga":
-		ft = FILE_TYPE_AUDIO
+		ft = FileTypeAudio
 	case "doc", "docx", "xls", "xlsx", "pdf":
-		ft = FILE_TYPE_DOCUMENT
+		ft = FileTypeDocument
 	case "mp4", "m4v", "3gp", "ogv", "webm", "mov":
-		ft = FILE_TYPE_VIDEO
+		ft = FileTypeVideo
 	default:
-		ft = FILE_TYPE_OTHER
+		ft = FileTypeOther
 	}
 	return
 }
 
-// Description:
-// Get file by universalID and returns only keys identified by "pj", if pj is set to NIL then
-// it returns all the keys of the document
-func (fm *FileManager) GetByID(uniID UniversalID, pj M) *FileInfo {
+func (fm *FileManager) GetByID(uniID UniversalID, pj tools.M) *FileInfo {
 	return _Manager.File.readFromCache(uniID)
 }
 
-// Description:
-//	Get files by universalIDs
 func (fm *FileManager) GetFilesByIDs(uniIDs []UniversalID) (files []FileInfo) {
 	return _Manager.File.readMultiFromCache(uniIDs)
 }
 
-// Description:
-// Get files by placeID and types are filtered by "filter" and name is filtered by "filename"
-// "pg" is also used for pagination
 func (fm *FileManager) GetFilesByPlace(placeID, filter, filename string, pg Pagination) (sortedList []SortedFilesWithPost) {
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(global.DB_NAME)
@@ -322,7 +311,7 @@ func (fm *FileManager) GetFilesByPlace(placeID, filter, filename string, pg Pagi
 	for iter.Next(&fetchedDoc) {
 		for _, file := range fetchedDoc.Files {
 			switch filter {
-			case FILE_TYPE_AUDIO, FILE_TYPE_DOCUMENT, FILE_TYPE_IMAGE, FILE_TYPE_VIDEO, FILE_TYPE_OTHER:
+			case FileTypeAudio, FileTypeDocument, FileTypeImage, FileTypeVideo, FileTypeOther:
 				if strings.HasPrefix(string(file.ID), filter) {
 					totalAttachments++
 					sortedList = append(sortedList, SortedFilesWithPost{
@@ -345,9 +334,6 @@ func (fm *FileManager) GetFilesByPlace(placeID, filter, filename string, pg Pagi
 	return
 }
 
-// Description:
-//	Get files which are in placeIDs and types are filtered by "filter" and name is filtered by "filename"
-//	"pg" is also used for pagination
 func (fm *FileManager) GetFilesByPlaces(placeIDs []string, pg Pagination) []FileInfo {
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(global.DB_NAME)
@@ -413,8 +399,6 @@ func (fm *FileManager) RemovePostAsOwner(uniID UniversalID, postID bson.ObjectId
 	return
 }
 
-// Description:
-// Update a file dimensions
 func (fm *FileManager) SetDimension(uniID UniversalID, width, height int64) bool {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -434,8 +418,6 @@ func (fm *FileManager) SetDimension(uniID UniversalID, width, height int64) bool
 	return true
 }
 
-// Description:
-// Set a file thumbnails
 func (fm *FileManager) SetThumbnails(uniID UniversalID, thumbs Picture) bool {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -453,8 +435,7 @@ func (fm *FileManager) SetThumbnails(uniID UniversalID, thumbs Picture) bool {
 	return true
 }
 
-// Description:
-// Increments the download counter of the file identified by "uniID"
+// IncrementDownloadCounter Increments the download counter of the file identified by "uniID"
 func (fm *FileManager) IncrementDownloadCounter(uniID UniversalID, count int) bool {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -520,5 +501,5 @@ type FileInfo struct {
 }
 
 func (f *FileInfo) IsPublic() bool {
-	return f.Status == FILE_STATUS_PUBLIC || f.Status == FILE_STATUS_THUMBNAIL
+	return f.Status == FileStatusPublic || f.Status == FileStatusThumbnail
 }

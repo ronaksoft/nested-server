@@ -27,7 +27,7 @@ type StoredFileInfo struct {
 	UploadDate time.Time   `json:"upload_date" bson:"uploadDate"`
 }
 
-// File's meta data which is used when file type is FILE_TYPE_IMAGE
+// File's meta data which is used when file type is FileTypeImage
 type MetaImage struct {
 	Width          int64 `json:"width" bson:"width"`
 	Height         int64 `json:"height" bson:"height"`
@@ -36,7 +36,7 @@ type MetaImage struct {
 	Orientation    int   `json:"orientation"`
 }
 
-// File's meta data which is used when file type is FILE_TYPE_VIDEO
+// File's meta data which is used when file type is FileTypeVideo
 type MetaVideo struct {
 	Width      int64         `json:"width" bson:"width"`
 	Height     int64         `json:"height" bson:"height"`
@@ -45,32 +45,32 @@ type MetaVideo struct {
 	AudioCodec string        `json:"audio_codec" bson:"audio_codec"`
 }
 
-// File's meta data which is used when file type is FILE_TYPE_AUDIO
+// File's meta data which is used when file type is FileTypeAudio
 type MetaAudio struct {
 	Duration   time.Duration `json:"duration" bson:"duration"`
 	AudioCodec string        `json:"audio_codec" bson:"audio_codec"`
 }
 
-// File's meta data which is used when file type is FILE_TYPE_GIF
+// File's meta data which is used when file type is FileTypeGif
 type MetaGif struct {
 	Width  int64 `json:"width" bson:"width"`
 	Height int64 `json:"height" bson:"height"`
 	Frames uint  `json:"frames" bson:"frames"`
 }
 
-// File's meta data which is used when file type is FILE_TYPE_VOICE
+// File's meta data which is used when file type is FileTypeVoice
 type MetaVoice struct {
 	Samples    []uint8       `json:"samples" bson:"samples"`
 	Duration   time.Duration `json:"duration" bson:"duration"`
 	SampleRate uint8         `json:"sample_rate" bson:"sample_rate"`
 }
 
-// File's meta data which is used when file type is FILE_TYPE_DOCUMENT
+// File's meta data which is used when file type is FileTypeDocument
 type MetaDocument struct {
 	PageCount int `json:"page_count" bson:"page_count"`
 }
 
-// File's meta data which is used when file type is FILE_TYPE_DOCUMENT and document is pdf
+// File's meta data which is used when file type is FileTypeDocument and document is pdf
 type MetaPdf struct {
 	Width     float32 `json:"width" bson:"width"`
 	Height    float32 `json:"height" bson:"height"`
@@ -78,14 +78,14 @@ type MetaPdf struct {
 }
 
 var Types = map[string]bool{
-	FILE_TYPE_GIF:       true,
-	FILE_TYPE_AUDIO:     true,
-	FILE_TYPE_IMAGE:     true,
-	FILE_TYPE_VIDEO:     true,
-	FILE_TYPE_VOICE:     true,
-	FILE_TYPE_OTHER:     true,
-	FILE_TYPE_DOCUMENT:  true,
-	FILE_TYPE_THUMBNAIL: true,
+	FileTypeGif:       true,
+	FileTypeAudio:     true,
+	FileTypeImage:     true,
+	FileTypeVideo:     true,
+	FileTypeVoice:     true,
+	FileTypeOther:     true,
+	FileTypeDocument:  true,
+	FileTypeThumbnail: true,
 }
 
 type StoreManager struct {

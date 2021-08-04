@@ -53,7 +53,7 @@ func (fs *Server) ServePublicFiles(ctx iris.Context) {
 		fileInfo = v
 	}
 	switch fileInfo.Status {
-	case nested.FILE_STATUS_PUBLIC, nested.FILE_STATUS_THUMBNAIL:
+	case nested.FileStatusPublic, nested.FileStatusThumbnail:
 	default:
 		ctx.StatusCode(http.StatusUnauthorized)
 		resp.Error(nested.ERR_ACCESS, []string{})
@@ -179,8 +179,8 @@ func (fs *Server) UploadSystem(ctx iris.Context) {
 		multipartReader = r
 	}
 	switch uploadType {
-	case nested.UPLOAD_TYPE_FILE, nested.UPLOAD_TYPE_GIF, nested.UPLOAD_TYPE_VOICE,
-		nested.UPLOAD_TYPE_AUDIO, nested.UPLOAD_TYPE_IMAGE, nested.UPLOAD_TYPE_VIDEO:
+	case nested.UploadTypeFile, nested.UploadTypeGif, nested.UploadTypeVoice,
+		nested.UploadTypeAudio, nested.UploadTypeImage, nested.UploadTypeVideo:
 		var fileInfos []nested.FileInfo
 		for part, err := multipartReader.NextPart(); nil == err; part, err = multipartReader.NextPart() {
 			if fileInfo, err := uploadFile(part, uploadType, uploaderID, false); err != nil {
@@ -209,7 +209,7 @@ func (fs *Server) UploadSystem(ctx iris.Context) {
 			r = append(r, uploadedFile)
 		}
 		resp.OkWithData(nested.M{"files": r})
-	case nested.UPLOAD_TYPE_PLACE_PICTURE, nested.UPLOAD_TYPE_PROFILE_PICTURE:
+	case nested.UploadTypePlacePicture, nested.UploadTypeProfilePicture:
 		if p, err := multipartReader.NextPart(); err != nil {
 			resp.Error(nested.ERR_UNKNOWN, []string{})
 			ctx.StatusCode(http.StatusExpectationFailed)
@@ -273,8 +273,8 @@ func (fs *Server) UploadUser(ctx iris.Context) {
 		multipartReader = r
 	}
 	switch uploadType {
-	case nested.UPLOAD_TYPE_FILE, nested.UPLOAD_TYPE_GIF, nested.UPLOAD_TYPE_VOICE,
-		nested.UPLOAD_TYPE_AUDIO, nested.UPLOAD_TYPE_IMAGE, nested.UPLOAD_TYPE_VIDEO:
+	case nested.UploadTypeFile, nested.UploadTypeGif, nested.UploadTypeVoice,
+		nested.UploadTypeAudio, nested.UploadTypeImage, nested.UploadTypeVideo:
 		var fileInfos []nested.FileInfo
 		for part, err := multipartReader.NextPart(); nil == err; part, err = multipartReader.NextPart() {
 			if fileInfo, err := uploadFile(part, uploadType, uploaderID, false); err != nil {
@@ -303,7 +303,7 @@ func (fs *Server) UploadUser(ctx iris.Context) {
 			r = append(r, uploadedFile)
 		}
 		resp.OkWithData(nested.M{"files": r})
-	case nested.UPLOAD_TYPE_PLACE_PICTURE, nested.UPLOAD_TYPE_PROFILE_PICTURE:
+	case nested.UploadTypePlacePicture, nested.UploadTypeProfilePicture:
 		if p, err := multipartReader.NextPart(); err != nil {
 			resp.Error(nested.ERR_UNKNOWN, []string{})
 			ctx.StatusCode(http.StatusExpectationFailed)
@@ -361,8 +361,8 @@ func (fs *Server) UploadApp(ctx iris.Context) {
 		multipartReader = r
 	}
 	switch uploadType {
-	case nested.UPLOAD_TYPE_FILE, nested.UPLOAD_TYPE_GIF, nested.UPLOAD_TYPE_VOICE,
-		nested.UPLOAD_TYPE_AUDIO, nested.UPLOAD_TYPE_IMAGE, nested.UPLOAD_TYPE_VIDEO:
+	case nested.UploadTypeFile, nested.UploadTypeGif, nested.UploadTypeVoice,
+		nested.UploadTypeAudio, nested.UploadTypeImage, nested.UploadTypeVideo:
 		var fileInfos []nested.FileInfo
 		for part, err := multipartReader.NextPart(); nil == err; part, err = multipartReader.NextPart() {
 			if fileInfo, err := uploadFile(part, uploadType, uploaderID, false); err != nil {
@@ -391,7 +391,7 @@ func (fs *Server) UploadApp(ctx iris.Context) {
 			r = append(r, uploadedFile)
 		}
 		resp.OkWithData(nested.M{"files": r})
-	case nested.UPLOAD_TYPE_PLACE_PICTURE, nested.UPLOAD_TYPE_PROFILE_PICTURE:
+	case nested.UploadTypePlacePicture, nested.UploadTypeProfilePicture:
 		if p, err := multipartReader.NextPart(); err != nil {
 			resp.Error(nested.ERR_UNKNOWN, []string{})
 			ctx.StatusCode(http.StatusExpectationFailed)
@@ -441,10 +441,10 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 	// Setup Nested file info
 	fileInfo := nested.FileInfo{
 		ID:              storedFileInfo.ID,
-		Status:          nested.FILE_STATUS_TEMP,
+		Status:          nested.FileStatusTemp,
 		Filename:        filename,
 		UploaderId:      uploader,
-		UploadType:      nested.UPLOAD_TYPE_FILE,
+		UploadType:      nested.UploadTypeFile,
 		UploadTimestamp: nested.Timestamp(),
 		Type:            nested.GetTypeByFilename(filename),
 		MimeType:        nested.GetMimeTypeByFilename(filename),
@@ -461,9 +461,9 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 	wgMetaData := new(sync.WaitGroup)
 
 	switch uploadType {
-	case nested.UPLOAD_TYPE_FILE:
+	case nested.UploadTypeFile:
 		switch storedFileInfo.Metadata.Type {
-		case nested.FILE_TYPE_IMAGE, nested.FILE_TYPE_GIF, nested.FILE_TYPE_VIDEO, nested.FILE_TYPE_AUDIO:
+		case nested.FileTypeImage, nested.FileTypeGif, nested.FileTypeVideo, nested.FileTypeAudio:
 			// Preview
 			// Thumbs
 			processList = []Processor{
@@ -512,28 +512,28 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 
 		// Meta Reader
 		switch storedFileInfo.Metadata.Type {
-		case nested.FILE_TYPE_IMAGE:
+		case nested.FileTypeImage:
 			processList = append(processList, &imageMetaReader{
 				MetaData:  metaData,
 				Lock:      metaDataLock,
 				WaitGroup: wgMetaData,
 			})
 
-		case nested.FILE_TYPE_AUDIO:
+		case nested.FileTypeAudio:
 			processList = append(processList, &audioMetaReader{
 				MetaData:  metaData,
 				Lock:      metaDataLock,
 				WaitGroup: wgMetaData,
 			})
 
-		case nested.FILE_TYPE_VIDEO:
+		case nested.FileTypeVideo:
 			processList = append(processList, &videoMetaReader{
 				MetaData:  metaData,
 				Lock:      metaDataLock,
 				WaitGroup: wgMetaData,
 			})
 
-		case nested.FILE_TYPE_DOCUMENT:
+		case nested.FileTypeDocument:
 			processList = append(processList, &documentMetaReader{
 				MimeType:  storedFileInfo.MimeType,
 				MetaData:  metaData,
@@ -544,15 +544,15 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 
 		wgMetaData.Add(len(processList))
 
-	case nested.UPLOAD_TYPE_PLACE_PICTURE, nested.UPLOAD_TYPE_PROFILE_PICTURE:
-		if nested.FILE_TYPE_IMAGE != storedFileInfo.Metadata.Type {
+	case nested.UploadTypePlacePicture, nested.UploadTypeProfilePicture:
+		if nested.FileTypeImage != storedFileInfo.Metadata.Type {
 			_Log.Warn("Invalid file uploaded as place/profile picture")
 			return nil, protocol.NewInvalidError([]string{"mime_type"}, nil)
 
 		}
 
 		// Thumbs
-		fileInfo.Status = nested.FILE_STATUS_PUBLIC
+		fileInfo.Status = nested.FileStatusPublic
 		processList = []Processor{
 			&previewGenerator{MaxWidth: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_PREVIEW], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: THUMBNAIL_PREVIEW, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
 			&thumbGenerator{MaxDimension: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_32], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: THUMBNAIL_32, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
@@ -562,8 +562,8 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 
 		wgMetaData.Add(len(processList))
 
-	case nested.UPLOAD_TYPE_VIDEO:
-		if nested.FILE_TYPE_VIDEO != storedFileInfo.Metadata.Type {
+	case nested.UploadTypeVideo:
+		if nested.FileTypeVideo != storedFileInfo.Metadata.Type {
 			_Log.Warn("Invalid file uploaded as Video")
 			return nil, protocol.NewInvalidError([]string{"mime_type"}, nil)
 
@@ -577,7 +577,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 			}
 		}
 
-		fileInfo.UploadType = nested.UPLOAD_TYPE_VIDEO
+		fileInfo.UploadType = nested.UploadTypeVideo
 		fileInfo.Filename = fmt.Sprintf("%s.mp4", basename)
 
 		// Thumbs
@@ -592,8 +592,8 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 
 		wgMetaData.Add(len(processList))
 
-	case nested.UPLOAD_TYPE_AUDIO:
-		if nested.FILE_TYPE_AUDIO != storedFileInfo.Metadata.Type {
+	case nested.UploadTypeAudio:
+		if nested.FileTypeAudio != storedFileInfo.Metadata.Type {
 			_Log.Warn("Invalid file uploaded as Audio")
 			return nil, protocol.NewInvalidError([]string{"mime_type"}, nil)
 		}
@@ -606,7 +606,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 			}
 		}
 
-		fileInfo.UploadType = nested.UPLOAD_TYPE_AUDIO
+		fileInfo.UploadType = nested.UploadTypeAudio
 		fileInfo.Filename = fmt.Sprintf("%s.mp3", basename)
 
 		// FIXME: Waveform
@@ -621,8 +621,8 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 
 		wgMetaData.Add(len(processList))
 
-	case nested.UPLOAD_TYPE_VOICE:
-		if nested.FILE_TYPE_AUDIO != storedFileInfo.Metadata.Type {
+	case nested.UploadTypeVoice:
+		if nested.FileTypeAudio != storedFileInfo.Metadata.Type {
 			_Log.Warn("Invalid file uploaded as Voice")
 			return nil, protocol.NewInvalidError([]string{"mime_type"}, nil)
 
@@ -636,12 +636,12 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 			}
 		}
 
-		// TODO:: GenerateFileInfo does not support FILE_TYPE_VOICE ?!?!?!
-		storedFileInfo = nested.GenerateFileInfo(filename, uploader, nested.FILE_TYPE_VOICE, nil, nil)
-		storedFileInfo.Metadata.Type = nested.FILE_TYPE_VOICE
+		// TODO:: GenerateFileInfo does not support FileTypeVoice ?!?!?!
+		storedFileInfo = nested.GenerateFileInfo(filename, uploader, nested.FileTypeVoice, nil, nil)
+		storedFileInfo.Metadata.Type = nested.FileTypeVoice
 
 		fileInfo.ID = nested.UniversalID(storedFileInfo.ID)
-		fileInfo.UploadType = nested.UPLOAD_TYPE_VOICE
+		fileInfo.UploadType = nested.UploadTypeVoice
 		fileInfo.Filename = fmt.Sprintf("%s.mp3", basename)
 
 		// TODO: Waveform
@@ -652,8 +652,8 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 
 		wgMetaData.Add(len(processList))
 
-	case nested.UPLOAD_TYPE_IMAGE:
-		if nested.FILE_TYPE_IMAGE != storedFileInfo.Metadata.Type {
+	case nested.UploadTypeImage:
+		if nested.FileTypeImage != storedFileInfo.Metadata.Type {
 			_Log.Warn("Invalid file uploaded as Image")
 			return nil, protocol.NewInvalidError([]string{"mime_type"}, nil)
 
@@ -667,7 +667,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 			}
 		}
 
-		fileInfo.UploadType = nested.UPLOAD_TYPE_IMAGE
+		fileInfo.UploadType = nested.UploadTypeImage
 		fileInfo.Filename = fmt.Sprintf("%s.jpg", basename)
 
 		// Thumbs
@@ -683,8 +683,8 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 
 		wgMetaData.Add(len(processList))
 
-	case nested.UPLOAD_TYPE_GIF:
-		if nested.FILE_TYPE_GIF != storedFileInfo.Metadata.Type {
+	case nested.UploadTypeGif:
+		if nested.FileTypeGif != storedFileInfo.Metadata.Type {
 			_Log.Warn("Invalid file uploaded as Gif")
 			return nil, protocol.NewInvalidError([]string{"mime_type"}, nil)
 
@@ -698,7 +698,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 			}
 		}
 
-		fileInfo.UploadType = nested.UPLOAD_TYPE_GIF
+		fileInfo.UploadType = nested.UploadTypeGif
 		fileInfo.Filename = fmt.Sprintf("%s.mp4", basename)
 
 		// Thumbs

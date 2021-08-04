@@ -21,7 +21,7 @@ func uploadFile(filename, uploaderId, status string, ownerIds []string, r io.Rea
 
 	_LOG.Info("Uploading file %s...", zap.String("filename", filename))
 
-	if res, err := clientStorage.Upload(nested.UPLOAD_TYPE_FILE, f); err != nil {
+	if res, err := clientStorage.Upload(nested.UploadTypeFile, f); err != nil {
 		return nil, err
 	} else if 0 == len(res.Files) {
 		return nil, errors.New("file not uploaded")

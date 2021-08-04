@@ -675,10 +675,10 @@ func (s *PlaceService) getPlaceFiles(requester *nested.Account, request *nestedG
 	}
 	if v, ok := request.Data["filter"].(string); ok {
 		switch v {
-		case nested.FILE_TYPE_AUDIO, nested.FILE_TYPE_DOCUMENT, nested.FILE_TYPE_IMAGE, nested.FILE_TYPE_VIDEO, nested.FILE_TYPE_OTHER:
+		case nested.FileTypeAudio, nested.FileTypeDocument, nested.FileTypeImage, nested.FileTypeVideo, nested.FileTypeOther:
 			filter = v
 		default:
-			filter = nested.FILE_TYPE_ALL
+			filter = nested.FileTypeAll
 		}
 
 	}

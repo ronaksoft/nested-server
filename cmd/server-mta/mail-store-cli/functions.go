@@ -129,7 +129,7 @@ func store(domain, sender string, recipients []string, mailEnvelope *enmime.Enve
 	attachmentOwners := append(nonBlindPlaceIDs, blindPlaceIDs...)
 
 	var rawMsgFileID nested.UniversalID
-	if finfo, err := uploadFile(fmt.Sprintf("%s-%s.eml", messageID, subject), senderID, nested.FILE_STATUS_ATTACHED, attachmentOwners, rawBody, m.Storage); err != nil {
+	if finfo, err := uploadFile(fmt.Sprintf("%s-%s.eml", messageID, subject), senderID, nested.FileStatusAttached, attachmentOwners, rawBody, m.Storage); err != nil {
 		// TODO: Retry
 		_LOG.Error("ERROR::::::Unable to upload raw message file", zap.Error(err))
 	} else {
@@ -150,7 +150,7 @@ func store(domain, sender string, recipients []string, mailEnvelope *enmime.Enve
 	} else if res.StatusCode != http.StatusOK {
 		_LOG.Debug("ERROR::::::Gravatar not found")
 	} else {
-		if finfo, err := uploadFile(fmt.Sprintf("%s.jpg", senderIdHash), senderID, nested.FILE_STATUS_PUBLIC, []string{}, res.Body, m.Storage); err != nil {
+		if finfo, err := uploadFile(fmt.Sprintf("%s.jpg", senderIdHash), senderID, nested.FileStatusPublic, []string{}, res.Body, m.Storage); err != nil {
 			_LOG.Error("ERROR::::::Unable set sender profile picture:", zap.Error(err))
 		} else {
 			senderPicture = finfo.Thumbs
@@ -194,7 +194,7 @@ func store(domain, sender string, recipients []string, mailEnvelope *enmime.Enve
 				zap.Any("", att.Header),
 			)
 
-			if finfo, err := uploadFile(filename, senderID, nested.FILE_STATUS_ATTACHED, attachmentOwners, bytes.NewReader(att.Content), m.Storage); err != nil {
+			if finfo, err := uploadFile(filename, senderID, nested.FileStatusAttached, attachmentOwners, bytes.NewReader(att.Content), m.Storage); err != nil {
 				_LOG.Error("ERROR::::::Error adding inline attachment:", zap.Error(err))
 			} else {
 				_LOG.Info("Gonna create file token for %s", zap.Any("", finfo.UniversalId))
@@ -246,7 +246,7 @@ func store(domain, sender string, recipients []string, mailEnvelope *enmime.Enve
 				zap.Any("", att.Header),
 			)
 
-			if finfo, err := uploadFile(att.FileName, senderID, nested.FILE_STATUS_ATTACHED, attachmentOwners, bytes.NewReader(att.Content), m.Storage); err != nil {
+			if finfo, err := uploadFile(att.FileName, senderID, nested.FileStatusAttached, attachmentOwners, bytes.NewReader(att.Content), m.Storage); err != nil {
 				_LOG.Error("ERROR::::::Error adding inline attachment:", zap.Error(err))
 			} else {
 				_LOG.Info("Gonna create file token for %s", zap.Any("", finfo.UniversalId))
