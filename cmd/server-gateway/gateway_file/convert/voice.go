@@ -3,8 +3,8 @@ package convert
 import (
 	"encoding/json"
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
-	"git.ronaksoft.com/nested/server/pkg/protocol"
 	"io"
 	"io/ioutil"
 	"os"
@@ -83,19 +83,19 @@ func (c Voice) ToMp3(r io.Reader, aQuality uint) (io.Reader, error) {
 
 	if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_voice_"); err != nil {
 		log.Warn(err.Error())
-		return nil, protocol.NewUnknownError(err)
+		return nil, err
 
 	} else if s, err := f.Stat(); err != nil {
 		log.Warn(err.Error())
-		return nil, protocol.NewUnknownError(err)
+		return nil, err
 
 	} else if n, err := io.Copy(f, r); err != nil {
 		log.Warn(err.Error())
-		return nil, protocol.NewUnknownError(err)
+		return nil, err
 
 	} else if 0 == n {
 		log.Warn("Voice::ToMp3 Nothing was written into temp file")
-		return nil, protocol.NewUnknownError(nil)
+		return nil, global.NewUnknownError(nil)
 
 	} else {
 		f.Close()

@@ -3,16 +3,15 @@ package convert
 import (
 	"encoding/json"
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
+	"go.uber.org/zap"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strconv"
 	"time"
-
-	"git.ronaksoft.com/nested/server/pkg/protocol"
-	"go.uber.org/zap"
 )
 
 type Audio struct{}
@@ -39,18 +38,17 @@ func (c Audio) Meta(r io.Reader) (*AudioMeta, error) {
 	if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_audio_"); err != nil {
 		log.Warn(err.Error())
 
-		return nil, protocol.NewUnknownError(err)
+		return nil, err
 	} else if s, err := f.Stat(); err != nil {
 		log.Warn(err.Error())
-		return nil, protocol.NewUnknownError(err)
+		return nil, err
 
 	} else if n, err := io.Copy(f, r); err != nil {
 		log.Warn(err.Error())
-		return nil, protocol.NewUnknownError(err)
+		return nil, err
 
 	} else if 0 == n {
-		log.Warn("Nothing was written into temp file")
-		return nil, protocol.NewUnknownError(nil)
+		return nil, fmt.Errorf("nothing was written into temp file")
 
 	} else {
 		f.Close()
@@ -112,18 +110,18 @@ func (c Audio) ToMp3(r io.Reader, aQuality uint) (io.Reader, error) {
 	if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_audio_"); err != nil {
 		log.Warn(err.Error())
 
-		return nil, protocol.NewUnknownError(err)
+		return nil, err
 	} else if s, err := f.Stat(); err != nil {
 		log.Warn(err.Error())
-		return nil, protocol.NewUnknownError(err)
+		return nil, err
 
 	} else if n, err := io.Copy(f, r); err != nil {
 		log.Warn(err.Error())
-		return nil, protocol.NewUnknownError(err)
+		return nil, err
 
 	} else if 0 == n {
 		log.Warn("nothing was written into temp file")
-		return nil, protocol.NewUnknownError(nil)
+		return nil, global.NewUnknownError(nil)
 
 	} else {
 		f.Close()

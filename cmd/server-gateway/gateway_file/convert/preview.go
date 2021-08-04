@@ -2,6 +2,7 @@ package convert
 
 import (
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
 	"io"
 	"io/ioutil"
@@ -9,8 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-
-	"git.ronaksoft.com/nested/server/pkg/protocol"
 )
 
 type Preview struct {
@@ -62,19 +61,19 @@ func (c Preview) Thumbnail(r io.Reader, mimeType string, maxWidth, maxHeight uin
 	case "video":
 		if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_preview_"); err != nil {
 			log.Warn(err.Error())
-			return nil, nil, protocol.NewUnknownError(err)
+			return nil, nil, err
 
 		} else if s, err := f.Stat(); err != nil {
 			log.Warn(err.Error())
-			return nil, nil, protocol.NewUnknownError(err)
+			return nil, nil, err
 
 		} else if n, err := io.Copy(f, r); err != nil {
 			log.Warn(err.Error())
-			return nil, nil, protocol.NewUnknownError(err)
+			return nil, nil, err
 
 		} else if 0 == n {
 			log.Warn(err.Error())
-			return nil, nil, protocol.NewUnknownError(nil)
+			return nil, nil, global.NewUnknownError(nil)
 
 		} else {
 			f.Close()
@@ -147,11 +146,11 @@ func (c Preview) Thumbnail(r io.Reader, mimeType string, maxWidth, maxHeight uin
 			cmd = exec.Command(_Commands.Convert, args...)
 
 		default:
-			return nil, nil, protocol.NewInvalidError([]string{"mime_type"}, nil)
+			return nil, nil, global.NewInvalidError([]string{"mime_type"}, nil)
 		}
 
 	default:
-		return nil, nil, protocol.NewInvalidError([]string{"mime_type"}, nil)
+		return nil, nil, global.NewInvalidError([]string{"mime_type"}, nil)
 	}
 
 	// Command Stdout: Output io.Reader
@@ -227,19 +226,19 @@ func (c Preview) Resized(r io.Reader, mimeType string, maxWidth, maxHeight uint)
 	case "video":
 		if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_preview_"); err != nil {
 			log.Warn(err.Error())
-			return nil, nil, protocol.NewUnknownError(err)
+			return nil, nil, err
 
 		} else if s, err := f.Stat(); err != nil {
 			log.Warn(err.Error())
-			return nil, nil, protocol.NewUnknownError(err)
+			return nil, nil, err
 
 		} else if n, err := io.Copy(f, r); err != nil {
 			log.Warn(err.Error())
-			return nil, nil, protocol.NewUnknownError(err)
+			return nil, nil, err
 
 		} else if 0 == n {
 			log.Warn("Nothing was written into temp file")
-			return nil, nil, protocol.NewUnknownError(nil)
+			return nil, nil, global.NewUnknownError(nil)
 
 		} else {
 			f.Close()
@@ -315,11 +314,11 @@ func (c Preview) Resized(r io.Reader, mimeType string, maxWidth, maxHeight uint)
 			cmd = exec.Command(_Commands.Convert, args...)
 
 		default:
-			return nil, nil, protocol.NewInvalidError([]string{"mime_type"}, nil)
+			return nil, nil, global.NewInvalidError([]string{"mime_type"}, nil)
 		}
 
 	default:
-		return nil, nil, protocol.NewInvalidError([]string{"mime_type"}, nil)
+		return nil, nil, global.NewInvalidError([]string{"mime_type"}, nil)
 	}
 
 	// Command Stdout: Output io.Reader

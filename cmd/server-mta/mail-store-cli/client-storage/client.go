@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"git.ronaksoft.com/nested/server/nested"
-	"git.ronaksoft.com/nested/server/pkg/protocol"
+	"git.ronaksoft.com/nested/server/pkg/global"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -111,10 +111,10 @@ func (c Client) Upload(uploadType string, files ...File) (*UploadOutput, error) 
 	} else if http.StatusOK != r.StatusCode {
 		fmt.Println("Upload request response error")
 
-		sErr := protocol.Error{}
+		sErr := global.Error{}
 		decoder := json.NewDecoder(r.Body)
 		if err := decoder.Decode(&sErr); err != nil {
-			return nil, protocol.NewUnknownError(protocol.D{"error": err, "status": r.Status})
+			return nil, global.NewUnknownError(global.DataPayload{"error": err, "status": r.Status})
 		} else {
 			return nil, sErr
 		}

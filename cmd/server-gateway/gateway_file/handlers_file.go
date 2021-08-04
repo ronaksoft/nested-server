@@ -4,10 +4,14 @@ import (
 	"errors"
 	"fmt"
 	nestedGateway "git.ronaksoft.com/nested/server/cmd/server-gateway/client"
+	"git.ronaksoft.com/nested/server/nested"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
 	"git.ronaksoft.com/nested/server/pkg/rpc"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
+	"github.com/kataras/iris"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -16,12 +20,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"git.ronaksoft.com/nested/server/nested"
-	"git.ronaksoft.com/nested/server/pkg/protocol"
-	"github.com/globalsign/mgo"
-	"github.com/globalsign/mgo/bson"
-	"github.com/kataras/iris"
 )
 
 func (fs *Server) ForceDownload(ctx iris.Context) {
@@ -73,16 +71,16 @@ func (fs *Server) ServePublicFiles(ctx iris.Context) {
 
 func (fs *Server) ServePrivateFiles(ctx iris.Context) {
 	universalID := nested.UniversalID(ctx.Params().Get("universalID"))
-	//sessionID := ctx.Params().Get("sessionID")
+	// sessionID := ctx.Params().Get("sessionID")
 	downloadToken := ctx.Params().Get("downloadToken")
 	resp := new(rpc.Response)
 
-	//if !bson.IsObjectIdHex(sessionID) {
+	// if !bson.IsObjectIdHex(sessionID) {
 	//    ctx.StatusCode(http.StatusUnauthorized)
 	//    resp.Error(global.ErrAccess, []string{})
 	//    ctx.JSON(resp)
 	//    return
-	//} else {
+	// } else {
 	//    session := _NestedModel.Session.GetByID(bson.ObjectIdHex(sessionID))
 	//    if session == nil {
 	//        ctx.StatusCode(http.StatusUnauthorized)
@@ -90,7 +88,7 @@ func (fs *Server) ServePrivateFiles(ctx iris.Context) {
 	//        ctx.JSON(resp)
 	//        return
 	//    }
-	//}
+	// }
 
 	if valid, uniID := nested.UseDownloadToken(downloadToken); !valid {
 		ctx.StatusCode(http.StatusUnauthorized)
@@ -558,7 +556,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 	case nested.UploadTypePlacePicture, nested.UploadTypeProfilePicture:
 		if nested.FileTypeImage != storedFileInfo.Metadata.Type {
 			log.Warn("Invalid file uploaded as place/profile picture")
-			return nil, protocol.NewInvalidError([]string{"mime_type"}, nil)
+			return nil, global.NewInvalidError([]string{"mime_type"}, nil)
 
 		}
 
@@ -576,7 +574,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 	case nested.UploadTypeVideo:
 		if nested.FileTypeVideo != storedFileInfo.Metadata.Type {
 			log.Warn("Invalid file uploaded as Video")
-			return nil, protocol.NewInvalidError([]string{"mime_type"}, nil)
+			return nil, global.NewInvalidError([]string{"mime_type"}, nil)
 
 		}
 
@@ -606,7 +604,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 	case nested.UploadTypeAudio:
 		if nested.FileTypeAudio != storedFileInfo.Metadata.Type {
 			log.Warn("Invalid file uploaded as Audio")
-			return nil, protocol.NewInvalidError([]string{"mime_type"}, nil)
+			return nil, global.NewInvalidError([]string{"mime_type"}, nil)
 		}
 
 		savePreprocessor = func(w io.Writer, r io.Reader) (int64, error) {
@@ -635,7 +633,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 	case nested.UploadTypeVoice:
 		if nested.FileTypeAudio != storedFileInfo.Metadata.Type {
 			log.Warn("Invalid file uploaded as Voice")
-			return nil, protocol.NewInvalidError([]string{"mime_type"}, nil)
+			return nil, global.NewInvalidError([]string{"mime_type"}, nil)
 
 		}
 
@@ -666,7 +664,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 	case nested.UploadTypeImage:
 		if nested.FileTypeImage != storedFileInfo.Metadata.Type {
 			log.Warn("Invalid file uploaded as Image")
-			return nil, protocol.NewInvalidError([]string{"mime_type"}, nil)
+			return nil, global.NewInvalidError([]string{"mime_type"}, nil)
 
 		}
 
@@ -697,7 +695,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 	case nested.UploadTypeGif:
 		if nested.FileTypeGif != storedFileInfo.Metadata.Type {
 			log.Warn("Invalid file uploaded as Gif")
-			return nil, protocol.NewInvalidError([]string{"mime_type"}, nil)
+			return nil, global.NewInvalidError([]string{"mime_type"}, nil)
 
 		}
 
@@ -752,7 +750,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 					w.CloseWithError(err) // Occur error on save read
 				} else if 0 == n {
 					log.Warn("Save Pre-Processor returned empty")
-					err := protocol.NewInvalidError([]string{"input"}, nil)
+					err := global.NewInvalidError([]string{"input"}, nil)
 					chErr <- err
 					r.CloseWithError(err) // Occur error on multi-writer write
 					w.CloseWithError(err) // Occur error on save read

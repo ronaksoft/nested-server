@@ -3,6 +3,7 @@ package convert
 import (
 	"encoding/json"
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
 	"io"
 	"io/ioutil"
@@ -10,8 +11,6 @@ import (
 	"os/exec"
 	"strconv"
 	"time"
-
-	"git.ronaksoft.com/nested/server/pkg/protocol"
 )
 
 type Video struct {
@@ -97,19 +96,19 @@ func (c Video) ToMp4(r io.Reader, vQuality, maxWidth, maxHeight, aBitRate uint) 
 
 	if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_video_"); err != nil {
 		log.Warn(err.Error())
-		return nil, protocol.NewUnknownError(err)
+		return nil, err
 
 	} else if s, err := f.Stat(); err != nil {
 		log.Warn(err.Error())
-		return nil, protocol.NewUnknownError(err)
+		return nil, err
 
 	} else if n, err := io.Copy(f, r); err != nil {
 		log.Warn(err.Error())
-		return nil, protocol.NewUnknownError(err)
+		return nil, err
 
 	} else if 0 == n {
 		log.Warn("Video::ToMp4 Nothing was written into temp file")
-		return nil, protocol.NewUnknownError(nil)
+		return nil, global.NewUnknownError(nil)
 
 	} else {
 		f.Close()
@@ -118,11 +117,11 @@ func (c Video) ToMp4(r io.Reader, vQuality, maxWidth, maxHeight, aBitRate uint) 
 
 	if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_video_out_"); err != nil {
 		log.Warn(err.Error())
-		return nil, protocol.NewUnknownError(err)
+		return nil, err
 
 	} else if s, err := f.Stat(); err != nil {
 		log.Warn(err.Error())
-		return nil, protocol.NewUnknownError(err)
+		return nil, err
 
 	} else {
 		f.Close()

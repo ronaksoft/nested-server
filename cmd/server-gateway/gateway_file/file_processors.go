@@ -3,15 +3,14 @@ package file
 import (
 	"errors"
 	"fmt"
+	"git.ronaksoft.com/nested/server/cmd/server-gateway/gateway_file/convert"
+	"git.ronaksoft.com/nested/server/nested"
+	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
+	"go.uber.org/zap"
 	"io"
 	"path"
 	"sync"
-
-	"git.ronaksoft.com/nested/server/cmd/server-gateway/gateway_file/convert"
-	"git.ronaksoft.com/nested/server/nested"
-	"git.ronaksoft.com/nested/server/pkg/protocol"
-	"go.uber.org/zap"
 )
 
 const (
@@ -97,7 +96,7 @@ func (p *thumbGenerator) Process(r io.Reader) error {
 		// Save File in Nested Model
 		if _NestedModel.File.AddFile(thumbInfo) != true {
 			log.Warn("File info submit failed")
-			return protocol.NewUnknownError(nil)
+			return global.NewUnknownError(nil)
 
 		} else {
 			p.Lock.Lock()
@@ -176,7 +175,7 @@ func (p *previewGenerator) Process(r io.Reader) error {
 		}
 
 		if _NestedModel.File.AddFile(thumbInfo) != true {
-			return protocol.NewUnknownError(nil)
+			return global.NewUnknownError(nil)
 
 		} else {
 			p.Lock.Lock()
@@ -378,5 +377,5 @@ func (p *gifMetaReader) Process(r io.Reader) error {
 		p.Lock.Unlock()
 	}
 
-	return protocol.NewNotImplementedError(nil)
+	return global.NewNotImplementedError(nil)
 }

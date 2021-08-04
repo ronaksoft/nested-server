@@ -2,14 +2,13 @@ package convert
 
 import (
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strconv"
-
-	"git.ronaksoft.com/nested/server/pkg/protocol"
 )
 
 type Gif struct {
@@ -52,19 +51,19 @@ func (c Gif) ToMp4(r io.Reader, vQuality, maxWidth, maxHeight uint) (io.Reader, 
 
 	if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_gif_"); err != nil {
 		log.Warn(err.Error())
-		return nil, protocol.NewUnknownError(err)
+		return nil, err
 
 	} else if s, err := f.Stat(); err != nil {
 		log.Warn(err.Error())
-		return nil, protocol.NewUnknownError(err)
+		return nil, err
 
 	} else if n, err := io.Copy(f, r); err != nil {
 		log.Warn(err.Error())
-		return nil, protocol.NewUnknownError(err)
+		return nil, err
 
 	} else if 0 == n {
 		log.Warn("Gif::ToMp4 Nothing was written into temp file")
-		return nil, protocol.NewUnknownError(nil)
+		return nil, global.NewUnknownError(nil)
 
 	} else {
 		f.Close()
@@ -73,11 +72,11 @@ func (c Gif) ToMp4(r io.Reader, vQuality, maxWidth, maxHeight uint) (io.Reader, 
 
 	if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_gif_out_"); err != nil {
 		log.Warn(err.Error())
-		return nil, protocol.NewUnknownError(err)
+		return nil, err
 
 	} else if s, err := f.Stat(); err != nil {
 		log.Warn(err.Error())
-		return nil, protocol.NewUnknownError(err)
+		return nil, err
 
 	} else {
 		f.Close()
