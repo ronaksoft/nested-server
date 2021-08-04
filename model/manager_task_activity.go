@@ -40,47 +40,47 @@ func NewTaskActivityManager() *TaskActivityManager {
 }
 func (tm *TaskActivityManager) Remove(activityID bson.ObjectId) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).UpdateId(
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).UpdateId(
 		activityID,
 		bson.M{"$set": bson.M{"_removed": true}},
 	); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return false
 	}
 	return true
 }
 func (tm *TaskActivityManager) GetActivityByID(activityID bson.ObjectId) *TaskActivity {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	taskActivity := new(TaskActivity)
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).FindId(activityID).One(taskActivity); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).FindId(activityID).One(taskActivity); err != nil {
+		log.Warn(err.Error())
 		return nil
 	}
 	return taskActivity
 }
 func (tm *TaskActivityManager) GetActivitiesByIDs(activityIDs []bson.ObjectId) []TaskActivity {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	taskActivities := make([]TaskActivity, 0, len(activityIDs))
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).Find(
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Find(
 		bson.M{"_id": bson.M{"$in": activityIDs}},
 	).All(&taskActivities); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil
 	}
 	return taskActivities
 }
 func (tm *TaskActivityManager) GetActivitiesByTaskID(taskID bson.ObjectId, pg Pagination, filter []TaskAction) []TaskActivity {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	taskActivities := make([]TaskActivity, pg.GetLimit())
@@ -96,11 +96,11 @@ func (tm *TaskActivityManager) GetActivitiesByTaskID(taskID bson.ObjectId, pg Pa
 		q["action"] = bson.M{"$in": filter}
 	}
 
-	Q := db.C(COLLECTION_TASKS_ACTIVITIES).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
+	Q := db.C(global.COLLECTION_TASKS_ACTIVITIES).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
 	// Log Explain Query
 
 	if err := Q.All(&taskActivities); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return []TaskActivity{}
 	}
 	return taskActivities
@@ -108,7 +108,7 @@ func (tm *TaskActivityManager) GetActivitiesByTaskID(taskID bson.ObjectId, pg Pa
 
 func (tm *TaskActivityManager) Created(taskID bson.ObjectId, actorID string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	v := TaskActivity{
@@ -118,14 +118,14 @@ func (tm *TaskActivityManager) Created(taskID bson.ObjectId, actorID string) {
 		TaskID:    taskID,
 		ActorID:   actorID,
 	}
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
 func (tm *TaskActivityManager) WatcherAdded(taskID bson.ObjectId, actorID string, watcherIDs []string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	v := TaskActivity{
@@ -136,14 +136,14 @@ func (tm *TaskActivityManager) WatcherAdded(taskID bson.ObjectId, actorID string
 		ActorID:    actorID,
 		WatcherIDs: watcherIDs,
 	}
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
 func (tm *TaskActivityManager) WatcherRemoved(taskID bson.ObjectId, actorID string, watcherIDs []string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	v := TaskActivity{
@@ -154,14 +154,14 @@ func (tm *TaskActivityManager) WatcherRemoved(taskID bson.ObjectId, actorID stri
 		ActorID:    actorID,
 		WatcherIDs: watcherIDs,
 	}
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
 func (tm *TaskActivityManager) EditorAdded(taskID bson.ObjectId, actorID string, editorIDs []string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	v := TaskActivity{
@@ -172,14 +172,14 @@ func (tm *TaskActivityManager) EditorAdded(taskID bson.ObjectId, actorID string,
 		ActorID:   actorID,
 		EditorIDs: editorIDs,
 	}
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
 func (tm *TaskActivityManager) EditorRemoved(taskID bson.ObjectId, actorID string, editorIDs []string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	v := TaskActivity{
@@ -190,14 +190,14 @@ func (tm *TaskActivityManager) EditorRemoved(taskID bson.ObjectId, actorID strin
 		ActorID:   actorID,
 		EditorIDs: editorIDs,
 	}
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
 func (tm *TaskActivityManager) AttachmentAdded(taskID bson.ObjectId, actorID string, attachmentIDs []UniversalID) *TaskActivity {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	v := TaskActivity{
@@ -208,15 +208,15 @@ func (tm *TaskActivityManager) AttachmentAdded(taskID bson.ObjectId, actorID str
 		ActorID:       actorID,
 		AttachmentIDs: attachmentIDs,
 	}
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 		return nil
 	}
 	return &v
 }
 func (tm *TaskActivityManager) AttachmentRemoved(taskID bson.ObjectId, actorID string, attachmentIDs []UniversalID) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	v := TaskActivity{
@@ -227,14 +227,14 @@ func (tm *TaskActivityManager) AttachmentRemoved(taskID bson.ObjectId, actorID s
 		ActorID:       actorID,
 		AttachmentIDs: attachmentIDs,
 	}
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
 func (tm *TaskActivityManager) TaskTitleChanged(taskID bson.ObjectId, actorID, title string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	v := TaskActivity{
@@ -245,14 +245,14 @@ func (tm *TaskActivityManager) TaskTitleChanged(taskID bson.ObjectId, actorID, t
 		ActorID:   actorID,
 		Title:     title,
 	}
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
 func (tm *TaskActivityManager) TaskDescriptionChanged(taskID bson.ObjectId, actorID, desc string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	v := TaskActivity{
@@ -263,14 +263,14 @@ func (tm *TaskActivityManager) TaskDescriptionChanged(taskID bson.ObjectId, acto
 		ActorID:   actorID,
 		Title:     desc,
 	}
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
 func (tm *TaskActivityManager) CandidateAdded(taskID bson.ObjectId, actorID string, candidateIDs []string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	v := TaskActivity{
@@ -281,14 +281,14 @@ func (tm *TaskActivityManager) CandidateAdded(taskID bson.ObjectId, actorID stri
 		ActorID:      actorID,
 		CandidateIDs: candidateIDs,
 	}
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
 func (tm *TaskActivityManager) CandidateRemoved(taskID bson.ObjectId, actorID string, candidateIDs []string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	v := TaskActivity{
@@ -299,14 +299,14 @@ func (tm *TaskActivityManager) CandidateRemoved(taskID bson.ObjectId, actorID st
 		ActorID:      actorID,
 		CandidateIDs: candidateIDs,
 	}
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
 func (tm *TaskActivityManager) StatusChanged(taskID bson.ObjectId, actorID string, newStatus TaskStatus) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	v := TaskActivity{
@@ -317,14 +317,14 @@ func (tm *TaskActivityManager) StatusChanged(taskID bson.ObjectId, actorID strin
 		ActorID:   actorID,
 		Status:    newStatus,
 	}
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
 func (tm *TaskActivityManager) ToDoAdded(taskID bson.ObjectId, actorID, todoText string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	v := TaskActivity{
@@ -335,14 +335,14 @@ func (tm *TaskActivityManager) ToDoAdded(taskID bson.ObjectId, actorID, todoText
 		ActorID:   actorID,
 		ToDoText:  todoText,
 	}
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
 func (tm *TaskActivityManager) ToDoRemoved(taskID bson.ObjectId, actorID, todoText string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	v := TaskActivity{
@@ -353,14 +353,14 @@ func (tm *TaskActivityManager) ToDoRemoved(taskID bson.ObjectId, actorID, todoTe
 		ActorID:   actorID,
 		ToDoText:  todoText,
 	}
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
 func (tm *TaskActivityManager) ToDoChanged(taskID bson.ObjectId, actorID, todoText string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	v := TaskActivity{
@@ -371,14 +371,14 @@ func (tm *TaskActivityManager) ToDoChanged(taskID bson.ObjectId, actorID, todoTe
 		ActorID:   actorID,
 		ToDoText:  todoText,
 	}
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
 func (tm *TaskActivityManager) ToDoDone(taskID bson.ObjectId, actorID, todoText string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	v := TaskActivity{
@@ -389,14 +389,14 @@ func (tm *TaskActivityManager) ToDoDone(taskID bson.ObjectId, actorID, todoText 
 		ActorID:   actorID,
 		ToDoText:  todoText,
 	}
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
 func (tm *TaskActivityManager) ToDoUndone(taskID bson.ObjectId, actorID, todoText string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	v := TaskActivity{
@@ -407,14 +407,14 @@ func (tm *TaskActivityManager) ToDoUndone(taskID bson.ObjectId, actorID, todoTex
 		ActorID:   actorID,
 		ToDoText:  todoText,
 	}
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
 func (tm *TaskActivityManager) AssigneeChanged(taskID bson.ObjectId, actorID, assigneeID string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	v := TaskActivity{
@@ -425,14 +425,14 @@ func (tm *TaskActivityManager) AssigneeChanged(taskID bson.ObjectId, actorID, as
 		ActorID:    actorID,
 		AssigneeID: assigneeID,
 	}
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
 func (tm *TaskActivityManager) Comment(taskID bson.ObjectId, actorID string, commentText string) *TaskActivity {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	v := TaskActivity{
@@ -444,24 +444,24 @@ func (tm *TaskActivityManager) Comment(taskID bson.ObjectId, actorID string, com
 		CommentText: commentText,
 	}
 
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 		return nil
 	}
 
-	if err := db.C(COLLECTION_TASKS).UpdateId(
+	if err := db.C(global.COLLECTION_TASKS).UpdateId(
 		taskID,
 		bson.M{
 			"$inc": bson.M{"counters.comments": 1},
 		},
 	); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 	}
 	return &v
 }
 func (tm *TaskActivityManager) LabelAdded(taskID bson.ObjectId, actorID string, labelIDs []string) *TaskActivity {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	v := TaskActivity{
@@ -472,15 +472,15 @@ func (tm *TaskActivityManager) LabelAdded(taskID bson.ObjectId, actorID string, 
 		ActorID:   actorID,
 		LabelIDs:  labelIDs,
 	}
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 		return nil
 	}
 	return &v
 }
 func (tm *TaskActivityManager) LabelRemoved(taskID bson.ObjectId, actorID string, labelIDs []string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	v := TaskActivity{
@@ -491,14 +491,14 @@ func (tm *TaskActivityManager) LabelRemoved(taskID bson.ObjectId, actorID string
 		ActorID:   actorID,
 		LabelIDs:  labelIDs,
 	}
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
 func (tm *TaskActivityManager) DueDateUpdated(taskID bson.ObjectId, actorID string, dueDate uint64, dueDateHasClock bool) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	v := TaskActivity{
@@ -510,14 +510,14 @@ func (tm *TaskActivityManager) DueDateUpdated(taskID bson.ObjectId, actorID stri
 		DueDate:         dueDate,
 		DueDateHasClock: dueDateHasClock,
 	}
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
 func (tm *TaskActivityManager) DueDateRemoved(taskID bson.ObjectId, actorID string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	v := TaskActivity{
@@ -527,8 +527,8 @@ func (tm *TaskActivityManager) DueDateRemoved(taskID bson.ObjectId, actorID stri
 		TaskID:    taskID,
 		ActorID:   actorID,
 	}
-	if err := db.C(COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }

@@ -43,8 +43,8 @@ func (m *AppManager) Register(appID, appName, homepage, callbackURL, developer, 
 	if appID == _AppStore.ID {
 		return false
 	}
-	if err := _MongoDB.C(COLLECTION_APPS).Insert(a); err != nil {
-		_Log.Warn(err.Error())
+	if err := _MongoDB.C(global.COLLECTION_APPS).Insert(a); err != nil {
+		log.Warn(err.Error())
 		return false
 	}
 	return true
@@ -52,8 +52,8 @@ func (m *AppManager) Register(appID, appName, homepage, callbackURL, developer, 
 
 // UnRegister removes the app from the verified apps list
 func (m *AppManager) UnRegister(appID string) bool {
-	if err := _MongoDB.C(COLLECTION_APPS).RemoveId(appID); err != nil {
-		_Log.Warn(err.Error())
+	if err := _MongoDB.C(global.COLLECTION_APPS).RemoveId(appID); err != nil {
+		log.Warn(err.Error())
 		return false
 	}
 	return true
@@ -65,8 +65,8 @@ func (m *AppManager) GetByID(appID string) *App {
 	if appID == _AppStore.ID {
 		return &_AppStore
 	}
-	if err := _MongoDB.C(COLLECTION_APPS).FindId(appID).One(app); err != nil {
-		_Log.Warn(err.Error())
+	if err := _MongoDB.C(global.COLLECTION_APPS).FindId(appID).One(app); err != nil {
+		log.Warn(err.Error())
 		return nil
 	}
 	return app
@@ -75,20 +75,20 @@ func (m *AppManager) GetByID(appID string) *App {
 // GetManyByIDs returns an array of Apps
 func (m *AppManager) GetManyByIDs(appIDs []string) []App {
 	apps := make([]App, 0, len(appIDs))
-	if err := _MongoDB.C(COLLECTION_APPS).Find(
+	if err := _MongoDB.C(global.COLLECTION_APPS).Find(
 		bson.M{"_id": bson.M{"$in": appIDs}},
 	).One(&apps); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 	}
 	return apps
 }
 
 // ExpireTokens remove all the AppTokens assigned to the appID
 func (m *AppManager) ExpireTokens(appID string) {
-	if _, err := _MongoDB.C(COLLECTION_TOKENS_APPS).RemoveAll(
+	if _, err := _MongoDB.C(global.COLLECTION_TOKENS_APPS).RemoveAll(
 		bson.M{"app_id": appID},
 	); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 	}
 }
 
@@ -97,8 +97,8 @@ func (m *AppManager) Exists(appID string) bool {
 	if appID == _AppStore.ID {
 		return true
 	}
-	if n, err := _MongoDB.C(COLLECTION_APPS).FindId(appID).Count(); err != nil {
-		_Log.Warn(err.Error())
+	if n, err := _MongoDB.C(global.COLLECTION_APPS).FindId(appID).Count(); err != nil {
+		log.Warn(err.Error())
 		return false
 	} else if n > 0 {
 		return true

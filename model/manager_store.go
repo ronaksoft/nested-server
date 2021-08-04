@@ -120,7 +120,7 @@ func (fm *StoreManager) Save(r io.Reader, info StoredFileInfo) *StoredFileInfo {
 
 	var gFile *mgo.GridFile
 	if gf, err := store.Create(finfo.Name); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil
 	} else {
 		gFile = gf
@@ -132,11 +132,11 @@ func (fm *StoreManager) Save(r io.Reader, info StoredFileInfo) *StoredFileInfo {
 	gFile.SetContentType(finfo.MimeType)
 
 	if n, err := io.Copy(gFile, r); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		gFile.Abort()
 		return nil
 	} else if 0 == n {
-		_Log.Warn(fmt.Sprintf("save empty file %s", info.ID))
+		log.Warn(fmt.Sprintf("save empty file %s", info.ID))
 		gFile.Abort()
 		return nil
 	} else {
@@ -155,7 +155,7 @@ func (fm *StoreManager) SetThumbnails(uniID UniversalID, thumbnails Thumbnails) 
 	defer dbSession.Close()
 
 	if err := store.Files.UpdateId(uniID, bson.M{"$set": bson.M{"metadata.thumbnails": thumbnails}}); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return err
 	}
 	return nil
@@ -168,7 +168,7 @@ func (fm *StoreManager) SetMeta(uniID UniversalID, meta interface{}) error {
 	defer dbSession.Close()
 
 	if err := store.Files.UpdateId(uniID, bson.M{"$set": bson.M{"metadata.meta": meta}}); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return err
 	}
 	return nil
@@ -181,7 +181,7 @@ func (fm *StoreManager) Exists(uniID UniversalID) bool {
 	defer dbSession.Close()
 
 	if c, err := store.Files.FindId(uniID).Count(); err != nil || 0 == c {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return false
 	}
 	return true

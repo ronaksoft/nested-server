@@ -43,13 +43,13 @@ func (sm *SessionManager) readFromCache(sessionID bson.ObjectId) *Session {
 	defer c.Close()
 	keyID := fmt.Sprintf("session:gob:%s", sessionID.Hex())
 	if gobSession, err := redis.Bytes(c.Do("GET", keyID)); err != nil {
-		if err := _MongoDB.C(COLLECTION_SESSIONS).FindId(sessionID).One(session); err != nil {
-			_Log.Warn(err.Error())
+		if err := _MongoDB.C(global.COLLECTION_SESSIONS).FindId(sessionID).One(session); err != nil {
+			log.Warn(err.Error())
 			return nil
 		}
 		gobSession := new(bytes.Buffer)
 		if err := gob.NewEncoder(gobSession).Encode(session); err == nil {
-			c.Do("SETEX", keyID, CACHE_LIFETIME, gobSession.Bytes())
+			c.Do("SETEX", keyID, global.CACHE_LIFETIME, gobSession.Bytes())
 		}
 		return session
 	} else if err := gob.NewDecoder(bytes.NewBuffer(gobSession)).Decode(session); err == nil {
@@ -63,8 +63,8 @@ func (sm *SessionManager) updateCache(sessionID bson.ObjectId) bool {
 	c := _Cache.Pool.Get()
 	defer c.Close()
 	keyID := fmt.Sprintf("session:gob:%s", sessionID.Hex())
-	if err := _MongoDB.C(COLLECTION_SESSIONS).FindId(sessionID).One(session); err != nil {
-		_Log.Warn(err.Error())
+	if err := _MongoDB.C(global.COLLECTION_SESSIONS).FindId(sessionID).One(session); err != nil {
+		log.Warn(err.Error())
 		c.Do("DEL", keyID)
 		return false
 	}
@@ -72,7 +72,7 @@ func (sm *SessionManager) updateCache(sessionID bson.ObjectId) bool {
 	if err := gob.NewEncoder(gobSession).Encode(session); err != nil {
 		return false
 	} else {
-		c.Do("SETEX", keyID, CACHE_LIFETIME, gobSession.Bytes())
+		c.Do("SETEX", keyID, global.CACHE_LIFETIME, gobSession.Bytes())
 	}
 	return true
 }
@@ -85,7 +85,7 @@ func (sm *SessionManager) Create(in MS) (bson.ObjectId, error) {
 
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	sk := bson.NewObjectId()
@@ -96,7 +96,7 @@ func (sm *SessionManager) Create(in MS) (bson.ObjectId, error) {
 	_Manager.Report.CountSessionLogin()
 
 	ts := Timestamp()
-	if err := db.C(COLLECTION_SESSIONS).Insert(
+	if err := db.C(global.COLLECTION_SESSIONS).Insert(
 		Session{
 			ID:         sk,
 			CreatedOn:  ts,
@@ -110,7 +110,7 @@ func (sm *SessionManager) Create(in MS) (bson.ObjectId, error) {
 			Expired: false,
 		},
 	); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return "", err
 	}
 	return sk, nil
@@ -123,10 +123,10 @@ func (sm *SessionManager) Expire(sk bson.ObjectId) {
 	defer _Manager.Session.updateCache(sk)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
-	db.C(COLLECTION_SESSIONS).UpdateId(sk, bson.M{"$set": bson.M{"expired": true}})
+	db.C(global.COLLECTION_SESSIONS).UpdateId(sk, bson.M{"$set": bson.M{"expired": true}})
 }
 
 // GetByID return Session by sessionID
@@ -144,15 +144,15 @@ func (sm *SessionManager) GetByUser(accountID string, pg Pagination) []Session {
 
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	s := make([]Session, 0)
-	if err := db.C(COLLECTION_SESSIONS).Find(bson.M{
+	if err := db.C(global.COLLECTION_SESSIONS).Find(bson.M{
 		"uid":     accountID,
 		"expired": false,
 	}).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&s); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 	}
 	return s
 
@@ -181,17 +181,17 @@ func (sm *SessionManager) Set(sk bson.ObjectId, v bson.M) bool {
 	defer _Manager.Session.updateCache(sk)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
-	if err := db.C(COLLECTION_SESSIONS).Update(
+	if err := db.C(global.COLLECTION_SESSIONS).Update(
 		bson.M{
 			"_id":     sk,
 			"expired": false,
 		},
 		bson.M{"$set": v},
 	); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return false
 	}
 	return true
@@ -204,17 +204,17 @@ func (sm *SessionManager) UpdateLastAccess(sk bson.ObjectId) bool {
 	defer _Manager.Session.updateCache(sk)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
-	if err := db.C(COLLECTION_SESSIONS).Update(
+	if err := db.C(global.COLLECTION_SESSIONS).Update(
 		bson.M{
 			"_id":     sk,
 			"expired": false,
 		},
 		bson.M{"$set": bson.M{"last_access": Timestamp()}},
 	); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return false
 	}
 	return true
@@ -260,10 +260,10 @@ func (s *Session) CloseOtherActives() {
 
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
-	db.C(COLLECTION_SESSIONS).RemoveAll(bson.M{
+	db.C(global.COLLECTION_SESSIONS).RemoveAll(bson.M{
 		"uid": s.AccountID,
 		"_id": bson.M{"$ne": s.ID},
 	})

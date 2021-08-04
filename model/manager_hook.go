@@ -131,7 +131,7 @@ func NewHookManager() *HookManager {
 //      3. task_id
 func (m *HookManager) AddHook(setterID, hookName string, anchorID interface{}, hookType int, url string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	hook := new(Hook)
@@ -142,8 +142,8 @@ func (m *HookManager) AddHook(setterID, hookName string, anchorID interface{}, h
 	hook.SetBy = setterID
 	hook.Url = url
 
-	if err := db.C(COLLECTION_HOOKS).Insert(hook); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_HOOKS).Insert(hook); err != nil {
+		log.Warn(err.Error())
 		return false
 	}
 	return true
@@ -151,11 +151,11 @@ func (m *HookManager) AddHook(setterID, hookName string, anchorID interface{}, h
 
 func (m *HookManager) RemoveHook(hookID bson.ObjectId) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
-	if err := db.C(COLLECTION_HOOKS).RemoveId(hookID); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_HOOKS).RemoveId(hookID); err != nil {
+		log.Warn(err.Error())
 		return false
 	}
 	return true
@@ -164,14 +164,14 @@ func (m *HookManager) RemoveHook(hookID bson.ObjectId) bool {
 
 func (m *HookManager) GetHooksBySetterID(setterID string, pg Pagination) []Hook {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	hooks := make([]Hook, 0, pg.GetLimit())
-	if err := db.C(COLLECTION_HOOKS).Find(
+	if err := db.C(global.COLLECTION_HOOKS).Find(
 		bson.M{"set_by": setterID},
 	).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&hooks); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 	}
 	return hooks
 }
@@ -188,7 +188,7 @@ func (m *HookManager) hooker() {
 
 func (m *HookManager) hHook(e HookEvent) {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	var anchorID interface{}
@@ -206,11 +206,11 @@ func (m *HookManager) hHook(e HookEvent) {
 	default:
 		return
 	}
-	iter := db.C(COLLECTION_HOOKS).Find(bson.M{"anchor_id": anchorID, "event_type": hookType}).Iter()
+	iter := db.C(global.COLLECTION_HOOKS).Find(bson.M{"anchor_id": anchorID, "event_type": hookType}).Iter()
 	defer iter.Close()
 
 	if b, err := json.Marshal(e); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 	} else {
 		postBody := new(bytes.Buffer)
 		hook := new(Hook)

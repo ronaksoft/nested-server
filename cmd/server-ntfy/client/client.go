@@ -312,7 +312,7 @@ func (c *Client) InternalNotificationSyncPush(targets []string, notificationType
 
 }
 
-// External Pushes
+// ExternalPush send the notification
 func (c *Client) ExternalPush(targets []string, data map[string]string) error {
 	cmd := CMDPushExternal{
 		Targets: targets,

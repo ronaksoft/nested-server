@@ -1,4 +1,4 @@
-package nested
+package global
 
 // Unchangeable Default Parameters
 const (

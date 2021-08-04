@@ -1,11 +1,5 @@
 package tools
 
-import (
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"os"
-)
-
 /*
    Creation Time: 2018 - Apr - 07
    Created by:  Ehsan N. Moosa (ehsan)
@@ -15,29 +9,43 @@ import (
    Copyright Ronak Software Group 2018
 */
 
-var (
-	_LOG       *zap.Logger
-	_LOG_LEVEL zap.AtomicLevel
-)
 
 type (
 	M  map[string]interface{}
 	MS map[string]string
 	MI map[string]int64
+	MB map[string]bool
 )
 
-func init() {
-	logConfig := zap.NewProductionConfig()
-	logConfig.Encoding = "console"
-	_LOG_LEVEL = zap.NewAtomicLevelAt(zapcore.ErrorLevel)
-	logConfig.Level = _LOG_LEVEL
-	if v, err := logConfig.Build(); err != nil {
-		os.Exit(1)
-	} else {
-		_LOG = v
+
+func (m M) KeysToArray() []string {
+	arr := make([]string, 0, len(m))
+	for k := range m {
+		arr = append(arr, k)
+	}
+	return arr
+}
+
+func (m M) ValuesToArray() []interface{} {
+	arr := make([]interface{}, 0, len(m))
+	for _, v := range m {
+		arr = append(arr, v)
+	}
+	return arr
+}
+
+func (m MB) AddKeys(keys ...[]string) {
+	for _, arr := range keys {
+		for _, key := range arr {
+			m[key] = true
+		}
 	}
 }
 
-func SetLogLevel(level int) {
-	_LOG_LEVEL.SetLevel(zapcore.Level(level))
+func (m MB) KeysToArray() []string {
+	arr := make([]string, 0, len(m))
+	for k := range m {
+		arr = append(arr, k)
+	}
+	return arr
 }

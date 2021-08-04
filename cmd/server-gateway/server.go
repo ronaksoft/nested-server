@@ -198,7 +198,7 @@ func (gw *GatewayServer) Run() {
 	}
 }
 
-// Shutdown
+// Shutdown clean up services before exiting
 func (gw *GatewayServer) Shutdown() {
 	gw.model.Shutdown()
 	gw.ntfy.Close()
@@ -292,7 +292,7 @@ func (gw *GatewayServer) websocketOnConnection(c websocket.Connection) {
 			userRequest.UserAgent = c.Context().GetHeader("User-Agent")
 			userRequest.WebsocketID = c.ID()
 
-			// Send to API API
+			// Send to API
 			userResponse := new(nestedGateway.Response)
 			gw.api.Worker().Execute(userRequest, userResponse)
 			_Log.Debug("Websocket Request Received",

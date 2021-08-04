@@ -4,24 +4,23 @@ import (
 	"crypto/tls"
 	"encoding/gob"
 	"fmt"
-	"net"
-	"os"
-	"time"
-
+	"git.ronaksoft.com/nested/server/pkg/cache"
+	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/log"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"net"
+	"time"
 )
 
 var (
-	_Log          *zap.Logger
-	_LogLevel     zap.AtomicLevel
 	_Manager      *Manager
 	_MongoSession *mgo.Session
 	_MongoDB      *mgo.Database
 	_MongoStore   *mgo.GridFS
-	_Cache        *CacheManager
+	_Cache        *cache.Manager
 )
 
 type (
@@ -45,26 +44,12 @@ func init() {
 	gob.Register(Account{})
 	gob.Register(Place{})
 	gob.Register(License{})
-
-	// Initialize Logger
-	_LogLevel = zap.NewAtomicLevelAt(zap.DebugLevel)
-	config := zap.NewProductionConfig()
-	config.Encoding = "console"
-	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	config.Level = _LogLevel
-	if v, err := config.Build(); err != nil {
-		os.Exit(1)
-	} else {
-		_Log = v
-	}
-
 }
 
-// Manager
+// Manager is the wrapper around all the other managers
 type Manager struct {
 	Account       *AccountManager
 	App           *AppManager
-	Cache         *CacheManager
 	Contact       *ContactManager
 	Device        *DeviceManager
 	File          *FileManager
@@ -96,7 +81,7 @@ func NewManager(instanceID, mongoDSN, redisDSN string, logLevel int) (*Manager, 
 	tlsConfig := new(tls.Config)
 	tlsConfig.InsecureSkipVerify = true
 	if dialInfo, err := mgo.ParseURL(mongoDSN); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 	} else {
 		dialInfo.Timeout = 5 * time.Second
@@ -108,29 +93,29 @@ func NewManager(instanceID, mongoDSN, redisDSN string, logLevel int) (*Manager, 
 			}
 		}
 		if mongoSession, err := mgo.DialWithInfo(dialInfo); err != nil {
-			_Log.Warn(err.Error())
+			log.Warn(err.Error())
 			if mongoSession, err = mgo.Dial(mongoDSN); err != nil {
-				_Log.Warn(err.Error(), zap.String("DSN", mongoDSN))
+				log.Warn(err.Error(), zap.String("DSN", mongoDSN))
 				return nil, err
 			} else {
-				_Log.Info("Model::NewManager::MongoDB Connected")
+				log.Info("Model::NewManager::MongoDB Connected")
 				_MongoSession = mongoSession
 			}
 		} else {
-			_Log.Info("Model::NewManager::MongoDB(TLS) Connected")
+			log.Info("Model::NewManager::MongoDB(TLS) Connected")
 			_MongoSession = mongoSession
 		}
 	}
 
 	// Set connection pool limit
-	DB_NAME = fmt.Sprintf("nested-%s", instanceID)
-	STORE_NAME = fmt.Sprintf("nested_store-%s", instanceID)
-	_MongoDB = _MongoSession.DB(DB_NAME)
-	_MongoStore = _MongoSession.DB(STORE_NAME).GridFS("fs")
+	global.global.global.DB_NAME = fmt.Sprintf("nested-%s", instanceID)
+	global.STORE_NAME = fmt.Sprintf("nested_store-%s", instanceID)
+	_MongoDB = _MongoSession.DB(global.global.global.DB_NAME)
+	_MongoStore = _MongoSession.DB(global.STORE_NAME).GridFS("fs")
 
 	// Initialize Cache Redis
-	if c, err := NewCacheManager(redisDSN); err != nil {
-		_Log.Info("Redis Pool Connection Error")
+	if c, err := cache.New(redisDSN); err != nil {
+		log.Info("Redis Pool Connection Error")
 		return nil, err
 	} else {
 		_Cache = c
@@ -139,7 +124,6 @@ func NewManager(instanceID, mongoDSN, redisDSN string, logLevel int) (*Manager, 
 	_Manager = new(Manager)
 	_Manager.Account = NewAccountManager()
 	_Manager.App = NewAppManager()
-	_Manager.Cache = _Cache
 	_Manager.Contact = NewContactManager()
 	_Manager.Device = NewDeviceManager()
 	_Manager.File = NewFileManager()
@@ -171,7 +155,7 @@ func NewManager(instanceID, mongoDSN, redisDSN string, logLevel int) (*Manager, 
 	_Manager.License.Load()
 
 	// Set Log Level
-	_Manager.SetLogLevel(logLevel)
+	log.SetLevel(zapcore.Level(logLevel))
 
 	return _Manager, nil
 }
@@ -182,19 +166,14 @@ func (m *Manager) RefreshDbConnection() {
 
 func (m *Manager) Shutdown() {
 	_MongoSession.Close()
-	_Log.Sync()
-}
-
-func (m *Manager) SetLogLevel(level int) {
-	_LogLevel.SetLevel(zapcore.Level(level))
 }
 
 func (m *Manager) RegisterBundle(bundleID string) {
-	if _, err := _MongoDB.C(COLLECTION_SYSTEM_INTERNAL).Upsert(
+	if _, err := _MongoDB.C(global.COLLECTION_SYSTEM_INTERNAL).Upsert(
 		bson.M{"_id": "bundles"},
 		bson.M{"$addToSet": bson.M{"bundle_ids": bundleID}},
 	); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 	}
 }
 
@@ -203,8 +182,8 @@ func (m *Manager) GetBundles() []string {
 		ID        string   `bson:"_id"`
 		BundleIDs []string `bson:"bundle_ids"`
 	}{}
-	if err := _MongoDB.C(COLLECTION_SYSTEM_INTERNAL).FindId("bundles").One(&r); err != nil {
-		_Log.Warn(err.Error())
+	if err := _MongoDB.C(global.COLLECTION_SYSTEM_INTERNAL).FindId("bundles").One(&r); err != nil {
+		log.Warn(err.Error())
 		return []string{}
 	} else {
 		return r.BundleIDs
@@ -218,7 +197,6 @@ func (m *Manager) ModelCheckHealth() {
 	RunDoctor(nil)
 }
 
-// Pagination
 type Pagination struct {
 	skip   int
 	limit  int
@@ -249,8 +227,8 @@ func (p *Pagination) SetSkip(n int) *Pagination {
 	return p
 }
 func (p *Pagination) SetLimit(n int) *Pagination {
-	if n > DEFAULT_MAX_RESULT_LIMIT || n <= 0 {
-		p.limit = DEFAULT_MAX_RESULT_LIMIT
+	if n > global.DEFAULT_MAX_RESULT_LIMIT || n <= 0 {
+		p.limit = global.DEFAULT_MAX_RESULT_LIMIT
 	} else {
 		p.limit = n
 	}
@@ -279,40 +257,4 @@ func (p *Pagination) FillQuery(q bson.M, sortItem, sortDir string) (bson.M, stri
 		q[sortItem] = bson.M{"$lt": p.Before}
 	}
 	return q, sortDir
-}
-
-// Generic Map
-type M map[string]interface{}
-
-func (m M) KeysToArray() []string {
-	arr := make([]string, 0, len(m))
-	for k := range m {
-		arr = append(arr, k)
-	}
-	return arr
-}
-func (m M) ValuesToArray() []interface{} {
-	arr := make([]interface{}, 0, len(m))
-	for _, v := range m {
-		arr = append(arr, v)
-	}
-	return arr
-}
-
-// Boolean MAp
-type MB map[string]bool
-
-func (m MB) AddKeys(keys ...[]string) {
-	for _, arr := range keys {
-		for _, key := range arr {
-			m[key] = true
-		}
-	}
-}
-func (m MB) KeysToArray() []string {
-	arr := make([]string, 0, len(m))
-	for k := range m {
-		arr = append(arr, k)
-	}
-	return arr
 }

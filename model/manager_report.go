@@ -2,7 +2,8 @@ package nested
 
 import (
 	"fmt"
-	"log"
+	"git.ronaksoft.com/nested/server/pkg/log"
+	"go.uber.org/zap"
 	"strconv"
 	"time"
 
@@ -55,43 +56,43 @@ func NewReportManager() *ReportManager {
 }
 
 func (rcm *ReportManager) CountAPI(cmd string) {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:api")
 	c.Do("HINCRBY", key, cmd, 1)
 }
 func (rcm *ReportManager) CountPostAdd() {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_POST_ADD)
 	c.Do("INCR", key)
 }
 func (rcm *ReportManager) CountPostExternalAdd() {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_POST_EXTERNAL_ADD)
 	c.Do("INCR", key)
 }
 func (rcm *ReportManager) CountPostAttachSize(n int64) {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_POST_ATTACH_SIZE)
 	c.Do("INCRBY", key, n)
 }
 func (rcm *ReportManager) CountPostAttachCount(n int) {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_POST_ATTACH_COUNT)
 	c.Do("INCRBY", key, n)
 }
 func (rcm *ReportManager) CountPostPerAccount(accountID string) {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_POST_PER_ACCOUNT)
 	c.Do("HINCRBY", key, accountID, 1)
 }
 func (rcm *ReportManager) CountPostPerPlace(placeIDs []string) {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_POST_PER_PLACE)
 	for _, placeID := range placeIDs {
@@ -100,19 +101,19 @@ func (rcm *ReportManager) CountPostPerPlace(placeIDs []string) {
 	c.Flush()
 }
 func (rcm *ReportManager) CountCommentAdd() {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_COMMENT_ADD)
 	c.Do("INCR", key)
 }
 func (rcm *ReportManager) CountCommentPerAccount(accountID string) {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_COMMENT_PER_ACCOUNT)
 	c.Do("HINCRBY", key, accountID, 1)
 }
 func (rcm *ReportManager) CountCommentPerPlace(placeIDs []string) {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_COMMENT_PER_PLACE)
 	for _, placeID := range placeIDs {
@@ -121,176 +122,176 @@ func (rcm *ReportManager) CountCommentPerPlace(placeIDs []string) {
 	c.Flush()
 }
 func (rcm *ReportManager) CountTaskAdd() {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_TASK_ADD)
 	c.Do("INCR", key)
 }
 func (rcm *ReportManager) CountTaskComment() {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_TASK_COMMENT)
 	c.Do("INCR", key)
 }
 func (rcm *ReportManager) CountTaskCompleted() {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_TASK_COMPLETED)
 	c.Do("INCR", key)
 }
 func (rcm *ReportManager) CountTaskAddPerAccount(accountID string) {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_TASK_ADD_PER_ACCOUNT)
 	c.Do("HINCRBY", key, accountID, 1)
 }
 func (rcm *ReportManager) CountTaskAssignedPerAccount(accountID string) {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_TASK_ASSIGNED_PER_ACCOUNT)
 	c.Do("HINCRBY", key, accountID, 1)
 }
 func (rcm *ReportManager) CountTaskCommentPerAccount(accountID string) {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_TASK_COMMENT_PER_ACCOUNT)
 	c.Do("HINCRBY", key, accountID, 1)
 }
 func (rcm *ReportManager) CountTaskCompletedPerAccount(accountID string) {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_TASK_COMPLETED_PER_ACCOUNT)
 	c.Do("HINCRBY", key, accountID, 1)
 }
 func (rcm *ReportManager) CountSessionLogin() {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_SESSION_LOGIN)
 	c.Do("INCR", key)
 }
 func (rcm *ReportManager) CountSessionRecall() {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_SESSION_RECALL)
 	c.Do("INCR", key)
 }
 func (rcm *ReportManager) CountRequests() {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_REQUESTS)
 	c.Do("INCR", key)
 }
 func (rcm *ReportManager) CountDataIn(n int) {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_DATA_IN)
 	c.Do("INCRBY", key, n)
 }
 func (rcm *ReportManager) CountDataOut(n int) {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_DATA_OUT)
 	c.Do("INCRBY", key, n)
 }
 func (rcm *ReportManager) CountProcessTime(n int) {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_PROCESS_TIME)
 	c.Do("INCRBY", key, n)
 }
 func (rcm *ReportManager) getAPI() MS {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:api")
 	ms, _ := redis.StringMap(c.Do("HGETALL", key))
 	return ms
 }
 func (rcm *ReportManager) getPostAdd() int {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_POST_ADD)
 	n, _ := redis.Int(c.Do("GET", key))
 	return n
 }
 func (rcm *ReportManager) getPostExternalAdd() int {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_POST_EXTERNAL_ADD)
 	n, _ := redis.Int(c.Do("GET", key))
 	return n
 }
 func (rcm *ReportManager) getPostAttachSize() int {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_POST_ATTACH_SIZE)
 	n, _ := redis.Int(c.Do("GET", key))
 	return n
 }
 func (rcm *ReportManager) getPostAttachCount() int {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_POST_ATTACH_COUNT)
 	n, _ := redis.Int(c.Do("GET", key))
 	return n
 }
 func (rcm *ReportManager) getPostPerAccount() MI {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_POST_PER_ACCOUNT)
 	mi, _ := redis.IntMap(c.Do("HGETALL", key))
 	return mi
 }
 func (rcm *ReportManager) getPostPerPlace() MI {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_POST_PER_PLACE)
 	mi, _ := redis.IntMap(c.Do("HGETALL", key))
 	return mi
 }
 func (rcm *ReportManager) getCommentAdd() int {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_COMMENT_ADD)
 	n, _ := redis.Int(c.Do("GET", key))
 	return n
 }
 func (rcm *ReportManager) getCommentPerAccount() MI {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_COMMENT_PER_ACCOUNT)
 	mi, _ := redis.IntMap(c.Do("HGETALL", key))
 	return mi
 }
 func (rcm *ReportManager) getCommentPerPlace() MI {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_COMMENT_PER_PLACE)
 	mi, _ := redis.IntMap(c.Do("HGETALL", key))
 	return mi
 }
 func (rcm *ReportManager) getTaskAdd() int {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_TASK_ADD)
 	n, _ := redis.Int(c.Do("GET", key))
 	return n
 }
 func (rcm *ReportManager) getTaskComment() int {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_TASK_COMMENT)
 	n, _ := redis.Int(c.Do("GET", key))
 	return n
 }
 func (rcm *ReportManager) getTaskCompleted() int {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_TASK_COMPLETED)
 	n, _ := redis.Int(c.Do("GET", key))
 	return n
 }
 func (rcm *ReportManager) getTaskAddPerAccount() MI {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_TASK_ADD_PER_ACCOUNT)
 	mi, _ := redis.IntMap(c.Do("HGETALL", key))
@@ -298,63 +299,63 @@ func (rcm *ReportManager) getTaskAddPerAccount() MI {
 
 }
 func (rcm *ReportManager) getTaskAssignedPerAccount() MI {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_TASK_ASSIGNED_PER_ACCOUNT)
 	mi, _ := redis.IntMap(c.Do("HGETALL", key))
 	return mi
 }
 func (rcm *ReportManager) getTaskCommentPerAccount() MI {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_TASK_COMMENT_PER_ACCOUNT)
 	mi, _ := redis.IntMap(c.Do("HGETALL", key))
 	return mi
 }
 func (rcm *ReportManager) getTaskCompletedPerAccount() MI {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_TASK_COMPLETED_PER_ACCOUNT)
 	mi, _ := redis.IntMap(c.Do("HGETALL", key))
 	return mi
 }
 func (rcm *ReportManager) getSessionLogin() int {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_SESSION_LOGIN)
 	n, _ := redis.Int(c.Do("GET", key))
 	return n
 }
 func (rcm *ReportManager) getSessionRecall() int {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_SESSION_RECALL)
 	n, _ := redis.Int(c.Do("GET", key))
 	return n
 }
 func (rcm *ReportManager) getRequests() int {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_REQUESTS)
 	n, _ := redis.Int(c.Do("GET", key))
 	return n
 }
 func (rcm *ReportManager) getDataIn() int {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_DATA_IN)
 	n, _ := redis.Int(c.Do("GET", key))
 	return n
 }
 func (rcm *ReportManager) getDataOut() int {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_DATA_OUT)
 	n, _ := redis.Int(c.Do("GET", key))
 	return n
 }
 func (rcm *ReportManager) getProcessTime() int {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 	key := fmt.Sprintf("report:counter:%s", REPORT_COUNTER_PROCESS_TIME)
 	n, _ := redis.Int(c.Do("GET", key))
@@ -384,7 +385,7 @@ func (rcm *ReportManager) GetCounters() M {
 	return m
 }
 func (rcm *ReportManager) resetAllCounters() {
-	c := _Cache.getConn()
+	c := _Cache.GetConn()
 	defer c.Close()
 
 	c.Send("SET", fmt.Sprintf("report:counter:%s", REPORT_COUNTER_POST_ADD), 0)
@@ -412,18 +413,18 @@ func (rcm *ReportManager) resetAllCounters() {
 	c.Send("DEL", fmt.Sprintf("report:counter:%s", REPORT_COUNTER_TASK_ASSIGNED_PER_ACCOUNT))
 
 	if err := c.Flush(); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 	}
 
 }
 func (rcm *ReportManager) FlushToDB() {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	t := time.Now()
 	valKey := fmt.Sprintf("values.%2d", t.Minute())
-	bulk := db.C(COLLECTION_REPORTS_COUNTERS).Bulk()
+	bulk := db.C(global.COLLECTION_REPORTS_COUNTERS).Bulk()
 	bulk.Unordered()
 
 	// Count General Counters
@@ -527,20 +528,20 @@ func (rcm *ReportManager) FlushToDB() {
 }
 func (rcm *ReportManager) GetTimeSeriesSingleValue(from, to, key, resolution string) []TimeSeriesSingleValueHourly {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
-	x := make([]TimeSeriesSingleValueHourly, 0, DEFAULT_MAX_RESULT_LIMIT)
+	x := make([]TimeSeriesSingleValueHourly, 0, global.DEFAULT_MAX_RESULT_LIMIT)
 	switch resolution {
 	case REPORT_RESOLUTION_HOUR:
-		if err := db.C(COLLECTION_REPORTS_COUNTERS).Find(bson.M{
+		if err := db.C(global.COLLECTION_REPORTS_COUNTERS).Find(bson.M{
 			"date": bson.M{"$gte": from, "$lte": to},
 			"key":  key,
-		}).Limit(DEFAULT_MAX_RESULT_LIMIT).All(&x); err != nil {
-			log.Println("Model::ReportManager::GetTimeSeriesSingleValue::Error 1::", err.Error())
+		}).Limit(global.DEFAULT_MAX_RESULT_LIMIT).All(&x); err != nil {
+			log.Warn("Model::ReportManager::GetTimeSeriesSingleValue::Error 1::", zap.Error(err))
 		}
 	case REPORT_RESOLUTION_DAY:
-		if err := db.C(COLLECTION_REPORTS_COUNTERS).Pipe([]bson.M{
+		if err := db.C(global.COLLECTION_REPORTS_COUNTERS).Pipe([]bson.M{
 			{"$match": bson.M{
 				"date": bson.M{"$gte": from, "$lte": to},
 				"key":  key,
@@ -555,7 +556,7 @@ func (rcm *ReportManager) GetTimeSeriesSingleValue(from, to, key, resolution str
 				"sum":  bson.M{"$sum": "$sum"},
 			}},
 		}).All(&x); err != nil {
-			log.Println("Model::ReportManager::GetTimeSeriesSingleValue::Error 2::", err.Error())
+			log.Error("Model::ReportManager::GetTimeSeriesSingleValue::Error 2::", zap.Error(err))
 		}
 
 	}
@@ -564,12 +565,12 @@ func (rcm *ReportManager) GetTimeSeriesSingleValue(from, to, key, resolution str
 
 func (rcm *ReportManager) GetAPICounters() MI {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	m := MI{}
-	if err := db.C(COLLECTION_REPORTS_COUNTERS).FindId("apiCommands").One(&m); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_REPORTS_COUNTERS).FindId("apiCommands").One(&m); err != nil {
+		log.Warn(err.Error())
 		return nil
 	}
 	return m

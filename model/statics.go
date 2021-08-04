@@ -65,7 +65,7 @@ func Encrypt(keyText, text string) string {
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return ""
 	}
 
@@ -74,7 +74,7 @@ func Encrypt(keyText, text string) string {
 	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
 	iv := ciphertext[:aes.BlockSize]
 	if _, err := rand.Read(iv); err != nil {
-		log.Println(err.Error())
+		log.Info(err.Error())
 		return ""
 	}
 
@@ -91,14 +91,14 @@ func Decrypt(keyText, cryptoText string) string {
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return ""
 	}
 
 	// The IV needs to be unique, but not secure. Therefore it's common to
 	// include it at the beginning of the cipher-text.
 	if len(ciphertext) < aes.BlockSize {
-		_Log.Warn("ciphertext too short")
+		log.Warn("ciphertext too short")
 		return ""
 	}
 	iv := ciphertext[:aes.BlockSize]
@@ -149,7 +149,7 @@ func SystemInfo() M {
 
 func IsValidEmail(email string) bool {
 	if email != "" {
-		if b, err := regexp.MatchString(DEFAULT_REGEX_EMAIL, email); err != nil || !b {
+		if b, err := regexp.MatchString(global.DEFAULT_REGEX_EMAIL, email); err != nil || !b {
 			return false
 		}
 		return true
@@ -168,7 +168,7 @@ func UseDownloadToken(token string) (bool, UniversalID) {
 
 	if len(p) > 3 {
 		if et, err := strconv.Atoi(p[3]); err != nil {
-			_Log.Warn(err.Error())
+			log.Warn(err.Error())
 
 			return false, ""
 		} else if Timestamp() > uint64(et) {
@@ -189,7 +189,7 @@ func UseUploadToken(token string, sk bson.ObjectId) (bool, string) {
 
 	if len(p) > 2 {
 		if et, err := strconv.Atoi(p[2]); err != nil {
-			_Log.Warn(err.Error())
+			log.Warn(err.Error())
 
 			return false, ""
 		} else if Timestamp() > uint64(et) {
@@ -209,7 +209,7 @@ func UseUploadToken(token string, sk bson.ObjectId) (bool, string) {
 // 3. Expiry time
 func GenerateUploadToken(sk bson.ObjectId) (string, error) {
 	et := Timestamp() + TOKEN_LIFETIME
-	tv := fmt.Sprintf("%s/%s/%s", sk.String(), DEFAULT_MAX_UPLOAD_SIZE, strconv.Itoa(int(et)))
+	tv := fmt.Sprintf("%s/%s/%s", sk.String(), global.DEFAULT_MAX_UPLOAD_SIZE, strconv.Itoa(int(et)))
 
 	token := fmt.Sprintf("%s-%d", Encrypt(TOKEN_SEED_SALT, tv), et)
 	return token, nil

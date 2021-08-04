@@ -31,14 +31,14 @@ func NewPhoneManager() *PhoneManager {
 // This function registers the accountID for the phoneNumber
 func (pm *PhoneManager) RegisterPhoneToAccount(accountID, phoneNumber string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
-	if _, err := db.C(COLLECTION_PHONES).UpsertId(
+	if _, err := db.C(global.COLLECTION_PHONES).UpsertId(
 		phoneNumber,
 		bson.M{"$set": bson.M{"owner_id": accountID}},
 	); err != nil {
-		log.Println("Model::PhoneManager::RegisterPhoneToAccount::Error::1::", err.Error())
+		log.Info("Model::PhoneManager::RegisterPhoneToAccount::Error::1::", err.Error())
 	}
 	return
 }
@@ -48,14 +48,14 @@ func (pm *PhoneManager) RegisterPhoneToAccount(accountID, phoneNumber string) {
 // user changes his/her phone number
 func (pm *PhoneManager) UnRegisterPhoneToAccount(accountID, phoneNumber string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
-	if _, err := db.C(COLLECTION_PHONES).UpsertId(
+	if _, err := db.C(global.COLLECTION_PHONES).UpsertId(
 		phoneNumber,
 		bson.M{"$unset": bson.M{"owner_id": ""}},
 	); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 	}
 	return
 }
@@ -65,14 +65,14 @@ func (pm *PhoneManager) UnRegisterPhoneToAccount(accountID, phoneNumber string) 
 // which attached to 'phoneNumber'
 func (pm *PhoneManager) AddContactToPhone(accountID, phoneNumber string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
-	if _, err := db.C(COLLECTION_PHONES).UpsertId(
+	if _, err := db.C(global.COLLECTION_PHONES).UpsertId(
 		phoneNumber,
 		bson.M{"$addToSet": bson.M{"contacts": accountID}},
 	); err != nil {
-		log.Println("Model::PhoneManager::AddContactToPhone::Error::1::", err.Error())
+		log.Info("Model::PhoneManager::AddContactToPhone::Error::1::", err.Error())
 	}
 	return
 }
@@ -81,14 +81,14 @@ func (pm *PhoneManager) AddContactToPhone(accountID, phoneNumber string) {
 // If 'phoneNumber' is not in contacts of the 'accountID' anymore then remove it from the list
 func (pm *PhoneManager) RemoveContactFromPhone(accountID, phoneNumber string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
-	if _, err := db.C(COLLECTION_PHONES).UpsertId(
+	if _, err := db.C(global.COLLECTION_PHONES).UpsertId(
 		phoneNumber,
 		bson.M{"$pull": bson.M{"contacts": accountID}},
 	); err != nil {
-		log.Println("Model::PhoneManager::RemoveContactFromPhone::Error::1::", err.Error())
+		log.Info("Model::PhoneManager::RemoveContactFromPhone::Error::1::", err.Error())
 	}
 	return
 }
@@ -97,11 +97,11 @@ func (pm *PhoneManager) RemoveContactFromPhone(accountID, phoneNumber string) {
 // Returns an array of accountIDs who have this number in their contact list
 func (pm *PhoneManager) GetContactsByPhoneNumber(phoneNumber string) []string {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	c := new(PhoneContacts)
-	db.C(COLLECTION_PHONES).FindId(phoneNumber).One(c)
+	db.C(global.COLLECTION_PHONES).FindId(phoneNumber).One(c)
 	return c.Contacts
 }
 
@@ -109,11 +109,11 @@ func (pm *PhoneManager) GetContactsByPhoneNumber(phoneNumber string) []string {
 // Returns an array of account ids who have the number owned by 'accountID'
 func (pm *PhoneManager) GetContactsByAccountID(accountID string) []string {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	c := new(PhoneContacts)
-	if err := db.C(COLLECTION_PHONES).Find(bson.M{"owner_id": accountID}).One(c); err != nil {
+	if err := db.C(global.COLLECTION_PHONES).Find(bson.M{"owner_id": accountID}).One(c); err != nil {
 		return []string{}
 	}
 	return c.Contacts

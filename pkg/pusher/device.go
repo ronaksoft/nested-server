@@ -1,19 +1,22 @@
-package nested
+package pusher
 
 import (
+	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
-	"time"
-
+	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
+	"time"
 )
 
-const (
-	DEVICE_OS_ANDROID = "android"
-	DEVICE_OS_FIREFOX = "firefox"
-	DEVICE_OS_CHROME  = "chrome"
-	DEVICE_OS_IOS     = "ios"
-	DEVICE_OS_SAFARI  = "safari"
-)
+/*
+   Creation Time: 2021 - Aug - 04
+   Created by:  (ehsan)
+   Maintainers:
+      1.  Ehsan N. Moosa (E2)
+   Auditor: Ehsan N. Moosa (E2)
+   Copyright Ronak Software Group 2020
+*/
+
 
 type Device struct {
 	ID           string `bson:"_id"`
@@ -27,13 +30,19 @@ type Device struct {
 	TotalUpdates int    `bson:"total_updates"`
 }
 
-type DeviceManager struct{}
+type DeviceManager struct {
+	s *mgo.Session
+}
 
-func NewDeviceManager() *DeviceManager { return new(DeviceManager) }
+func NewDeviceManager(s *mgo.Session) *DeviceManager {
+	return &DeviceManager{
+		s: s,
+	}
+}
 
 func (dm *DeviceManager) GetByAccountID(accountID string) []Device {
-	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.global.DB_NAME)
+	dbSession := dm.s.Copy()
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	var devices []Device
@@ -44,8 +53,8 @@ func (dm *DeviceManager) GetByAccountID(accountID string) []Device {
 }
 
 func (dm *DeviceManager) IncrementBadge(accountID string) {
-	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.global.DB_NAME)
+	dbSession := dm.s.Copy()
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	if _, err := db.C(global.COLLECTION_ACCOUNTS_DEVICES).UpdateAll(
@@ -57,14 +66,14 @@ func (dm *DeviceManager) IncrementBadge(accountID string) {
 }
 
 func (dm *DeviceManager) Register(deviceID, deviceToken, deviceOS, accountID string) bool {
-	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.global.DB_NAME)
+	dbSession := dm.s.Copy()
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	// only supported devices
 	switch deviceOS {
-	case DEVICE_OS_ANDROID, DEVICE_OS_CHROME, DEVICE_OS_FIREFOX,
-		DEVICE_OS_IOS, DEVICE_OS_SAFARI:
+	case global.PLATFORM_ANDROID, global.PLATFORM_CHROME, global.PLATFORM_FIREFOX,
+		global.PLATFORM_IOS, global.PLATFORM_SAFARI:
 	default:
 		return false
 	}
@@ -96,8 +105,8 @@ func (dm *DeviceManager) Register(deviceID, deviceToken, deviceOS, accountID str
 }
 
 func (dm *DeviceManager) Remove(deviceID string) bool {
-	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.global.DB_NAME)
+	dbSession := dm.s.Copy()
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_ACCOUNTS_DEVICES).Remove(bson.M{"_id": deviceID}); err != nil {
@@ -108,7 +117,7 @@ func (dm *DeviceManager) Remove(deviceID string) bool {
 }
 
 func (dm *DeviceManager) SetAsConnected(deviceID, accountID string) bool {
-	dbSession := _MongoSession.Copy()
+	dbSession := dm.s.Copy()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
@@ -129,7 +138,7 @@ func (dm *DeviceManager) SetAsConnected(deviceID, accountID string) bool {
 }
 
 func (dm *DeviceManager) SetAsDisconnected(deviceID string) bool {
-	dbSession := _MongoSession.Copy()
+	dbSession := dm.s.Copy()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
@@ -144,7 +153,7 @@ func (dm *DeviceManager) SetAsDisconnected(deviceID string) bool {
 }
 
 func (dm *DeviceManager) Update(deviceID, deviceToken, deviceOS, accountID string) bool {
-	dbSession := _MongoSession.Copy()
+	dbSession := dm.s.Copy()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 

@@ -27,14 +27,14 @@ func (pm *PostActivityManager) Remove(activityID bson.ObjectId) bool {
 
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.global.DB_NAME)
 	defer dbSession.Close()
 
-	if err := db.C(COLLECTION_POSTS_ACTIVITIES).UpdateId(
+	if err := db.C(global.COLLECTION_POSTS_ACTIVITIES).UpdateId(
 		activityID,
 		bson.M{"$set": bson.M{"_removed": true}},
 	); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return false
 	}
 	return true
@@ -44,12 +44,12 @@ func (pm *PostActivityManager) GetActivityByID(activityID bson.ObjectId) *PostAc
 
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.global.DB_NAME)
 	defer dbSession.Close()
 
 	postActivity := new(PostActivity)
-	if err := db.C(COLLECTION_POSTS_ACTIVITIES).FindId(activityID).One(postActivity); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_POSTS_ACTIVITIES).FindId(activityID).One(postActivity); err != nil {
+		log.Warn(err.Error())
 		return nil
 	}
 	return postActivity
@@ -59,14 +59,14 @@ func (pm *PostActivityManager) GetActivitiesByIDs(activityIDs []bson.ObjectId) [
 
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.global.DB_NAME)
 	defer dbSession.Close()
 
 	postActivities := make([]PostActivity, 0, len(activityIDs))
-	if err := db.C(COLLECTION_POSTS_ACTIVITIES).Find(
+	if err := db.C(global.COLLECTION_POSTS_ACTIVITIES).Find(
 		bson.M{"_id": bson.M{"$in": activityIDs}},
 	).All(&postActivities); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil
 	}
 	return postActivities
@@ -76,7 +76,7 @@ func (pm *PostActivityManager) GetActivitiesByPostID(postID bson.ObjectId, pg Pa
 
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.global.DB_NAME)
 	defer dbSession.Close()
 
 	postActivities := make([]PostActivity, pg.GetLimit())
@@ -92,11 +92,11 @@ func (pm *PostActivityManager) GetActivitiesByPostID(postID bson.ObjectId, pg Pa
 		q["action"] = bson.M{"$in": filter}
 	}
 
-	Q := db.C(COLLECTION_POSTS_ACTIVITIES).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
+	Q := db.C(global.COLLECTION_POSTS_ACTIVITIES).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
 	// Log Explain Query
 
 	if err := Q.All(&postActivities); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return []PostActivity{}
 	}
 	return postActivities
@@ -107,7 +107,7 @@ func (pm *PostActivityManager) CommentAdd(postID bson.ObjectId, actorID string, 
 
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.global.DB_NAME)
 	defer dbSession.Close()
 
 	ts := Timestamp()
@@ -120,8 +120,8 @@ func (pm *PostActivityManager) CommentAdd(postID bson.ObjectId, actorID string, 
 		CommentID: commentID,
 	}
 
-	if err := db.C(COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
@@ -131,7 +131,7 @@ func (pm *PostActivityManager) CommentRemove(postID bson.ObjectId, actorID strin
 
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.global.DB_NAME)
 	defer dbSession.Close()
 
 	ts := Timestamp()
@@ -144,8 +144,8 @@ func (pm *PostActivityManager) CommentRemove(postID bson.ObjectId, actorID strin
 		CommentID: commentID,
 	}
 
-	if err := db.C(COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
@@ -155,7 +155,7 @@ func (pm *PostActivityManager) LabelAdd(postID bson.ObjectId, actorID string, la
 
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.global.DB_NAME)
 	defer dbSession.Close()
 
 	ts := Timestamp()
@@ -168,8 +168,8 @@ func (pm *PostActivityManager) LabelAdd(postID bson.ObjectId, actorID string, la
 		LabelID:   labelID,
 	}
 
-	if err := db.C(COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
@@ -179,7 +179,7 @@ func (pm *PostActivityManager) LabelRemove(postID bson.ObjectId, actorID string,
 
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.global.DB_NAME)
 	defer dbSession.Close()
 
 	ts := Timestamp()
@@ -192,8 +192,8 @@ func (pm *PostActivityManager) LabelRemove(postID bson.ObjectId, actorID string,
 		LabelID:   labelID,
 	}
 
-	if err := db.C(COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
@@ -203,7 +203,7 @@ func (pm *PostActivityManager) PlaceMove(postID bson.ObjectId, actorID string, o
 
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.global.DB_NAME)
 	defer dbSession.Close()
 
 	ts := Timestamp()
@@ -217,8 +217,8 @@ func (pm *PostActivityManager) PlaceMove(postID bson.ObjectId, actorID string, o
 		NewPlaceID: newPlaceID,
 	}
 
-	if err := db.C(COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
@@ -228,7 +228,7 @@ func (pm *PostActivityManager) PlaceAttached(postID bson.ObjectId, actorID strin
 
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.global.DB_NAME)
 	defer dbSession.Close()
 
 	ts := Timestamp()
@@ -241,8 +241,8 @@ func (pm *PostActivityManager) PlaceAttached(postID bson.ObjectId, actorID strin
 		NewPlaceID: newPlaceID,
 	}
 
-	if err := db.C(COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 }
@@ -252,7 +252,7 @@ func (pm *PostActivityManager) Edit(postID bson.ObjectId, actorID string) {
 
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.global.DB_NAME)
 	defer dbSession.Close()
 
 	ts := Timestamp()
@@ -264,8 +264,8 @@ func (pm *PostActivityManager) Edit(postID bson.ObjectId, actorID string) {
 		ActorID:   actorID,
 	}
 
-	if err := db.C(COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
+		log.Warn(err.Error())
 	}
 	return
 

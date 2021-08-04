@@ -1,12 +1,22 @@
-package nested
+package pusher
 
 import (
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/cache"
 	"git.ronaksoft.com/nested/server/pkg/log"
-	"strings"
-
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"github.com/gomodule/redigo/redis"
+	"strings"
 )
+
+/*
+   Creation Time: 2021 - Aug - 04
+   Created by:  (ehsan)
+   Maintainers:
+      1.  Ehsan N. Moosa (E2)
+   Auditor: Ehsan N. Moosa (E2)
+   Copyright Ronak Software Group 2020
+*/
 
 type Websocket struct {
 	WebsocketID string
@@ -15,9 +25,15 @@ type Websocket struct {
 	DeviceID    string
 }
 
-type WebsocketManager struct{}
+type WebsocketManager struct {
+	c *cache.Manager
+}
 
-func NewWebsocketManager() *WebsocketManager { return new(WebsocketManager) }
+func NewWebsocketManager(c *cache.Manager) *WebsocketManager {
+	return &WebsocketManager{
+		c: c,
+	}
+}
 
 // Register
 // save websockets in the cache.
@@ -35,7 +51,7 @@ func NewWebsocketManager() *WebsocketManager { return new(WebsocketManager) }
 //	SetKey is used to find accountIDs by [bundleID]
 //	DHKey is used to find accountID but [bundleID],[websocketID]
 func (wm *WebsocketManager) Register(websocketID, bundleID, deviceID, accountID string) bool {
-	c := _Cache.Pool.Get()
+	c := wm.c.Pool.Get()
 	defer c.Close()
 	if c == nil {
 		log.Warn("Cannot get redis connection")
@@ -62,10 +78,7 @@ func (wm *WebsocketManager) Register(websocketID, bundleID, deviceID, accountID 
 // Returns an array of Websocket, if bundleID != "" then it only returns websockets
 // which are in the bundleID
 func (wm *WebsocketManager) GetWebsocketsByAccountID(accountID, bundleID string) []Websocket {
-	//
-
-
-	c := _Cache.Pool.Get()
+	c := wm.c.Pool.Get()
 	defer c.Close()
 	if c == nil {
 		log.Warn("Cannot get redis connection")
@@ -94,12 +107,10 @@ func (wm *WebsocketManager) GetWebsocketsByAccountID(accountID, bundleID string)
 	return websockets
 }
 
-// GetAccountsByBundleID
 func (wm *WebsocketManager) GetAccountsByBundleID(bundleID string) []string {
 	//
 
-
-	c := _Cache.Pool.Get()
+	c := wm.c.Pool.Get()
 	defer c.Close()
 	if c == nil {
 		log.Warn("Cannot get redis connection")
@@ -114,13 +125,10 @@ func (wm *WebsocketManager) GetAccountsByBundleID(bundleID string) []string {
 	return []string{}
 }
 
-// Remove
-// Removes the websocketID in the bundleID
 func (wm *WebsocketManager) Remove(websocketID, bundleID string) *Websocket {
 	//
 
-
-	c := _Cache.Pool.Get()
+	c := wm.c.Pool.Get()
 	defer c.Close()
 	if c == nil {
 		log.Warn("Cannot get redis connection")
@@ -160,12 +168,10 @@ func (wm *WebsocketManager) Remove(websocketID, bundleID string) *Websocket {
 	return ws
 }
 
-// RemoveByBundleID
 func (wm *WebsocketManager) RemoveByBundleID(bundleID string) {
 	//
 
-
-	c := _Cache.Pool.Get()
+	c := wm.c.Pool.Get()
 	defer c.Close()
 	if c == nil {
 		log.Warn("Cannot get redis connection")
@@ -190,11 +196,9 @@ func (wm *WebsocketManager) RemoveByBundleID(bundleID string) {
 
 // IsConnected
 // Returns a map of accountIDs with TRUE value for each accountID which has at least one open socket
-func (wm *WebsocketManager) IsConnected(accountIDs []string) MB {
-	//
-
-	res := MB{}
-	c := _Cache.Pool.Get()
+func (wm *WebsocketManager) IsConnected(accountIDs []string) tools.MB {
+	res := tools.MB{}
+	c := wm.c.Pool.Get()
 	defer c.Close()
 	if c == nil {
 		log.Warn("cannot get redis connection")

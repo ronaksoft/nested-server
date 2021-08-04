@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/log"
 	"regexp"
 	"strings"
 
@@ -84,13 +85,13 @@ func (pm *PlaceManager) readFromCache(placeID string) *Place {
 	defer c.Close()
 	keyID := fmt.Sprintf("place:gob:%s", placeID)
 	if gobPlace, err := redis.Bytes(c.Do("GET", keyID)); err != nil {
-		if err := _MongoDB.C(COLLECTION_PLACES).FindId(placeID).One(place); err != nil {
-			_Log.Warn(err.Error())
+		if err := _MongoDB.C(global.COLLECTION_PLACES).FindId(placeID).One(place); err != nil {
+			log.Warn(err.Error())
 			return nil
 		}
 		gobPlace := new(bytes.Buffer)
 		if err := gob.NewEncoder(gobPlace).Encode(place); err == nil {
-			c.Do("SETEX", keyID, CACHE_LIFETIME, gobPlace.Bytes())
+			c.Do("SETEX", keyID, global.CACHE_LIFETIME, gobPlace.Bytes())
 		}
 		return place
 	} else if err := gob.NewDecoder(bytes.NewBuffer(gobPlace)).Decode(place); err == nil {
@@ -138,14 +139,14 @@ func (pm *PlaceManager) AddKeyholder(placeID, accountID string) *PlaceManager {
 	defer _Manager.Account.removeCache(accountID)
 
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	place := _Manager.Place.GetByID(placeID, nil)
 	account := _Manager.Account.GetByID(accountID, nil)
 
 	// Update PLACES collection
-	if err := db.C(COLLECTION_PLACES).Update(
+	if err := db.C(global.COLLECTION_PLACES).Update(
 		bson.M{
 			"_id":         placeID,
 			"creators":    bson.M{"$ne": accountID},
@@ -156,39 +157,39 @@ func (pm *PlaceManager) AddKeyholder(placeID, accountID string) *PlaceManager {
 			"$inc":      bson.M{"counters.key_holders": 1},
 		},
 	); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 	}
 
 	// Update ACCOUNTS collection
-	if err := db.C(COLLECTION_ACCOUNTS).Update(
+	if err := db.C(global.COLLECTION_ACCOUNTS).Update(
 		bson.M{"_id": accountID},
 		bson.M{"$addToSet": bson.M{"access_places": placeID}},
 	); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 	}
 
 	// Update POSTS.READS.COUNTERS collection
-	no_unreads, _ := db.C(COLLECTION_POSTS_READS).Find(
+	no_unreads, _ := db.C(global.COLLECTION_POSTS_READS).Find(
 		bson.M{
 			"account_id": accountID,
 			"place_id":   placeID,
 			"read":       false,
 		},
 	).Count()
-	db.C(COLLECTION_POSTS_READS_COUNTERS).Upsert(
+	db.C(global.COLLECTION_POSTS_READS_COUNTERS).Upsert(
 		bson.M{"account_id": accountID, "place_id": placeID},
 		bson.M{"$set": bson.M{"no_unreads": no_unreads}},
 	)
 	if place.IsGrandPlace() {
 		for _, unlockedPlaceID := range place.UnlockedChildrenIDs {
-			no_unreads, _ := db.C(COLLECTION_POSTS_READS).Find(
+			no_unreads, _ := db.C(global.COLLECTION_POSTS_READS).Find(
 				bson.M{
 					"account_id": accountID,
 					"place_id":   unlockedPlaceID,
 					"read":       false,
 				},
 			).Count()
-			db.C(COLLECTION_POSTS_READS_COUNTERS).Upsert(
+			db.C(global.COLLECTION_POSTS_READS_COUNTERS).Upsert(
 				bson.M{"account_id": accountID, "place_id": unlockedPlaceID},
 				bson.M{"$set": bson.M{"no_unreads": no_unreads}},
 			)
@@ -220,26 +221,26 @@ func (pm *PlaceManager) AddKeyholder(placeID, accountID string) *PlaceManager {
 //	is not reserved or not already taken.
 func (pm *PlaceManager) Available(placeID string) bool {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	dotPosition := strings.LastIndex(placeID, ".")
 	if dotPosition == -1 {
-		if matched, err := regexp.MatchString(DEFAULT_REGEX_GRANDPLACE_ID, placeID); err != nil || !matched {
+		if matched, err := regexp.MatchString(global.DEFAULT_REGEX_GRANDPLACE_ID, placeID); err != nil || !matched {
 			return false
 		}
 	} else {
 		localPlaceID := string(placeID[dotPosition+1:])
-		if matched, err := regexp.MatchString(DEFAULT_REGEX_PLACE_ID, localPlaceID); err != nil || !matched {
+		if matched, err := regexp.MatchString(global.DEFAULT_REGEX_PLACE_ID, localPlaceID); err != nil || !matched {
 			return false
 		}
 	}
 
-	if n, _ := db.C(COLLECTION_PLACES).FindId(placeID).Count(); n > 0 {
+	if n, _ := db.C(global.COLLECTION_PLACES).FindId(placeID).Count(); n > 0 {
 		return false
 	}
 
-	if n, _ := db.C(COLLECTION_SYS_RESERVED_WORDS).Find(bson.M{"word": placeID}).Count(); n > 0 {
+	if n, _ := db.C(global.COLLECTION_SYS_RESERVED_WORDS).Find(bson.M{"word": placeID}).Count(); n > 0 {
 		return false
 	}
 
@@ -249,7 +250,7 @@ func (pm *PlaceManager) Available(placeID string) bool {
 //	CountUnreadPosts counts all the unread posts for accountID in all placeIDs
 func (pm *PlaceManager) CountUnreadPosts(placeIDs []string, accountID string) int {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	c := 0
@@ -257,7 +258,7 @@ func (pm *PlaceManager) CountUnreadPosts(placeIDs []string, accountID string) in
 		Count int `json:"no_unreads" bson:"no_unreads"`
 	}{}
 
-	iter := db.C(COLLECTION_POSTS_READS_COUNTERS).Find(
+	iter := db.C(global.COLLECTION_POSTS_READS_COUNTERS).Find(
 		bson.M{"account_id": accountID, "place_id": bson.M{"$in": placeIDs}},
 	).Iter()
 	defer iter.Close()
@@ -270,7 +271,7 @@ func (pm *PlaceManager) CountUnreadPosts(placeIDs []string, accountID string) in
 //	CreatePersonalPlace creates personal grand place and sub places.  The difference between this function and
 func (pm *PlaceManager) CreatePersonalPlace(pcr PlaceCreateRequest) *Place {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	p := Place{
@@ -304,11 +305,11 @@ func (pm *PlaceManager) CreatePersonalPlace(pcr PlaceCreateRequest) *Place {
 	p.MainCreatorID = pcr.AccountID
 	p.Picture = pcr.Picture
 
-	if err := db.C(COLLECTION_PLACES).Insert(p); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_PLACES).Insert(p); err != nil {
+		log.Warn(err.Error())
 		return nil
-	} else if err = db.C(COLLECTION_PLACES).FindId(p.ID).One(&p); err != nil {
-		_Log.Warn(err.Error())
+	} else if err = db.C(global.COLLECTION_PLACES).FindId(p.ID).One(&p); err != nil {
+		log.Warn(err.Error())
 		return nil
 	}
 
@@ -335,7 +336,7 @@ func (pm *PlaceManager) CreateGrandPlace(pcr PlaceCreateRequest) *Place {
 	defer _Manager.Account.removeCache(pcr.AccountID)
 
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	place := Place{
@@ -358,11 +359,11 @@ func (pm *PlaceManager) CreateGrandPlace(pcr PlaceCreateRequest) *Place {
 	place.MainCreatorID = pcr.AccountID
 	place.Picture = pcr.Picture
 
-	if err := db.C(COLLECTION_PLACES).Insert(place); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_PLACES).Insert(place); err != nil {
+		log.Warn(err.Error())
 		return nil
-	} else if err = db.C(COLLECTION_PLACES).FindId(place.ID).One(&place); err != nil {
-		_Log.Warn(err.Error())
+	} else if err = db.C(global.COLLECTION_PLACES).FindId(place.ID).One(&place); err != nil {
+		log.Warn(err.Error())
 		return nil
 	}
 
@@ -382,7 +383,7 @@ func (pm *PlaceManager) CreateGrandPlace(pcr PlaceCreateRequest) *Place {
 //	maintainability.
 func (pm *PlaceManager) CreateLockedPlace(pcr PlaceCreateRequest) *Place {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	p := Place{
@@ -408,20 +409,20 @@ func (pm *PlaceManager) CreateLockedPlace(pcr PlaceCreateRequest) *Place {
 	p.Picture = pcr.Picture
 	p.Level = parentPlace.Level + 1
 
-	if err := db.C(COLLECTION_PLACES).Insert(p); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_PLACES).Insert(p); err != nil {
+		log.Warn(err.Error())
 		return nil
-	} else if db.C(COLLECTION_PLACES).FindId(p.ID).One(&p); err != nil {
-		_Log.Warn(err.Error())
+	} else if db.C(global.COLLECTION_PLACES).FindId(p.ID).One(&p); err != nil {
+		log.Warn(err.Error())
 		return nil
 	}
 
 	// update parent counters
-	if err := db.C(COLLECTION_PLACES).UpdateId(
+	if err := db.C(global.COLLECTION_PLACES).UpdateId(
 		p.GetParentID(),
 		bson.M{"$inc": bson.M{"counters.childs": 1}},
 	); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 	}
 
 	// Update System.Internal Counter
@@ -440,7 +441,7 @@ func (pm *PlaceManager) CreateLockedPlace(pcr PlaceCreateRequest) *Place {
 //	maintainability.
 func (pm *PlaceManager) CreateUnlockedPlace(pcr PlaceCreateRequest) *Place {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	p := Place{
@@ -474,11 +475,11 @@ func (pm *PlaceManager) CreateUnlockedPlace(pcr PlaceCreateRequest) *Place {
 	p.Picture = pcr.Picture
 	p.Level = 1
 
-	if err := db.C(COLLECTION_PLACES).Insert(p); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_PLACES).Insert(p); err != nil {
+		log.Warn(err.Error())
 		return nil
-	} else if db.C(COLLECTION_PLACES).FindId(p.ID).One(&p); err != nil {
-		_Log.Warn(err.Error())
+	} else if db.C(global.COLLECTION_PLACES).FindId(p.ID).One(&p); err != nil {
+		log.Warn(err.Error())
 		return nil
 	}
 
@@ -486,7 +487,7 @@ func (pm *PlaceManager) CreateUnlockedPlace(pcr PlaceCreateRequest) *Place {
 	_Manager.System.incrementCounter(MI{SYSTEM_COUNTERS_UNLOCKED_PLACES: 1})
 
 	// update parent counters
-	db.C(COLLECTION_PLACES).UpdateId(
+	db.C(global.COLLECTION_PLACES).UpdateId(
 		p.GrandParentID,
 		bson.M{
 			"$inc": bson.M{
@@ -508,13 +509,13 @@ func (pm *PlaceManager) CreateUnlockedPlace(pcr PlaceCreateRequest) *Place {
 //	Demote change user level from creator to key holder
 func (pm *PlaceManager) Demote(placeID, accountID string) *PlaceManager {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	defer _Manager.Place.removeCache(placeID)
 	defer _Manager.Account.removeCache(accountID)
 	// Update PLACES collection
-	if err := db.C(COLLECTION_PLACES).Update(
+	if err := db.C(global.COLLECTION_PLACES).Update(
 		bson.M{
 			"_id":         placeID,
 			"key_holders": bson.M{"$ne": accountID},
@@ -529,7 +530,7 @@ func (pm *PlaceManager) Demote(placeID, accountID string) *PlaceManager {
 			},
 		},
 	); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 	}
 	return pm
 }
@@ -537,10 +538,10 @@ func (pm *PlaceManager) Demote(placeID, accountID string) *PlaceManager {
 //	Exists returns true if place is already exists, this function is opposite of Available
 func (pm *PlaceManager) Exists(placeID string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
-	n, _ := db.C(COLLECTION_PLACES).FindId(placeID).Count()
+	n, _ := db.C(global.COLLECTION_PLACES).FindId(placeID).Count()
 
 	return n > 0
 }
@@ -580,7 +581,7 @@ func (pm *PlaceManager) GetParentID(placeID string) string {
 //	6. PLACE_COUNTER_QUOTA
 func (pm *PlaceManager) IncrementCounter(placeIDs []string, counterName string, c int) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	switch counterName {
@@ -588,11 +589,11 @@ func (pm *PlaceManager) IncrementCounter(placeIDs []string, counterName string, 
 		PLACE_COUNTER_CREATORS, PLACE_COUNTER_KEYHOLDERS,
 		PLACE_COUNTER_POSTS, PLACE_COUNTER_QUOTA:
 		keyName := fmt.Sprintf("counters.%s", counterName)
-		if err := db.C(COLLECTION_PLACES).Update(
+		if err := db.C(global.COLLECTION_PLACES).Update(
 			bson.M{"_id": bson.M{"$in": placeIDs}},
 			bson.M{"$inc": bson.M{keyName: c}},
 		); err != nil {
-			_Log.Warn(err.Error())
+			log.Warn(err.Error())
 			return false
 		}
 	}
@@ -616,11 +617,11 @@ func (pm *PlaceManager) Promote(placeID, accountID string) *PlaceManager {
 	defer _Manager.Account.removeCache(accountID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	// Update PLACES collection
-	if err := db.C(COLLECTION_PLACES).Update(
+	if err := db.C(global.COLLECTION_PLACES).Update(
 		bson.M{
 			"_id":         placeID,
 			"creators":    bson.M{"$ne": accountID},
@@ -635,7 +636,7 @@ func (pm *PlaceManager) Promote(placeID, accountID string) *PlaceManager {
 			},
 		},
 	); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil
 	}
 	_Manager.Account.UpdatePlaceConnection(accountID, []string{placeID}, 1)
@@ -647,10 +648,10 @@ func (pm *PlaceManager) PinPost(placeID string, postID bson.ObjectId) bool {
 	defer _Manager.Place.removeCache(placeID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
-	if err := db.C(COLLECTION_PLACES).Update(
+	if err := db.C(global.COLLECTION_PLACES).Update(
 		bson.M{"_id": placeID},
 		bson.M{
 			"$push": bson.M{
@@ -661,7 +662,7 @@ func (pm *PlaceManager) PinPost(placeID string, postID bson.ObjectId) bool {
 			},
 		},
 	); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return false
 	}
 	return true
@@ -672,14 +673,14 @@ func (pm *PlaceManager) UnpinPost(placeID string, postID bson.ObjectId) bool {
 	defer _Manager.Place.removeCache(placeID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
-	if err := db.C(COLLECTION_PLACES).Update(
+	if err := db.C(global.COLLECTION_PLACES).Update(
 		bson.M{"_id": placeID},
 		bson.M{"$pull": bson.M{"pinned_posts": postID}},
 	); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return false
 	}
 	return true
@@ -691,7 +692,7 @@ func (pm *PlaceManager) Remove(placeID string, accountID string) bool {
 	defer _Manager.Place.removeCache(placeID)
 
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	place := pm.GetByID(placeID, nil)
@@ -707,24 +708,24 @@ func (pm *PlaceManager) Remove(placeID string, accountID string) bool {
 		if place.Level > 1 {
 			defer _Manager.Place.removeCache(place.GetParentID())
 		}
-		if err := db.C(COLLECTION_PLACES).UpdateId(
+		if err := db.C(global.COLLECTION_PLACES).UpdateId(
 			place.GetParentID(),
 			bson.M{"$inc": bson.M{"counters.childs": -1}},
 		); err != nil {
-			_Log.Warn(err.Error())
+			log.Warn(err.Error())
 		}
 	}
 
 	// Update grand place if place is OPEN
 	if !place.Privacy.Locked {
-		if err := db.C(COLLECTION_PLACES).UpdateId(
+		if err := db.C(global.COLLECTION_PLACES).UpdateId(
 			place.GrandParentID,
 			bson.M{
 				"$pull": bson.M{"unlocked_childs": placeID},
 				"$inc":  bson.M{"counters.unlocked_childs": -1},
 			},
 		); err != nil {
-			_Log.Warn(err.Error())
+			log.Warn(err.Error())
 		}
 	}
 
@@ -732,7 +733,7 @@ func (pm *PlaceManager) Remove(placeID string, accountID string) bool {
 	pm.RemoveAllMembers(placeID)
 
 	// Remove all posts
-	iter := db.C(COLLECTION_POSTS).Find(bson.M{"places": placeID}).Select(bson.M{"_id": 1}).Iter()
+	iter := db.C(global.COLLECTION_POSTS).Find(bson.M{"places": placeID}).Select(bson.M{"_id": 1}).Iter()
 	defer iter.Close()
 	post := new(Post)
 	for iter.Next(post) {
@@ -741,8 +742,8 @@ func (pm *PlaceManager) Remove(placeID string, accountID string) bool {
 	}
 
 	// Remove the place from PLACES collection
-	if err := db.C(COLLECTION_PLACES).RemoveId(placeID); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_PLACES).RemoveId(placeID); err != nil {
+		log.Warn(err.Error())
 		return false
 	}
 
@@ -763,24 +764,24 @@ func (pm *PlaceManager) Remove(placeID string, accountID string) bool {
 
 func (pm *PlaceManager) RemoveAllMembers(placeID string) {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	place := _Manager.Place.GetByID(placeID, nil)
 	memberIDs := place.GetMemberIDs()
 	_Manager.Account.removeMultiFromCache(memberIDs)
-	if _, err := db.C(COLLECTION_ACCOUNTS).UpdateAll(
+	if _, err := db.C(global.COLLECTION_ACCOUNTS).UpdateAll(
 		bson.M{"_id": bson.M{"$in": memberIDs}},
 		bson.M{"$pull": bson.M{"access_places": placeID}},
 	); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 	}
 
-	if _, err := db.C(COLLECTION_ACCOUNTS).UpdateAll(
+	if _, err := db.C(global.COLLECTION_ACCOUNTS).UpdateAll(
 		bson.M{"bookmarked_places": placeID},
 		bson.M{"$pull": bson.M{"bookmarked_places": placeID}},
 	); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 	}
 
 }
@@ -790,12 +791,12 @@ func (pm *PlaceManager) RemoveKeyHolder(placeID, accountID, actorID string) *Pla
 	defer _Manager.Account.removeCache(accountID)
 
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	place := _Manager.Place.GetByID(placeID, nil)
 	// update PLACES collection
-	if err := db.C(COLLECTION_PLACES).Update(
+	if err := db.C(global.COLLECTION_PLACES).Update(
 		bson.M{
 			"_id":         placeID,
 			"key_holders": accountID,
@@ -806,12 +807,12 @@ func (pm *PlaceManager) RemoveKeyHolder(placeID, accountID, actorID string) *Pla
 			"$inc":  bson.M{"counters.key_holders": -1},
 		},
 	); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 	}
 
 	// Update ACCOUNTS collection
 	// remove the place from account's document
-	if err := db.C(COLLECTION_ACCOUNTS).Update(
+	if err := db.C(global.COLLECTION_ACCOUNTS).Update(
 		bson.M{"_id": accountID},
 		bson.M{"$pull": bson.M{
 			"access_places":     placeID,
@@ -819,9 +820,9 @@ func (pm *PlaceManager) RemoveKeyHolder(placeID, accountID, actorID string) *Pla
 			"recently_visited":  placeID,
 		}},
 	); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 	}
-	if _, err := db.C(COLLECTION_POSTS_READS).UpdateAll(
+	if _, err := db.C(global.COLLECTION_POSTS_READS).UpdateAll(
 		bson.M{
 			"account_id": accountID,
 			"place_id":   placeID,
@@ -829,28 +830,28 @@ func (pm *PlaceManager) RemoveKeyHolder(placeID, accountID, actorID string) *Pla
 		},
 		bson.M{"$set": bson.M{"read": true}},
 	); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 	}
 
 	// Update POSTS.READS.COUNTERS collection
-	if err := db.C(COLLECTION_POSTS_READS_COUNTERS).Remove(
+	if err := db.C(global.COLLECTION_POSTS_READS_COUNTERS).Remove(
 		bson.M{
 			"account_id": accountID,
 			"place_id":   placeID,
 		},
 	); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 	}
 
 	if place.IsGrandPlace() {
 		for _, unlockedPlaceID := range place.UnlockedChildrenIDs {
-			if err := db.C(COLLECTION_POSTS_READS_COUNTERS).Remove(
+			if err := db.C(global.COLLECTION_POSTS_READS_COUNTERS).Remove(
 				bson.M{
 					"account_id": accountID,
 					"place_id":   unlockedPlaceID,
 				},
 			); err != nil {
-				_Log.Warn(err.Error())
+				log.Warn(err.Error())
 			}
 		}
 	}
@@ -874,14 +875,14 @@ func (pm *PlaceManager) SetPicture(placeID string, pic Picture) {
 	defer _Manager.Place.removeCache(placeID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
-	if err := db.C(COLLECTION_PLACES).UpdateId(
+	if err := db.C(global.COLLECTION_PLACES).UpdateId(
 		placeID,
 		bson.M{"$set": bson.M{"picture": pic}},
 	); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 	}
 }
 
@@ -889,7 +890,7 @@ func (pm *PlaceManager) Update(placeID string, placeUpdateRequest M) bool {
 	defer _Manager.Place.removeCache(placeID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	for k := range placeUpdateRequest {
@@ -901,8 +902,8 @@ func (pm *PlaceManager) Update(placeID string, placeUpdateRequest M) bool {
 		}
 	}
 	if len(placeUpdateRequest) > 0 {
-		if err := db.C(COLLECTION_PLACES).UpdateId(placeID, bson.M{"$set": placeUpdateRequest}); err != nil {
-			_Log.Warn(err.Error())
+		if err := db.C(global.COLLECTION_PLACES).UpdateId(placeID, bson.M{"$set": placeUpdateRequest}); err != nil {
+			log.Warn(err.Error())
 			return false
 		}
 	}
@@ -913,18 +914,18 @@ func (pm *PlaceManager) UpdateLimits(placeID string, limits MI) bool {
 	defer _Manager.Place.removeCache(placeID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	m := MI{}
 	for limitKey, limitValue := range limits {
 		switch limitKey {
 		case "limits.key_holders":
-			m[limitKey] = ClampInteger(limitValue, SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS_LL, SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS_UL)
+			m[limitKey] = ClampInteger(limitValue, global.SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS_LL, global.SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS_UL)
 		case "limits.creators":
-			m[limitKey] = ClampInteger(limitValue, SYSTEM_CONSTANTS_PLACE_MAX_CREATORS_LL, SYSTEM_CONSTANTS_PLACE_MAX_CREATORS_UL)
+			m[limitKey] = ClampInteger(limitValue, global.SYSTEM_CONSTANTS_PLACE_MAX_CREATORS_LL, global.SYSTEM_CONSTANTS_PLACE_MAX_CREATORS_UL)
 		case "limits.childs":
-			m[limitKey] = ClampInteger(limitValue, SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN_LL, SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN_UL)
+			m[limitKey] = ClampInteger(limitValue, global.SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN_LL, global.SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN_UL)
 		case "limits.size":
 			m[limitKey] = limitValue
 		}
@@ -932,11 +933,11 @@ func (pm *PlaceManager) UpdateLimits(placeID string, limits MI) bool {
 	if len(m) == 0 {
 		return false
 	}
-	if _, err := db.C(COLLECTION_PLACES).UpdateAll(
+	if _, err := db.C(global.COLLECTION_PLACES).UpdateAll(
 		bson.M{"grand_parent_id": placeID},
 		bson.M{"$set": m},
 	); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return false
 	}
 	return true
@@ -944,11 +945,11 @@ func (pm *PlaceManager) UpdateLimits(placeID string, limits MI) bool {
 
 func (pm *PlaceManager) GetPlaceBlockedAddresses(placeID string) []string {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 	blockedAddresses := BlockedAddresses{}
-	if err := db.C(COLLECTION_PLACES_BLOCKED_ADDRESSES).FindId(placeID).One(&blockedAddresses); err != nil {
-		_Log.Warn(err.Error())
+	if err := db.C(global.COLLECTION_PLACES_BLOCKED_ADDRESSES).FindId(placeID).One(&blockedAddresses); err != nil {
+		log.Warn(err.Error())
 		return nil
 	}
 	return blockedAddresses.Addresses
@@ -956,15 +957,15 @@ func (pm *PlaceManager) GetPlaceBlockedAddresses(placeID string) []string {
 
 func (pm *PlaceManager) AddToBlacklist(placeID string, addresses []string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
-	_, err := db.C(COLLECTION_PLACES_BLOCKED_ADDRESSES).UpsertId(
+	_, err := db.C(global.COLLECTION_PLACES_BLOCKED_ADDRESSES).UpsertId(
 		placeID,
 		bson.M{"$addToSet": bson.M{"addresses": bson.M{"$each": addresses}}},
 	)
 	if err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return false
 	}
 	return true
@@ -972,15 +973,15 @@ func (pm *PlaceManager) AddToBlacklist(placeID string, addresses []string) bool 
 
 func (pm *PlaceManager) RemoveFromBlacklist(placeID string, addresses []string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
-	err := db.C(COLLECTION_PLACES_BLOCKED_ADDRESSES).UpdateId(
+	err := db.C(global.COLLECTION_PLACES_BLOCKED_ADDRESSES).UpdateId(
 		placeID,
 		bson.M{"$pull": bson.M{"addresses": bson.M{"$in": addresses}}},
 	)
 	if err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return false
 	}
 	return true
@@ -988,14 +989,14 @@ func (pm *PlaceManager) RemoveFromBlacklist(placeID string, addresses []string) 
 
 func (pm *PlaceManager) IsBlocked(placeID, address string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
-	n, err := db.C(COLLECTION_PLACES_BLOCKED_ADDRESSES).FindId(placeID).Select(
+	n, err := db.C(global.COLLECTION_PLACES_BLOCKED_ADDRESSES).FindId(placeID).Select(
 		bson.M{"addresses": address},
 	).Count()
 	if err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return false
 	}
 	return n > 0
@@ -1004,10 +1005,10 @@ func (pm *PlaceManager) IsBlocked(placeID, address string) bool {
 //	AddDefaultPlaces adds placeIDs to the initial place list
 func (pm *PlaceManager) AddDefaultPlaces(placeIDs []string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
-	bulk := db.C(COLLECTION_PLACES_DEFAULT).Bulk()
+	bulk := db.C(global.COLLECTION_PLACES_DEFAULT).Bulk()
 	bulk.Unordered()
 	for _, id := range placeIDs {
 		d := DefaulPlace{
@@ -1018,7 +1019,7 @@ func (pm *PlaceManager) AddDefaultPlaces(placeIDs []string) bool {
 	}
 	_, err := bulk.Run()
 	if err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return false
 	}
 	return true
@@ -1027,21 +1028,21 @@ func (pm *PlaceManager) AddDefaultPlaces(placeIDs []string) bool {
 //	GetDefaultPlacesWithPagination gets initial placeIDs
 func (pm *PlaceManager) GetDefaultPlacesWithPagination(pg Pagination) ([]string, int) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 	defaultPlaces := make([]DefaulPlace, 0, pg.GetLimit())
 	ids := make([]string, 0, pg.GetLimit())
-	err := db.C(COLLECTION_PLACES_DEFAULT).Find(nil).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&defaultPlaces)
+	err := db.C(global.COLLECTION_PLACES_DEFAULT).Find(nil).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&defaultPlaces)
 	if err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, 0
 	}
 	for _, placeID := range defaultPlaces {
 		ids = append(ids, placeID.PlaceID)
 	}
-	n, err := db.C(COLLECTION_PLACES_DEFAULT).Find(nil).Count()
+	n, err := db.C(global.COLLECTION_PLACES_DEFAULT).Find(nil).Count()
 	if err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, 0
 	}
 	return ids, n
@@ -1050,12 +1051,12 @@ func (pm *PlaceManager) GetDefaultPlacesWithPagination(pg Pagination) ([]string,
 //	GetDefaultPlaces gets default placeIDs
 func (pm *PlaceManager) GetDefaultPlaces() []string {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 	var defaultPlaces []DefaulPlace
-	err := db.C(COLLECTION_PLACES_DEFAULT).Find(nil).All(&defaultPlaces)
+	err := db.C(global.COLLECTION_PLACES_DEFAULT).Find(nil).All(&defaultPlaces)
 	if err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil
 	}
 	ids := make([]string, 0, len(defaultPlaces))
@@ -1068,11 +1069,11 @@ func (pm *PlaceManager) GetDefaultPlaces() []string {
 //	RemoveDefaultPlaces removes default placeIDs
 func (pm *PlaceManager) RemoveDefaultPlaces(placeIDs []string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(DB_NAME)
+	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
-	err := db.C(COLLECTION_PLACES_DEFAULT).Remove(bson.M{"place_id": bson.M{"$in": placeIDs}})
+	err := db.C(global.COLLECTION_PLACES_DEFAULT).Remove(bson.M{"place_id": bson.M{"$in": placeIDs}})
 	if err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return false
 	}
 	return true
