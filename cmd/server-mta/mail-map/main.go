@@ -251,7 +251,7 @@ func Get(conn net.Conn, email string) {
 		return
 	}
 
-	if place == nil || place.Privacy.Receptive != nested.PLACE_RECEPTIVE_EXTERNAL {
+	if place == nil || place.Privacy.Receptive != nested.PlaceReceptiveExternal {
 		fmt.Fprintln(conn, fmt.Sprintf("%s Unavailable", RES_UNAVAILABLE))
 		return
 	}

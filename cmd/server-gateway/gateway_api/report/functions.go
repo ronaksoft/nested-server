@@ -22,7 +22,7 @@ func (s *ReportService) ReportTimeSeriesSingleValue(requester *nested.Account, r
 	}
 	if v, ok := request.Data["res"].(string); ok {
 		switch v {
-		case nested.REPORT_RESOLUTION_HOUR, nested.REPORT_RESOLUTION_DAY, nested.REPORT_RESOLUTION_MONTH:
+		case nested.ReportResolutionHour, nested.ReportResolutionDay, nested.ReportResolutionMonth:
 			res = v
 		default:
 			response.Error(nested.ERR_INVALID, []string{"res"})

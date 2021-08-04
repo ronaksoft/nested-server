@@ -230,21 +230,21 @@ func SyncSystemCounters() {
 	enabledAccounts, _ := _MongoDB.C(global.COLLECTION_ACCOUNTS).Find(bson.M{"disabled": false}).Count()
 	disabledAccounts, _ := _MongoDB.C(global.COLLECTION_ACCOUNTS).Find(bson.M{"disabled": true}).Count()
 	personalPlaces, _ := _MongoDB.C(global.COLLECTION_PLACES).Find(bson.M{
-		"type": PLACE_TYPE_PERSONAL,
+		"type": PlaceTypePersonal,
 	}).Count()
 	grandPlaces, _ := _MongoDB.C(global.COLLECTION_PLACES).Find(bson.M{
 		"level": 0,
-		"type":  PLACE_TYPE_SHARED,
+		"type":  PlaceTypeShared,
 	}).Count()
 	lockedPlaces, _ := _MongoDB.C(global.COLLECTION_PLACES).Find(bson.M{
 		"privacy.locked": true,
 		"level":          bson.M{"$ne": 0},
-		"type":           PLACE_TYPE_SHARED,
+		"type":           PlaceTypeShared,
 	}).Count()
 	unLockedPlaces, _ := _MongoDB.C(global.COLLECTION_PLACES).Find(bson.M{
 		"privacy.locked": false,
 		"level":          bson.M{"$ne": 0},
-		"type":           PLACE_TYPE_SHARED,
+		"type":           PlaceTypeShared,
 	}).Count()
 	_Manager.System.SetCounter(
 		MI{

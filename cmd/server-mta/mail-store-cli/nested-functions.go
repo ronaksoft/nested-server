@@ -117,7 +117,7 @@ func (m *Model) ExternalPush(targets []string, data map[string]string) error {
 func (m *Model) ExternalPushPlaceActivityPostAdded(post *nested.Post) {
 	pushData := nested.MS{
 		"type":   "a",
-		"action": fmt.Sprintf("%d", nested.PLACE_ACTIVITY_ACTION_POST_ADD),
+		"action": fmt.Sprintf("%d", nested.PlaceActivityActionPostAdd),
 	}
 
 	if post.Internal {
@@ -267,9 +267,9 @@ func (m *Model) IncrementCounter(placeIDs []string, counterName string, c int) b
 	defer dbSession.Close()
 
 	switch counterName {
-	case nested.PLACE_COUNTER_CHILDREN, nested.PLACE_COUNTER_UNLOCKED_CHILDREN,
-		nested.PLACE_COUNTER_CREATORS, nested.PLACE_COUNTER_KEYHOLDERS,
-		nested.PLACE_COUNTER_POSTS, nested.PLACE_COUNTER_QUOTA:
+	case nested.PlaceCounterChildren, nested.PlaceCounterUnlockedChildren,
+		nested.PlaceCounterCreators, nested.PlaceCounterKeyHolders,
+		nested.PlaceCounterPosts, nested.PlaceCounterQuota:
 		keyName := fmt.Sprintf("counters.%s", counterName)
 		if err := db.C(nested.COLLECTION_PLACES).Update(
 			bson.M{"_id": bson.M{"$in": placeIDs}},
@@ -377,7 +377,7 @@ func (m *Model) PostAdd(actorID string, placeIDs []string, postID bson.ObjectId)
 	v := nested.PlaceActivity{
 		Timestamp:  ts,
 		LastUpdate: ts,
-		Action:     nested.PLACE_ACTIVITY_ACTION_POST_ADD,
+		Action:     nested.PlaceActivityActionPostAdd,
 		Actor:      actorID,
 		PostID:     postID,
 	}
@@ -575,10 +575,10 @@ func (m *Model) AddPost(pcr nested.PostCreateRequest) *nested.Post {
 
 	// Update counters of the grand places
 	grandParentIDs := m.GetGrandParentIDs(pcr.PlaceIDs)
-	m.IncrementCounter(grandParentIDs, nested.PLACE_COUNTER_QUOTA, int(post.Counters.Size))
+	m.IncrementCounter(grandParentIDs, nested.PlaceCounterQuota, int(post.Counters.Size))
 
 	// Update counters of the places
-	m.IncrementCounter(pcr.PlaceIDs, nested.PLACE_COUNTER_POSTS, 1)
+	m.IncrementCounter(pcr.PlaceIDs, nested.PlaceCounterPosts, 1)
 
 	// Update user contacts list
 	if post.Internal {

@@ -51,7 +51,7 @@ func (sm *SearchManager) Places(keyword, filter, sort, grandParentID string, pg 
 	switch filter {
 	case PLACE_SEARCH_FILTER_GRANDPLACE:
 		q["level"] = 0
-		q["type"] = PLACE_TYPE_SHARED
+		q["type"] = PlaceTypeShared
 	case PLACE_SEARCH_FILTER_LOCKED_PLACES:
 		q["level"] = bson.M{"$ne": 0}
 		q["privacy.locked"] = true
@@ -59,9 +59,9 @@ func (sm *SearchManager) Places(keyword, filter, sort, grandParentID string, pg 
 		q["level"] = bson.M{"$ne": 0}
 		q["privacy.locked"] = false
 	case PLACE_SEARCH_FILTER_PERSONAL:
-		q["type"] = PLACE_TYPE_PERSONAL
+		q["type"] = PlaceTypePersonal
 	case PLACE_SEARCH_FILTER_SHARED:
-		q["type"] = PLACE_TYPE_SHARED
+		q["type"] = PlaceTypeShared
 	case PLACE_SEARCH_FILTER_ALL:
 	default:
 

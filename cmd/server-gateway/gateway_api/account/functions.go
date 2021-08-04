@@ -277,24 +277,24 @@ func (s *AccountService) getAccountAllPlaces(requester *nested.Account, request 
 	if v, ok := request.Data["filter"].(string); ok {
 		filter = v
 	} else {
-		filter = nested.MEMBER_TYPE_ALL
+		filter = nested.MemberTypeAll
 	}
 	switch filter {
-	case nested.MEMBER_TYPE_CREATOR:
+	case nested.MemberTypeCreator:
 		places := _Model.Place.GetPlacesByIDs(requester.AccessPlaceIDs)
 		for _, place := range places {
 			if place.IsCreator(requester.ID) {
 				d = append(d, s.Worker().Map().Place(requester, place, place.GetAccess(requester.ID)))
 			}
 		}
-	case nested.MEMBER_TYPE_KEY_HOLDER:
+	case nested.MemberTypeKeyHolder:
 		places := _Model.Place.GetPlacesByIDs(requester.AccessPlaceIDs)
 		for _, place := range places {
 			if place.IsKeyholder(requester.ID) {
 				d = append(d, s.Worker().Map().Place(requester, place, place.GetAccess(requester.ID)))
 			}
 		}
-	case nested.MEMBER_TYPE_ALL:
+	case nested.MemberTypeAll:
 		fallthrough
 	default:
 		places := _Model.Place.GetPlacesByIDs(requester.AccessPlaceIDs)
@@ -314,7 +314,7 @@ func (s *AccountService) getAccountAllPlaces(requester *nested.Account, request 
 			}
 			d = append(d, s.Worker().Map().Place(requester, place, place.GetAccess(requester.ID)))
 		}
-		filter = nested.MEMBER_TYPE_ALL
+		filter = nested.MemberTypeAll
 	}
 	response.OkWithData(nested.M{"places": d})
 	return

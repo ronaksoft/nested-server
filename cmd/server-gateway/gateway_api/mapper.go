@@ -297,7 +297,7 @@ func (m *Mapper) Place(requester *nested.Account, place nested.Place, access nes
 		}
 	}
 
-	if !access[nested.PLACE_ACCESS_READ_POST] {
+	if !access[nested.PlaceAccessReadPost] {
 		r := nested.M{
 			"_id":         place.ID,
 			"type":        place.Type,
@@ -306,15 +306,15 @@ func (m *Mapper) Place(requester *nested.Account, place nested.Place, access nes
 			"picture":     place.Picture,
 			"access":      a,
 		}
-		if place.Privacy.Receptive == nested.PLACE_RECEPTIVE_EXTERNAL {
-			r["receptive"] = nested.PLACE_RECEPTIVE_EXTERNAL
+		if place.Privacy.Receptive == nested.PlaceReceptiveExternal {
+			r["receptive"] = nested.PlaceReceptiveExternal
 		}
 		return r
 	}
 
-	memberType := nested.MEMBER_TYPE_KEY_HOLDER
-	if access[nested.PLACE_ACCESS_CONTROL] {
-		memberType = nested.MEMBER_TYPE_CREATOR
+	memberType := nested.MemberTypeKeyHolder
+	if access[nested.PlaceAccessControl] {
+		memberType = nested.MemberTypeCreator
 	}
 	r := nested.M{
 		"_id":             place.ID,
@@ -354,7 +354,7 @@ func (m *Mapper) PlaceActivity(requester *nested.Account, placeActivity nested.P
 			r["actor"] = m.Account(*actor, false)
 		}
 		switch placeActivity.Action {
-		case nested.PLACE_ACTIVITY_ACTION_POST_ADD:
+		case nested.PlaceActivityActionPostAdd:
 			post = m.worker.Model().Post.GetPostByID(placeActivity.PostID)
 			if post != nil {
 				if !post.Internal {
@@ -371,12 +371,12 @@ func (m *Mapper) PlaceActivity(requester *nested.Account, placeActivity nested.P
 				r["post_preview"] = post.Preview
 				r["post_subject"] = post.Subject
 			}
-		case nested.PLACE_ACTIVITY_ACTION_MEMBER_REMOVE:
+		case nested.PlaceActivityActionMemberRemove:
 			member := m.worker.Model().Account.GetByID(placeActivity.MemberID, nil)
 			if member != nil {
 				r["member"] = m.Account(*member, false)
 			}
-		case nested.PLACE_ACTIVITY_ACTION_POST_MOVE_TO, nested.PLACE_ACTIVITY_ACTION_POST_MOVE_FROM:
+		case nested.PlaceActivityActionPostMoveTo, nested.PlaceActivityActionPostMoveFrom:
 			post = m.worker.Model().Post.GetPostByID(placeActivity.PostID)
 			if post != nil {
 				if !post.Internal {
@@ -550,24 +550,24 @@ func (m *Mapper) PostActivity(requester *nested.Account, postActivity nested.Pos
 			r["actor"] = m.Account(*actor, false)
 		}
 		switch postActivity.Action {
-		case nested.POST_ACTIVITY_ACTION_COMMENT_ADD,
-			nested.POST_ACTIVITY_ACTION_COMMENT_REMOVE:
+		case nested.PostActivityActionCommentAdd,
+			nested.PostActivityActionCommentRemove:
 			comment = m.worker.Model().Post.GetCommentByID(postActivity.CommentID)
 			if comment != nil {
 				r["comment"] = m.worker.Map().Comment(*comment)
 			}
-		case nested.POST_ACTIVITY_ACTION_LABEL_ADD,
-			nested.POST_ACTIVITY_ACTION_LABEL_REMOVE:
+		case nested.PostActivityActionLabelAdd,
+			nested.PostActivityActionLabelRemove:
 			label := m.worker.Model().Label.GetByID(postActivity.LabelID)
 			if label != nil {
 				r["label"] = m.Label(requester, *label, false)
 			}
-		case nested.POST_ACTIVITY_ACTION_PLACE_ATTACH:
+		case nested.PostActivityActionPlaceAttach:
 			newPlace := m.worker.Model().Place.GetByID(postActivity.NewPlaceID, nil)
 			if newPlace != nil {
 				r["new_place"] = m.worker.Map().Place(requester, *newPlace, nil)
 			}
-		case nested.POST_ACTIVITY_ACTION_PLACE_MOVE:
+		case nested.PostActivityActionPlaceMove:
 			oldPlace := m.worker.Model().Place.GetByID(postActivity.OldPlaceID, nil)
 			newPlace := m.worker.Model().Place.GetByID(postActivity.NewPlaceID, nil)
 			if oldPlace != nil {
@@ -576,7 +576,7 @@ func (m *Mapper) PostActivity(requester *nested.Account, postActivity nested.Pos
 			if newPlace != nil {
 				r["new_place"] = m.worker.Map().Place(requester, *newPlace, nil)
 			}
-		case nested.POST_ACTIVITY_ACTION_EDITED:
+		case nested.PostActivityActionEdited:
 			post := m.worker.Model().Post.GetPostByID(postActivity.PostID)
 			if post != nil {
 				r["post"] = m.worker.Map().Post(requester, *post, true)

@@ -359,11 +359,11 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 		Name:          fmt.Sprintf("%s %s", fname, lname),
 		Description:   fmt.Sprintf("Personal place for %s", uid),
 	}
-	pcr.Policy.AddMember = nested.PLACE_POLICY_NOONE
-	pcr.Policy.AddPlace = nested.PLACE_POLICY_CREATORS
-	pcr.Policy.AddPost = nested.PLACE_POLICY_EVERYONE
+	pcr.Policy.AddMember = nested.PlacePolicyNoOne
+	pcr.Policy.AddPlace = nested.PlacePolicyCreators
+	pcr.Policy.AddPost = nested.PlacePolicyEveryone
 	pcr.Privacy.Locked = true
-	pcr.Privacy.Receptive = nested.PLACE_RECEPTIVE_EXTERNAL
+	pcr.Privacy.Receptive = nested.PlaceReceptiveExternal
 	pcr.Privacy.Search = true
 	s.Worker().Model().Place.CreatePersonalPlace(pcr)
 

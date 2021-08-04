@@ -468,7 +468,7 @@ func (c *Client) ExternalPushNotification(n *nested.Notification) {
 func (c *Client) ExternalPushPlaceActivityPostAdded(post *nested.Post) {
 	pushData := nested.MS{
 		"type":   "a",
-		"action": fmt.Sprintf("%d", nested.PLACE_ACTIVITY_ACTION_POST_ADD),
+		"action": fmt.Sprintf("%d", nested.PlaceActivityActionPostAdd),
 	}
 
 	if post.Internal {
@@ -520,7 +520,7 @@ func (c *Client) ExternalPushPlaceActivityPostAdded(post *nested.Post) {
 func (c *Client) ExternalPushPlaceActivityPostAttached(post *nested.Post, placeIDs []string) {
 	pushData := nested.MS{
 		"type":   "a",
-		"action": strconv.Itoa(nested.PLACE_ACTIVITY_ACTION_POST_ADD),
+		"action": strconv.Itoa(nested.PlaceActivityActionPostAdd),
 	}
 
 	if post.Internal {

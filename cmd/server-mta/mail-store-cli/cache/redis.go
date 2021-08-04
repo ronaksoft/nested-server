@@ -39,28 +39,28 @@ func (cm *CacheManager) getConn() redis.Conn {
 func (cm *CacheManager) CountPostAdd() {
 	c := cm.getConn()
 	defer c.Close()
-	key := fmt.Sprintf("report:counter:%s", nested.REPORT_COUNTER_POST_ADD)
+	key := fmt.Sprintf("report:counter:%s", nested.ReportCounterPostAdd)
 	c.Do("INCR", key)
 }
 
 func (cm *CacheManager) CountPostAttachCount(n int) {
 	c := cm.getConn()
 	defer c.Close()
-	key := fmt.Sprintf("report:counter:%s", nested.REPORT_COUNTER_POST_ATTACH_COUNT)
+	key := fmt.Sprintf("report:counter:%s", nested.ReportCounterPostAttachCount)
 	c.Do("INCRBY", key, n)
 }
 
 func (cm *CacheManager) CountPostAttachSize(n int64) {
 	c := cm.getConn()
 	defer c.Close()
-	key := fmt.Sprintf("report:counter:%s", nested.REPORT_COUNTER_POST_ATTACH_SIZE)
+	key := fmt.Sprintf("report:counter:%s", nested.ReportCounterPostAttachSize)
 	c.Do("INCRBY", key, n)
 }
 
 func (cm *CacheManager) CountPostPerPlace(placeIDs []string) {
 	c := cm.getConn()
 	defer c.Close()
-	key := fmt.Sprintf("report:counter:%s", nested.REPORT_COUNTER_POST_PER_PLACE)
+	key := fmt.Sprintf("report:counter:%s", nested.ReportCounterPostPerPlace)
 	for _, placeID := range placeIDs {
 		c.Send("HINCRBY", key, placeID, 1)
 	}
@@ -70,14 +70,14 @@ func (cm *CacheManager) CountPostPerPlace(placeIDs []string) {
 func (cm *CacheManager) CountPostExternalAdd() {
 	c := cm.getConn()
 	defer c.Close()
-	key := fmt.Sprintf("report:counter:%s", nested.REPORT_COUNTER_POST_EXTERNAL_ADD)
+	key := fmt.Sprintf("report:counter:%s", nested.ReportCounterPostExternalAdd)
 	c.Do("INCR", key)
 }
 
 func (cm *CacheManager) CountPostPerAccount(accountID string) {
 	c := cm.getConn()
 	defer c.Close()
-	key := fmt.Sprintf("report:counter:%s", nested.REPORT_COUNTER_POST_PER_ACCOUNT)
+	key := fmt.Sprintf("report:counter:%s", nested.ReportCounterPostPerAccount)
 	c.Do("HINCRBY", key, accountID, 1)
 }
 

@@ -410,12 +410,12 @@ func (s *AdminService) createGrandPlace(requester *nested.Account, request *nest
 	if v, ok := request.Data["privacy.receptive"].(string); ok {
 		pcr.Privacy.Receptive = nested.PrivacyReceptive(v)
 		switch pcr.Privacy.Receptive {
-		case nested.PLACE_RECEPTIVE_EXTERNAL, nested.PLACE_RECEPTIVE_OFF:
+		case nested.PlaceReceptiveExternal, nested.PlaceReceptiveOff:
 		default:
-			pcr.Privacy.Receptive = nested.PLACE_RECEPTIVE_OFF
+			pcr.Privacy.Receptive = nested.PlaceReceptiveOff
 		}
 	} else {
-		pcr.Privacy.Receptive = nested.PLACE_RECEPTIVE_OFF
+		pcr.Privacy.Receptive = nested.PlaceReceptiveOff
 	}
 	if v, ok := request.Data["privacy.search"].(bool); ok {
 		pcr.Privacy.Search = v
@@ -428,32 +428,32 @@ func (s *AdminService) createGrandPlace(requester *nested.Account, request *nest
 	if v, ok := request.Data["policy.add_member"].(string); ok {
 		pcr.Policy.AddMember = nested.PolicyGroup(v)
 		switch pcr.Policy.AddMember {
-		case nested.PLACE_POLICY_CREATORS, nested.PLACE_POLICY_EVERYONE:
+		case nested.PlacePolicyCreators, nested.PlacePolicyEveryone:
 		default:
-			pcr.Policy.AddMember = nested.PLACE_POLICY_CREATORS
+			pcr.Policy.AddMember = nested.PlacePolicyCreators
 		}
 	} else {
-		pcr.Policy.AddMember = nested.PLACE_POLICY_CREATORS
+		pcr.Policy.AddMember = nested.PlacePolicyCreators
 	}
 	if v, ok := request.Data["policy.add_post"].(string); ok {
 		pcr.Policy.AddPost = nested.PolicyGroup(v)
 		switch pcr.Policy.AddPost {
-		case nested.PLACE_POLICY_CREATORS, nested.PLACE_POLICY_EVERYONE:
+		case nested.PlacePolicyCreators, nested.PlacePolicyEveryone:
 		default:
-			pcr.Policy.AddPost = nested.PLACE_POLICY_CREATORS
+			pcr.Policy.AddPost = nested.PlacePolicyCreators
 		}
 	} else {
-		pcr.Policy.AddPost = nested.PLACE_POLICY_CREATORS
+		pcr.Policy.AddPost = nested.PlacePolicyCreators
 	}
 	if v, ok := request.Data["policy.add_place"].(string); ok {
 		pcr.Policy.AddPlace = nested.PolicyGroup(v)
 		switch pcr.Policy.AddPlace {
-		case nested.PLACE_POLICY_CREATORS, nested.PLACE_POLICY_EVERYONE:
+		case nested.PlacePolicyCreators, nested.PlacePolicyEveryone:
 		default:
-			pcr.Policy.AddPlace = nested.PLACE_POLICY_CREATORS
+			pcr.Policy.AddPlace = nested.PlacePolicyCreators
 		}
 	} else {
-		pcr.Policy.AddPlace = nested.PLACE_POLICY_CREATORS
+		pcr.Policy.AddPlace = nested.PlacePolicyCreators
 	}
 
 	pcr.GrandParentID = pcr.ID
@@ -534,12 +534,12 @@ func (s *AdminService) createPlace(requester *nested.Account, request *nestedGat
 	if v, ok := request.Data["privacy.receptive"].(string); ok {
 		pcr.Privacy.Receptive = nested.PrivacyReceptive(v)
 		switch pcr.Privacy.Receptive {
-		case nested.PLACE_RECEPTIVE_EXTERNAL, nested.PLACE_RECEPTIVE_INTERNAL, nested.PLACE_RECEPTIVE_OFF:
+		case nested.PlaceReceptiveExternal, nested.PlaceReceptiveInternal, nested.PlaceReceptiveOff:
 		default:
-			pcr.Privacy.Receptive = nested.PLACE_RECEPTIVE_OFF
+			pcr.Privacy.Receptive = nested.PlaceReceptiveOff
 		}
 	} else {
-		pcr.Privacy.Receptive = nested.PLACE_RECEPTIVE_OFF
+		pcr.Privacy.Receptive = nested.PlaceReceptiveOff
 	}
 	if v, ok := request.Data["privacy.search"].(bool); ok {
 		pcr.Privacy.Search = v
@@ -552,32 +552,32 @@ func (s *AdminService) createPlace(requester *nested.Account, request *nestedGat
 	if v, ok := request.Data["policy.add_member"].(string); ok {
 		pcr.Policy.AddMember = nested.PolicyGroup(v)
 		switch pcr.Policy.AddMember {
-		case nested.PLACE_POLICY_CREATORS, nested.PLACE_POLICY_EVERYONE:
+		case nested.PlacePolicyCreators, nested.PlacePolicyEveryone:
 		default:
-			pcr.Policy.AddMember = nested.PLACE_POLICY_CREATORS
+			pcr.Policy.AddMember = nested.PlacePolicyCreators
 		}
 	} else {
-		pcr.Policy.AddMember = nested.PLACE_POLICY_CREATORS
+		pcr.Policy.AddMember = nested.PlacePolicyCreators
 	}
 	if v, ok := request.Data["policy.add_post"].(string); ok {
 		pcr.Policy.AddPost = nested.PolicyGroup(v)
 		switch pcr.Policy.AddPost {
-		case nested.PLACE_POLICY_CREATORS, nested.PLACE_POLICY_EVERYONE:
+		case nested.PlacePolicyCreators, nested.PlacePolicyEveryone:
 		default:
-			pcr.Policy.AddPost = nested.PLACE_POLICY_CREATORS
+			pcr.Policy.AddPost = nested.PlacePolicyCreators
 		}
 	} else {
-		pcr.Policy.AddPost = nested.PLACE_POLICY_CREATORS
+		pcr.Policy.AddPost = nested.PlacePolicyCreators
 	}
 	if v, ok := request.Data["policy.add_place"].(string); ok {
 		pcr.Policy.AddPlace = nested.PolicyGroup(v)
 		switch pcr.Policy.AddPlace {
-		case nested.PLACE_POLICY_CREATORS, nested.PLACE_POLICY_EVERYONE:
+		case nested.PlacePolicyCreators, nested.PlacePolicyEveryone:
 		default:
-			pcr.Policy.AddPlace = nested.PLACE_POLICY_CREATORS
+			pcr.Policy.AddPlace = nested.PlacePolicyCreators
 		}
 	} else {
-		pcr.Policy.AddPlace = nested.PLACE_POLICY_CREATORS
+		pcr.Policy.AddPlace = nested.PlacePolicyCreators
 	}
 
 	// check parent's limitations and access permissions
@@ -663,7 +663,7 @@ func (s *AdminService) updatePlace(requester *nested.Account, request *nestedGat
 	if v, ok := request.Data["policy.add_member"].(string); ok {
 		if !place.IsPersonal() {
 			switch nested.PolicyGroup(v) {
-			case nested.PLACE_POLICY_CREATORS, nested.PLACE_POLICY_EVERYONE:
+			case nested.PlacePolicyCreators, nested.PlacePolicyEveryone:
 				placeUpdate["policy.add_member"] = v
 			}
 		}
@@ -681,9 +681,9 @@ func (s *AdminService) updatePlace(requester *nested.Account, request *nestedGat
 		if v, ok := request.Data["privacy.receptive"].(string); ok {
 			if place.IsGrandPlace() {
 				switch nested.PrivacyReceptive(v) {
-				case nested.PLACE_RECEPTIVE_EXTERNAL:
+				case nested.PlaceReceptiveExternal:
 					placeUpdate["privacy.receptive"] = v
-				case nested.PLACE_RECEPTIVE_INTERNAL, nested.PLACE_RECEPTIVE_OFF:
+				case nested.PlaceReceptiveInternal, nested.PlaceReceptiveOff:
 					placeUpdate["privacy.receptive"] = v
 					s.Worker().Model().Search.RemovePlaceFromSearchIndex(place.ID)
 				default:
@@ -692,9 +692,9 @@ func (s *AdminService) updatePlace(requester *nested.Account, request *nestedGat
 				}
 			} else {
 				switch nested.PrivacyReceptive(v) {
-				case nested.PLACE_RECEPTIVE_EXTERNAL, nested.PLACE_RECEPTIVE_INTERNAL:
+				case nested.PlaceReceptiveExternal, nested.PlaceReceptiveInternal:
 					placeUpdate["privacy.receptive"] = v
-				case nested.PLACE_RECEPTIVE_OFF:
+				case nested.PlaceReceptiveOff:
 					placeUpdate["privacy.receptive"] = v
 					placeUpdate["privacy.search"] = false
 					s.Worker().Model().Search.RemovePlaceFromSearchIndex(place.ID)
@@ -707,7 +707,7 @@ func (s *AdminService) updatePlace(requester *nested.Account, request *nestedGat
 		}
 		if v, ok := request.Data["policy.add_post"].(string); ok {
 			switch nested.PolicyGroup(v) {
-			case nested.PLACE_POLICY_CREATORS, nested.PLACE_POLICY_EVERYONE:
+			case nested.PlacePolicyCreators, nested.PlacePolicyEveryone:
 				placeUpdate["policy.add_post"] = v
 
 			}
@@ -715,7 +715,7 @@ func (s *AdminService) updatePlace(requester *nested.Account, request *nestedGat
 		if v, ok := request.Data["policy.add_place"].(string); ok {
 			if !place.IsPersonal() {
 				switch nested.PolicyGroup(v) {
-				case nested.PLACE_POLICY_CREATORS, nested.PLACE_POLICY_EVERYONE:
+				case nested.PlacePolicyCreators, nested.PlacePolicyEveryone:
 					placeUpdate["policy.add_place"] = v
 
 				}
@@ -1186,11 +1186,11 @@ func (s *AdminService) createAccount(requester *nested.Account, request *nestedG
 		Name:          fmt.Sprintf("%s %s", fname, lname),
 		Description:   fmt.Sprintf("Personal place for %s", uid),
 	}
-	pcr.Policy.AddMember = nested.PLACE_POLICY_NOONE
-	pcr.Policy.AddPlace = nested.PLACE_POLICY_CREATORS
-	pcr.Policy.AddPost = nested.PLACE_POLICY_EVERYONE
+	pcr.Policy.AddMember = nested.PlacePolicyNoOne
+	pcr.Policy.AddPlace = nested.PlacePolicyCreators
+	pcr.Policy.AddPost = nested.PlacePolicyEveryone
 	pcr.Privacy.Locked = true
-	pcr.Privacy.Receptive = nested.PLACE_RECEPTIVE_EXTERNAL
+	pcr.Privacy.Receptive = nested.PlaceReceptiveExternal
 	pcr.Privacy.Search = true
 	s.Worker().Model().Place.CreatePersonalPlace(pcr)
 

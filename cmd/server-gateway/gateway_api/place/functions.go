@@ -37,7 +37,7 @@ func (s *PlaceService) addPlaceMember(requester *nested.Account, request *nested
 	}
 	// check users right access
 	access := place.GetAccess(requester.ID)
-	if !access[nested.PLACE_ACCESS_ADD_MEMBERS] {
+	if !access[nested.PlaceAccessAddMembers] {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -169,12 +169,12 @@ func (s *PlaceService) createGrandPlace(requester *nested.Account, request *nest
 	if v, ok := request.Data["privacy.receptive"].(string); ok {
 		pcr.Privacy.Receptive = nested.PrivacyReceptive(v)
 		switch pcr.Privacy.Receptive {
-		case nested.PLACE_RECEPTIVE_EXTERNAL, nested.PLACE_RECEPTIVE_OFF:
+		case nested.PlaceReceptiveExternal, nested.PlaceReceptiveOff:
 		default:
-			pcr.Privacy.Receptive = nested.PLACE_RECEPTIVE_OFF
+			pcr.Privacy.Receptive = nested.PlaceReceptiveOff
 		}
 	} else {
-		pcr.Privacy.Receptive = nested.PLACE_RECEPTIVE_OFF
+		pcr.Privacy.Receptive = nested.PlaceReceptiveOff
 	}
 	if v, ok := request.Data["privacy.search"].(bool); ok {
 		pcr.Privacy.Search = v
@@ -187,32 +187,32 @@ func (s *PlaceService) createGrandPlace(requester *nested.Account, request *nest
 	if v, ok := request.Data["policy.add_member"].(string); ok {
 		pcr.Policy.AddMember = nested.PolicyGroup(v)
 		switch pcr.Policy.AddMember {
-		case nested.PLACE_POLICY_CREATORS, nested.PLACE_POLICY_EVERYONE:
+		case nested.PlacePolicyCreators, nested.PlacePolicyEveryone:
 		default:
-			pcr.Policy.AddMember = nested.PLACE_POLICY_CREATORS
+			pcr.Policy.AddMember = nested.PlacePolicyCreators
 		}
 	} else {
-		pcr.Policy.AddMember = nested.PLACE_POLICY_CREATORS
+		pcr.Policy.AddMember = nested.PlacePolicyCreators
 	}
 	if v, ok := request.Data["policy.add_post"].(string); ok {
 		pcr.Policy.AddPost = nested.PolicyGroup(v)
 		switch pcr.Policy.AddPost {
-		case nested.PLACE_POLICY_CREATORS, nested.PLACE_POLICY_EVERYONE:
+		case nested.PlacePolicyCreators, nested.PlacePolicyEveryone:
 		default:
-			pcr.Policy.AddPost = nested.PLACE_POLICY_CREATORS
+			pcr.Policy.AddPost = nested.PlacePolicyCreators
 		}
 	} else {
-		pcr.Policy.AddPost = nested.PLACE_POLICY_CREATORS
+		pcr.Policy.AddPost = nested.PlacePolicyCreators
 	}
 	if v, ok := request.Data["policy.add_place"].(string); ok {
 		pcr.Policy.AddPlace = nested.PolicyGroup(v)
 		switch pcr.Policy.AddPlace {
-		case nested.PLACE_POLICY_CREATORS, nested.PLACE_POLICY_EVERYONE:
+		case nested.PlacePolicyCreators, nested.PlacePolicyEveryone:
 		default:
-			pcr.Policy.AddPlace = nested.PLACE_POLICY_CREATORS
+			pcr.Policy.AddPlace = nested.PlacePolicyCreators
 		}
 	} else {
-		pcr.Policy.AddPlace = nested.PLACE_POLICY_CREATORS
+		pcr.Policy.AddPlace = nested.PlacePolicyCreators
 	}
 
 	pcr.GrandParentID = pcr.ID
@@ -241,7 +241,7 @@ func (s *PlaceService) createGrandPlace(requester *nested.Account, request *nest
 		"grand_parent_id": place.GrandParentID,
 		"privacy":         place.Privacy,
 		"policy":          place.Policy,
-		"member_type":     nested.MEMBER_TYPE_CREATOR,
+		"member_type":     nested.MemberTypeCreator,
 		"limits":          place.Limit,
 		"counters":        place.Counter,
 		"unread_posts":    s.Worker().Model().Place.CountUnreadPosts([]string{place.ID}, requester.ID),
@@ -304,12 +304,12 @@ func (s *PlaceService) createLockedPlace(requester *nested.Account, request *nes
 	if v, ok := request.Data["privacy.receptive"].(string); ok {
 		pcr.Privacy.Receptive = nested.PrivacyReceptive(v)
 		switch pcr.Privacy.Receptive {
-		case nested.PLACE_RECEPTIVE_EXTERNAL, nested.PLACE_RECEPTIVE_INTERNAL, nested.PLACE_RECEPTIVE_OFF:
+		case nested.PlaceReceptiveExternal, nested.PlaceReceptiveInternal, nested.PlaceReceptiveOff:
 		default:
-			pcr.Privacy.Receptive = nested.PLACE_RECEPTIVE_OFF
+			pcr.Privacy.Receptive = nested.PlaceReceptiveOff
 		}
 	} else {
-		pcr.Privacy.Receptive = nested.PLACE_RECEPTIVE_OFF
+		pcr.Privacy.Receptive = nested.PlaceReceptiveOff
 	}
 	if v, ok := request.Data["privacy.search"].(bool); ok {
 		pcr.Privacy.Search = v
@@ -322,32 +322,32 @@ func (s *PlaceService) createLockedPlace(requester *nested.Account, request *nes
 	if v, ok := request.Data["policy.add_member"].(string); ok {
 		pcr.Policy.AddMember = nested.PolicyGroup(v)
 		switch pcr.Policy.AddMember {
-		case nested.PLACE_POLICY_CREATORS, nested.PLACE_POLICY_EVERYONE:
+		case nested.PlacePolicyCreators, nested.PlacePolicyEveryone:
 		default:
-			pcr.Policy.AddMember = nested.PLACE_POLICY_CREATORS
+			pcr.Policy.AddMember = nested.PlacePolicyCreators
 		}
 	} else {
-		pcr.Policy.AddMember = nested.PLACE_POLICY_CREATORS
+		pcr.Policy.AddMember = nested.PlacePolicyCreators
 	}
 	if v, ok := request.Data["policy.add_post"].(string); ok {
 		pcr.Policy.AddPost = nested.PolicyGroup(v)
 		switch pcr.Policy.AddPost {
-		case nested.PLACE_POLICY_CREATORS, nested.PLACE_POLICY_EVERYONE:
+		case nested.PlacePolicyCreators, nested.PlacePolicyEveryone:
 		default:
-			pcr.Policy.AddPost = nested.PLACE_POLICY_CREATORS
+			pcr.Policy.AddPost = nested.PlacePolicyCreators
 		}
 	} else {
-		pcr.Policy.AddPost = nested.PLACE_POLICY_CREATORS
+		pcr.Policy.AddPost = nested.PlacePolicyCreators
 	}
 	if v, ok := request.Data["policy.add_place"].(string); ok {
 		pcr.Policy.AddPlace = nested.PolicyGroup(v)
 		switch pcr.Policy.AddPlace {
-		case nested.PLACE_POLICY_CREATORS, nested.PLACE_POLICY_EVERYONE:
+		case nested.PlacePolicyCreators, nested.PlacePolicyEveryone:
 		default:
-			pcr.Policy.AddPlace = nested.PLACE_POLICY_CREATORS
+			pcr.Policy.AddPlace = nested.PlacePolicyCreators
 		}
 	} else {
-		pcr.Policy.AddPlace = nested.PLACE_POLICY_CREATORS
+		pcr.Policy.AddPlace = nested.PlacePolicyCreators
 	}
 
 	// check parent's limitations and access permissions
@@ -367,7 +367,7 @@ func (s *PlaceService) createLockedPlace(requester *nested.Account, request *nes
 
 	// check if user has the right to create place
 	access := parent.GetAccess(requester.ID)
-	if !access[nested.PLACE_ACCESS_ADD_PLACE] {
+	if !access[nested.PlaceAccessAddPlace] {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -407,7 +407,7 @@ func (s *PlaceService) createLockedPlace(requester *nested.Account, request *nes
 		"grand_parent_id": place.GrandParentID,
 		"privacy":         place.Privacy,
 		"policy":          place.Policy,
-		"member_type":     nested.MEMBER_TYPE_CREATOR,
+		"member_type":     nested.MemberTypeCreator,
 		"limits":          place.Limit,
 		"counters":        place.Counter,
 		"unread_posts":    s.Worker().Model().Place.CountUnreadPosts([]string{place.ID}, requester.ID),
@@ -477,7 +477,7 @@ func (s *PlaceService) createUnlockedPlace(requester *nested.Account, request *n
 
 	// check if user has the right to create place
 	access := parent.GetAccess(requester.ID)
-	if !access[nested.PLACE_ACCESS_ADD_PLACE] {
+	if !access[nested.PlaceAccessAddPlace] {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -514,7 +514,7 @@ func (s *PlaceService) createUnlockedPlace(requester *nested.Account, request *n
 		"grand_parent_id": place.GrandParentID,
 		"privacy":         place.Privacy,
 		"policy":          place.Policy,
-		"member_type":     nested.MEMBER_TYPE_CREATOR,
+		"member_type":     nested.MemberTypeCreator,
 		"limits":          place.Limit,
 		"counters":        place.Counter,
 		"unread_posts":    s.Worker().Model().Place.CountUnreadPosts([]string{place.ID}, requester.ID),
@@ -686,7 +686,7 @@ func (s *PlaceService) getPlaceFiles(requester *nested.Account, request *nestedG
 		filename = v
 	}
 	access := place.GetAccess(requester.ID)
-	if !access[nested.PLACE_ACCESS_READ_POST] {
+	if !access[nested.PlaceAccessReadPost] {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -757,7 +757,7 @@ func (s *PlaceService) getPlaceCreators(requester *nested.Account, request *nest
 		return
 	}
 	access := place.GetAccess(requester.ID)
-	if !access[nested.PLACE_ACCESS_SEE_MEMBERS] {
+	if !access[nested.PlaceAccessSeeMembers] {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -790,7 +790,7 @@ func (s *PlaceService) getPlaceKeyholders(requester *nested.Account, request *ne
 		return
 	}
 	access := place.GetAccess(requester.ID)
-	if !access[nested.PLACE_ACCESS_SEE_MEMBERS] {
+	if !access[nested.PlaceAccessSeeMembers] {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -822,7 +822,7 @@ func (s *PlaceService) getPlaceMembers(requester *nested.Account, request *neste
 		return
 	}
 	access := place.GetAccess(requester.ID)
-	if !access[nested.PLACE_ACCESS_SEE_MEMBERS] {
+	if !access[nested.PlaceAccessSeeMembers] {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -992,7 +992,7 @@ func (s *PlaceService) invitePlaceMember(requester *nested.Account, request *nes
 
 	// check if user has the right permission
 	access := place.GetAccess(requester.ID)
-	if !access[nested.PLACE_ACCESS_ADD_MEMBERS] {
+	if !access[nested.PlaceAccessAddMembers] {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -1163,7 +1163,7 @@ func (s *PlaceService) remove(requester *nested.Account, request *nestedGateway.
 
 	// check if user has the right permission
 	access := place.GetAccess(requester.ID)
-	if !access[nested.PLACE_ACCESS_REMOVE_PLACE] {
+	if !access[nested.PlaceAccessRemovePlace] {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -1193,7 +1193,7 @@ func (s *PlaceService) removePlaceFromFavorites(requester *nested.Account, reque
 		return
 	}
 	access := place.GetAccess(requester.ID)
-	if access[nested.PLACE_ACCESS_READ_POST] {
+	if access[nested.PlaceAccessReadPost] {
 		s.Worker().Model().Account.RemovePlaceFromBookmarks(requester.ID, place.ID)
 		response.Ok()
 	} else {
@@ -1219,7 +1219,7 @@ func (s *PlaceService) removeMember(requester *nested.Account, request *nestedGa
 		return
 	}
 	access := place.GetAccess(requester.ID)
-	if !access[nested.PLACE_ACCESS_REMOVE_MEMBERS] {
+	if !access[nested.PlaceAccessRemoveMembers] {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -1262,7 +1262,7 @@ func (s *PlaceService) removePicture(requester *nested.Account, request *nestedG
 		return
 	}
 	access := place.GetAccess(requester.ID)
-	if access[nested.PLACE_ACCESS_CONTROL] {
+	if access[nested.PlaceAccessControl] {
 		s.Worker().Model().Place.SetPicture(place.ID, nested.Picture{})
 		response.Ok()
 	} else {
@@ -1279,7 +1279,7 @@ func (s *PlaceService) setPlaceAsFavorite(requester *nested.Account, request *ne
 		return
 	}
 	access := place.GetAccess(requester.ID)
-	if access[nested.PLACE_ACCESS_READ_POST] {
+	if access[nested.PlaceAccessReadPost] {
 		s.Worker().Model().Account.AddPlaceToBookmarks(requester.ID, place.ID)
 		response.Ok()
 	} else {
@@ -1302,7 +1302,7 @@ func (s *PlaceService) setPlaceNotification(requester *nested.Account, request *
 	}
 	// user must have READ access in the place
 	access := place.GetAccess(requester.ID)
-	if !access[nested.PLACE_ACCESS_READ_POST] {
+	if !access[nested.PlaceAccessReadPost] {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -1334,7 +1334,7 @@ func (s *PlaceService) setPicture(requester *nested.Account, request *nestedGate
 		pic = fileInfo.Thumbnails
 	}
 	access := place.GetAccess(requester.ID)
-	if !access[nested.PLACE_ACCESS_CONTROL] {
+	if !access[nested.PlaceAccessControl] {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -1373,7 +1373,7 @@ func (s *PlaceService) update(requester *nested.Account, request *nestedGateway.
 	if v, ok := request.Data["policy.add_member"].(string); ok {
 		if !place.IsPersonal() {
 			switch nested.PolicyGroup(v) {
-			case nested.PLACE_POLICY_CREATORS, nested.PLACE_POLICY_EVERYONE:
+			case nested.PlacePolicyCreators, nested.PlacePolicyEveryone:
 				placeUpdateRequest["policy.add_member"] = v
 			}
 		}
@@ -1391,9 +1391,9 @@ func (s *PlaceService) update(requester *nested.Account, request *nestedGateway.
 		if v, ok := request.Data["privacy.receptive"].(string); ok {
 			if place.IsGrandPlace() {
 				switch nested.PrivacyReceptive(v) {
-				case nested.PLACE_RECEPTIVE_EXTERNAL:
+				case nested.PlaceReceptiveExternal:
 					placeUpdateRequest["privacy.receptive"] = v
-				case nested.PLACE_RECEPTIVE_INTERNAL, nested.PLACE_RECEPTIVE_OFF:
+				case nested.PlaceReceptiveInternal, nested.PlaceReceptiveOff:
 					placeUpdateRequest["privacy.receptive"] = v
 					s.Worker().Model().Search.RemovePlaceFromSearchIndex(place.ID)
 				default:
@@ -1402,9 +1402,9 @@ func (s *PlaceService) update(requester *nested.Account, request *nestedGateway.
 				}
 			} else {
 				switch nested.PrivacyReceptive(v) {
-				case nested.PLACE_RECEPTIVE_EXTERNAL, nested.PLACE_RECEPTIVE_INTERNAL:
+				case nested.PlaceReceptiveExternal, nested.PlaceReceptiveInternal:
 					placeUpdateRequest["privacy.receptive"] = v
-				case nested.PLACE_RECEPTIVE_OFF:
+				case nested.PlaceReceptiveOff:
 					placeUpdateRequest["privacy.receptive"] = v
 					placeUpdateRequest["privacy.search"] = false
 					s.Worker().Model().Search.RemovePlaceFromSearchIndex(place.ID)
@@ -1417,7 +1417,7 @@ func (s *PlaceService) update(requester *nested.Account, request *nestedGateway.
 		}
 		if v, ok := request.Data["policy.add_post"].(string); ok {
 			switch nested.PolicyGroup(v) {
-			case nested.PLACE_POLICY_CREATORS, nested.PLACE_POLICY_EVERYONE:
+			case nested.PlacePolicyCreators, nested.PlacePolicyEveryone:
 				placeUpdateRequest["policy.add_post"] = v
 
 			}
@@ -1425,7 +1425,7 @@ func (s *PlaceService) update(requester *nested.Account, request *nestedGateway.
 		if v, ok := request.Data["policy.add_place"].(string); ok {
 			if !place.IsPersonal() {
 				switch nested.PolicyGroup(v) {
-				case nested.PLACE_POLICY_CREATORS, nested.PLACE_POLICY_EVERYONE:
+				case nested.PlacePolicyCreators, nested.PlacePolicyEveryone:
 					placeUpdateRequest["policy.add_place"] = v
 
 				}
@@ -1433,7 +1433,7 @@ func (s *PlaceService) update(requester *nested.Account, request *nestedGateway.
 		}
 	}
 	access := place.GetAccess(requester.ID)
-	if !access[nested.PLACE_ACCESS_CONTROL] {
+	if !access[nested.PlaceAccessControl] {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}

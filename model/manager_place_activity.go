@@ -2,19 +2,19 @@ package nested
 
 import (
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
-
 	"github.com/globalsign/mgo/bson"
 )
 
 const (
-	PLACE_ACTIVITY_ACTION_MEMBER_REMOVE  = 0x002
-	PLACE_ACTIVITY_ACTION_MEMBER_JOIN    = 0x008
-	PLACE_ACTIVITY_ACTION_PLACE_ADD      = 0x010
-	PLACE_ACTIVITY_ACTION_POST_ADD       = 0x100
-	PLACE_ACTIVITY_ACTION_POST_REMOVE    = 0x105
-	PLACE_ACTIVITY_ACTION_POST_MOVE_TO   = 0x206
-	PLACE_ACTIVITY_ACTION_POST_MOVE_FROM = 0x207
+	PlaceActivityActionMemberRemove = 0x002
+	PlaceActivityActionMemberJoin   = 0x008
+	PlaceActivityActionPlaceAdd     = 0x010
+	PlaceActivityActionPostAdd      = 0x100
+	PlaceActivityActionPostRemove   = 0x105
+	PlaceActivityActionPostMoveTo   = 0x206
+	PlaceActivityActionPostMoveFrom = 0x207
 )
 
 type PlaceActivityManager struct{}
@@ -24,9 +24,6 @@ func NewPlaceActivityManager() *PlaceActivityManager {
 }
 
 func (tm *PlaceActivityManager) Exists(activityID bson.ObjectId) bool {
-
-
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
@@ -37,9 +34,6 @@ func (tm *PlaceActivityManager) Exists(activityID bson.ObjectId) bool {
 }
 
 func (tm *PlaceActivityManager) GetByID(activityID bson.ObjectId) *PlaceActivity {
-
-
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
@@ -71,9 +65,6 @@ func (tm *PlaceActivityManager) GetActivitiesByPlace(placeID string, pg Paginati
 }
 
 func (tm *PlaceActivityManager) PostAdd(actorID string, placeIDs []string, postID bson.ObjectId) {
-
-
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
@@ -84,7 +75,7 @@ func (tm *PlaceActivityManager) PostAdd(actorID string, placeIDs []string, postI
 	v := PlaceActivity{
 		Timestamp:  ts,
 		LastUpdate: ts,
-		Action:     PLACE_ACTIVITY_ACTION_POST_ADD,
+		Action:     PlaceActivityActionPostAdd,
 		Actor:      actorID,
 		PostID:     postID,
 	}
@@ -101,9 +92,6 @@ func (tm *PlaceActivityManager) PostAdd(actorID string, placeIDs []string, postI
 }
 
 func (tm *PlaceActivityManager) PostAttachPlace(actorID, newPlaceID string, postID bson.ObjectId) {
-
-
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
@@ -113,7 +101,7 @@ func (tm *PlaceActivityManager) PostAttachPlace(actorID, newPlaceID string, post
 		ID:         bson.NewObjectId(),
 		Timestamp:  ts,
 		LastUpdate: ts,
-		Action:     PLACE_ACTIVITY_ACTION_POST_ADD,
+		Action:     PlaceActivityActionPostAdd,
 		Actor:      actorID,
 		NewPlaceID: newPlaceID,
 		PostID:     postID,
@@ -126,9 +114,6 @@ func (tm *PlaceActivityManager) PostAttachPlace(actorID, newPlaceID string, post
 }
 
 func (tm *PlaceActivityManager) PostMove(actorID, oldPlaceID, newPlaceID string, postID bson.ObjectId) {
-
-
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
@@ -147,12 +132,12 @@ func (tm *PlaceActivityManager) PostMove(actorID, oldPlaceID, newPlaceID string,
 
 	v.ID = bson.NewObjectId()
 	v.PlaceID = oldPlaceID
-	v.Action = PLACE_ACTIVITY_ACTION_POST_MOVE_FROM
+	v.Action = PlaceActivityActionPostMoveFrom
 	bulk.Insert(v)
 
 	v.ID = bson.NewObjectId()
 	v.PlaceID = newPlaceID
-	v.Action = PLACE_ACTIVITY_ACTION_POST_MOVE_TO
+	v.Action = PlaceActivityActionPostMoveTo
 	bulk.Insert(v)
 
 	if _, err := bulk.Run(); err != nil {
@@ -163,9 +148,6 @@ func (tm *PlaceActivityManager) PostMove(actorID, oldPlaceID, newPlaceID string,
 }
 
 func (tm *PlaceActivityManager) PostRemove(actorID, placeID string, postID bson.ObjectId) {
-
-
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
@@ -174,7 +156,7 @@ func (tm *PlaceActivityManager) PostRemove(actorID, placeID string, postID bson.
 	v := PlaceActivity{
 		ID:        bson.NewObjectId(),
 		Timestamp: ts,
-		Action:    PLACE_ACTIVITY_ACTION_POST_REMOVE,
+		Action:    PlaceActivityActionPostRemove,
 		Actor:     actorID,
 		PostID:    postID,
 	}
@@ -186,9 +168,6 @@ func (tm *PlaceActivityManager) PostRemove(actorID, placeID string, postID bson.
 }
 
 func (tm *PlaceActivityManager) PlaceAdd(actor, placeID string) {
-
-
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
@@ -198,7 +177,7 @@ func (tm *PlaceActivityManager) PlaceAdd(actor, placeID string) {
 		"timestamp":   ts,
 		"last_update": ts,
 		"_removed":    false,
-		"action":      PLACE_ACTIVITY_ACTION_PLACE_ADD,
+		"action":      PlaceActivityActionPlaceAdd,
 		"actor":       actor,
 		"place_id":    placeID,
 	}
@@ -207,9 +186,6 @@ func (tm *PlaceActivityManager) PlaceAdd(actor, placeID string) {
 }
 
 func (tm *PlaceActivityManager) PlaceRemove(placeID string) {
-
-
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
@@ -218,7 +194,7 @@ func (tm *PlaceActivityManager) PlaceRemove(placeID string) {
 
 	// remove all the activities of PLACE_ADD
 	if _, err := db.C(global.COLLECTION_PLACES_ACTIVITIES).UpdateAll(
-		bson.M{"action": PLACE_ACTIVITY_ACTION_PLACE_ADD, "place_id": placeID, "_removed": false},
+		bson.M{"action": PlaceActivityActionPlaceAdd, "place_id": placeID, "_removed": false},
 		bson.M{"$set": bson.M{"_removed": true, "last_update": ts}},
 	); err != nil {
 		log.Warn(err.Error())
@@ -226,7 +202,7 @@ func (tm *PlaceActivityManager) PlaceRemove(placeID string) {
 
 	// remove all the MEMBER_JOIN actions
 	if _, err := db.C(global.COLLECTION_PLACES_ACTIVITIES).UpdateAll(
-		bson.M{"action": PLACE_ACTIVITY_ACTION_MEMBER_JOIN, "place_id": placeID},
+		bson.M{"action": PlaceActivityActionMemberJoin, "place_id": placeID},
 		bson.M{"$set": bson.M{"_removed": true, "last_update": ts}},
 	); err != nil {
 		log.Warn(err.Error())
@@ -235,9 +211,6 @@ func (tm *PlaceActivityManager) PlaceRemove(placeID string) {
 }
 
 func (tm *PlaceActivityManager) MemberRemove(actor, placeID, memberID string, reason string) {
-
-
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
@@ -247,7 +220,7 @@ func (tm *PlaceActivityManager) MemberRemove(actor, placeID, memberID string, re
 		"timestamp":   ts,
 		"last_update": ts,
 		"_removed":    false,
-		"action":      PLACE_ACTIVITY_ACTION_MEMBER_REMOVE,
+		"action":      PlaceActivityActionMemberRemove,
 		"actor":       actor,
 		"place_id":    placeID,
 		"member_id":   memberID,
@@ -257,9 +230,6 @@ func (tm *PlaceActivityManager) MemberRemove(actor, placeID, memberID string, re
 }
 
 func (tm *PlaceActivityManager) MemberJoin(actor, placeID, by string) {
-
-	// removed LOG Function
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
@@ -269,7 +239,7 @@ func (tm *PlaceActivityManager) MemberJoin(actor, placeID, by string) {
 		"timestamp":   ts,
 		"last_update": ts,
 		"_removed":    false,
-		"action":      PLACE_ACTIVITY_ACTION_MEMBER_JOIN,
+		"action":      PlaceActivityActionMemberJoin,
 		"actor":       actor,
 		"place_id":    placeID,
 		"by":          by}

@@ -385,7 +385,7 @@ func store(domain, sender string, recipients []string, mailEnvelope *enmime.Enve
 				// Internal
 				place := m.GetPlaceByID(pid)
 				memberIDs := place.GetMemberIDs()
-				m.InternalPlaceActivitySyncPush(memberIDs, pid, nested.PLACE_ACTIVITY_ACTION_POST_ADD)
+				m.InternalPlaceActivitySyncPush(memberIDs, pid, nested.PlaceActivityActionPostAdd)
 			}
 		}
 		return nil

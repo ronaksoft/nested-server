@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"github.com/PuerkitoBio/goquery"
 	"io"
 	"strings"
@@ -33,7 +35,6 @@ const (
 	COMMENT_TYPE_ACTIVITY CommentType = 0x02
 )
 
-// Post Manager and Methods
 type PostManager struct{}
 
 func NewPostManager() *PostManager {
@@ -286,17 +287,17 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 	post.ContentType = pcr.ContentType
 
 	// Returns nil if targets are more than DEFAULT_POST_MAX_TARGETS
-	if len(pcr.PlaceIDs)+len(pcr.Recipients) > DEFAULT_POST_MAX_TARGETS {
+	if len(pcr.PlaceIDs)+len(pcr.Recipients) > global.DEFAULT_POST_MAX_TARGETS {
 		return nil
 	}
 
 	// Returns nil if number of attachments exceeds DEFAULT_POST_MAX_ATTACHMENTS
-	if len(pcr.AttachmentIDs) > DEFAULT_POST_MAX_ATTACHMENTS {
+	if len(pcr.AttachmentIDs) > global.DEFAULT_POST_MAX_ATTACHMENTS {
 		return nil
 	}
 
 	// Returns nil if number of labels exceeds DEFAULT_POST_MAX_LABELS
-	if len(pcr.LabelIDs) > DEFAULT_POST_MAX_LABELS {
+	if len(pcr.LabelIDs) > global.DEFAULT_POST_MAX_LABELS {
 		return nil
 	}
 
@@ -378,10 +379,10 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 
 	// Update counters of the grand places
 	grandParentIDs := _Manager.Place.GetGrandParentIDs(pcr.PlaceIDs)
-	_Manager.Place.IncrementCounter(grandParentIDs, PLACE_COUNTER_QUOTA, int(post.Counters.Size))
+	_Manager.Place.IncrementCounter(grandParentIDs, PlaceCounterQuota, int(post.Counters.Size))
 
 	// Update counters of the places
-	_Manager.Place.IncrementCounter(pcr.PlaceIDs, PLACE_COUNTER_POSTS, 1)
+	_Manager.Place.IncrementCounter(pcr.PlaceIDs, PlaceCounterPosts, 1)
 
 	// Update user contacts list
 	if post.Internal {
@@ -510,7 +511,7 @@ func (pm *PostManager) AttachPlace(postID bson.ObjectId, placeID, accountID stri
 	}
 
 	// Update counters of the attached place
-	_Manager.Place.IncrementCounter([]string{placeID}, PLACE_COUNTER_POSTS, 1)
+	_Manager.Place.IncrementCounter([]string{placeID}, PlaceCounterPosts, 1)
 
 	// Add new place to watcher list
 	if place.HasReadAccess(post.SenderID) {
@@ -732,7 +733,7 @@ func (pm *PostManager) GetUnreadPostsByPlace(placeID, accountID string, subPlace
 	// Log Explain Query
 	iter := Q.Iter()
 	defer iter.Close()
-	readItem := M{}
+	readItem := tools.M{}
 	posts := make([]Post, 0, pg.GetLimit())
 	for iter.Next(&readItem) {
 		if post := _Manager.Post.GetPostByID(readItem["post_id"].(bson.ObjectId)); post != nil {
@@ -811,7 +812,7 @@ func (pm *PostManager) GetPinnedPosts(accountID string, pg Pagination) []Post {
 	Q := db.C(global.COLLECTION_ACCOUNTS_POSTS).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
 	// Log Explain Query
 	iter := Q.Iter()
-	item := M{}
+	item := tools.M{}
 	posts := make([]Post, 0, pg.GetLimit())
 	for iter.Next(item) {
 		postID := item["post_id"].(bson.ObjectId)
@@ -1163,7 +1164,7 @@ func (pm *PostManager) Remove(accountID string, postID bson.ObjectId, placeID st
 	}
 
 	// Update place counter
-	_Manager.Place.IncrementCounter([]string{placeID}, PLACE_COUNTER_POSTS, -1)
+	_Manager.Place.IncrementCounter([]string{placeID}, PlaceCounterPosts, -1)
 
 	pr := new(PostRead)
 	iter := db.C(global.COLLECTION_POSTS_READS).Find(

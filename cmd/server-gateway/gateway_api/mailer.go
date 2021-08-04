@@ -157,7 +157,7 @@ func (m *Mailer) createMessage(postID bson.ObjectId) *mail.Message {
 		recipients = append(recipients, recipient)
 	}
 	for _, place := range places {
-		if place.Privacy.Receptive == nested.PLACE_RECEPTIVE_EXTERNAL {
+		if place.Privacy.Receptive == nested.PlaceReceptiveExternal {
 			if place.ID == postSender.ID || place.GrandParentID == postSender.ID {
 				continue
 			}

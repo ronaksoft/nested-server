@@ -43,7 +43,7 @@ func (pm *PushManager) PlaceJoined(place *nested.Place, actorID, memberID string
 
 	// Send the activity sync packet over the wire
 	memberIDs := place.GetMemberIDs()
-	pm.Notification.InternalPlaceActivitySyncPush(memberIDs, place.ID, nested.PLACE_ACTIVITY_ACTION_MEMBER_JOIN)
+	pm.Notification.InternalPlaceActivitySyncPush(memberIDs, place.ID, nested.PlaceActivityActionMemberJoin)
 
 	// Send the notification packet over the wire
 	pm.Notification.InternalNotificationSyncPush([]string{memberID}, nested.NotificationTypeJoinedPlace)
@@ -82,7 +82,7 @@ func (pm *PushManager) PostAdded(post *nested.Post) {
 		pm.Notification.InternalPlaceActivitySyncPush(
 			place.GetMemberIDs(),
 			placeID,
-			nested.PLACE_ACTIVITY_ACTION_POST_ADD,
+			nested.PlaceActivityActionPostAdd,
 		)
 	}
 }
@@ -90,19 +90,19 @@ func (pm *PushManager) PostEdited(post *nested.Post) {
 	for _, placeID := range post.PlaceIDs {
 		place := pm.worker.Model().Place.GetByID(placeID, nil)
 		memberIDs := place.GetMemberIDs()
-		pm.Notification.InternalPostActivitySyncPush(memberIDs, post.ID, nested.POST_ACTIVITY_ACTION_EDITED, post.PlaceIDs)
+		pm.Notification.InternalPostActivitySyncPush(memberIDs, post.ID, nested.PostActivityActionEdited, post.PlaceIDs)
 	}
 }
 func (pm *PushManager) PostMovedTo(post *nested.Post, oldPlace, newPlace *nested.Place) {
 	pm.Notification.InternalPlaceActivitySyncPush(
 		newPlace.GetMemberIDs(),
 		newPlace.ID,
-		nested.PLACE_ACTIVITY_ACTION_POST_MOVE_TO,
+		nested.PlaceActivityActionPostMoveTo,
 	)
 	pm.Notification.InternalPlaceActivitySyncPush(
 		oldPlace.GetMemberIDs(),
 		oldPlace.ID,
-		nested.PLACE_ACTIVITY_ACTION_POST_MOVE_FROM,
+		nested.PlaceActivityActionPostMoveFrom,
 	)
 	for _, placeID := range post.PlaceIDs {
 		if placeID == oldPlace.ID || placeID == newPlace.ID {
@@ -112,7 +112,7 @@ func (pm *PushManager) PostMovedTo(post *nested.Post, oldPlace, newPlace *nested
 		pm.Notification.InternalPostActivitySyncPush(
 			place.GetMemberIDs(),
 			post.ID,
-			nested.POST_ACTIVITY_ACTION_PLACE_MOVE,
+			nested.PostActivityActionPlaceMove,
 			post.PlaceIDs,
 		)
 	}
@@ -126,7 +126,7 @@ func (pm *PushManager) PostAttached(post *nested.Post, attachedPlaceIDs []string
 		pm.Notification.InternalPlaceActivitySyncPush(
 			place.GetMemberIDs(),
 			placeID,
-			nested.PLACE_ACTIVITY_ACTION_POST_ADD,
+			nested.PlaceActivityActionPostAdd,
 		)
 	}
 	for _, placeID := range post.PlaceIDs {
@@ -134,7 +134,7 @@ func (pm *PushManager) PostAttached(post *nested.Post, attachedPlaceIDs []string
 			pm.Notification.InternalPostActivitySyncPush(
 				place.GetMemberIDs(),
 				post.ID,
-				nested.POST_ACTIVITY_ACTION_PLACE_ATTACH,
+				nested.PostActivityActionPlaceAttach,
 				post.PlaceIDs,
 			)
 		}
@@ -175,7 +175,7 @@ func (pm *PushManager) PostCommentAdded(post *nested.Post, comment *nested.Comme
 	for _, placeID := range post.PlaceIDs {
 		place := pm.worker.Model().Place.GetByID(placeID, nil)
 		memberIDs := place.GetMemberIDs()
-		pm.Notification.InternalPostActivitySyncPush(memberIDs, post.ID, nested.POST_ACTIVITY_ACTION_COMMENT_ADD, post.PlaceIDs)
+		pm.Notification.InternalPostActivitySyncPush(memberIDs, post.ID, nested.PostActivityActionCommentAdd, post.PlaceIDs)
 	}
 }
 func (pm *PushManager) PostCommentRemoved(post *nested.Post, comment *nested.Comment) {
@@ -183,7 +183,7 @@ func (pm *PushManager) PostCommentRemoved(post *nested.Post, comment *nested.Com
 	for _, placeID := range post.PlaceIDs {
 		place := pm.worker.Model().Place.GetByID(placeID, nil)
 		memberIDs := place.GetMemberIDs()
-		pm.Notification.InternalPostActivitySyncPush(memberIDs, post.ID, nested.POST_ACTIVITY_ACTION_COMMENT_REMOVE, post.PlaceIDs)
+		pm.Notification.InternalPostActivitySyncPush(memberIDs, post.ID, nested.PostActivityActionCommentRemove, post.PlaceIDs)
 	}
 }
 func (pm *PushManager) PostLabelAdded(post *nested.Post, label *nested.Label) {
@@ -191,7 +191,7 @@ func (pm *PushManager) PostLabelAdded(post *nested.Post, label *nested.Label) {
 	for _, placeID := range post.PlaceIDs {
 		place := pm.worker.Model().Place.GetByID(placeID, nil)
 		memberIDs := place.GetMemberIDs()
-		pm.Notification.InternalPostActivitySyncPush(memberIDs, post.ID, nested.POST_ACTIVITY_ACTION_LABEL_ADD, post.PlaceIDs)
+		pm.Notification.InternalPostActivitySyncPush(memberIDs, post.ID, nested.PostActivityActionLabelAdd, post.PlaceIDs)
 	}
 }
 func (pm *PushManager) PostLabelRemoved(post *nested.Post, label *nested.Label) {
@@ -199,7 +199,7 @@ func (pm *PushManager) PostLabelRemoved(post *nested.Post, label *nested.Label) 
 	for _, placeID := range post.PlaceIDs {
 		place := pm.worker.Model().Place.GetByID(placeID, nil)
 		memberIDs := place.GetMemberIDs()
-		pm.Notification.InternalPostActivitySyncPush(memberIDs, post.ID, nested.POST_ACTIVITY_ACTION_LABEL_REMOVE, post.PlaceIDs)
+		pm.Notification.InternalPostActivitySyncPush(memberIDs, post.ID, nested.PostActivityActionLabelRemove, post.PlaceIDs)
 	}
 }
 

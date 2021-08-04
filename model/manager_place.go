@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"regexp"
 	"strings"
 
@@ -13,48 +15,48 @@ import (
 )
 
 const (
-	PLACE_ACCESS_WRITE_POST     string = "WR"
-	PLACE_ACCESS_ADD_MEMBERS    string = "AM"
-	PLACE_ACCESS_ADD_PLACE      string = "AP"
-	PLACE_ACCESS_READ_POST      string = "RD"
-	PLACE_ACCESS_SEE_MEMBERS    string = "SM"
-	PLACE_ACCESS_SEE_PLACE      string = "SP"
-	PLACE_ACCESS_REMOVE_MEMBERS string = "RM"
-	PLACE_ACCESS_REMOVE_PLACE   string = "RP"
-	PLACE_ACCESS_REMOVE_POST    string = "D"
-	PLACE_ACCESS_CONTROL        string = "C"
+	PlaceAccessWritePost     string = "WR"
+	PlaceAccessAddMembers    string = "AM"
+	PlaceAccessAddPlace      string = "AP"
+	PlaceAccessReadPost      string = "RD"
+	PlaceAccessSeeMembers    string = "SM"
+	PlaceAccessSeePlace      string = "SP"
+	PlaceAccessRemoveMembers string = "RM"
+	PlaceAccessRemovePlace   string = "RP"
+	PlaceAccessRemovePost    string = "D"
+	PlaceAccessControl       string = "C"
 )
 const (
-	PLACE_POLICY_NOONE    PolicyGroup = "noone"
-	PLACE_POLICY_CREATORS PolicyGroup = "creators"
-	PLACE_POLICY_EVERYONE PolicyGroup = "everyone"
+	PlacePolicyNoOne    PolicyGroup = "noone"
+	PlacePolicyCreators PolicyGroup = "creators"
+	PlacePolicyEveryone PolicyGroup = "everyone"
 )
 const (
-	PLACE_RECEPTIVE_OFF      PrivacyReceptive = "off"
-	PLACE_RECEPTIVE_INTERNAL PrivacyReceptive = "internal"
-	PLACE_RECEPTIVE_EXTERNAL PrivacyReceptive = "external"
+	PlaceReceptiveOff      PrivacyReceptive = "off"
+	PlaceReceptiveInternal PrivacyReceptive = "internal"
+	PlaceReceptiveExternal PrivacyReceptive = "external"
 )
 const (
-	MEMBER_TYPE_ALL        string = "all"
-	MEMBER_TYPE_CREATOR    string = "creator"
-	MEMBER_TYPE_KEY_HOLDER string = "key_holder"
+	MemberTypeAll       string = "all"
+	MemberTypeCreator   string = "creator"
+	MemberTypeKeyHolder string = "key_holder"
 )
 const (
-	PLACE_TYPE_PERSONAL string = "personal"
-	PLACE_TYPE_SHARED   string = "shared"
+	PlaceTypePersonal string = "personal"
+	PlaceTypeShared   string = "shared"
 )
 const (
-	PLACE_COUNTER_CREATORS          string = "creators"
-	PLACE_COUNTER_KEYHOLDERS        string = "key_holders"
-	PLACE_COUNTER_CHILDREN          string = "childs"
-	PLACE_COUNTER_UNLOCKED_CHILDREN string = "unlocked_childs"
-	PLACE_COUNTER_QUOTA             string = "size"
-	PLACE_COUNTER_POSTS             string = "posts"
+	PlaceCounterCreators         string = "creators"
+	PlaceCounterKeyHolders       string = "key_holders"
+	PlaceCounterChildren         string = "childs"
+	PlaceCounterUnlockedChildren string = "unlocked_childs"
+	PlaceCounterQuota            string = "size"
+	PlaceCounterPosts            string = "posts"
 )
 
 type PrivacyReceptive string
 type PolicyGroup string
-type PlaceAccess MB
+type PlaceAccess tools.MB
 
 type PlaceCreateRequest struct {
 	ID            string
@@ -276,7 +278,7 @@ func (pm *PlaceManager) CreatePersonalPlace(pcr PlaceCreateRequest) *Place {
 
 	p := Place{
 		ID:          pcr.ID,
-		Type:        PLACE_TYPE_PERSONAL,
+		Type:        PlaceTypePersonal,
 		Name:        pcr.Name,
 		Description: pcr.Description,
 		CreatedOn:   Timestamp(),
@@ -284,11 +286,11 @@ func (pm *PlaceManager) CreatePersonalPlace(pcr PlaceCreateRequest) *Place {
 	}
 
 	// Initialize Place Policy and Privacy
-	p.Policy.AddPost = PLACE_POLICY_CREATORS
-	p.Policy.AddMember = PLACE_POLICY_NOONE
-	p.Policy.AddPlace = PLACE_POLICY_CREATORS
+	p.Policy.AddPost = PlacePolicyCreators
+	p.Policy.AddMember = PlacePolicyNoOne
+	p.Policy.AddPlace = PlacePolicyCreators
 	p.Privacy.Locked = true
-	p.Privacy.Receptive = PLACE_RECEPTIVE_EXTERNAL
+	p.Privacy.Receptive = PlaceReceptiveExternal
 
 	if pcr.ID == pcr.GrandParentID {
 		p.GrandParentID = p.ID
@@ -296,7 +298,7 @@ func (pm *PlaceManager) CreatePersonalPlace(pcr PlaceCreateRequest) *Place {
 		// Initialize Place Limits
 		p.Limit.Creators = 1
 		p.Limit.Keyholders = 0
-		p.Limit.Children = DEFAULT_PLACE_MAX_CHILDREN
+		p.Limit.Children = global.DEFAULT_PLACE_MAX_CHILDREN
 	} else if pcr.GrandParentID != "" {
 		grandPlace := _Manager.Place.GetByID(pcr.GrandParentID, nil)
 		p.Limit = grandPlace.Limit
@@ -315,9 +317,9 @@ func (pm *PlaceManager) CreatePersonalPlace(pcr PlaceCreateRequest) *Place {
 
 	// Update System.Internal Counter
 	if p.Level == 0 {
-		_Manager.System.incrementCounter(MI{SYSTEM_COUNTERS_GRAND_PLACES: 1})
+		_Manager.System.incrementCounter(MI{global.SYSTEM_COUNTERS_GRAND_PLACES: 1})
 	} else {
-		_Manager.System.incrementCounter(MI{SYSTEM_COUNTERS_LOCKED_PLACES: 1})
+		_Manager.System.incrementCounter(MI{global.SYSTEM_COUNTERS_LOCKED_PLACES: 1})
 	}
 
 	// add the timeline event
@@ -341,7 +343,7 @@ func (pm *PlaceManager) CreateGrandPlace(pcr PlaceCreateRequest) *Place {
 
 	place := Place{
 		ID:          pcr.ID,
-		Type:        PLACE_TYPE_SHARED,
+		Type:        PlaceTypeShared,
 		Name:        pcr.Name,
 		Description: pcr.Description,
 		Policy:      pcr.Policy,
@@ -349,9 +351,9 @@ func (pm *PlaceManager) CreateGrandPlace(pcr PlaceCreateRequest) *Place {
 		CreatedOn:   Timestamp(),
 	}
 	// Initialize Place Limits
-	place.Limit.Creators = DEFAULT_PLACE_MAX_CREATORS
-	place.Limit.Keyholders = DEFAULT_PLACE_MAX_KEYHOLDERS
-	place.Limit.Children = DEFAULT_PLACE_MAX_CHILDREN
+	place.Limit.Creators = global.DEFAULT_PLACE_MAX_CREATORS
+	place.Limit.Keyholders = global.DEFAULT_PLACE_MAX_KEYHOLDERS
+	place.Limit.Children = global.DEFAULT_PLACE_MAX_CHILDREN
 	// Initialize Place Policy and Privacy
 	place.Privacy.Locked = true
 	place.GrandParentID = pcr.ID
@@ -368,7 +370,7 @@ func (pm *PlaceManager) CreateGrandPlace(pcr PlaceCreateRequest) *Place {
 	}
 
 	// Update System.Internal Counter
-	_Manager.System.incrementCounter(MI{SYSTEM_COUNTERS_GRAND_PLACES: 1})
+	_Manager.System.incrementCounter(MI{global.SYSTEM_COUNTERS_GRAND_PLACES: 1})
 
 	// add timeline event
 	_Manager.PlaceActivity.PlaceAdd(pcr.AccountID, pcr.ID)
@@ -388,7 +390,7 @@ func (pm *PlaceManager) CreateLockedPlace(pcr PlaceCreateRequest) *Place {
 
 	p := Place{
 		ID:          pcr.ID,
-		Type:        PLACE_TYPE_SHARED,
+		Type:        PlaceTypeShared,
 		Name:        pcr.Name,
 		Description: pcr.Description,
 		Policy:      pcr.Policy,
@@ -426,7 +428,7 @@ func (pm *PlaceManager) CreateLockedPlace(pcr PlaceCreateRequest) *Place {
 	}
 
 	// Update System.Internal Counter
-	_Manager.System.incrementCounter(MI{SYSTEM_COUNTERS_LOCKED_PLACES: 1})
+	_Manager.System.incrementCounter(MI{global.SYSTEM_COUNTERS_LOCKED_PLACES: 1})
 
 	// add timeline event
 	_Manager.PlaceActivity.PlaceAdd(pcr.AccountID, pcr.ID)
@@ -446,7 +448,7 @@ func (pm *PlaceManager) CreateUnlockedPlace(pcr PlaceCreateRequest) *Place {
 
 	p := Place{
 		ID:          pcr.ID,
-		Type:        PLACE_TYPE_SHARED,
+		Type:        PlaceTypeShared,
 		Name:        pcr.Name,
 		Description: pcr.Description,
 		CreatedOn:   Timestamp(),
@@ -466,10 +468,10 @@ func (pm *PlaceManager) CreateUnlockedPlace(pcr PlaceCreateRequest) *Place {
 
 	// Initialize Place Policy and Privacy
 	p.Privacy.Locked = false
-	p.Privacy.Receptive = PLACE_RECEPTIVE_OFF
-	p.Policy.AddMember = PLACE_POLICY_CREATORS
-	p.Policy.AddPlace = PLACE_POLICY_NOONE
-	p.Policy.AddPost = PLACE_POLICY_EVERYONE
+	p.Privacy.Receptive = PlaceReceptiveOff
+	p.Policy.AddMember = PlacePolicyCreators
+	p.Policy.AddPlace = PlacePolicyNoOne
+	p.Policy.AddPost = PlacePolicyEveryone
 	p.GrandParentID = pcr.GrandParentID
 	p.MainCreatorID = pcr.AccountID
 	p.Picture = pcr.Picture
@@ -484,7 +486,7 @@ func (pm *PlaceManager) CreateUnlockedPlace(pcr PlaceCreateRequest) *Place {
 	}
 
 	// Update System.Internal Counter
-	_Manager.System.incrementCounter(MI{SYSTEM_COUNTERS_UNLOCKED_PLACES: 1})
+	_Manager.System.incrementCounter(MI{global.SYSTEM_COUNTERS_UNLOCKED_PLACES: 1})
 
 	// update parent counters
 	db.C(global.COLLECTION_PLACES).UpdateId(
@@ -547,7 +549,7 @@ func (pm *PlaceManager) Exists(placeID string) bool {
 }
 
 //	GetByID returns a pointer to a place identified by placeID.
-func (pm *PlaceManager) GetByID(placeID string, pj M) *Place {
+func (pm *PlaceManager) GetByID(placeID string, pj tools.M) *Place {
 	return _Manager.Place.readFromCache(placeID)
 }
 
@@ -573,21 +575,21 @@ func (pm *PlaceManager) GetParentID(placeID string) string {
 }
 
 //	IncrementCounter increase/decrease place counters supported counters are
-//	1. PLACE_COUNTER_CHILDREN
-//	2. PLACE_COUNTER_UNLOCKED_CHILDREN
-//	3. PLACE_COUNTER_CREATORS
-//	4. PLACE_COUNTER_KEYHOLDERS
-//	5. PLACE_COUNTER_POSTS
-//	6. PLACE_COUNTER_QUOTA
+//	1. PlaceCounterChildren
+//	2. PlaceCounterUnlockedChildren
+//	3. PlaceCounterCreators
+//	4. PlaceCounterKeyHolders
+//	5. PlaceCounterPosts
+//	6. PlaceCounterQuota
 func (pm *PlaceManager) IncrementCounter(placeIDs []string, counterName string, c int) bool {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	switch counterName {
-	case PLACE_COUNTER_CHILDREN, PLACE_COUNTER_UNLOCKED_CHILDREN,
-		PLACE_COUNTER_CREATORS, PLACE_COUNTER_KEYHOLDERS,
-		PLACE_COUNTER_POSTS, PLACE_COUNTER_QUOTA:
+	case PlaceCounterChildren, PlaceCounterUnlockedChildren,
+		PlaceCounterCreators, PlaceCounterKeyHolders,
+		PlaceCounterPosts, PlaceCounterQuota:
 		keyName := fmt.Sprintf("counters.%s", counterName)
 		if err := db.C(global.COLLECTION_PLACES).Update(
 			bson.M{"_id": bson.M{"$in": placeIDs}},
@@ -752,11 +754,11 @@ func (pm *PlaceManager) Remove(placeID string, accountID string) bool {
 
 	// Update System.Internal Counter
 	if place.Level == 0 {
-		_Manager.System.incrementCounter(MI{SYSTEM_COUNTERS_GRAND_PLACES: -1})
+		_Manager.System.incrementCounter(MI{global.SYSTEM_COUNTERS_GRAND_PLACES: -1})
 	} else if place.Privacy.Locked {
-		_Manager.System.incrementCounter(MI{SYSTEM_COUNTERS_LOCKED_PLACES: -1})
+		_Manager.System.incrementCounter(MI{global.SYSTEM_COUNTERS_LOCKED_PLACES: -1})
 	} else {
-		_Manager.System.incrementCounter(MI{SYSTEM_COUNTERS_UNLOCKED_PLACES: -1})
+		_Manager.System.incrementCounter(MI{global.SYSTEM_COUNTERS_UNLOCKED_PLACES: -1})
 	}
 
 	return true
@@ -886,7 +888,7 @@ func (pm *PlaceManager) SetPicture(placeID string, pic Picture) {
 	}
 }
 
-func (pm *PlaceManager) Update(placeID string, placeUpdateRequest M) bool {
+func (pm *PlaceManager) Update(placeID string, placeUpdateRequest tools.M) bool {
 	defer _Manager.Place.removeCache(placeID)
 
 	dbSession := _MongoSession.Clone()
@@ -1164,7 +1166,7 @@ func (p *Place) IsGrandPlace() bool {
 }
 
 func (p *Place) IsPersonal() bool {
-	if p.Type == PLACE_TYPE_PERSONAL {
+	if p.Type == PlaceTypePersonal {
 		return true
 	}
 	return false
@@ -1201,7 +1203,6 @@ func (p *Place) HasCreatorLimit() bool {
 
 func (p *Place) IsCreator(accountID string) bool {
 
-
 	for _, creatorID := range p.CreatorIDs {
 		if creatorID == accountID {
 			return true
@@ -1213,7 +1214,6 @@ func (p *Place) IsCreator(accountID string) bool {
 
 func (p *Place) IsKeyholder(accountID string) bool {
 
-
 	for _, keyholderID := range p.KeyholderIDs {
 		if keyholderID == accountID {
 			return true
@@ -1223,7 +1223,6 @@ func (p *Place) IsKeyholder(accountID string) bool {
 }
 
 func (p *Place) IsMember(accountID string) bool {
-
 
 	for _, creatorID := range p.CreatorIDs {
 		if creatorID == accountID {
@@ -1240,7 +1239,6 @@ func (p *Place) IsMember(accountID string) bool {
 
 func (p *Place) HasReadAccess(accountID string) bool {
 
-
 	if p.IsMember(accountID) {
 		return true
 	} else if !p.Privacy.Locked && !p.IsGrandPlace() {
@@ -1254,8 +1252,7 @@ func (p *Place) HasReadAccess(accountID string) bool {
 
 func (p *Place) HasWriteAccess(accountID string) bool {
 
-
-	if p.IsMember(accountID) && p.Policy.AddPost == PLACE_POLICY_EVERYONE {
+	if p.IsMember(accountID) && p.Policy.AddPost == PlacePolicyEveryone {
 		return true
 	} else if p.IsCreator(accountID) {
 		return true
@@ -1263,96 +1260,95 @@ func (p *Place) HasWriteAccess(accountID string) bool {
 	grandParent := p.GetGrandParent()
 	igpm := grandParent.IsMember(accountID)
 	switch p.Privacy.Receptive {
-	case PLACE_RECEPTIVE_INTERNAL:
+	case PlaceReceptiveInternal:
 		if igpm {
 			return true
 		}
-	case PLACE_RECEPTIVE_EXTERNAL:
+	case PlaceReceptiveExternal:
 		return true
 
 	}
 	return false
 }
 
-func (p *Place) GetAccess(accountID string) MB {
+func (p *Place) GetAccess(accountID string) tools.MB {
 
-
-	acl := MB{}
-	acl[PLACE_ACCESS_READ_POST] = false
-	acl[PLACE_ACCESS_WRITE_POST] = false
-	acl[PLACE_ACCESS_REMOVE_POST] = false
-	acl[PLACE_ACCESS_ADD_PLACE] = false
-	acl[PLACE_ACCESS_SEE_PLACE] = false
-	acl[PLACE_ACCESS_REMOVE_PLACE] = false
-	acl[PLACE_ACCESS_ADD_MEMBERS] = false
-	acl[PLACE_ACCESS_REMOVE_MEMBERS] = false
-	acl[PLACE_ACCESS_SEE_MEMBERS] = false
-	acl[PLACE_ACCESS_CONTROL] = false
+	acl := tools.MB{}
+	acl[PlaceAccessReadPost] = false
+	acl[PlaceAccessWritePost] = false
+	acl[PlaceAccessRemovePost] = false
+	acl[PlaceAccessAddPlace] = false
+	acl[PlaceAccessSeePlace] = false
+	acl[PlaceAccessRemovePlace] = false
+	acl[PlaceAccessAddMembers] = false
+	acl[PlaceAccessRemoveMembers] = false
+	acl[PlaceAccessSeeMembers] = false
+	acl[PlaceAccessControl] = false
 
 	if p.IsCreator(accountID) {
-		if p.Type == PLACE_TYPE_PERSONAL {
-			acl[PLACE_ACCESS_READ_POST] = true
-			acl[PLACE_ACCESS_WRITE_POST] = true
-			acl[PLACE_ACCESS_CONTROL] = true
-			acl[PLACE_ACCESS_REMOVE_POST] = true
-			acl[PLACE_ACCESS_REMOVE_MEMBERS] = true
-			acl[PLACE_ACCESS_SEE_PLACE] = true
-			acl[PLACE_ACCESS_ADD_PLACE] = true
-			acl[PLACE_ACCESS_SEE_MEMBERS] = false
+		if p.Type == PlaceTypePersonal {
+			acl[PlaceAccessReadPost] = true
+			acl[PlaceAccessWritePost] = true
+			acl[PlaceAccessControl] = true
+			acl[PlaceAccessRemovePost] = true
+			acl[PlaceAccessRemoveMembers] = true
+			acl[PlaceAccessSeePlace] = true
+			acl[PlaceAccessAddPlace] = true
+			acl[PlaceAccessSeeMembers] = false
 
 			if p.GrandParentID != p.ID {
-				acl[PLACE_ACCESS_REMOVE_PLACE] = true
+				acl[PlaceAccessRemovePlace] = true
 			} else {
-				acl[PLACE_ACCESS_REMOVE_PLACE] = false
+				acl[PlaceAccessRemovePlace] = false
 			}
 		} else {
-			acl[PLACE_ACCESS_READ_POST] = true
-			acl[PLACE_ACCESS_WRITE_POST] = true
-			acl[PLACE_ACCESS_REMOVE_POST] = true
-			acl[PLACE_ACCESS_CONTROL] = true
-			acl[PLACE_ACCESS_REMOVE_PLACE] = true
-			acl[PLACE_ACCESS_SEE_PLACE] = true
-			acl[PLACE_ACCESS_ADD_MEMBERS] = true
-			acl[PLACE_ACCESS_SEE_MEMBERS] = true
-			acl[PLACE_ACCESS_REMOVE_MEMBERS] = true
+			acl[PlaceAccessReadPost] = true
+			acl[PlaceAccessWritePost] = true
+			acl[PlaceAccessRemovePost] = true
+			acl[PlaceAccessControl] = true
+			acl[PlaceAccessRemovePlace] = true
+			acl[PlaceAccessSeePlace] = true
+			acl[PlaceAccessAddMembers] = true
+			acl[PlaceAccessSeeMembers] = true
+			acl[PlaceAccessRemoveMembers] = true
 			if p.Privacy.Locked {
-				acl[PLACE_ACCESS_ADD_PLACE] = true
+				acl[PlaceAccessAddPlace] = true
 			} else {
-				acl[PLACE_ACCESS_ADD_PLACE] = false
+				acl[PlaceAccessAddPlace] = false
 			}
 		}
 	} else if p.IsKeyholder(accountID) {
-		acl[PLACE_ACCESS_READ_POST] = true
-		acl[PLACE_ACCESS_SEE_MEMBERS] = true
-		if p.Policy.AddMember == PLACE_POLICY_EVERYONE {
-			acl[PLACE_ACCESS_ADD_MEMBERS] = true
+		acl[PlaceAccessReadPost] = true
+		acl[PlaceAccessSeeMembers] = true
+		if p.Policy.AddMember == PlacePolicyEveryone {
+			acl[PlaceAccessAddMembers] = true
 		} else {
-			acl[PLACE_ACCESS_ADD_MEMBERS] = false
+			acl[PlaceAccessAddMembers] = false
 		}
-		if p.Privacy.Locked && p.Policy.AddPlace == PLACE_POLICY_EVERYONE {
-			acl[PLACE_ACCESS_ADD_PLACE] = true
+		if p.Privacy.Locked && p.Policy.AddPlace == PlacePolicyEveryone {
+			acl[PlaceAccessAddPlace] = true
 		} else {
-			acl[PLACE_ACCESS_ADD_PLACE] = false
+			acl[PlaceAccessAddPlace] = false
 		}
-		if p.Policy.AddPost == PLACE_POLICY_EVERYONE {
-			acl[PLACE_ACCESS_WRITE_POST] = true
+		if p.Policy.AddPost == PlacePolicyEveryone {
+			acl[PlaceAccessWritePost] = true
 		} else {
-			acl[PLACE_ACCESS_WRITE_POST] = false
+			acl[PlaceAccessWritePost] = false
 		}
 	} else {
 		grandParent := _Manager.Place.GetByID(p.GrandParentID, nil)
 		igpm := grandParent.IsMember(accountID)
 		if !p.Privacy.Locked && igpm {
-			acl[PLACE_ACCESS_READ_POST] = true
-			acl[PLACE_ACCESS_SEE_MEMBERS] = true
+			acl[PlaceAccessReadPost] = true
+			acl[PlaceAccessSeeMembers] = true
 		}
 		switch p.Privacy.Receptive {
-		case PLACE_RECEPTIVE_INTERNAL:
+		case PlaceReceptiveInternal:
 			if igpm {
-				acl[PLACE_ACCESS_WRITE_POST] = true
+				acl[PlaceAccessWritePost] = true
 			}
-		case PLACE_RECEPTIVE_EXTERNAL:
-			acl[PLACE_ACCESS_WRITE_POST] = true
+		case PlaceReceptiveExternal:
+			acl[PlaceAccessWritePost] = true
 
 		}
 	}

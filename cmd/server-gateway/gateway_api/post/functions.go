@@ -155,7 +155,7 @@ func (s *PostService) attachPlace(requester *nested.Account, request *nestedGate
 			continue
 		}
 		access := place.GetAccess(requester.ID)
-		if !access[nested.PLACE_ACCESS_WRITE_POST] {
+		if !access[nested.PlaceAccessWritePost] {
 			notAttachedPlaceIDs = append(notAttachedPlaceIDs, placeID)
 			continue
 		}
@@ -713,7 +713,7 @@ func (s *PostService) removeComment(requester *nested.Account, request *nestedGa
 			continue
 		}
 		access := place.GetAccess(requester.ID)
-		if access[nested.PLACE_ACCESS_REMOVE_POST] {
+		if access[nested.PlaceAccessRemovePost] {
 			_Model.Post.HideComment(comment.ID, requester.ID)
 			s.Worker().Pusher().PostCommentRemoved(post, comment)
 			response.Ok()
@@ -766,7 +766,7 @@ func (s *PostService) removePost(requester *nested.Account, request *nestedGatew
 	}
 
 	access := place.GetAccess(requester.ID)
-	if access[nested.PLACE_ACCESS_REMOVE_POST] || requester.Authority.Admin {
+	if access[nested.PlaceAccessRemovePost] || requester.Authority.Admin {
 		_Model.Post.Remove(requester.ID, post.ID, place.ID)
 		response.Ok()
 	} else {
@@ -851,7 +851,7 @@ func (s *PostService) movePost(requester *nested.Account, request *nestedGateway
 	// Get access for both places
 	oldAccess := oldPlace.GetAccess(requester.ID)
 	newAccess := newPlace.GetAccess(requester.ID)
-	if !oldAccess[nested.PLACE_ACCESS_CONTROL] || !newAccess[nested.PLACE_ACCESS_CONTROL] {
+	if !oldAccess[nested.PlaceAccessControl] || !newAccess[nested.PlaceAccessControl] {
 		response.Error(nested.ERR_ACCESS, []string{"must_be_creator"})
 		return
 	}
