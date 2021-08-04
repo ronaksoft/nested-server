@@ -33,18 +33,18 @@ func NewSystemService(worker *api.Worker) *SystemService {
 	s := new(SystemService)
 	s.worker = worker
 	s.serviceCommands = api.ServiceCommands{
-		CMD_GET_INT_CONSTANTS:    {MinAuthLevel: api.AUTH_LEVEL_UNAUTHORIZED, Execute: s.getSystemIntegerConstants},
-		CMD_GET_STRING_CONSTANTS: {MinAuthLevel: api.AUTH_LEVEL_UNAUTHORIZED, Execute: s.getSystemStringConstants},
-		CMD_SET_INT_CONSTANTS:    {MinAuthLevel: api.AUTH_LEVEL_ADMIN_USER, Execute: s.setSystemIntegerConstants},
-		CMD_SET_STRING_CONSTANTS: {MinAuthLevel: api.AUTH_LEVEL_ADMIN_USER, Execute: s.setSystemStringConstants},
-		CMD_GET_COUNTERS:         {MinAuthLevel: api.AUTH_LEVEL_ADMIN_USER, Execute: s.getSystemCounters},
-		CMD_MONITOR_ENABLE:       {MinAuthLevel: api.AUTH_LEVEL_ADMIN_USER, Execute: s.enableMonitor},
-		CMD_MONITOR_DISABLE:      {MinAuthLevel: api.AUTH_LEVEL_ADMIN_USER, Execute: s.disableMonitor},
-		CMD_MONITOR_STATS:        {MinAuthLevel: api.AUTH_LEVEL_ADMIN_USER, Execute: s.getSystemStats},
-		CMD_MONITOR_ONLINE_USERS: {MinAuthLevel: api.AUTH_LEVEL_ADMIN_USER, Execute: s.onlineUsers},
-		CMD_MONITOR_ACTIVITY:     {MinAuthLevel: api.AUTH_LEVEL_ADMIN_USER, Execute: s.monitorActivity},
-		CMD_LICENSE_SET:          {MinAuthLevel: api.AUTH_LEVEL_ADMIN_USER, Execute: s.setLicense},
-		CMD_LICENSE_GET:          {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.getLicense},
+		CMD_GET_INT_CONSTANTS:    {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.getSystemIntegerConstants},
+		CMD_GET_STRING_CONSTANTS: {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.getSystemStringConstants},
+		CMD_SET_INT_CONSTANTS:    {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.setSystemIntegerConstants},
+		CMD_SET_STRING_CONSTANTS: {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.setSystemStringConstants},
+		CMD_GET_COUNTERS:         {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.getSystemCounters},
+		CMD_MONITOR_ENABLE:       {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.enableMonitor},
+		CMD_MONITOR_DISABLE:      {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.disableMonitor},
+		CMD_MONITOR_STATS:        {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.getSystemStats},
+		CMD_MONITOR_ONLINE_USERS: {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.onlineUsers},
+		CMD_MONITOR_ACTIVITY:     {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.monitorActivity},
+		CMD_LICENSE_SET:          {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.setLicense},
+		CMD_LICENSE_GET:          {MinAuthLevel: api.AuthLevelUser, Execute: s.getLicense},
 	}
 	return s
 }

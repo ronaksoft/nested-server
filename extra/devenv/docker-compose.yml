@@ -1,37 +1,37 @@
 version: '2'
 services:
 
-  edge-01:
+  cyrus:
     restart: always
     image: registry.ronaksoft.com/nested/server-gateway:4.0
-    container_name: nested-server-edge1
+    container_name: nested-server-edge
     ports:
-      - 6061:6060
-      - 80:8080
+      - "6061:6060"
+      - "80:8080"
     environment:
-      - NST_BUNDLE_ID=EDGE
-      - NST_INSTANCE_ID=001
-      - NST_JOB_ADDRESS=nats://nats:4222
-      - NST_REDIS_DSN=cache:6379
-      - NST_REDIS_PASS=ehsan2374
-      - NST_REDIS_POOL_MAX_SIZE=500
-      - NST_REDIS_POOL_SIZE=500
-      - NST_ADP_MESSAGE_URL=https://ws.adpdigital.com/url/send
-      - NST_ADP_USERNAME=ronak
-      - NST_ADP_PASSWORD=E2e2374k19743
-      - NST_MAX_CONCURRENCY=4000
-      - NST_TEST_MODE=true
-      - NST_LOG_LEVEL=-1
-      - NST_MONGO_DSN=mongodb://nested-mongo:27001/nested
-      - NST_MONGO_TLS=false
-    volumes:
-      - ./_hdd/ranger.so:/ronak/ranger.so
+      - NST_INSTANCE_ID=20180800010
+      - NST_BUNDLE_ID=CYRUS-001
+      - NST_MONGO_DSN=mongodb://mongodb:27001/nested
+      - NST_REDIS_DSN=cache:637
+      - NST_DEBUG_LEVEL=-1
+      - NST_RUN_MODE=DEVELOPMENT
     networks:
       test-nested:
         aliases:
           - "test-edge-01"
 
-
+  web:
+    restart: always
+    image: registry.ronaksoft.com/nested/legacy/web-app:v4.10.25
+    container_name: nested-web
+    environment:
+      - NST_XERXES_URL=https://xerxes.nested.me:80
+        - NST_HTTP_CYRUS_URL=http://cyrus
+        - NST_WS_CYRUS_URL=ws://cyrus
+        - NST_UPLOAD_SIZE_LIMIT=104857600
+        - NST_DOMAIN=nested.me
+        - SHOW_FOOTER=true
+        - DEFAULT_LOCALE=fa
 
 networks:
   test-nested:

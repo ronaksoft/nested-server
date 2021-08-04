@@ -33,13 +33,13 @@ func NewNotificationService(worker *api.Worker) *NotificationService {
 	s.worker = worker
 
 	s.serviceCommands = api.ServiceCommands{
-		CMD_GET:                  {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.getNotificationByID},
-		CMD_GET_ALL:              {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.getNotificationsByAccountID},
-		CMD_MARK_AS_READ:         {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.markNotificationAsRead},
-		CMD_MARK_AS_READ_BY_POST: {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.markNotificationAsReadByPost},
-		CMD_REMOVE:               {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.removeNotification},
-		CMD_RESET_COUNTER:        {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.resetNotificationCounter},
-		CMD_GET_COUNTER:          {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.getNotificationCounter},
+		CMD_GET:                  {MinAuthLevel: api.AuthLevelUser, Execute: s.getNotificationByID},
+		CMD_GET_ALL:              {MinAuthLevel: api.AuthLevelUser, Execute: s.getNotificationsByAccountID},
+		CMD_MARK_AS_READ:         {MinAuthLevel: api.AuthLevelUser, Execute: s.markNotificationAsRead},
+		CMD_MARK_AS_READ_BY_POST: {MinAuthLevel: api.AuthLevelUser, Execute: s.markNotificationAsReadByPost},
+		CMD_REMOVE:               {MinAuthLevel: api.AuthLevelUser, Execute: s.removeNotification},
+		CMD_RESET_COUNTER:        {MinAuthLevel: api.AuthLevelUser, Execute: s.resetNotificationCounter},
+		CMD_GET_COUNTER:          {MinAuthLevel: api.AuthLevelUser, Execute: s.getNotificationCounter},
 	}
 
 	_Model = s.worker.Model()

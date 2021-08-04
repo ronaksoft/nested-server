@@ -37,17 +37,17 @@ func NewLabelService(worker *api.Worker) *LabelService {
 	s.worker = worker
 
 	s.serviceCommands = api.ServiceCommands{
-		CMD_CREATE:         {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.CreateLabel},
-		CMD_GET_MANY:       {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.GetManyLabels},
-		CMD_MEMBER_GET_ALL: {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.GetLabelMembers},
-		CMD_MEMBER_ADD:     {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.AddMemberToLabel},
-		CMD_MEMBER_REMOVE:  {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.RemoveMemberFromLabel},
-		CMD_REMOVE:         {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.RemoveLabel},
-		CMD_REQUEST:        {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.CreateLabelRequest},
-		CMD_REQUEST_UPDATE: {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.UpdateLabelRequest},
-		CMD_REQUEST_LIST:   {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.ListLabelRequests},
-		CMD_REQUEST_REMOVE: {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.RemoveLabelRequest},
-		CMD_UPDATE:         {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.UpdateLabel},
+		CMD_CREATE:         {MinAuthLevel: api.AuthLevelUser, Execute: s.CreateLabel},
+		CMD_GET_MANY:       {MinAuthLevel: api.AuthLevelUser, Execute: s.GetManyLabels},
+		CMD_MEMBER_GET_ALL: {MinAuthLevel: api.AuthLevelUser, Execute: s.GetLabelMembers},
+		CMD_MEMBER_ADD:     {MinAuthLevel: api.AuthLevelUser, Execute: s.AddMemberToLabel},
+		CMD_MEMBER_REMOVE:  {MinAuthLevel: api.AuthLevelUser, Execute: s.RemoveMemberFromLabel},
+		CMD_REMOVE:         {MinAuthLevel: api.AuthLevelUser, Execute: s.RemoveLabel},
+		CMD_REQUEST:        {MinAuthLevel: api.AuthLevelUser, Execute: s.CreateLabelRequest},
+		CMD_REQUEST_UPDATE: {MinAuthLevel: api.AuthLevelUser, Execute: s.UpdateLabelRequest},
+		CMD_REQUEST_LIST:   {MinAuthLevel: api.AuthLevelUser, Execute: s.ListLabelRequests},
+		CMD_REQUEST_REMOVE: {MinAuthLevel: api.AuthLevelUser, Execute: s.RemoveLabelRequest},
+		CMD_UPDATE:         {MinAuthLevel: api.AuthLevelUser, Execute: s.UpdateLabel},
 	}
 
 	_Model = s.worker.Model()

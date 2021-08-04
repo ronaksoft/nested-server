@@ -27,7 +27,7 @@ func NewReportService(worker *api.Worker) *ReportService {
 	s.worker = worker
 
 	s.serviceCommands = api.ServiceCommands{
-		CMD_GET_TS_SINGLE_VAL: {MinAuthLevel: api.AUTH_LEVEL_ADMIN_USER, Execute: s.ReportTimeSeriesSingleValue},
+		CMD_GET_TS_SINGLE_VAL: {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.ReportTimeSeriesSingleValue},
 	}
 
 	_Model = s.worker.Model()

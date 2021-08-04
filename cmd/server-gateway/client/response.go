@@ -5,7 +5,7 @@ import (
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 )
 
-// Response
+// Response is the json wrapper around the server's response
 type Response struct {
 	Format    string   `json:"-" bson:"-"`
 	Type      string   `json:"type,omitempty" bson:"type,omitempty"`
@@ -23,6 +23,7 @@ func (r *Response) Error(code global.ErrorCode, items []string) {
 		"items":    items,
 	}
 }
+
 func (r *Response) NotImplemented() {
 	r.Type = "r"
 	r.Status = "err"
@@ -31,6 +32,7 @@ func (r *Response) NotImplemented() {
 		"items":    []string{"API Not Implemented."},
 	}
 }
+
 func (r *Response) NotAuthorized() {
 	r.Type = "r"
 	r.Status = "err"
@@ -39,6 +41,7 @@ func (r *Response) NotAuthorized() {
 		"items":    []string{"You are not authorized."},
 	}
 }
+
 func (r *Response) NotInitialized() {
 	r.Type = "r"
 	r.Status = "err"
@@ -47,6 +50,7 @@ func (r *Response) NotInitialized() {
 		"items":    []string{"Response not initialized."},
 	}
 }
+
 func (r *Response) SessionInvalid() {
 	r.Type = "r"
 	r.Status = "err"
@@ -55,6 +59,7 @@ func (r *Response) SessionInvalid() {
 		"items":    []string{"session is invalid"},
 	}
 }
+
 func (r *Response) Timeout() {
 	r.Type = "r"
 	r.Status = "err"
@@ -69,20 +74,14 @@ func (r *Response) OkWithData(data tools.M) {
 	r.Status = "ok"
 	r.Data = data
 }
+
 func (r *Response) Ok() {
 	r.Type = "r"
 	r.Data = tools.M{}
 	r.Status = "ok"
 }
+
 func (r *Response) SetLate(reqID string) {
 	r.Late = true
 	r.RequestID = reqID
 }
-// func (r *Response) MarshalJSON() ([]byte, error) {
-// 	return nil, nil
-// 	// return json.Marshal(r)
-// }
-// func (r *Response) UnMarshalJSON(b []byte) error {
-// 	err := json.Unmarshal(b, r)
-// 	return err
-// }

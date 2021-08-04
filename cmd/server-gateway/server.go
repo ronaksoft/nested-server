@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/log"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"net/http"
 	"os"
@@ -235,11 +236,11 @@ func (gw *GatewayServer) httpOnConnection(ctx iris.Context) {
 		userRequest.AppToken = appToken
 	}
 
-	// Send to API API
+	// Send to API
 	userResponse := new(nestedGateway.Response)
 	gw.api.Worker().Execute(userRequest, userResponse)
 
-	_Log.Info("HTTP Request Received",
+	log.Info("HTTP Request Received",
 		zap.String("AppID", userRequest.AppID),
 		zap.String("Cmd", userRequest.Command),
 		zap.String("Status", userResponse.Status),
@@ -274,7 +275,7 @@ func (gw *GatewayServer) httpCheckAuth(ctx iris.Context) {
 // websocketOnConnection
 // This function will be called once in each websocket connection life-time
 func (gw *GatewayServer) websocketOnConnection(c websocket.Connection) {
-	_Log.Debug("Websocket Connected",
+	log.Debug("Websocket Connected",
 		zap.String("ConnID", c.ID()),
 		zap.String("RemoteIP", c.Context().Request().RemoteAddr),
 	)
@@ -288,16 +289,16 @@ func (gw *GatewayServer) websocketOnConnection(c websocket.Connection) {
 			_ = c.EmitMessage([]byte(strings.Replace(string(m), "PING!", "PONG!", 1)))
 		} else {
 			startTime := time.Now()
-			userRequest := new(nestedGateway.Request)
+			userRequest := &nestedGateway.Request{}
 			_ = json.Unmarshal(m, userRequest)
 			userRequest.ClientIP = c.Context().RemoteAddr()
 			userRequest.UserAgent = c.Context().GetHeader("User-Agent")
 			userRequest.WebsocketID = c.ID()
 
 			// Send to API
-			userResponse := new(nestedGateway.Response)
+			userResponse := &nestedGateway.Response{}
 			gw.api.Worker().Execute(userRequest, userResponse)
-			_Log.Debug("Websocket Request Received",
+			log.Debug("Websocket Request Received",
 				zap.String("AppID", userRequest.AppID),
 				zap.String("Cmd", userRequest.Command),
 				zap.String("Status", userResponse.Status),

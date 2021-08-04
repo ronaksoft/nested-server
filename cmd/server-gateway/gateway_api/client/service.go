@@ -32,12 +32,12 @@ func NewClientService(worker *api.Worker) *ClientService {
 	s.worker = worker
 
 	s.serviceCommands = api.ServiceCommands{
-		CMD_UPLOAD_CONTACTS:    {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.uploadContacts},
-		CMD_READ_KEY:           {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.getKey},
-		CMD_SAVE_KEY:           {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.saveKey},
-		CMD_REMOVE_KEY:         {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.removeKey},
-		CMD_GET_ALL_KEYS:       {MinAuthLevel: api.AUTH_LEVEL_USER, Execute: s.getAllKeys},
-		CMD_GET_SERVER_DETAILS: {MinAuthLevel: api.AUTH_LEVEL_UNAUTHORIZED, Execute: s.getServerDetails},
+		CMD_UPLOAD_CONTACTS:    {MinAuthLevel: api.AuthLevelUser, Execute: s.uploadContacts},
+		CMD_READ_KEY:           {MinAuthLevel: api.AuthLevelUser, Execute: s.getKey},
+		CMD_SAVE_KEY:           {MinAuthLevel: api.AuthLevelUser, Execute: s.saveKey},
+		CMD_REMOVE_KEY:         {MinAuthLevel: api.AuthLevelUser, Execute: s.removeKey},
+		CMD_GET_ALL_KEYS:       {MinAuthLevel: api.AuthLevelUser, Execute: s.getAllKeys},
+		CMD_GET_SERVER_DETAILS: {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.getServerDetails},
 	}
 
 	_Model = s.worker.Model()

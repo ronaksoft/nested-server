@@ -31,11 +31,11 @@ func NewFileService(worker *api.Worker) *FileService {
 	s.worker = worker
 
 	s.serviceCommands = api.ServiceCommands{
-		FILE_CMD_GET_DOWNLOAD_TOKEN: {MinAuthLevel: api.AUTH_LEVEL_APP_L3, Execute: s.getDownloadToken},
-		FILE_CMD_GET_UPLOAD_TOKEN:   {MinAuthLevel: api.AUTH_LEVEL_APP_L1, Execute: s.getUploadToken},
-		FILE_CMD_GET_FILE:           {MinAuthLevel: api.AUTH_LEVEL_APP_L1, Execute: s.getFileByID},
-		FILE_CMD_GET_BY_TOKEN:       {MinAuthLevel: api.AUTH_LEVEL_UNAUTHORIZED, Execute: s.getFileByToken},
-		FILE_CMD_GET_RECENT_FILES:   {MinAuthLevel: api.AUTH_LEVEL_APP_L3, Execute: s.getRecentFiles},
+		FILE_CMD_GET_DOWNLOAD_TOKEN: {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getDownloadToken},
+		FILE_CMD_GET_UPLOAD_TOKEN:   {MinAuthLevel: api.AuthLevelAppL1, Execute: s.getUploadToken},
+		FILE_CMD_GET_FILE:           {MinAuthLevel: api.AuthLevelAppL1, Execute: s.getFileByID},
+		FILE_CMD_GET_BY_TOKEN:       {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.getFileByToken},
+		FILE_CMD_GET_RECENT_FILES:   {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getRecentFiles},
 	}
 
 	_Model = s.worker.Model()

@@ -67,7 +67,7 @@ func (sw *Worker) Execute(request *nestedGateway.Request, response *nestedGatewa
 
 	// authLevel initialized to UNAUTHORIZED, and if SessionSecret and SessionKey checked
 	// and at the last step AppToken will be checked.
-	authLevel := AUTH_LEVEL_UNAUTHORIZED
+	authLevel := AuthLevelUnauthorized
 	if len(request.SessionSec) > 0 && request.SessionKey.Valid() {
 		if sw.Model().Session.Verify(request.SessionKey, request.SessionSec) {
 			requester = sw.Model().Session.GetAccount(request.SessionKey)
@@ -76,9 +76,9 @@ func (sw *Worker) Execute(request *nestedGateway.Request, response *nestedGatewa
 				return
 			}
 			if requester.Authority.Admin {
-				authLevel = AUTH_LEVEL_ADMIN_USER
+				authLevel = AuthLevelAdminUser
 			} else {
-				authLevel = AUTH_LEVEL_USER
+				authLevel = AuthLevelUser
 			}
 		} else {
 			// response with ErrSession  and go to next request
@@ -92,7 +92,7 @@ func (sw *Worker) Execute(request *nestedGateway.Request, response *nestedGatewa
 			if app != nil && appToken.AppID == app.ID {
 				requester = sw.Model().Account.GetByID(appToken.AccountID, nil)
 				// TODO (Ehsan):: app levels must be set here
-				authLevel = AUTH_LEVEL_APP_L3
+				authLevel = AuthLevelAppL3
 			}
 		}
 	}

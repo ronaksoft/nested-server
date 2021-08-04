@@ -37,21 +37,21 @@ func NewSearchService(worker *api.Worker) *SearchService {
 	s.worker = worker
 
 	s.serviceCommands = api.ServiceCommands{
-		CMD_ACCOUNTS:                  {MinAuthLevel: api.AUTH_LEVEL_APP_L1,Execute: s.accounts},
-		CMD_ACCOUNTS_FOR_ADMIN:        {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.accountsForAdmin},
-		CMD_ACCOUNTS_FOR_SEARCH:       {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.accountsForSearch},
-		CMD_ACCOUNTS_FOR_ADD:          {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.accountsForAdd},
-		CMD_ACCOUNTS_FOR_INVITE:       {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.accountsForInvite},
-		CMD_ACCOUNTS_FOR_MENTION:      {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.accountsForMention},
-		CMD_ACCOUNTS_FOR_TASK_MENTION: {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.accountsForTaskMention},
-		CMD_LABELS:                    {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.labels},
-		CMD_PLACES_FOR_COMPOSE:        {MinAuthLevel: api.AUTH_LEVEL_APP_L1,Execute: s.placesForCompose},
-		CMD_PLACES_FOR_SEARCH:         {MinAuthLevel: api.AUTH_LEVEL_APP_L1,Execute: s.placesForSearch},
-		CMD_POSTS:                     {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.posts},
-		CMD_POSTS_CONVERSATION:        {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.conversation},
-		CMD_SUGGESTIONS:               {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.suggestions},
-		CMD_TASKS:                     {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.tasks},
-		CMD_APPS:                      {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.apps},
+		CMD_ACCOUNTS:                  {MinAuthLevel: api.AuthLevelAppL1,Execute: s.accounts},
+		CMD_ACCOUNTS_FOR_ADMIN:        {MinAuthLevel: api.AuthLevelUser,Execute: s.accountsForAdmin},
+		CMD_ACCOUNTS_FOR_SEARCH:       {MinAuthLevel: api.AuthLevelUser,Execute: s.accountsForSearch},
+		CMD_ACCOUNTS_FOR_ADD:          {MinAuthLevel: api.AuthLevelUser,Execute: s.accountsForAdd},
+		CMD_ACCOUNTS_FOR_INVITE:       {MinAuthLevel: api.AuthLevelUser,Execute: s.accountsForInvite},
+		CMD_ACCOUNTS_FOR_MENTION:      {MinAuthLevel: api.AuthLevelUser,Execute: s.accountsForMention},
+		CMD_ACCOUNTS_FOR_TASK_MENTION: {MinAuthLevel: api.AuthLevelUser,Execute: s.accountsForTaskMention},
+		CMD_LABELS:                    {MinAuthLevel: api.AuthLevelUser,Execute: s.labels},
+		CMD_PLACES_FOR_COMPOSE:        {MinAuthLevel: api.AuthLevelAppL1,Execute: s.placesForCompose},
+		CMD_PLACES_FOR_SEARCH:         {MinAuthLevel: api.AuthLevelAppL1,Execute: s.placesForSearch},
+		CMD_POSTS:                     {MinAuthLevel: api.AuthLevelUser,Execute: s.posts},
+		CMD_POSTS_CONVERSATION:        {MinAuthLevel: api.AuthLevelUser,Execute: s.conversation},
+		CMD_SUGGESTIONS:               {MinAuthLevel: api.AuthLevelUser,Execute: s.suggestions},
+		CMD_TASKS:                     {MinAuthLevel: api.AuthLevelUser,Execute: s.tasks},
+		CMD_APPS:                      {MinAuthLevel: api.AuthLevelUser,Execute: s.apps},
 	}
 
 	return s

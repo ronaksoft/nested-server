@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/log"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -13,11 +14,6 @@ import (
 	"git.ronaksoft.com/nested/server/pkg/protocol"
 
 	"go.uber.org/zap"
-)
-
-var (
-	_Log      *zap.Logger
-	_LogLevel zap.AtomicLevel
 )
 
 type File interface {
@@ -32,19 +28,6 @@ type Client struct {
 }
 
 func NewClient(url, apiKey string, insecure bool) (*Client, error) {
-	if nil == _Log {
-		_LogLevel = zap.NewAtomicLevelAt(zap.InfoLevel)
-		zap.NewProductionConfig()
-		logConfig := zap.NewProductionConfig()
-		logConfig.Encoding = "console"
-		logConfig.Level = _LogLevel
-		if v, err := logConfig.Build(); err != nil {
-			os.Exit(1)
-		} else {
-			_Log = v
-		}
-	}
-
 	c := &Client{
 		url:         url,
 		apiKey:      apiKey,
@@ -54,7 +37,7 @@ func NewClient(url, apiKey string, insecure bool) (*Client, error) {
 	return c, nil
 }
 
-// Uploads files
+// Upload uploads files
 func (c Client) Upload(uploadType string, files ...File) (*UploadOutput, error) {
 	var req *http.Request
 	var res *http.Response
@@ -72,16 +55,16 @@ func (c Client) Upload(uploadType string, files ...File) (*UploadOutput, error) 
 			}
 
 			if p, err := frm.CreateFormFile("files[]", fname); err != nil {
-				_Log.Warn(err.Error())
+				log.Warn(err.Error())
 				pw.CloseWithError(err)
 			} else if _, err := io.Copy(p, f); err != nil {
-				_Log.Warn(err.Error())
+				log.Warn(err.Error())
 				pw.CloseWithError(err)
 			}
 		}
 
 		if err := frm.Close(); err != nil {
-			_Log.Warn(err.Error())
+			log.Warn(err.Error())
 			pw.CloseWithError(err)
 
 		} else {
@@ -90,7 +73,7 @@ func (c Client) Upload(uploadType string, files ...File) (*UploadOutput, error) 
 	}()
 
 	if r, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/system/upload/%s/%s", c.url, uploadType, c.apiKey), pr); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 
 	} else {
@@ -110,11 +93,11 @@ func (c Client) Upload(uploadType string, files ...File) (*UploadOutput, error) 
 	}
 
 	if r, err := client.Do(req); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 
 		return nil, err
 	} else if http.StatusOK != r.StatusCode {
-		_Log.Warn("Upload request response error")
+		log.Warn("Upload request response error")
 
 		sErr := protocol.Error{}
 		decoder := json.NewDecoder(r.Body)
@@ -133,7 +116,7 @@ func (c Client) Upload(uploadType string, files ...File) (*UploadOutput, error) 
 
 	decoder := json.NewDecoder(res.Body)
 	if err := decoder.Decode(response); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 	}
 
@@ -143,7 +126,7 @@ func (c Client) Upload(uploadType string, files ...File) (*UploadOutput, error) 
 // Prepare Download Query
 func (c Client) PrepareDownload(uid string) (*http.Request, error) {
 	if r, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/system/download/%s/%s", c.url, c.apiKey, uid), nil); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 		return nil, err
 
 	} else {
@@ -172,12 +155,12 @@ func (c Client) Download(uid string) (io.Reader, error) {
 	}
 
 	if r, err := client.Do(req); err != nil {
-		_Log.Warn(err.Error())
+		log.Warn(err.Error())
 
 		return nil, err
 	} else if http.StatusOK != r.StatusCode {
 
-		_Log.Warn("download request response error",
+		log.Warn("download request response error",
 			zap.String("STATUS", r.Status),
 		)
 

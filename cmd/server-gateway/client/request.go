@@ -1,7 +1,6 @@
 package nestedGateway
 
 import (
-	"encoding/json"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 
 	"github.com/globalsign/mgo/bson"
@@ -25,14 +24,4 @@ type Request struct {
 	Data            tools.M       `json:"data"`
 	PacketSize      int           `json:"-"`
 	ResponseChannel chan Response
-}
-
-func (r *Request) UnMarshalJSON(b []byte) error {
-	err := json.Unmarshal(b, r)
-	r.PacketSize = len(b)
-	return err
-}
-
-func (r *Request) MarshalJSON() ([]byte, error) {
-	return json.Marshal(r)
 }

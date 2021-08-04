@@ -14,18 +14,8 @@ services:
       - ./redis.conf:/usr/local/etc/redis/redis.conf
       - ./_hdd/cache/:/data:rw
     ports:
-      - 6379:6379
+      - "6379:6379"
 
-  # NATS Message Broker
-  nats:
-    restart: always
-    image: registry.ronaksoft.com/base/docker/nats-streaming
-    container_name: nested-nats
-    networks:
-      - test-nested
-    ports:
-      - 8224:8222
-      - 4222:4222
 
 
   # MONGO DB
@@ -35,7 +25,7 @@ services:
     container_name: nested-mongo
     command: mongod --config /ronak/config.yml
     ports:
-      - 27001:27001
+      - "27001:27001"
     volumes:
       - ./_hdd/mongo:/data/db:rw
       - ./mongo-config.yml:/ronak/config.yml

@@ -32,12 +32,12 @@ func NewContactService(worker *api.Worker) *ContactService {
 	s.worker = worker
 
 	s.serviceCommands = api.ServiceCommands{
-		CONTACT_CMD_ADD:             {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.addContact},
-		CONTACT_CMD_ADD_FAVORITE:    {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.addContactToFavorite},
-		CONTACT_CMD_GET:             {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.getContact},
-		CONTACT_CMD_GET_ALL:         {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.getAllContacts},
-		CONTACT_CMD_REMOVE:          {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.removeContact},
-		CONTACT_CMD_REMOVE_FAVORITE: {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.removeContactFromFavorite},
+		CONTACT_CMD_ADD:             {MinAuthLevel: api.AuthLevelUser,Execute: s.addContact},
+		CONTACT_CMD_ADD_FAVORITE:    {MinAuthLevel: api.AuthLevelUser,Execute: s.addContactToFavorite},
+		CONTACT_CMD_GET:             {MinAuthLevel: api.AuthLevelUser,Execute: s.getContact},
+		CONTACT_CMD_GET_ALL:         {MinAuthLevel: api.AuthLevelUser,Execute: s.getAllContacts},
+		CONTACT_CMD_REMOVE:          {MinAuthLevel: api.AuthLevelUser,Execute: s.removeContact},
+		CONTACT_CMD_REMOVE_FAVORITE: {MinAuthLevel: api.AuthLevelUser,Execute: s.removeContactFromFavorite},
 	}
 
 	_Model = s.worker.Model()

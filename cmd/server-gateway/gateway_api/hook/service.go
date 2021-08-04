@@ -26,10 +26,10 @@ func NewHookService(worker *api.Worker) *HookService {
 	s.worker = worker
 
 	s.serviceCommands = api.ServiceCommands{
-		CMD_ADD_PLACE_HOOK:   {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.addPlaceHook},
-		CMD_ADD_ACCOUNT_HOOK: {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.addAccountHook},
-		CMD_REMOVE_HOOK:      {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.removeHook},
-		CMD_LIST:             {MinAuthLevel: api.AUTH_LEVEL_USER,Execute: s.list},
+		CMD_ADD_PLACE_HOOK:   {MinAuthLevel: api.AuthLevelUser,Execute: s.addPlaceHook},
+		CMD_ADD_ACCOUNT_HOOK: {MinAuthLevel: api.AuthLevelUser,Execute: s.addAccountHook},
+		CMD_REMOVE_HOOK:      {MinAuthLevel: api.AuthLevelUser,Execute: s.removeHook},
+		CMD_LIST:             {MinAuthLevel: api.AuthLevelUser,Execute: s.list},
 	}
 
 	return s
