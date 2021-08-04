@@ -2,7 +2,6 @@ package nested_test
 
 import (
 	nested "git.ronaksoft.com/nested/server/model"
-	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	. "github.com/smartystreets/goconvey/convey"
 	"strings"
 	"testing"
@@ -19,9 +18,9 @@ import (
 
 func TestSearchManager_Posts(t *testing.T) {
 	Convey("Search/Posts", t, func(c C) {
-		accountID := strings.ToLower(tools.RandomID(10))
+		accountID := strings.ToLower(nested.RandomID(10))
 		b := _Manager.Account.CreateUser(
-			accountID, tools.RandomID(10), tools.RandomDigit(10), "IR", "Firstname", "LN",
+			accountID, nested.RandomID(10), nested.RandomDigit(10), "IR", "Firstname", "LN",
 			"", "", "male",
 		)
 		c.So(b, ShouldBeTrue)

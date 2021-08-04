@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"git.ronaksoft.com/nested/server/pkg/global"
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"net/http"
 	"os"
 	"strings"
@@ -55,9 +57,9 @@ func NewGatewayServer() *GatewayServer {
 	gateway := new(GatewayServer)
 
 	// Set Welcome Message to send to clients when they connect
-	_WelcomeMsg := nested.M{
+	_WelcomeMsg := tools.M{
 		"type": "r",
-		"data": nested.M{
+		"data": tools.M{
 			"status": "ok",
 			"msg":    "hi",
 		},
@@ -219,7 +221,7 @@ func (gw *GatewayServer) httpOnConnection(ctx iris.Context) {
 	if err := ctx.ReadJSON(userRequest); err != nil {
 		ctx.JSON(iris.Map{
 			"status":     "err",
-			"error_code": nested.ERR_INVALID,
+			"error_code": global.ERR_INVALID,
 			"err_items":  []string{"not_valid_json"},
 		})
 		return
