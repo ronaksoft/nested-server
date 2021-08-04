@@ -1,37 +1,19 @@
 package v1
 
 import (
-	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
-	"os"
-
 	"firebase.google.com/go"
 	"git.ronaksoft.com/nested/server/model"
 	"git.ronaksoft.com/nested/server/pkg/rpc"
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"github.com/nats-io/go-nats"
-	"go.uber.org/zap"
 )
 
 var (
-	_Log      *zap.Logger
-	_LogLevel zap.AtomicLevel
 	_Model    *nested.Manager
 	_BundleID string
 	_FCM      *firebase.App
 	_NatsConn *nats.Conn
 )
-
-func init() {
-	_LogLevel = zap.NewAtomicLevelAt(zap.DebugLevel)
-	zap.NewProductionConfig()
-	logConfig := zap.NewProductionConfig()
-	logConfig.Encoding = "console"
-	logConfig.Level = _LogLevel
-	if v, err := logConfig.Build(); err != nil {
-		os.Exit(1)
-	} else {
-		_Log = v
-	}
-}
 
 func NewWorker(rateLimiter tools.RateLimiter, model *nested.Manager, natsConn *nats.Conn, fcmClient *firebase.App,
 	bundleID string) *rpc.SimpleWorker {
