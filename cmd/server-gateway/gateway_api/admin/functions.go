@@ -109,7 +109,7 @@ func (s *AdminService) createPost(requester *nested.Account, request *nestedGate
 	var subject, body, content_type, iframeUrl string
 	var labels []nested.Label
 	if v, ok := request.Data["targets"].(string); ok {
-		targets = strings.SplitN(v, ",", global.DEFAULT_POST_MAX_TARGETS)
+		targets = strings.SplitN(v, ",", global.DefaultPostMaxTargets)
 		if len(targets) == 0 {
 			response.Error(global.ERR_INVALID, []string{"targets"})
 			return
@@ -119,13 +119,13 @@ func (s *AdminService) createPost(requester *nested.Account, request *nestedGate
 		return
 	}
 	if v, ok := request.Data["label_id"].(string); ok {
-		labelIDs := strings.SplitN(v, ",", global.DEFAULT_POST_MAX_LABELS)
+		labelIDs := strings.SplitN(v, ",", global.DefaultPostMaxLabels)
 		labels = s.Worker().Model().Label.GetByIDs(labelIDs)
 	} else {
 		labels = []nested.Label{}
 	}
 	if v, ok := request.Data["attaches"].(string); ok && v != "" {
-		attachments = strings.SplitN(v, ",", global.DEFAULT_POST_MAX_ATTACHMENTS)
+		attachments = strings.SplitN(v, ",", global.DefaultPostMaxAttachments)
 	} else {
 		attachments = []string{}
 	}
@@ -174,7 +174,7 @@ func (s *AdminService) createPost(requester *nested.Account, request *nestedGate
 			mPlaces[v] = true
 		}
 	}
-	notValidPlaces := make([]string, 0, global.DEFAULT_POST_MAX_TARGETS)
+	notValidPlaces := make([]string, 0, global.DefaultPostMaxTargets)
 	for k := range mPlaces {
 		place := s.Worker().Model().Place.GetByID(k, nil)
 		if place == nil {
@@ -375,11 +375,11 @@ func (s *AdminService) createGrandPlace(requester *nested.Account, request *nest
 	pcr := nested.PlaceCreateRequest{}
 	if v, ok := request.Data["place_id"].(string); ok {
 		pcr.ID = strings.ToLower(v)
-		if pcr.ID == "" || len(pcr.ID) > global.DEFAULT_MAX_PLACE_ID {
+		if pcr.ID == "" || len(pcr.ID) > global.DefaultMaxPlaceID {
 			response.Error(global.ERR_INVALID, []string{"place_id"})
 			return
 		}
-		if matched, err := regexp.MatchString(global.DEFAULT_REGEX_GRANDPLACE_ID, pcr.ID); err != nil {
+		if matched, err := regexp.MatchString(global.DefaultRegexGrandPlaceID, pcr.ID); err != nil {
 			response.Error(global.ERR_UNKNOWN, []string{err.Error()})
 			return
 		} else if !matched {
@@ -396,7 +396,7 @@ func (s *AdminService) createGrandPlace(requester *nested.Account, request *nest
 	}
 	if v, ok := request.Data["place_name"].(string); ok {
 		pcr.Name = v
-		if pcr.Name == "" || len(pcr.Name) > global.DEFAULT_MAX_PLACE_NAME {
+		if pcr.Name == "" || len(pcr.Name) > global.DefaultMaxPlaceName {
 			response.Error(global.ERR_INVALID, []string{"place_name"})
 			return
 		}
@@ -494,7 +494,7 @@ func (s *AdminService) createPlace(requester *nested.Account, request *nestedGat
 
 	if v, ok := request.Data["place_id"].(string); ok {
 		pcr.ID = strings.ToLower(v)
-		if pcr.ID == "" || len(pcr.ID) > global.DEFAULT_MAX_PLACE_ID {
+		if pcr.ID == "" || len(pcr.ID) > global.DefaultMaxPlaceID {
 			response.Error(global.ERR_INVALID, []string{"place_id"})
 			return
 		}
@@ -505,7 +505,7 @@ func (s *AdminService) createPlace(requester *nested.Account, request *nestedGat
 		} else {
 			localPlaceID := string(pcr.ID[pos+1:])
 			// check if place id is a valid place id
-			if matched, err := regexp.MatchString(global.DEFAULT_REGEX_PLACE_ID, localPlaceID); err != nil {
+			if matched, err := regexp.MatchString(global.DefaultRegexPlaceID, localPlaceID); err != nil {
 				log.Println(err.Error())
 				response.Error(global.ERR_UNKNOWN, []string{})
 				return
@@ -520,7 +520,7 @@ func (s *AdminService) createPlace(requester *nested.Account, request *nestedGat
 	}
 	if v, ok := request.Data["place_name"].(string); ok {
 		pcr.Name = v
-		if pcr.Name == "" || len(pcr.Name) > global.DEFAULT_MAX_PLACE_NAME {
+		if pcr.Name == "" || len(pcr.Name) > global.DefaultMaxPlaceName {
 			response.Error(global.ERR_INVALID, []string{"place_name"})
 			return
 		}
@@ -588,7 +588,7 @@ func (s *AdminService) createPlace(requester *nested.Account, request *nestedGat
 		response.Error(global.ERR_INVALID, []string{"place_id"})
 		return
 	}
-	if parent.Level >= global.DEFAULT_PLACE_MAX_LEVEL {
+	if parent.Level >= global.DefaultPlaceMaxLevel {
 		response.Error(global.ERR_LIMIT, []string{"level"})
 		return
 	}
@@ -652,7 +652,7 @@ func (s *AdminService) updatePlace(requester *nested.Account, request *nestedGat
 	}
 
 	if placeName, ok := request.Data["place_name"].(string); ok {
-		if len(placeName) > 0 && len(placeName) < global.DEFAULT_MAX_PLACE_NAME {
+		if len(placeName) > 0 && len(placeName) < global.DefaultMaxPlaceName {
 			placeUpdate["name"] = placeName
 			place.Name = placeName
 		}
@@ -845,7 +845,7 @@ func (s *AdminService) addPlaceMember(requester *nested.Account, request *nested
 	}
 
 	if v, ok := request.Data["account_id"].(string); ok {
-		accountIDs = strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		accountIDs = strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 	} else {
 		response.Error(global.ERR_INCOMPLETE, []string{"account_id"})
 		return
@@ -1008,7 +1008,7 @@ func (s *AdminService) listPlaceMembers(requester *nested.Account, request *nest
 	keyholderIDs := place.KeyholderIDs
 	r := make([]tools.M, 0, len(creatorIDs)+len(keyholderIDs))
 	iStart := 0
-	iLength := global.DEFAULT_MAX_RESULT_LIMIT
+	iLength := global.DefaultMaxResultLimit
 	iEnd := iStart + iLength
 	if iEnd > len(creatorIDs) {
 		iEnd = len(creatorIDs)
@@ -1028,7 +1028,7 @@ func (s *AdminService) listPlaceMembers(requester *nested.Account, request *nest
 	}
 
 	iStart = 0
-	iLength = global.DEFAULT_MAX_RESULT_LIMIT
+	iLength = global.DefaultMaxResultLimit
 	iEnd = iStart + iLength
 	if iEnd > len(keyholderIDs) {
 		iEnd = len(keyholderIDs)
@@ -1127,7 +1127,7 @@ func (s *AdminService) createAccount(requester *nested.Account, request *nestedG
 	}
 	if v, ok := request.Data["email"].(string); ok {
 		email = strings.Trim(v, " ")
-		if b, err := regexp.MatchString(global.DEFAULT_REGEX_EMAIL, email); err != nil || !b {
+		if b, err := regexp.MatchString(global.DefaultRegexEmail, email); err != nil || !b {
 			response.Error(global.ERR_INVALID, []string{"email"})
 			return
 		}
@@ -1142,7 +1142,7 @@ func (s *AdminService) createAccount(requester *nested.Account, request *nestedG
 	}
 
 	// check if username match the regular expression
-	if matched, err := regexp.MatchString(global.DEFAULT_REGEX_ACCOUNT_ID, uid); err != nil {
+	if matched, err := regexp.MatchString(global.DefaultRegexAccountID, uid); err != nil {
 		response.Error(global.ERR_UNKNOWN, []string{err.Error()})
 		return
 	} else if !matched {
@@ -1443,7 +1443,7 @@ func (s *AdminService) listPlacesOfAccount(requester *nested.Account, request *n
 	placeIDs := account.AccessPlaceIDs
 	r := make([]tools.M, 0, len(placeIDs))
 	iStart := 0
-	iLength := global.DEFAULT_MAX_RESULT_LIMIT
+	iLength := global.DefaultMaxResultLimit
 	iEnd := iStart + iLength
 	if iEnd > len(placeIDs) {
 		iEnd = len(placeIDs)
@@ -1497,14 +1497,14 @@ func (s *AdminService) updateAccount(requester *nested.Account, request *nestedG
 
 	if fname, ok := request.Data["fname"].(string); ok && fname != "" {
 		accountUpdateRequest.FirstName = fname
-		if len(fname) > global.DEFAULT_MAX_ACCOUNT_NAME {
-			accountUpdateRequest.FirstName = fname[:global.DEFAULT_MAX_ACCOUNT_NAME]
+		if len(fname) > global.DefaultMaxAccountName {
+			accountUpdateRequest.FirstName = fname[:global.DefaultMaxAccountName]
 		}
 	}
 	if lname, ok := request.Data["lname"].(string); ok && lname != "" {
 		accountUpdateRequest.LastName = lname
-		if len(lname) > global.DEFAULT_MAX_ACCOUNT_NAME {
-			accountUpdateRequest.LastName = lname[:global.DEFAULT_MAX_ACCOUNT_NAME]
+		if len(lname) > global.DefaultMaxAccountName {
+			accountUpdateRequest.LastName = lname[:global.DefaultMaxAccountName]
 		}
 	}
 	if gender, ok := request.Data["gender"].(string); ok && gender != "" {
@@ -1527,7 +1527,7 @@ func (s *AdminService) updateAccount(requester *nested.Account, request *nestedG
 	}
 	if email, ok := request.Data["email"].(string); ok {
 		email = strings.Trim(email, " ")
-		if b, err := regexp.MatchString(global.DEFAULT_REGEX_EMAIL, email); err == nil && b {
+		if b, err := regexp.MatchString(global.DefaultRegexEmail, email); err == nil && b {
 			accountUpdateRequest.Email = email
 		}
 	}
@@ -1675,13 +1675,13 @@ func (s *AdminService) createPostForAllAccounts(requester *nested.Account, reque
 		filter = v
 	}
 	if v, ok := request.Data["label_id"].(string); ok {
-		labelIDs := strings.SplitN(v, ",", global.DEFAULT_POST_MAX_LABELS)
+		labelIDs := strings.SplitN(v, ",", global.DefaultPostMaxLabels)
 		labels = s.Worker().Model().Label.GetByIDs(labelIDs)
 	} else {
 		labels = []nested.Label{}
 	}
 	if v, ok := request.Data["attaches"].(string); ok && v != "" {
-		attachments = strings.SplitN(v, ",", global.DEFAULT_POST_MAX_ATTACHMENTS)
+		attachments = strings.SplitN(v, ",", global.DefaultPostMaxAttachments)
 	} else {
 		attachments = []string{}
 	}

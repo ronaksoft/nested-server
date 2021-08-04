@@ -150,7 +150,7 @@ func SystemInfo() tools.M {
 
 func IsValidEmail(email string) bool {
 	if email != "" {
-		if b, err := regexp.MatchString(global.DEFAULT_REGEX_EMAIL, email); err != nil || !b {
+		if b, err := regexp.MatchString(global.DefaultRegexEmail, email); err != nil || !b {
 			return false
 		}
 		return true
@@ -210,7 +210,7 @@ func UseUploadToken(token string, sk bson.ObjectId) (bool, string) {
 // 3. Expiry time
 func GenerateUploadToken(sk bson.ObjectId) (string, error) {
 	et := Timestamp() + TokenLifetime
-	tv := fmt.Sprintf("%s/%s/%s", sk.String(), global.DEFAULT_MAX_UPLOAD_SIZE, strconv.Itoa(int(et)))
+	tv := fmt.Sprintf("%s/%s/%s", sk.String(), global.DefaultMaxUploadSize, strconv.Itoa(int(et)))
 
 	token := fmt.Sprintf("%s-%d", Encrypt(TokenSeedSalt, tv), et)
 	return token, nil

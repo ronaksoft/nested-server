@@ -65,7 +65,7 @@ func (tm *TaskManager) readFromCache(taskID bson.ObjectId) *Task {
 		}
 		gobTask := new(bytes.Buffer)
 		if err := gob.NewEncoder(gobTask).Encode(task); err == nil {
-			c.Do("SETEX", keyID, global.CACHE_LIFETIME, gobTask.Bytes())
+			c.Do("SETEX", keyID, global.CacheLifetime, gobTask.Bytes())
 		}
 		return task
 	} else if err := gob.NewDecoder(bytes.NewBuffer(gobTask)).Decode(task); err == nil {
@@ -109,7 +109,7 @@ func (tm *TaskManager) removeCache(taskID bson.ObjectId) bool {
 // CreateTask creates the task object in database based on the date of TaskCreateRequest
 func (tm *TaskManager) CreateTask(tcr TaskCreateRequest) *Task {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	ts := Timestamp()
@@ -221,7 +221,7 @@ func (tm *TaskManager) GetTasksByIDs(taskIDs []bson.ObjectId) []Task {
 func (tm *TaskManager) GetByAssigneeID(accountID string, pg Pagination, filter []TaskStatus) []Task {
 
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	tasks := make([]Task, 0, pg.GetLimit())
@@ -243,7 +243,7 @@ func (tm *TaskManager) GetByAssigneeID(accountID string, pg Pagination, filter [
 func (tm *TaskManager) GetByAssignorID(accountID string, pg Pagination, filter []TaskStatus) []Task {
 
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	tasks := make([]Task, 0, pg.GetLimit())
@@ -265,7 +265,7 @@ func (tm *TaskManager) GetByAssignorID(accountID string, pg Pagination, filter [
 func (tm *TaskManager) GetByWatcherEditorID(accountID string, pg Pagination, filter []TaskStatus) []Task {
 
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	tasks := make([]Task, 0, pg.GetLimit())
@@ -290,7 +290,7 @@ func (tm *TaskManager) GetByWatcherEditorID(accountID string, pg Pagination, fil
 func (tm *TaskManager) GetByCandidateID(accountID string, pg Pagination, filter []TaskStatus) []Task {
 
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	tasks := make([]Task, 0, pg.GetLimit())
@@ -318,7 +318,7 @@ func (tm *TaskManager) GetByCustomFilter(
 ) []Task {
 
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	tasks := make([]Task, 0, pg.GetLimit())
@@ -380,7 +380,7 @@ func (tm *TaskManager) GetByCustomFilter(
 func (tm *TaskManager) GetUpcomingTasks(accountID string, pg Pagination) []Task {
 
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	tasks := make([]Task, 0, pg.GetLimit())
@@ -401,7 +401,7 @@ func (tm *TaskManager) RemoveTask(taskID bson.ObjectId) bool {
 	defer _Manager.Task.removeCache(taskID)
 
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	task := _Manager.Task.GetByID(taskID)
@@ -537,7 +537,7 @@ func (t *Task) AddAttachments(accountID string, fileIDs []UniversalID) bool {
 	defer _Manager.Task.removeCache(t.ID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_TASKS).Update(
@@ -571,7 +571,7 @@ func (t *Task) AddLabels(accountID string, labelIDs []string) bool {
 	defer _Manager.Task.removeCache(t.ID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_TASKS).Update(
@@ -601,7 +601,7 @@ func (t *Task) AddToDo(accountID string, txt string, weight int) *TaskToDo {
 	defer _Manager.Task.removeCache(t.ID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	toDo := TaskToDo{
@@ -634,7 +634,7 @@ func (t *Task) AddWatchers(adderID string, watcherIDs []string) bool {
 	defer _Manager.Task.removeCache(t.ID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_TASKS).Update(
@@ -666,7 +666,7 @@ func (t *Task) AddEditors(adderID string, editorIDs []string) bool {
 	defer _Manager.Task.removeCache(t.ID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_TASKS).Update(
@@ -699,7 +699,7 @@ func (t *Task) AddCandidates(adderID string, candidateIDs []string) bool {
 	defer _Manager.Task.removeCache(t.ID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_TASKS).Update(
@@ -730,7 +730,7 @@ func (t *Task) RemoveAttachments(accountID string, fileIDs []UniversalID) bool {
 	defer _Manager.Task.removeCache(t.ID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_TASKS).Update(
@@ -763,7 +763,7 @@ func (t *Task) RemoveLabels(accountID string, labelIDs []string) bool {
 	defer _Manager.Task.removeCache(t.ID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_TASKS).Update(
@@ -795,7 +795,7 @@ func (t *Task) RemoveToDo(accountID string, todoID int) bool {
 	defer _Manager.Task.removeCache(t.ID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	var todo TaskToDo
@@ -824,7 +824,7 @@ func (t *Task) RemoveEditors(removerID string, editorIDs []string) bool {
 	defer _Manager.Task.removeCache(t.ID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	onlyEditorIDs := make([]string, 0)
@@ -869,7 +869,7 @@ func (t *Task) RemoveWatchers(removerID string, watcherIDs []string) bool {
 	defer _Manager.Task.removeCache(t.ID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	onlyWatcherIDs := make([]string, 0)
@@ -914,7 +914,7 @@ func (t *Task) RemoveCandidates(removerID string, candidateIDs []string) bool {
 	defer _Manager.Task.removeCache(t.ID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_TASKS).Update(
@@ -942,7 +942,7 @@ func (t *Task) RemoveCandidates(removerID string, candidateIDs []string) bool {
 
 func (t *Task) UpdateMemberIDs() {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 	memberIDs := tools.MB{}
 	memberIDs.AddKeys(t.WatcherIDs, t.EditorIDs, t.CandidateIDs, []string{t.AssigneeID, t.AssignorID})
@@ -959,7 +959,7 @@ func (t *Task) UpdateStatus(accountID string, newStatus TaskStatus) bool {
 	defer _Manager.Task.removeCache(t.ID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if newStatus == t.Status {
@@ -1001,7 +1001,7 @@ func (t *Task) UpdateTodo(accountID string, todoID int, text string, weight int,
 	defer _Manager.Task.removeCache(t.ID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	var found bool
@@ -1052,7 +1052,7 @@ func (t *Task) Update(accountID string, title, desc string, dueDate uint64, dueD
 	defer _Manager.Task.removeCache(t.ID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_TASKS).UpdateId(
@@ -1096,7 +1096,7 @@ func (t *Task) UpdateAssignee(accountID string, candidateIDs []string) bool {
 	defer _Manager.Task.removeCache(t.ID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if len(candidateIDs) == 1 {
@@ -1250,7 +1250,7 @@ func (t *Task) HasActivity(activityID bson.ObjectId) bool {
 	// removed LOG Function
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if n, err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Find(
@@ -1287,7 +1287,7 @@ func (t *Task) Accept(accountID string) bool {
 	defer _Manager.Task.removeCache(t.ID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_TASKS).UpdateId(
@@ -1313,7 +1313,7 @@ func (t *Task) Reject(accountID, reason string) bool {
 	defer _Manager.Task.removeCache(t.ID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if t.Counters.Candidates > 1 {
@@ -1362,7 +1362,7 @@ func (t *Task) Resign(accountID, reason string) bool {
 	defer _Manager.Task.removeCache(t.ID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_TASKS).Update(

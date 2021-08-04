@@ -249,7 +249,7 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 	var uid, pass, fname, lname, gender, dob, country, email, phone string
 	var verification *nested.Verification
 
-	if global.REGISTER_MODE == global.REGISTER_MODE_ADMIN_ONLY {
+	if global.RegisterModeAdminOnly == global.REGISTER_MODE_ADMIN_ONLY {
 		response.Error(global.ERR_ACCESS, []string{"only_admin"})
 		return
 	}
@@ -314,7 +314,7 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 	}
 
 	// check if username match the regular expression
-	if matched, err := regexp.MatchString(global.DEFAULT_REGEX_ACCOUNT_ID, uid); err != nil {
+	if matched, err := regexp.MatchString(global.DefaultRegexAccountID, uid); err != nil {
 		response.Error(global.ERR_UNKNOWN, []string{err.Error()})
 		return
 	} else if !matched {

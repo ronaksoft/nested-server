@@ -470,7 +470,7 @@ func (rcm *ReportManager) resetAllCounters() {
 
 func (rcm *ReportManager) FlushToDB() {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	t := time.Now()
@@ -580,16 +580,16 @@ func (rcm *ReportManager) FlushToDB() {
 
 func (rcm *ReportManager) GetTimeSeriesSingleValue(from, to, key, resolution string) []TimeSeriesSingleValueHourly {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	x := make([]TimeSeriesSingleValueHourly, 0, global.DEFAULT_MAX_RESULT_LIMIT)
+	x := make([]TimeSeriesSingleValueHourly, 0, global.DefaultMaxResultLimit)
 	switch resolution {
 	case ReportResolutionHour:
 		if err := db.C(global.COLLECTION_REPORTS_COUNTERS).Find(bson.M{
 			"date": bson.M{"$gte": from, "$lte": to},
 			"key":  key,
-		}).Limit(global.DEFAULT_MAX_RESULT_LIMIT).All(&x); err != nil {
+		}).Limit(global.DefaultMaxResultLimit).All(&x); err != nil {
 			log.Warn("Model::ReportManager::GetTimeSeriesSingleValue::Error 1::", zap.Error(err))
 		}
 	case ReportResolutionDay:
@@ -617,7 +617,7 @@ func (rcm *ReportManager) GetTimeSeriesSingleValue(from, to, key, resolution str
 
 func (rcm *ReportManager) GetAPICounters() MI {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	m := MI{}

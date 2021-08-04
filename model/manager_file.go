@@ -85,7 +85,7 @@ func (fm *FileManager) readFromCache(fileID UniversalID) *FileInfo {
 		}
 		gobFile := new(bytes.Buffer)
 		if err := gob.NewEncoder(gobFile).Encode(file); err == nil {
-			c.Do("SETEX", keyID, global.CACHE_LIFETIME, gobFile.Bytes())
+			c.Do("SETEX", keyID, global.CacheLifetime, gobFile.Bytes())
 		}
 		return file
 	} else if err := gob.NewDecoder(bytes.NewBuffer(gobFile)).Decode(file); err == nil {
@@ -128,7 +128,7 @@ func (fm *FileManager) removeCache(fileID UniversalID) bool {
 
 func (fm *FileManager) AddFile(f FileInfo) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if f.Filename == "" {
@@ -142,7 +142,7 @@ func (fm *FileManager) AddFile(f FileInfo) bool {
 
 func (fm *FileManager) AddPostAsOwner(uniID UniversalID, postID bson.ObjectId) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_FILES).UpdateId(
@@ -164,7 +164,7 @@ func (fm *FileManager) AddPostAsOwner(uniID UniversalID, postID bson.ObjectId) {
 
 func (fm *FileManager) AddTaskAsOwner(uniID UniversalID, taskID bson.ObjectId) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_FILES).UpdateId(
@@ -189,7 +189,7 @@ func (fm *FileManager) AddTaskAsOwner(uniID UniversalID, taskID bson.ObjectId) {
 // check if universalID exists
 func (fm *FileManager) Exists(uniID UniversalID) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n, _ := db.C(global.COLLECTION_FILES).FindId(uniID).Count()
@@ -201,7 +201,7 @@ func (fm *FileManager) Exists(uniID UniversalID) bool {
 // Updates the status of the universalID
 func (fm *FileManager) SetStatus(uniID UniversalID, fileStatus string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	switch fileStatus {
@@ -238,7 +238,7 @@ func (fm *FileManager) SetStatus(uniID UniversalID, fileStatus string) bool {
 
 func (fm *FileManager) SetMetadata(uniID UniversalID, meta interface{}) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_FILES).Update(
@@ -276,7 +276,7 @@ func (fm *FileManager) GetFilesByIDs(uniIDs []UniversalID) (files []FileInfo) {
 
 func (fm *FileManager) GetFilesByPlace(placeID, filter, filename string, pg Pagination) (sortedList []SortedFilesWithPost) {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	q := []bson.M{
@@ -336,7 +336,7 @@ func (fm *FileManager) GetFilesByPlace(placeID, filter, filename string, pg Pagi
 
 func (fm *FileManager) GetFilesByPlaces(placeIDs []string, pg Pagination) []FileInfo {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	post := new(Post)
@@ -360,7 +360,7 @@ func (fm *FileManager) GetFilesByPlaces(placeIDs []string, pg Pagination) []File
 // RemoveTaskAsOwner removes the connection between uniID and fileID
 func (fm *FileManager) RemoveTaskAsOwner(uniID UniversalID, taskID bson.ObjectId) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_FILES).UpdateId(
@@ -381,7 +381,7 @@ func (fm *FileManager) RemoveTaskAsOwner(uniID UniversalID, taskID bson.ObjectId
 // RemovePostAsOwner removes the file from post
 func (fm *FileManager) RemovePostAsOwner(uniID UniversalID, postID bson.ObjectId) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_FILES).UpdateId(
@@ -401,7 +401,7 @@ func (fm *FileManager) RemovePostAsOwner(uniID UniversalID, postID bson.ObjectId
 
 func (fm *FileManager) SetDimension(uniID UniversalID, width, height int64) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_FILES).UpdateId(
@@ -420,7 +420,7 @@ func (fm *FileManager) SetDimension(uniID UniversalID, width, height int64) bool
 
 func (fm *FileManager) SetThumbnails(uniID UniversalID, thumbs Picture) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_FILES).UpdateId(
@@ -438,7 +438,7 @@ func (fm *FileManager) SetThumbnails(uniID UniversalID, thumbs Picture) bool {
 // IncrementDownloadCounter Increments the download counter of the file identified by "uniID"
 func (fm *FileManager) IncrementDownloadCounter(uniID UniversalID, count int) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_FILES).UpdateId(uniID, bson.M{"$inc": bson.M{"downloads": count}}); err != nil {
@@ -452,7 +452,7 @@ func (fm *FileManager) IncrementDownloadCounter(uniID UniversalID, count int) bo
 // IsTaskOwner returns true if "taskID" is one of the owners of the file identified by "uniID"
 func (fm *FileManager) IsTaskOwner(uniID UniversalID, taskID bson.ObjectId) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if n, err := db.C(global.COLLECTION_TASKS_FILES).Find(
@@ -467,7 +467,7 @@ func (fm *FileManager) IsTaskOwner(uniID UniversalID, taskID bson.ObjectId) bool
 // IsPostOwner returns true if "postID" is one of the owners of the file identified by "uniID"
 func (fm *FileManager) IsPostOwner(uniID UniversalID, postID bson.ObjectId) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if n, err := db.C(global.COLLECTION_POSTS_FILES).Find(

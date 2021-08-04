@@ -27,7 +27,7 @@ func (s *PlaceService) addPlaceMember(requester *nested.Account, request *nested
 		return
 	}
 	if v, ok := request.Data["member_id"].(string); ok {
-		memberIDs = strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		memberIDs = strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 	} else {
 		response.Error(global.ERR_INCOMPLETE, []string{"member_id"})
 		return
@@ -75,7 +75,7 @@ func (s *PlaceService) countPlaceUnreadPosts(requester *nested.Account, request 
 	var placeIDs []string
 	var withSubPlaces bool
 	if v, ok := request.Data["place_id"].(string); ok {
-		placeIDs = strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		placeIDs = strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 	} else {
 		response.Error(global.ERR_INVALID, []string{"place_id"})
 		return
@@ -134,11 +134,11 @@ func (s *PlaceService) createGrandPlace(requester *nested.Account, request *nest
 	}
 	if v, ok := request.Data["place_id"].(string); ok {
 		pcr.ID = strings.ToLower(v)
-		if pcr.ID == "" || len(pcr.ID) > global.DEFAULT_MAX_PLACE_ID {
+		if pcr.ID == "" || len(pcr.ID) > global.DefaultMaxPlaceID {
 			response.Error(global.ERR_INVALID, []string{"place_id"})
 			return
 		}
-		if matched, err := regexp.MatchString(global.DEFAULT_REGEX_GRANDPLACE_ID, pcr.ID); err != nil {
+		if matched, err := regexp.MatchString(global.DefaultRegexGrandPlaceID, pcr.ID); err != nil {
 			response.Error(global.ERR_UNKNOWN, []string{err.Error()})
 			return
 		} else if !matched {
@@ -155,7 +155,7 @@ func (s *PlaceService) createGrandPlace(requester *nested.Account, request *nest
 	}
 	if v, ok := request.Data["place_name"].(string); ok {
 		pcr.Name = v
-		if pcr.Name == "" || len(pcr.Name) > global.DEFAULT_MAX_PLACE_NAME {
+		if pcr.Name == "" || len(pcr.Name) > global.DefaultMaxPlaceName {
 			response.Error(global.ERR_INVALID, []string{"place_name"})
 			return
 		}
@@ -265,7 +265,7 @@ func (s *PlaceService) createLockedPlace(requester *nested.Account, request *nes
 
 	if v, ok := request.Data["place_id"].(string); ok {
 		pcr.ID = strings.ToLower(v)
-		if pcr.ID == "" || len(pcr.ID) > global.DEFAULT_MAX_PLACE_ID {
+		if pcr.ID == "" || len(pcr.ID) > global.DefaultMaxPlaceID {
 			response.Error(global.ERR_INVALID, []string{"place_id"})
 			return
 		}
@@ -276,7 +276,7 @@ func (s *PlaceService) createLockedPlace(requester *nested.Account, request *nes
 		} else {
 			localPlaceID := string(pcr.ID[pos+1:])
 			// check if place id is a valid place id
-			if matched, err := regexp.MatchString(global.DEFAULT_REGEX_PLACE_ID, localPlaceID); err != nil {
+			if matched, err := regexp.MatchString(global.DefaultRegexPlaceID, localPlaceID); err != nil {
 				response.Error(global.ERR_UNKNOWN, []string{err.Error()})
 				return
 			} else if !matched {
@@ -290,7 +290,7 @@ func (s *PlaceService) createLockedPlace(requester *nested.Account, request *nes
 	}
 	if v, ok := request.Data["place_name"].(string); ok {
 		pcr.Name = v
-		if pcr.Name == "" || len(pcr.Name) > global.DEFAULT_MAX_PLACE_NAME {
+		if pcr.Name == "" || len(pcr.Name) > global.DefaultMaxPlaceName {
 			response.Error(global.ERR_INVALID, []string{"place_name"})
 			return
 		}
@@ -358,7 +358,7 @@ func (s *PlaceService) createLockedPlace(requester *nested.Account, request *nes
 		response.Error(global.ERR_INVALID, []string{"place_id"})
 		return
 	}
-	if parent.Level >= global.DEFAULT_PLACE_MAX_LEVEL {
+	if parent.Level >= global.DefaultPlaceMaxLevel {
 		response.Error(global.ERR_LIMIT, []string{"level"})
 		return
 	}
@@ -425,18 +425,18 @@ func (s *PlaceService) createUnlockedPlace(requester *nested.Account, request *n
 	pcr := nested.PlaceCreateRequest{}
 	if v, ok := request.Data["place_id"].(string); ok {
 		pcr.ID = strings.ToLower(v)
-		if pcr.ID == "" || len(pcr.ID) > global.DEFAULT_MAX_PLACE_ID {
+		if pcr.ID == "" || len(pcr.ID) > global.DefaultMaxPlaceID {
 			response.Error(global.ERR_INVALID, []string{"place_id"})
 			return
 		}
-		// check if place is a subplace
+		// check if place is a sub-place
 		if pos := strings.LastIndex(pcr.ID, "."); pos == -1 {
 			response.Error(global.ERR_INVALID, []string{"place_id"})
 			return
 		} else {
 			localPlaceID := string(pcr.ID[pos+1:])
 			// check if place id is a valid place id
-			if matched, err := regexp.MatchString(global.DEFAULT_REGEX_PLACE_ID, localPlaceID); err != nil {
+			if matched, err := regexp.MatchString(global.DefaultRegexPlaceID, localPlaceID); err != nil {
 				response.Error(global.ERR_UNKNOWN, []string{err.Error()})
 				return
 			} else if !matched {
@@ -450,7 +450,7 @@ func (s *PlaceService) createUnlockedPlace(requester *nested.Account, request *n
 	}
 	if v, ok := request.Data["place_name"].(string); ok {
 		pcr.Name = v
-		if pcr.Name == "" || len(pcr.Name) > global.DEFAULT_MAX_PLACE_NAME {
+		if pcr.Name == "" || len(pcr.Name) > global.DefaultMaxPlaceName {
 			response.Error(global.ERR_INVALID, []string{"place_name"})
 			return
 		}
@@ -565,11 +565,11 @@ func (s *PlaceService) demoteMember(requester *nested.Account, request *nestedGa
 func (s *PlaceService) getPlaceAccess(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	var places []nested.Place
 	if v, ok := request.Data["place_id"].(string); ok {
-		placeIDs := strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		placeIDs := strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 		places = s.Worker().Model().Place.GetPlacesByIDs(placeIDs)
 	} else {
 		if v, ok := request.Data["place_ids"].(string); ok {
-			placeIDs := strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+			placeIDs := strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 			places = s.Worker().Model().Place.GetPlacesByIDs(placeIDs)
 		} else {
 			response.Error(global.ERR_INVALID, []string{"place_id"})
@@ -907,7 +907,7 @@ func (s *PlaceService) getMutualPlaces(requester *nested.Account, request *neste
 	placeIDs := s.Worker().Model().Account.GetMutualPlaceIDs(requester.ID, accountID)
 	r := make([]tools.M, 0, len(placeIDs))
 	iStart := 0
-	iLength := global.DEFAULT_MAX_RESULT_LIMIT
+	iLength := global.DefaultMaxResultLimit
 	iEnd := iStart + iLength
 	if iEnd > len(placeIDs) {
 		iEnd = len(placeIDs)
@@ -980,7 +980,7 @@ func (s *PlaceService) invitePlaceMember(requester *nested.Account, request *nes
 		return
 	}
 	if v, ok := request.Data["member_id"].(string); ok {
-		memberIDs = strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		memberIDs = strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 	} else {
 		response.Error(global.ERR_INCOMPLETE, []string{"member_id"})
 		return
@@ -1499,7 +1499,7 @@ func (s *PlaceService) addToBlackList(requester *nested.Account, request *nested
 		return
 	}
 	if v, ok := request.Data["addresses"].(string); ok {
-		addresses = strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		addresses = strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 	} else {
 		response.Error(global.ERR_INCOMPLETE, []string{"addresses"})
 		return
@@ -1533,7 +1533,7 @@ func (s *PlaceService) removeFromBlacklist(requester *nested.Account, request *n
 		return
 	}
 	if v, ok := request.Data["addresses"].(string); ok {
-		addresses = strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		addresses = strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 	} else {
 		response.Error(global.ERR_INCOMPLETE, []string{"addresses"})
 		return

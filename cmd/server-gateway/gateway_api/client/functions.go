@@ -73,7 +73,7 @@ func (s *ClientService) saveKey(requester *nested.Account, request *nestedGatewa
 		return
 	}
 	if v, ok := request.Data["key_value"].(string); ok {
-		if len(keyValue) > global.DEFAULT_MAX_CLIENT_OBJ_SIZE {
+		if len(keyValue) > global.DefaultMaxClientObjSize {
 			response.Error(global.ERR_LIMIT, []string{"key_value"})
 			return
 		}

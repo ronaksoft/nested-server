@@ -261,16 +261,16 @@ func (s *SearchService) posts(requester *nested.Account, request *nestedGateway.
 	labelIDs := make([]string, 0, 10)
 	placeIDs := make([]string, 0, 10)
 	if v, ok := request.Data["place_id"].(string); ok && len(v) > 0 {
-		placeIDs = strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		placeIDs = strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 	}
 	if v, ok := request.Data["sender_id"].(string); ok && len(v) > 0 {
-		senderIDs = strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		senderIDs = strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 	}
 	if v, ok := request.Data["label_id"].(string); ok && len(v) > 0 {
-		labelIDs = strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		labelIDs = strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 	}
 	if v, ok := request.Data["label_title"].(string); ok && len(v) > 0 {
-		labelTitles := strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		labelTitles := strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 		labels := s.Worker().Model().Label.GetByTitles(labelTitles)
 		for _, label := range labels {
 			labelIDs = append(labelIDs, label.ID)
@@ -314,16 +314,16 @@ func (s *SearchService) tasks(requester *nested.Account, request *nestedGateway.
 	assigneeIDs := make([]string, 0, 10)
 	labelIDs := make([]string, 0, 10)
 	if v, ok := request.Data["assigner_id"].(string); ok && len(v) > 0 {
-		assignorIDs = strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		assignorIDs = strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 	}
 	if v, ok := request.Data["assignee_id"].(string); ok && len(v) > 0 {
-		assigneeIDs = strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		assigneeIDs = strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 	}
 	if v, ok := request.Data["label_id"].(string); ok && len(v) > 0 {
-		labelIDs = strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		labelIDs = strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 	}
 	if v, ok := request.Data["label_title"].(string); ok && len(v) > 0 {
-		labelTitles := strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		labelTitles := strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 		labels := s.Worker().Model().Label.GetByTitles(labelTitles)
 		for _, label := range labels {
 			labelIDs = append(labelIDs, label.ID)

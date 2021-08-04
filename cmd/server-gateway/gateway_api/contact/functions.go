@@ -88,7 +88,7 @@ func (s *ContactService) getAllContacts(requester *nested.Account, request *nest
 	}
 	r := make([]tools.M, 0, len(c.Contacts))
 	iStart := 0
-	iLength := global.DEFAULT_MAX_RESULT_LIMIT
+	iLength := global.DefaultMaxResultLimit
 	iEnd := iStart + iLength
 	if iEnd > len(c.Contacts) {
 		iEnd = len(c.Contacts)

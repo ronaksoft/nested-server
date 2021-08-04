@@ -109,10 +109,10 @@ func NewManager(instanceID, mongoDSN, redisDSN string, logLevel int) (*Manager, 
 	}
 
 	// Set connection pool limit
-	global.DB_NAME = fmt.Sprintf("nested-%s", instanceID)
-	global.STORE_NAME = fmt.Sprintf("nested_store-%s", instanceID)
-	_MongoDB = _MongoSession.DB(global.DB_NAME)
-	_MongoStore = _MongoSession.DB(global.STORE_NAME).GridFS("fs")
+	global.DbName = fmt.Sprintf("nested-%s", instanceID)
+	global.StoreName = fmt.Sprintf("nested_store-%s", instanceID)
+	_MongoDB = _MongoSession.DB(global.DbName)
+	_MongoStore = _MongoSession.DB(global.StoreName).GridFS("fs")
 
 	// Initialize Cache Redis
 	if c, err := cache.New(redisDSN); err != nil {
@@ -229,8 +229,8 @@ func (p *Pagination) SetSkip(n int) *Pagination {
 	return p
 }
 func (p *Pagination) SetLimit(n int) *Pagination {
-	if n > global.DEFAULT_MAX_RESULT_LIMIT || n <= 0 {
-		p.limit = global.DEFAULT_MAX_RESULT_LIMIT
+	if n > global.DefaultMaxResultLimit || n <= 0 {
+		p.limit = global.DefaultMaxResultLimit
 	} else {
 		p.limit = n
 	}

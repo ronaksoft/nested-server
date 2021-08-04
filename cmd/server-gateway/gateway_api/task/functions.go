@@ -58,7 +58,7 @@ func (s *TaskService) create(requester *nested.Account, request *nestedGateway.R
 	}
 	if len(tcr.AssigneeID) == 0 {
 		if vv, ok := request.Data["candidate_id"].(string); ok {
-			accountIDs := strings.SplitN(vv, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+			accountIDs := strings.SplitN(vv, ",", global.DefaultMaxResultLimit)
 			candidates := s.Worker().Model().Account.GetAccountsByIDs(accountIDs)
 			for _, c := range candidates {
 				tcr.CandidateIDs = append(tcr.CandidateIDs, c.ID)
@@ -83,14 +83,14 @@ func (s *TaskService) create(requester *nested.Account, request *nestedGateway.R
 		}
 	}
 	if v, ok := request.Data["watcher_id"].(string); ok {
-		accountIDs := strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		accountIDs := strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 		watchers := s.Worker().Model().Account.GetAccountsByIDs(accountIDs)
 		for _, watcher := range watchers {
 			tcr.WatcherIDs = append(tcr.WatcherIDs, watcher.ID)
 		}
 	}
 	if v, ok := request.Data["editor_id"].(string); ok {
-		accountIDs := strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		accountIDs := strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 		editors := s.Worker().Model().Account.GetAccountsByIDs(accountIDs)
 		for _, editor := range editors {
 			tcr.EditorIDs = append(tcr.EditorIDs, editor.ID)
@@ -106,14 +106,14 @@ func (s *TaskService) create(requester *nested.Account, request *nestedGateway.R
 	}
 	if v, ok := request.Data["attachment_id"].(string); ok {
 		var attachmentIDs []nested.UniversalID
-		for _, attachmentID := range strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT) {
+		for _, attachmentID := range strings.SplitN(v, ",", global.DefaultMaxResultLimit) {
 			attachmentIDs = append(attachmentIDs, nested.UniversalID(attachmentID))
 		}
 		tcr.AttachmentIDs = attachmentIDs
 	}
 	if v, ok := request.Data["todos"].(string); ok {
 		i := 0
-		for _, todoRaw := range strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT) {
+		for _, todoRaw := range strings.SplitN(v, ",", global.DefaultMaxResultLimit) {
 			i++
 			todoParts := strings.SplitN(todoRaw, ";", 2)
 			if vv, err := base64.StdEncoding.DecodeString(todoParts[0]); err != nil {
@@ -141,7 +141,7 @@ func (s *TaskService) create(requester *nested.Account, request *nestedGateway.R
 		tcr.DueDate = uint64(v)
 	}
 	if v, ok := request.Data["label_id"].(string); ok {
-		labels := s.Worker().Model().Label.GetByIDs(strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT))
+		labels := s.Worker().Model().Label.GetByIDs(strings.SplitN(v, ",", global.DefaultMaxResultLimit))
 		for _, l := range labels {
 			if l.IsMember(requester.ID) || l.Public {
 				tcr.LabelIDs = append(tcr.LabelIDs, l.ID)
@@ -211,7 +211,7 @@ func (s *TaskService) addAttachment(requester *nested.Account, request *nestedGa
 		return
 	}
 	if v, ok := request.Data["universal_id"].(string); ok {
-		attachIDs := strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		attachIDs := strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 		for _, attachID := range attachIDs {
 			if s.Worker().Model().File.Exists(nested.UniversalID(attachID)) {
 				universalIDs = append(universalIDs, nested.UniversalID(attachID))
@@ -246,7 +246,7 @@ func (s *TaskService) addLabel(requester *nested.Account, request *nestedGateway
 		return
 	}
 	if v, ok := request.Data["label_id"].(string); ok {
-		labels := s.Worker().Model().Label.GetByIDs(strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT))
+		labels := s.Worker().Model().Label.GetByIDs(strings.SplitN(v, ",", global.DefaultMaxResultLimit))
 		for _, l := range labels {
 			if l.IsMember(requester.ID) || l.Public {
 				labelIDs = append(labelIDs, l.ID)
@@ -318,7 +318,7 @@ func (s *TaskService) addWatcher(requester *nested.Account, request *nestedGatew
 	}
 	if v, ok := request.Data["watcher_id"].(string); ok {
 		// only add account_ids which are exists in system and are not already in the watchers list
-		accounts := s.Worker().Model().Account.GetAccountsByIDs(strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT))
+		accounts := s.Worker().Model().Account.GetAccountsByIDs(strings.SplitN(v, ",", global.DefaultMaxResultLimit))
 		for _, account := range accounts {
 			if !task.IsWatcher(account.ID) {
 				watcherIDs = append(watcherIDs, account.ID)
@@ -351,7 +351,7 @@ func (s *TaskService) addEditor(requester *nested.Account, request *nestedGatewa
 	}
 	if v, ok := request.Data["editor_id"].(string); ok {
 		// only add account_ids which are exists in system and are not already in the watchers list
-		accounts := s.Worker().Model().Account.GetAccountsByIDs(strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT))
+		accounts := s.Worker().Model().Account.GetAccountsByIDs(strings.SplitN(v, ",", global.DefaultMaxResultLimit))
 		for _, account := range accounts {
 			if !task.IsEditor(account.ID) {
 				editorIDs = append(editorIDs, account.ID)
@@ -384,7 +384,7 @@ func (s *TaskService) updateAssignee(requester *nested.Account, request *nestedG
 	}
 	if v, ok := request.Data["account_id"].(string); ok {
 		// only add account_ids which are exists in system and are not already in the watchers list
-		accounts := s.Worker().Model().Account.GetAccountsByIDs(strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT))
+		accounts := s.Worker().Model().Account.GetAccountsByIDs(strings.SplitN(v, ",", global.DefaultMaxResultLimit))
 		for _, account := range accounts {
 			accountIDs = append(accountIDs, account.ID)
 		}
@@ -421,7 +421,7 @@ func (s *TaskService) addCandidate(requester *nested.Account, request *nestedGat
 	}
 	if v, ok := request.Data["candidate_id"].(string); ok {
 		// only add account_ids which are exists in system and are not already in the watchers list
-		accounts := s.Worker().Model().Account.GetAccountsByIDs(strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT))
+		accounts := s.Worker().Model().Account.GetAccountsByIDs(strings.SplitN(v, ",", global.DefaultMaxResultLimit))
 		for _, account := range accounts {
 			if !task.IsCandidate(account.ID) {
 				candidateIDs = append(candidateIDs, account.ID)
@@ -523,16 +523,16 @@ func (s *TaskService) getByCustomFilter(requester *nested.Account, request *nest
 	var keyword string
 	var dueDate, createdAt uint64
 	if v, ok := request.Data["assignor_id"].(string); ok && len(v) > 0 {
-		assignorIDs = strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		assignorIDs = strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 	}
 	if v, ok := request.Data["assignee_id"].(string); ok && len(v) > 0 {
-		assigneeIDs = strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		assigneeIDs = strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 	}
 	if v, ok := request.Data["label_id"].(string); ok && len(v) > 0 {
-		labelIDs = strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		labelIDs = strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 	}
 	if v, ok := request.Data["label_title"].(string); ok && len(v) > 0 {
-		labelTitles := strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		labelTitles := strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 		labels := s.Worker().Model().Label.GetByTitles(labelTitles)
 		for _, label := range labels {
 			labelIDs = append(labelIDs, label.ID)
@@ -630,7 +630,7 @@ func (s *TaskService) getActivities(requester *nested.Account, request *nestedGa
 func (s *TaskService) getMany(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	var taskIDs []bson.ObjectId
 	if v, ok := request.Data["task_id"].(string); ok {
-		ids := strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		ids := strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 		for _, taskID := range ids {
 			if bson.IsObjectIdHex(taskID) {
 				taskIDs = append(taskIDs, bson.ObjectIdHex(taskID))
@@ -656,7 +656,7 @@ func (s *TaskService) getManyActivities(requester *nested.Account, request *nest
 	var taskActivityIDs []bson.ObjectId
 	var details bool
 	if v, ok := request.Data["activity_id"].(string); ok {
-		ids := strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		ids := strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 		for _, taskActivityID := range ids {
 			if bson.IsObjectIdHex(taskActivityID) {
 				taskActivityIDs = append(taskActivityIDs, bson.ObjectIdHex(taskActivityID))
@@ -687,7 +687,7 @@ func (s *TaskService) removeAttachment(requester *nested.Account, request *neste
 	}
 	if v, ok := request.Data["universal_id"].(string); ok {
 
-		for _, id := range strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT) {
+		for _, id := range strings.SplitN(v, ",", global.DefaultMaxResultLimit) {
 			attachmentIDs = append(attachmentIDs, nested.UniversalID(id))
 		}
 	}
@@ -769,7 +769,7 @@ func (s *TaskService) removeLabel(requester *nested.Account, request *nestedGate
 		return
 	}
 	if v, ok := request.Data["label_id"].(string); ok {
-		for _, id := range strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT) {
+		for _, id := range strings.SplitN(v, ",", global.DefaultMaxResultLimit) {
 			labelIDs = append(labelIDs, id)
 		}
 	} else {
@@ -800,7 +800,7 @@ func (s *TaskService) removeTodo(requester *nested.Account, request *nestedGatew
 		return
 	}
 	if v, ok := request.Data["todo_id"].(string); ok {
-		for _, id := range strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT) {
+		for _, id := range strings.SplitN(v, ",", global.DefaultMaxResultLimit) {
 			s, _ := strconv.Atoi(id)
 			todoIDs = append(todoIDs, s)
 		}
@@ -831,7 +831,7 @@ func (s *TaskService) removeWatcher(requester *nested.Account, request *nestedGa
 		return
 	}
 	if v, ok := request.Data["watcher_id"].(string); ok {
-		for _, id := range strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT) {
+		for _, id := range strings.SplitN(v, ",", global.DefaultMaxResultLimit) {
 			watcherIDs = append(watcherIDs, id)
 		}
 	}
@@ -860,7 +860,7 @@ func (s *TaskService) removeEditor(requester *nested.Account, request *nestedGat
 		return
 	}
 	if v, ok := request.Data["editor_id"].(string); ok {
-		for _, id := range strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT) {
+		for _, id := range strings.SplitN(v, ",", global.DefaultMaxResultLimit) {
 			editorIDs = append(editorIDs, id)
 		}
 	}
@@ -889,7 +889,7 @@ func (s *TaskService) removeCandidate(requester *nested.Account, request *nested
 		return
 	}
 	if v, ok := request.Data["candidate_id"].(string); ok {
-		for _, id := range strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT) {
+		for _, id := range strings.SplitN(v, ",", global.DefaultMaxResultLimit) {
 			candidateIDs = append(candidateIDs, id)
 		}
 	}

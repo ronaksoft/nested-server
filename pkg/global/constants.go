@@ -2,68 +2,68 @@ package global
 
 // Unchangeable Default Parameters
 const (
-	DEFAULT_MAX_VERIFICATION_ATTEMPTS = 3
-	DEFAULT_MAX_RESULT_LIMIT          = 100
-	DEFAULT_MAX_BOOKMARKED_PLACES     = 1000
-	DEFAULT_MAX_CLIENT_OBJ_COUNT      = 10
-	DEFAULT_MAX_CLIENT_OBJ_SIZE       = 102400
-	DEFAULT_MAX_PLACE_NAME            = 64
-	DEFAULT_MAX_ACCOUNT_NAME          = 32
-	DEFAULT_MAX_PLACE_ID              = 128
-	DEFAULT_MAX_LABEL_TITLE           = 32
-	DEFAULT_MODEL_VERSION             = 17
+	DefaultMaxVerificationAttempts = 3
+	DefaultMaxResultLimit          = 100
+	DefaultMaxBookmarkedPlaces     = 1000
+	DefaultMaxClientObjCount       = 10
+	DefaultMaxClientObjSize        = 102400
+	DefaultMaxPlaceName            = 64
+	DefaultMaxAccountName          = 32
+	DefaultMaxPlaceID              = 128
+	DefaultMaxLabelTitle           = 32
+	DefaultModelVersion            = 17
 
-	DEFAULT_REGEX_PLACE_ID      = "^[a-zA-Z][a-zA-Z0-9-_]{0,30}[a-zA-Z0-9]$"
-	DEFAULT_REGEX_GRANDPLACE_ID = "^[a-zA-Z][a-zA-Z0-9-_]{1,30}[a-zA-Z0-9]$"
-	DEFAULT_REGEX_ACCOUNT_ID    = "^[a-zA-Z][a-zA-Z0-9-_]{1,30}[a-zA-Z0-9]$"
-	DEFAULT_REGEX_EMAIL         = "^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"
+	DefaultRegexPlaceID      = "^[a-zA-Z][a-zA-Z0-9-_]{0,30}[a-zA-Z0-9]$"
+	DefaultRegexGrandPlaceID = "^[a-zA-Z][a-zA-Z0-9-_]{1,30}[a-zA-Z0-9]$"
+	DefaultRegexAccountID    = "^[a-zA-Z][a-zA-Z0-9-_]{1,30}[a-zA-Z0-9]$"
+	DefaultRegexEmail        = "^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"
 )
 
 // Minimum Client Versions
 const (
-	ANDROID_CURRENT_SDK_VERSION = 339
-	ANDROID_MIN_SDK_VERSION     = 338
-	IOS_CURRENT_SDK_VERSION     = 10
-	IOS_MIN_SDK_VERSION         = 10
+	AndroidCurrentSdkVersion = 339
+	AndroidMinSdkVersion     = 338
+	IosCurrentSdkVersion     = 10
+	IosMinSdkVersion         = 10
 )
 
 // Supported Client Platforms
 const (
-	PLATFORM_ANDROID = "android"
-	PLATFORM_IOS     = "ios"
-	PLATFORM_FIREFOX = "firefox"
-	PLATFORM_CHROME  = "chrome"
-	PLATFORM_SAFARI  = "safari"
+	PlatformAndroid = "android"
+	PlatformIOS     = "ios"
+	PlatformFirefox = "firefox"
+	PlatformChrome  = "chrome"
+	PlatformSafari  = "safari"
 )
 
 // Adjustable Default Parameters
 var (
-	CACHE_LIFETIME          = 3600 // Seconds
-	REGISTER_MODE           = REGISTER_MODE_ADMIN_ONLY
-	DEFAULT_MAX_UPLOAD_SIZE = "100MB"
+	CacheLifetime         = 3600 // Seconds
+	RegisterModeAdminOnly = REGISTER_MODE_ADMIN_ONLY
+	DefaultMaxUploadSize  = "100MB"
 
-	DEFAULT_PLACE_MAX_CHILDREN   = 10
-	DEFAULT_PLACE_MAX_CREATORS   = 5
-	DEFAULT_PLACE_MAX_KEYHOLDERS = 25
-	DEFAULT_PLACE_MAX_LEVEL      = 3
+	DefaultPlaceMaxChildren   = 10
+	DefaultPlaceMaxCreators   = 5
+	DefaultPlaceMaxKeyHolders = 25
+	DefaultPlaceMaxLevel      = 3
 
-	DEFAULT_POST_MAX_ATTACHMENTS        = 50
-	DEFAULT_POST_MAX_TARGETS            = 20
-	DEFAULT_POST_MAX_LABELS             = 10
-	DEFAULT_POST_RETRACT_TIME    uint64 = 86400000 // 24h
+	DefaultPostMaxAttachments        = 50
+	DefaultPostMaxTargets            = 20
+	DefaultPostMaxLabels             = 10
+	DefaultPostRetractTime    uint64 = 86400000 // 24h
 
-	DEFAULT_ACCOUNT_GRAND_PLACES = 2
+	DefaultAccountGrandPlaces = 2
 
-	DEFAULT_LABEL_MAX_MEMBERS = 50
+	DefaultLabelMaxMembers = 50
 
-	DEFAULT_COMPANY_NAME = "Nested"
-	DEFAULT_COMPANY_DESC = "Team Communication Platform"
-	DEFAULT_COMPANY_LOGO = ""
-	DEFAULT_MAGIC_NUMBER = "989121228718"
-	DEFAULT_SYSTEM_LANG  = "en"
+	DefaultCompanyName = "Nested"
+	DefaultCompanyDesc = "Team Communication Platform"
+	DefaultCompanyLogo = ""
+	DefaultMagicNumber = "989121228718"
+	DefaultSystemLang  = "en"
 
-	DB_NAME    string
-	STORE_NAME string
+	DbName    string
+	StoreName string
 )
 
 // MONGODB COLLECTIONS

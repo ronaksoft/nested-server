@@ -53,7 +53,7 @@ func (pm *PostManager) readFromCache(postID bson.ObjectId) *Post {
 		}
 		gobPost := new(bytes.Buffer)
 		if err := gob.NewEncoder(gobPost).Encode(post); err == nil {
-			c.Do("SETEX", keyID, global.CACHE_LIFETIME, gobPost.Bytes())
+			c.Do("SETEX", keyID, global.CacheLifetime, gobPost.Bytes())
 		}
 		return post
 	} else if err := gob.NewDecoder(bytes.NewBuffer(gobPost)).Decode(post); err == nil {
@@ -74,7 +74,7 @@ func (pm *PostManager) readCommentFromCache(commentID bson.ObjectId) *Comment {
 		}
 		gobComment := new(bytes.Buffer)
 		if err := gob.NewDecoder(gobComment).Decode(comment); err == nil {
-			c.Do("SETEX", keyID, global.CACHE_LIFETIME, gobComment.Bytes())
+			c.Do("SETEX", keyID, global.CacheLifetime, gobComment.Bytes())
 		}
 		return comment
 	} else if err := gob.NewDecoder(bytes.NewBuffer(gobComment)).Decode(comment); err == nil {
@@ -188,7 +188,7 @@ func (pm *PostManager) AddComment(postID bson.ObjectId, senderID string, body st
 	defer _Manager.Post.removeCache(postID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	// Define Default Values
@@ -276,7 +276,7 @@ func (pm *PostManager) AddComment(postID bson.ObjectId, senderID string, body st
 // AddPost creates a new post according with data provided by 'pcr'
 func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	post := Post{}
@@ -286,18 +286,18 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 	post.ForwardFrom = pcr.ForwardFrom
 	post.ContentType = pcr.ContentType
 
-	// Returns nil if targets are more than DEFAULT_POST_MAX_TARGETS
-	if len(pcr.PlaceIDs)+len(pcr.Recipients) > global.DEFAULT_POST_MAX_TARGETS {
+	// Returns nil if targets are more than DefaultPostMaxTargets
+	if len(pcr.PlaceIDs)+len(pcr.Recipients) > global.DefaultPostMaxTargets {
 		return nil
 	}
 
-	// Returns nil if number of attachments exceeds DEFAULT_POST_MAX_ATTACHMENTS
-	if len(pcr.AttachmentIDs) > global.DEFAULT_POST_MAX_ATTACHMENTS {
+	// Returns nil if number of attachments exceeds DefaultPostMaxAttachments
+	if len(pcr.AttachmentIDs) > global.DefaultPostMaxAttachments {
 		return nil
 	}
 
-	// Returns nil if number of labels exceeds DEFAULT_POST_MAX_LABELS
-	if len(pcr.LabelIDs) > global.DEFAULT_POST_MAX_LABELS {
+	// Returns nil if number of labels exceeds DefaultPostMaxLabels
+	if len(pcr.LabelIDs) > global.DefaultPostMaxLabels {
 		return nil
 	}
 
@@ -470,7 +470,7 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 // AddAccountToWatcherList adds accountID to postID's watcher list of placeID
 func (pm *PostManager) AddAccountToWatcherList(postID bson.ObjectId, accountID string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if _, err := db.C(global.COLLECTION_POSTS_WATCHERS).Upsert(
@@ -486,7 +486,7 @@ func (pm *PostManager) AddAccountToWatcherList(postID bson.ObjectId, accountID s
 // AttachPlace adds a new place to the post, and changes the last_update of the post
 func (pm *PostManager) AttachPlace(postID bson.ObjectId, placeID, accountID string) bool {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	defer _Manager.Post.removeCache(postID)
@@ -528,7 +528,7 @@ func (pm *PostManager) AttachPlace(postID bson.ObjectId, placeID, accountID stri
 // AddRelatedTask adds a task to post
 func (pm *PostManager) AddRelatedTask(postID, taskID bson.ObjectId) {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	defer _Manager.Post.removeCache(postID)
@@ -553,7 +553,7 @@ func (pm *PostManager) RemoveRelatedTask(postID, taskID bson.ObjectId) {
 	defer _Manager.Post.removeCache(postID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_POSTS).Update(
@@ -583,7 +583,7 @@ func (pm *PostManager) CommentHasAccess(commentID bson.ObjectId, accountID strin
 // Exists returns true if post exists and it is not deleted
 func (pm *PostManager) Exists(postID bson.ObjectId) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n, _ := db.C(global.COLLECTION_POSTS).Find(bson.M{
@@ -610,11 +610,11 @@ func (pm *PostManager) GetPostsByIDs(postIDs []bson.ObjectId) []Post {
 // this function is preferred to be called instead of GetPostsOfPlaces
 func (pm *PostManager) GetPostsByPlace(placeID, sortItem string, pg Pagination) []Post {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	q := bson.M{"_removed": false}
-	posts := make([]Post, 0, global.DEFAULT_MAX_RESULT_LIMIT)
+	posts := make([]Post, 0, global.DefaultMaxResultLimit)
 	switch sortItem {
 	case POST_SORT_LAST_UPDATE, POST_SORT_TIMESTAMP:
 	default:
@@ -639,7 +639,7 @@ func (pm *PostManager) GetPostsByPlace(placeID, sortItem string, pg Pagination) 
 //		POST_SORT_TIMESTAMP
 func (pm *PostManager) GetPostsBySender(accountID, sortItem string, pg Pagination) []Post {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	switch sortItem {
@@ -651,8 +651,8 @@ func (pm *PostManager) GetPostsBySender(accountID, sortItem string, pg Paginatio
 	q := bson.M{"_removed": false}
 	q, sortDir = pg.FillQuery(q, sortItem, sortDir)
 
-	if pg.GetLimit() == 0 || pg.GetLimit() > global.DEFAULT_MAX_RESULT_LIMIT {
-		pg.SetLimit(global.DEFAULT_MAX_RESULT_LIMIT)
+	if pg.GetLimit() == 0 || pg.GetLimit() > global.DefaultMaxResultLimit {
+		pg.SetLimit(global.DefaultMaxResultLimit)
 	}
 	q["sender"] = accountID
 	Q := db.C(global.COLLECTION_POSTS).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
@@ -668,7 +668,7 @@ func (pm *PostManager) GetPostsBySender(accountID, sortItem string, pg Paginatio
 //		POST_SORT_TIMESTAMP
 func (pm *PostManager) GetPostsOfPlaces(places []string, sortItem string, pg Pagination) []Post {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	switch sortItem {
@@ -692,7 +692,7 @@ func (pm *PostManager) GetPostsOfPlaces(places []string, sortItem string, pg Pag
 // GetPostWatchers returns an array of accountIDs who listen to post notifications
 func (pm *PostManager) GetPostWatchers(postID bson.ObjectId) []string {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	watchers := struct {
@@ -712,7 +712,7 @@ func (pm *PostManager) GetPostWatchers(postID bson.ObjectId) []string {
 // return an empty slice if there is no unseen/unread post
 func (pm *PostManager) GetUnreadPostsByPlace(placeID, accountID string, subPlaces bool, pg Pagination) []Post {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	sortItem := POST_SORT_TIMESTAMP
@@ -746,7 +746,7 @@ func (pm *PostManager) GetUnreadPostsByPlace(placeID, accountID string, subPlace
 // GetAccountsWhoReadThis returns a list of members who have read this post
 func (pm *PostManager) GetAccountsWhoReadThis(postID bson.ObjectId, pg Pagination) []PostRead {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	pr := make([]PostRead, 0, pg.GetLimit())
@@ -779,7 +779,7 @@ func (pm *PostManager) GetCommentsByIDs(commentIDs []bson.ObjectId) []Comment {
 // GetCommentsByPostID returns an array of Comments of postID, if postID has no comments then it returns an empty slice.
 func (pm *PostManager) GetCommentsByPostID(postID bson.ObjectId, pg Pagination) []Comment {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	q := bson.M{
@@ -799,7 +799,7 @@ func (pm *PostManager) GetCommentsByPostID(postID bson.ObjectId, pg Pagination) 
 // GetPinnedPosts returns an array of Posts which are pinned by accountID
 func (pm *PostManager) GetPinnedPosts(accountID string, pg Pagination) []Post {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	q := bson.M{
@@ -831,7 +831,7 @@ func (pm *PostManager) GetPinnedPosts(accountID string, pg Pagination) []Post {
 // HasBeenReadBy returns TRUE if postID has been seen/read by accountID
 func (pm *PostManager) HasBeenReadBy(postID bson.ObjectId, accountID string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	q := bson.M{
@@ -850,7 +850,7 @@ func (pm *PostManager) HasBeenReadBy(postID bson.ObjectId, accountID string) boo
 // HasBeenWatchedBy returns TRUE if postID has accountID in its watchers list
 func (pm *PostManager) HasBeenWatchedBy(postID bson.ObjectId, accountID string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	q := bson.M{
@@ -887,7 +887,7 @@ func (pm *PostManager) HasAccess(postID bson.ObjectId, accountID string) bool {
 // identifies accountID as the remover of the commentID
 func (pm *PostManager) HideComment(commentID bson.ObjectId, accountID string) bool {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	c := _Manager.Post.GetCommentByID(commentID)
@@ -942,7 +942,7 @@ func (pm *PostManager) HideComment(commentID bson.ObjectId, accountID string) bo
 // MarkAsRead marks the postID as seen/read by accountID
 func (pm *PostManager) MarkAsRead(postID bson.ObjectId, accountID string) bool {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	ts := Timestamp()
@@ -993,7 +993,7 @@ func (pm *PostManager) MarkAsRead(postID bson.ObjectId, accountID string) bool {
 // MarkAsReadByPlace marks all the posts in the placeID as seen/read by accountID
 func (pm *PostManager) MarkAsReadByPlace(placeID, accountID string) bool {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	db.C(global.COLLECTION_POSTS_READS).RemoveAll(
@@ -1023,7 +1023,7 @@ func (pm *PostManager) Move(postID bson.ObjectId, oldPlaceID, newPlaceID, accoun
 	defer _Manager.Place.removeCache(newPlaceID)
 
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	// Update POSTS collection
@@ -1101,7 +1101,7 @@ func (pm *PostManager) Move(postID bson.ObjectId, oldPlaceID, newPlaceID, accoun
 // BookmarkPost adds postID to the pinned posts list of the accountID
 func (pm *PostManager) BookmarkPost(accountID string, postID bson.ObjectId) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if post := _Manager.Post.GetPostByID(postID); post != nil {
@@ -1123,7 +1123,7 @@ func (pm *PostManager) Remove(accountID string, postID bson.ObjectId, placeID st
 	defer _Manager.Place.removeCache(placeID)
 
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	post := pm.GetPostByID(postID)
@@ -1199,7 +1199,7 @@ func (pm *PostManager) Remove(accountID string, postID bson.ObjectId, placeID st
 // also removes the time-line activity of the comment
 func (pm *PostManager) RemoveComment(accountID string, commentID bson.ObjectId) bool {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	ch := mgo.Change{
@@ -1255,7 +1255,7 @@ func (pm *PostManager) RemoveComment(accountID string, commentID bson.ObjectId) 
 // RemoveAccountFromWatcherList removes accountID from postID's watchers list of the placeID
 func (pm *PostManager) RemoveAccountFromWatcherList(postID bson.ObjectId, accountID string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_POSTS_WATCHERS).Update(
@@ -1271,7 +1271,7 @@ func (pm *PostManager) RemoveAccountFromWatcherList(postID bson.ObjectId, accoun
 // SetEmailMessageID set MessageID for the post, this function will be used by Gobryas service
 func (pm *PostManager) SetEmailMessageID(postID bson.ObjectId, messageID string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_POSTS).UpdateId(
@@ -1288,7 +1288,7 @@ func (pm *PostManager) SetEmailMessageID(postID bson.ObjectId, messageID string)
 // UnpinPost removes the postID from accountID's pinned posts list
 func (pm *PostManager) UnpinPost(accountID string, postID bson.ObjectId) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_ACCOUNTS_POSTS).Remove(bson.M{
@@ -1302,7 +1302,7 @@ func (pm *PostManager) UnpinPost(accountID string, postID bson.ObjectId) {
 // IsPinned returns true if postID has been pinned by accountID
 func (pm *PostManager) IsPinned(accountID string, postID bson.ObjectId) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if n, err := db.C(global.COLLECTION_ACCOUNTS_POSTS).Find(bson.M{
@@ -1435,7 +1435,7 @@ func (p *Post) AddLabel(accountID, labelID string) bool {
 	defer _Manager.Post.removeCache(p.ID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_POSTS).UpdateId(
@@ -1463,7 +1463,7 @@ func (p *Post) RemoveLabel(accountID, labelID string) bool {
 	defer _Manager.Post.removeCache(p.ID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_POSTS).UpdateId(
@@ -1488,7 +1488,7 @@ func (p *Post) RemoveLabel(accountID, labelID string) bool {
 // MarkAsRead marks the postID as seen/read by accountID
 func (p *Post) MarkAsRead(accountID string) bool {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	ts := Timestamp()
@@ -1540,7 +1540,7 @@ func (p *Post) MarkAsRead(accountID string) bool {
 // Update updates the post
 func (p *Post) Update(postSubject, postBody string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	defer _Manager.Post.removeCache(p.ID)

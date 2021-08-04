@@ -37,7 +37,7 @@ func NewSearchManager() *SearchManager {
 // 				PlaceSearchFilterAll
 func (sm *SearchManager) Places(keyword, filter, sort, grandParentID string, pg Pagination) []Place {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	places := make([]Place, 0, pg.GetLimit())
@@ -88,7 +88,7 @@ func (sm *SearchManager) Places(keyword, filter, sort, grandParentID string, pg 
 // 		2. SEARCH.PLACES collection which contains all the places which are searchable
 func (sm *SearchManager) PlacesForCompose(keyword, accountID string, pg Pagination) []Place {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	limit := pg.GetLimit()
@@ -142,7 +142,7 @@ func (sm *SearchManager) PlacesForCompose(keyword, accountID string, pg Paginati
 // 	RecipientsForCompose returns an array of Recipients filtered by keyword
 func (sm *SearchManager) RecipientsForCompose(keyword, accountID string, pg Pagination) []string {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	limit := pg.GetLimit()
@@ -164,7 +164,7 @@ func (sm *SearchManager) RecipientsForCompose(keyword, accountID string, pg Pagi
 // 	It searches through all the places that accountID is member of
 func (sm *SearchManager) PlacesForSearch(keyword, accountID string, pg Pagination) []Place {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	limit := pg.GetLimit()
@@ -211,7 +211,7 @@ func (sm *SearchManager) PlacesForSearch(keyword, accountID string, pg Paginatio
 // 					AccountSearchFilterAll
 func (sm *SearchManager) Accounts(keyword, filter, sort string, pg Pagination) []Account {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	accounts := make([]Account, 0, pg.GetLimit())
@@ -251,7 +251,7 @@ func (sm *SearchManager) Accounts(keyword, filter, sort string, pg Pagination) [
 // 	AccountsForAddToPlace search through the members of grand place of placeID and filter by keyword
 func (sm *SearchManager) AccountsForAddToPlace(accountID, placeID string, keywords []string, pg Pagination) []Account {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	grandPlaceID := placeID
@@ -285,7 +285,7 @@ func (sm *SearchManager) AccountsForAddToPlace(accountID, placeID string, keywor
 // 	the placeID
 func (sm *SearchManager) AccountsForAddToGrandPlace(inviterID, placeID string, keyword string, pg Pagination) []Account {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	limit := pg.GetLimit()
@@ -351,7 +351,7 @@ func (sm *SearchManager) AccountsForAddToGrandPlace(inviterID, placeID string, k
 // 	AccountsForSearch search through all the members of placeIDs and all the users who are searchable.
 func (sm *SearchManager) AccountsForSearch(accountID string, keyword string, pg Pagination) []Account {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	limit := pg.GetLimit()
@@ -398,10 +398,10 @@ func (sm *SearchManager) AccountsForSearch(accountID string, keyword string, pg 
 // 	AccountsForTaskMention searches through members of placeIDs and filter by keyword
 func (sm *SearchManager) AccountsForTaskMention(task *Task, keyword string) []Account {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	accounts := make([]Account, 0, global.DEFAULT_MAX_RESULT_LIMIT)
+	accounts := make([]Account, 0, global.DefaultMaxResultLimit)
 	accountsDomain := append(task.WatcherIDs, task.AssignorID, task.AssigneeID)
 	accountsDomain = append(accountsDomain, task.CandidateIDs...)
 	accountsDomain = append(accountsDomain, task.EditorIDs...)
@@ -422,10 +422,10 @@ func (sm *SearchManager) AccountsForTaskMention(task *Task, keyword string) []Ac
 // 	AccountsForPostMention searches through members of placeIDs and filter by keyword
 func (sm *SearchManager) AccountsForPostMention(placeIDs, keywords []string, pg Pagination) []Account {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	accounts := make([]Account, 0, global.DEFAULT_MAX_RESULT_LIMIT)
+	accounts := make([]Account, 0, global.DefaultMaxResultLimit)
 	targetPlacesMap := make(map[string]bool, len(placeIDs))
 	for _, placeID := range placeIDs {
 		place := _Manager.Place.GetByID(placeID, nil)
@@ -466,7 +466,7 @@ func (sm *SearchManager) AccountsForPostMention(placeIDs, keywords []string, pg 
 // Apps searches through registered apps
 func (sm *SearchManager) Apps(keyword string, pg Pagination) []App {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	apps := make([]App, 0, pg.GetLimit())
@@ -481,7 +481,7 @@ func (sm *SearchManager) Apps(keyword string, pg Pagination) []App {
 // 	Labels returns an array of all the labels ids filtered by keyword and filter
 func (sm *SearchManager) Labels(accountID, keyword, filter string, pg Pagination) []Label {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	labels := make([]Label, 0, pg.GetLimit())
@@ -515,7 +515,7 @@ func (sm *SearchManager) Labels(accountID, keyword, filter string, pg Pagination
 // 	Posts searches through posts in "placeIDs" and filter them by keywords
 func (sm *SearchManager) Posts(keyword, accountID string, placeIDs, senderIDs, labelIDs []string, hasAttachments bool, pg Pagination) []Post {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	sortItem := POST_SORT_TIMESTAMP
@@ -567,7 +567,7 @@ func (sm *SearchManager) Posts(keyword, accountID string, placeIDs, senderIDs, l
 // 	PostsConversations returns posts between two accounts: accountID1 and accountID2
 func (sm *SearchManager) PostsConversations(peerID1, peerID2, keywords string, pg Pagination) []Post {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	sortItem := POST_SORT_TIMESTAMP
@@ -610,7 +610,7 @@ func (sm *SearchManager) PostsConversations(peerID1, peerID2, keywords string, p
 // 	Tasks searches through tasks
 func (sm *SearchManager) Tasks(keyword, accountID string, assignorIDs, assigneeIDs, labelIDs []string, hasAttachments bool, pg Pagination) []Task {
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	sortItem := POST_SORT_TIMESTAMP
@@ -680,7 +680,7 @@ func (sm *SearchManager) AddPlaceToSearchIndex(placeID, placeName string, p Pict
 	//
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if _, err := db.C(global.COLLECTION_SEARCH_INDEX_PLACES).UpsertId(placeID,
@@ -695,7 +695,7 @@ func (sm *SearchManager) RemovePlaceFromSearchIndex(placeID string) {
 	//
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	db.C(global.COLLECTION_SEARCH_INDEX_PLACES).RemoveId(placeID)
@@ -706,7 +706,7 @@ func (sm *SearchManager) AddSearchHistory(accountID, keyword string) bool {
 	//
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if len(keyword) == 0 {
@@ -732,7 +732,7 @@ func (sm *SearchManager) GetSearchHistory(accountID, keyword string) []string {
 	//
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	searchHistory := struct {
@@ -759,7 +759,7 @@ func (sm *SearchManager) AccountIDs(filter string) []string {
 	//
 
 	dbSession := _MongoSession.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	q := bson.M{}

@@ -19,7 +19,7 @@ func NewGroupManager() *GroupManager {
 // CreatePlaceGroup creates a group object in database for "placeID" and name it "name" and returns the id of the group
 func (gm *GroupManager) CreatePlaceGroup(placeID, name string) string {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	groupID := bson.NewObjectId().Hex() + RandomID(24)
@@ -43,7 +43,7 @@ func (gm *GroupManager) CreatePlaceGroup(placeID, name string) string {
 // AddItems adds items in the "items" array to the group identified by "groupID"
 func (gm *GroupManager) AddItems(groupID string, items []string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_PLACES_GROUPS).Update(
@@ -59,7 +59,7 @@ func (gm *GroupManager) AddItems(groupID string, items []string) {
 // RemoveItems removes items in the "items" array from the group identified by "groupID"
 func (gm *GroupManager) RemoveItems(groupID string, items []string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_PLACES_GROUPS).Update(
@@ -73,7 +73,7 @@ func (gm *GroupManager) RemoveItems(groupID string, items []string) {
 // GetItems returns an array of items from "groupID"
 func (gm *GroupManager) GetItems(groupID string) []string {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	v := struct {
@@ -89,7 +89,7 @@ func (gm *GroupManager) GetItems(groupID string) []string {
 // ItemExists returns true if the item exists in group identified by "groupID"
 func (gm *GroupManager) ItemExists(groupID string, item string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n, _ := db.C(global.COLLECTION_PLACES_GROUPS).Find(bson.M{

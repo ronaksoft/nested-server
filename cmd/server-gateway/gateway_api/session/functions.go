@@ -126,17 +126,17 @@ func (s *SessionService) recall(requester *nested.Account, request *nestedGatewa
 		"account":          s.Worker().Map().Account(*account, true),
 	}
 	switch os {
-	case global.PLATFORM_ANDROID:
+	case global.PlatformAndroid:
 		r["update"] = tools.M{
-			"os":          global.PLATFORM_ANDROID,
-			"cur_version": global.ANDROID_CURRENT_SDK_VERSION,
-			"min_version": global.ANDROID_MIN_SDK_VERSION,
+			"os":          global.PlatformAndroid,
+			"cur_version": global.AndroidCurrentSdkVersion,
+			"min_version": global.AndroidMinSdkVersion,
 		}
-	case global.PLATFORM_IOS:
+	case global.PlatformIOS:
 		r["update"] = tools.M{
-			"os":          global.PLATFORM_IOS,
-			"cur_version": global.IOS_CURRENT_SDK_VERSION,
-			"min_version": global.IOS_MIN_SDK_VERSION,
+			"os":          global.PlatformIOS,
+			"cur_version": global.IosCurrentSdkVersion,
+			"min_version": global.IosMinSdkVersion,
 		}
 	}
 	response.OkWithData(r)
@@ -240,18 +240,18 @@ func (s *SessionService) register(requester *nested.Account, request *nestedGate
 		"account":          s.Worker().Map().Account(*account, true),
 	}
 	switch os {
-	case global.PLATFORM_ANDROID:
+	case global.PlatformAndroid:
 		r["update"] = tools.M{
-			"os":          global.PLATFORM_ANDROID,
-			"cur_version": global.ANDROID_CURRENT_SDK_VERSION,
-			"min_version": global.ANDROID_MIN_SDK_VERSION,
+			"os":          global.PlatformAndroid,
+			"cur_version": global.AndroidCurrentSdkVersion,
+			"min_version": global.AndroidMinSdkVersion,
 			"description": "",
 		}
-	case global.PLATFORM_IOS:
+	case global.PlatformIOS:
 		r["update"] = tools.M{
-			"os":          global.PLATFORM_IOS,
-			"cur_version": global.IOS_CURRENT_SDK_VERSION,
-			"min_version": global.IOS_MIN_SDK_VERSION,
+			"os":          global.PlatformIOS,
+			"cur_version": global.IosCurrentSdkVersion,
+			"min_version": global.IosMinSdkVersion,
 			"description": "",
 		}
 	}

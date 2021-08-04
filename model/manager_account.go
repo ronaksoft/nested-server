@@ -104,7 +104,7 @@ func (am *AccountManager) readFromCache(accountID string) *Account {
 		}
 		gobAccount := new(bytes.Buffer)
 		if err := gob.NewEncoder(gobAccount).Encode(account); err == nil {
-			c.Do("SETEX", keyID, global.CACHE_LIFETIME, gobAccount.Bytes())
+			c.Do("SETEX", keyID, global.CacheLifetime, gobAccount.Bytes())
 		}
 		return account
 	} else if err := gob.NewDecoder(bytes.NewBuffer(gobAccount)).Decode(account); err == nil {
@@ -146,7 +146,7 @@ func (am *AccountManager) readKeyFromCache(keyID string) string {
 			log.Sugar().Info("Model::AccountManager::readKeyFromCache::Error 1::", err.Error())
 			return ""
 		}
-		c.Do("SETEX", keyID, global.CACHE_LIFETIME, doc["value"].(string))
+		c.Do("SETEX", keyID, global.CacheLifetime, doc["value"].(string))
 		return doc["value"].(string)
 	} else {
 		return keyValue
@@ -189,7 +189,7 @@ func (am *AccountManager) AddPlaceToBookmarks(accountID, placeID string) {
 			"$addToSet": bson.M{
 				"bookmarked_places": bson.M{
 					"$each": []string{placeID},
-					// "$slice": -global.DEFAULT_MAX_BOOKMARKED_PLACES,
+					// "$slice": -global.DefaultMaxBookmarkedPlaces,
 				},
 			},
 		},
@@ -201,7 +201,7 @@ func (am *AccountManager) AddPlaceToBookmarks(accountID, placeID string) {
 
 // Available returns true if account can be created on system otherwise returns false
 func (am *AccountManager) Available(accountID string) bool {
-	if matched, err := regexp.MatchString(global.DEFAULT_REGEX_ACCOUNT_ID, accountID); err != nil {
+	if matched, err := regexp.MatchString(global.DefaultRegexAccountID, accountID); err != nil {
 		return false
 	} else if !matched {
 		return false
@@ -250,8 +250,8 @@ func (am *AccountManager) CreateUser(uid, pass, phone, country, fname, lname, em
 	acc.Privacy.ChangePicture = true
 	acc.Privacy.ChangeProfile = true
 
-	acc.Limits.GrandPlaces = global.DEFAULT_ACCOUNT_GRAND_PLACES
-	acc.Limits.Keys = global.DEFAULT_MAX_CLIENT_OBJ_COUNT
+	acc.Limits.GrandPlaces = global.DefaultAccountGrandPlaces
+	acc.Limits.Keys = global.DefaultMaxClientObjCount
 	if err := _MongoDB.C(global.COLLECTION_ACCOUNTS).Insert(acc); err != nil {
 		log.Sugar().Info("Model::CreateUser::Error 1::", err.Error())
 		return false

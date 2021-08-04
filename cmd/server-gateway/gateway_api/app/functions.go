@@ -84,7 +84,7 @@ func (s *AppService) getTokenByAppID(requester *nested.Account, request *nestedG
 func (s *AppService) getManyApps(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	var appIDs []string
 	if v, ok := request.Data["app_id"].(string); ok {
-		appIDs = strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		appIDs = strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 	} else {
 		response.Error(global.ERR_INCOMPLETE, []string{"app_id"})
 		return

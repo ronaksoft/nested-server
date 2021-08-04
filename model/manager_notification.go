@@ -93,7 +93,7 @@ func (n *Notification) incrementCounter() {
 	defer _Manager.Account.removeCache(n.AccountID)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	db.C(global.COLLECTION_ACCOUNTS).UpdateId(
@@ -115,7 +115,7 @@ func (nm *NotificationManager) GetByAccountID(
 	accountID string, pg Pagination, only_unread bool, subject string,
 ) []Notification {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := make([]Notification, 0, pg.GetLimit())
@@ -152,7 +152,7 @@ func (nm *NotificationManager) GetByID(notificationID string) (n *Notification) 
 	//
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n = new(Notification)
@@ -165,7 +165,7 @@ func (nm *NotificationManager) MarkAsRead(notificationID, accountID string) {
 	//
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	switch notificationID {
@@ -207,7 +207,7 @@ func (nm *NotificationManager) MarkAsReadByPostID(postID bson.ObjectId, accountI
 	//
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	iter := db.C(global.COLLECTION_NOTIFICATIONS).Find(
@@ -246,7 +246,7 @@ func (nm *NotificationManager) Remove(notificationID string) bool {
 	//
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_NOTIFICATIONS).UpdateId(
@@ -264,7 +264,7 @@ func (nm *NotificationManager) AddMention(senderID, mentionedID string, postID, 
 	//
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -292,7 +292,7 @@ func (nm *NotificationManager) JoinedPlace(adderID, addedID, placeID string) *No
 	//
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -319,7 +319,7 @@ func (nm *NotificationManager) Comment(accountID, commenterID string, postID, co
 	//
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -373,7 +373,7 @@ func (nm *NotificationManager) Promoted(promotedID, promoterID, placeID string) 
 	//
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -400,7 +400,7 @@ func (nm *NotificationManager) Demoted(demotedID, demoterID, placeID string) *No
 	//
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -427,7 +427,7 @@ func (nm *NotificationManager) PlaceSettingsChanged(accountID, changerID, placeI
 	//
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -470,7 +470,7 @@ func (nm *NotificationManager) NewSession(accountID, clientID string) *Notificat
 	//
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -499,7 +499,7 @@ func (nm *NotificationManager) LabelRequestApproved(
 	//
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -530,7 +530,7 @@ func (nm *NotificationManager) LabelRequestRejected(
 	//
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -559,7 +559,7 @@ func (nm *NotificationManager) LabelRequest(accountID, requesterID string) *Noti
 	//
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -607,7 +607,7 @@ func (nm *NotificationManager) LabelJoined(accountID, labelID, adderID string) *
 	//
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -635,7 +635,7 @@ func (nm *NotificationManager) TaskAssigned(accountID, assignorID string, task *
 	//
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -665,7 +665,7 @@ func (nm *NotificationManager) TaskWatcherAdded(accountID, adderID string, task 
 	// removed LOG Function
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -694,7 +694,7 @@ func (nm *NotificationManager) TaskEditorAdded(accountID, adderID string, task *
 	// removed LOG Function
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -723,7 +723,7 @@ func (nm *NotificationManager) TaskCandidateAdded(accountID, adderID string, tas
 	// removed LOG Function
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -753,7 +753,7 @@ func (nm *NotificationManager) TaskAssigneeChanged(accountID, newAssigneeID, act
 	// removed LOG Function
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -783,7 +783,7 @@ func (nm *NotificationManager) TaskUpdated(
 	// removed LOG Function
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -812,7 +812,7 @@ func (nm *NotificationManager) TaskOverdue(accountID string, task *Task) *Notifi
 	// removed LOG Function
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -842,7 +842,7 @@ func (nm *NotificationManager) TaskDueTimeUpdated(accountID string, task *Task) 
 	// removed LOG Function
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -872,7 +872,7 @@ func (nm *NotificationManager) TaskRejected(accountID, actorID string, task *Tas
 	// removed LOG Function
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -902,7 +902,7 @@ func (nm *NotificationManager) TaskAccepted(accountID, actorID string, task *Tas
 	// removed LOG Function
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -932,7 +932,7 @@ func (nm *NotificationManager) TaskCompleted(accountID, actorID string, task *Ta
 	// removed LOG Function
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -962,7 +962,7 @@ func (nm *NotificationManager) TaskHold(accountID, actorID string, task *Task) *
 	// removed LOG Function
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -992,7 +992,7 @@ func (nm *NotificationManager) TaskInProgress(accountID, actorID string, task *T
 	// removed LOG Function
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -1022,7 +1022,7 @@ func (nm *NotificationManager) TaskFailed(accountID, actorID string, task *Task)
 	// removed LOG Function
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -1054,7 +1054,7 @@ func (nm *NotificationManager) TaskCommentMentioned(
 	// removed LOG Function
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)
@@ -1084,7 +1084,7 @@ func (nm *NotificationManager) TaskComment(accountID, actorID string, task *Task
 	// removed LOG Function
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n := new(Notification)

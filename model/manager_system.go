@@ -35,7 +35,7 @@ func NewSystemManager() *SystemManager {
 // GetIntegerConstants returns a map with integer values
 func (sm *SystemManager) GetIntegerConstants() MI {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	r := new(SystemConstants)
@@ -52,48 +52,48 @@ func (sm *SystemManager) GetIntegerConstants() MI {
 
 	// Place Constants
 	if _, ok := r.Integers[global.SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN]; !ok {
-		r.Integers[global.SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN] = global.DEFAULT_PLACE_MAX_CHILDREN
+		r.Integers[global.SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN] = global.DefaultPlaceMaxChildren
 	}
 	if _, ok := r.Integers[global.SYSTEM_CONSTANTS_PLACE_MAX_CREATORS]; !ok {
-		r.Integers[global.SYSTEM_CONSTANTS_PLACE_MAX_CREATORS] = global.DEFAULT_PLACE_MAX_CREATORS
+		r.Integers[global.SYSTEM_CONSTANTS_PLACE_MAX_CREATORS] = global.DefaultPlaceMaxCreators
 	}
 	if _, ok := r.Integers[global.SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS]; !ok {
-		r.Integers[global.SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS] = global.DEFAULT_PLACE_MAX_KEYHOLDERS
+		r.Integers[global.SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS] = global.DefaultPlaceMaxKeyHolders
 	}
 	if _, ok := r.Integers[global.SYSTEM_CONSTANTS_PLACE_MAX_LEVEL]; !ok {
-		r.Integers[global.SYSTEM_CONSTANTS_PLACE_MAX_LEVEL] = global.DEFAULT_PLACE_MAX_LEVEL
+		r.Integers[global.SYSTEM_CONSTANTS_PLACE_MAX_LEVEL] = global.DefaultPlaceMaxLevel
 	}
 
 	// Post Constants
 	if _, ok := r.Integers[global.SYSTEM_CONSTANTS_POST_MAX_ATTACHMENTS]; !ok {
-		r.Integers[global.SYSTEM_CONSTANTS_POST_MAX_ATTACHMENTS] = global.DEFAULT_POST_MAX_ATTACHMENTS
+		r.Integers[global.SYSTEM_CONSTANTS_POST_MAX_ATTACHMENTS] = global.DefaultPostMaxAttachments
 	}
 	if _, ok := r.Integers[global.SYSTEM_CONSTANTS_POST_MAX_TARGETS]; !ok {
-		r.Integers[global.SYSTEM_CONSTANTS_POST_MAX_TARGETS] = global.DEFAULT_POST_MAX_TARGETS
+		r.Integers[global.SYSTEM_CONSTANTS_POST_MAX_TARGETS] = global.DefaultPostMaxTargets
 	}
 	if _, ok := r.Integers[global.SYSTEM_CONSTANTS_POST_MAX_LABELS]; !ok {
-		r.Integers[global.SYSTEM_CONSTANTS_POST_MAX_LABELS] = global.DEFAULT_POST_MAX_LABELS
+		r.Integers[global.SYSTEM_CONSTANTS_POST_MAX_LABELS] = global.DefaultPostMaxLabels
 	}
 	if _, ok := r.Integers[global.SYSTEM_CONSTANTS_POST_RETRACT_TIME]; !ok {
-		r.Integers[global.SYSTEM_CONSTANTS_POST_RETRACT_TIME] = int(global.DEFAULT_POST_RETRACT_TIME)
+		r.Integers[global.SYSTEM_CONSTANTS_POST_RETRACT_TIME] = int(global.DefaultPostRetractTime)
 	}
 
 	// Account Constants
 	if _, ok := r.Integers[global.SYSTEM_CONSTANTS_ACCOUNT_GRANDPLACE_LIMIT]; !ok {
-		r.Integers[global.SYSTEM_CONSTANTS_ACCOUNT_GRANDPLACE_LIMIT] = global.DEFAULT_ACCOUNT_GRAND_PLACES
+		r.Integers[global.SYSTEM_CONSTANTS_ACCOUNT_GRANDPLACE_LIMIT] = global.DefaultAccountGrandPlaces
 	}
 
 	// Label Constants
 	if _, ok := r.Integers[global.SYSTEM_CONSTANTS_LABEL_MAX_MEMBERS]; !ok {
-		r.Integers[global.SYSTEM_CONSTANTS_LABEL_MAX_MEMBERS] = global.DEFAULT_LABEL_MAX_MEMBERS
+		r.Integers[global.SYSTEM_CONSTANTS_LABEL_MAX_MEMBERS] = global.DefaultLabelMaxMembers
 	}
 
 	// Misc Constants
 	if _, ok := r.Integers[global.SYSTEM_CONSTANTS_CACHE_LIFETIME]; !ok {
-		r.Integers[global.SYSTEM_CONSTANTS_CACHE_LIFETIME] = global.CACHE_LIFETIME
+		r.Integers[global.SYSTEM_CONSTANTS_CACHE_LIFETIME] = global.CacheLifetime
 	}
 	if _, ok := r.Integers[global.SYSTEM_CONSTANTS_REGISTER_MODE]; !ok {
-		r.Integers[global.SYSTEM_CONSTANTS_REGISTER_MODE] = global.REGISTER_MODE
+		r.Integers[global.SYSTEM_CONSTANTS_REGISTER_MODE] = global.RegisterModeAdminOnly
 	}
 
 	return r.Integers
@@ -114,19 +114,19 @@ func (sm *SystemManager) GetStringConstants() MS {
 	}
 	// Company Constants
 	if _, ok := r.Strings[global.SYSTEM_CONSTANTS_COMPANY_NAME]; !ok {
-		r.Strings[global.SYSTEM_CONSTANTS_COMPANY_NAME] = global.DEFAULT_COMPANY_NAME
+		r.Strings[global.SYSTEM_CONSTANTS_COMPANY_NAME] = global.DefaultCompanyName
 	}
 	if _, ok := r.Strings[global.SYSTEM_CONSTANTS_COMPANY_DESC]; !ok {
-		r.Strings[global.SYSTEM_CONSTANTS_COMPANY_DESC] = global.DEFAULT_COMPANY_DESC
+		r.Strings[global.SYSTEM_CONSTANTS_COMPANY_DESC] = global.DefaultCompanyDesc
 	}
 	if _, ok := r.Strings[global.SYSTEM_CONSTANTS_COMPANY_LOGO]; !ok {
-		r.Strings[global.SYSTEM_CONSTANTS_COMPANY_LOGO] = global.DEFAULT_COMPANY_LOGO
+		r.Strings[global.SYSTEM_CONSTANTS_COMPANY_LOGO] = global.DefaultCompanyLogo
 	}
 	if _, ok := r.Strings[global.SYSTEM_CONSTANTS_SYSTEM_LANG]; !ok {
-		r.Strings[global.SYSTEM_CONSTANTS_SYSTEM_LANG] = global.DEFAULT_SYSTEM_LANG
+		r.Strings[global.SYSTEM_CONSTANTS_SYSTEM_LANG] = global.DefaultSystemLang
 	}
 	if _, ok := r.Strings[global.SYSTEM_CONSTANTS_MAGIC_NUMBER]; !ok {
-		r.Strings[global.SYSTEM_CONSTANTS_MAGIC_NUMBER] = global.DEFAULT_MAGIC_NUMBER
+		r.Strings[global.SYSTEM_CONSTANTS_MAGIC_NUMBER] = global.DefaultMagicNumber
 	}
 	if _, ok := r.Strings[global.SYSTEM_CONSTANTS_LICENSE_KEY]; !ok {
 		r.Strings[global.SYSTEM_CONSTANTS_LICENSE_KEY] = ""
@@ -143,7 +143,7 @@ func (sm *SystemManager) GetStringConstants() MS {
 //  6. Common Places
 func (sm *SystemManager) GetCounters() MI {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	m := MI{}
@@ -276,65 +276,65 @@ func (sm *SystemManager) SetStringConstants(m tools.M) {
 func (sm *SystemManager) LoadIntegerConstants() {
 	iConstants := sm.GetIntegerConstants()
 	// Place Constants
-	global.DEFAULT_PLACE_MAX_CHILDREN = ClampInteger(
+	global.DefaultPlaceMaxChildren = ClampInteger(
 		iConstants[global.SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN],
 		global.SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN_LL,
 		global.SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN_UL,
 	)
-	global.DEFAULT_PLACE_MAX_CREATORS = ClampInteger(
+	global.DefaultPlaceMaxCreators = ClampInteger(
 		iConstants[global.SYSTEM_CONSTANTS_PLACE_MAX_CREATORS],
 		global.SYSTEM_CONSTANTS_PLACE_MAX_CREATORS_LL,
 		global.SYSTEM_CONSTANTS_PLACE_MAX_CREATORS_UL,
 	)
-	global.DEFAULT_PLACE_MAX_KEYHOLDERS = ClampInteger(
+	global.DefaultPlaceMaxKeyHolders = ClampInteger(
 		iConstants[global.SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS],
 		global.SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS_LL,
 		global.SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS_UL,
 	)
-	global.DEFAULT_PLACE_MAX_LEVEL = ClampInteger(
+	global.DefaultPlaceMaxLevel = ClampInteger(
 		iConstants[global.SYSTEM_CONSTANTS_PLACE_MAX_LEVEL],
 		global.SYSTEM_CONSTANTS_PLACE_MAX_LEVEL_LL,
 		global.SYSTEM_CONSTANTS_PLACE_MAX_LEVEL_UL,
 	)
 
 	// Post Constants
-	global.DEFAULT_POST_MAX_ATTACHMENTS = ClampInteger(
+	global.DefaultPostMaxAttachments = ClampInteger(
 		iConstants[global.SYSTEM_CONSTANTS_POST_MAX_ATTACHMENTS],
 		global.SYSTEM_CONSTANTS_POST_MAX_ATTACHMENTS_LL,
 		global.SYSTEM_CONSTANTS_POST_MAX_ATTACHMENTS_UL,
 	)
-	global.DEFAULT_POST_MAX_TARGETS = ClampInteger(
+	global.DefaultPostMaxTargets = ClampInteger(
 		iConstants[global.SYSTEM_CONSTANTS_POST_MAX_TARGETS],
 		global.SYSTEM_CONSTANTS_POST_MAX_TARGETS_LL,
 		global.SYSTEM_CONSTANTS_POST_MAX_TARGETS_UL,
 	)
-	global.DEFAULT_POST_RETRACT_TIME = uint64(ClampInteger(
+	global.DefaultPostRetractTime = uint64(ClampInteger(
 		iConstants[global.SYSTEM_CONSTANTS_POST_RETRACT_TIME],
 		global.SYSTEM_CONSTANTS_POST_RETRACT_TIME_LL,
 		global.SYSTEM_CONSTANTS_POST_RETRACT_TIME_UL,
 	))
-	global.DEFAULT_POST_MAX_LABELS = ClampInteger(
+	global.DefaultPostMaxLabels = ClampInteger(
 		iConstants[global.SYSTEM_CONSTANTS_POST_MAX_LABELS],
 		global.SYSTEM_CONSTANTS_POST_MAX_LABELS_LL,
 		global.SYSTEM_CONSTANTS_POST_MAX_LABELS_UL,
 	)
 
 	// Account Constants
-	global.DEFAULT_ACCOUNT_GRAND_PLACES = ClampInteger(
+	global.DefaultAccountGrandPlaces = ClampInteger(
 		iConstants[global.SYSTEM_CONSTANTS_ACCOUNT_GRANDPLACE_LIMIT],
 		global.SYSTEM_CONSTANTS_ACCOUNT_GRANDPLACE_LIMIT_LL,
 		global.SYSTEM_CONSTANTS_ACCOUNT_GRANDPLACE_LIMIT_UL,
 	)
 
 	// Label Constants
-	global.DEFAULT_LABEL_MAX_MEMBERS = ClampInteger(
+	global.DefaultLabelMaxMembers = ClampInteger(
 		iConstants[global.SYSTEM_CONSTANTS_LABEL_MAX_MEMBERS],
 		global.SYSTEM_CONSTANTS_LABEL_MAX_MEMBERS_LL,
 		global.SYSTEM_CONSTANTS_LABEL_MAX_MEMBERS_UL,
 	)
 
 	// Misc Constants
-	global.CACHE_LIFETIME = ClampInteger(
+	global.CacheLifetime = ClampInteger(
 		iConstants[global.SYSTEM_CONSTANTS_CACHE_LIFETIME],
 		global.SYSTEM_CONSTANTS_CACHE_LIFETIME_LL,
 		global.SYSTEM_CONSTANTS_CACHE_LIFETIME_UL,
@@ -342,18 +342,18 @@ func (sm *SystemManager) LoadIntegerConstants() {
 
 	switch iConstants[global.SYSTEM_CONSTANTS_REGISTER_MODE] {
 	case global.REGISTER_MODE_ADMIN_ONLY, global.REGISTER_MODE_EVERYONE:
-		global.REGISTER_MODE = iConstants[global.SYSTEM_CONSTANTS_REGISTER_MODE]
+		global.RegisterModeAdminOnly = iConstants[global.SYSTEM_CONSTANTS_REGISTER_MODE]
 	default:
-		global.REGISTER_MODE = global.REGISTER_MODE_ADMIN_ONLY
+		global.RegisterModeAdminOnly = global.REGISTER_MODE_ADMIN_ONLY
 	}
 }
 
 func (sm *SystemManager) LoadStringConstants() {
 	sConstants := sm.GetStringConstants()
-	global.DEFAULT_COMPANY_NAME = sConstants[global.SYSTEM_CONSTANTS_COMPANY_NAME]
-	global.DEFAULT_COMPANY_DESC = sConstants[global.SYSTEM_CONSTANTS_COMPANY_DESC]
-	global.DEFAULT_COMPANY_LOGO = sConstants[global.SYSTEM_CONSTANTS_COMPANY_LOGO]
-	global.DEFAULT_MAGIC_NUMBER = sConstants[global.SYSTEM_CONSTANTS_MAGIC_NUMBER]
+	global.DefaultCompanyName = sConstants[global.SYSTEM_CONSTANTS_COMPANY_NAME]
+	global.DefaultCompanyDesc = sConstants[global.SYSTEM_CONSTANTS_COMPANY_DESC]
+	global.DefaultCompanyLogo = sConstants[global.SYSTEM_CONSTANTS_COMPANY_LOGO]
+	global.DefaultMagicNumber = sConstants[global.SYSTEM_CONSTANTS_MAGIC_NUMBER]
 }
 
 func (sm *SystemManager) SetMessageTemplate(msgID, msgSubject, msgBody string) bool {
@@ -373,7 +373,7 @@ func (sm *SystemManager) SetMessageTemplate(msgID, msgSubject, msgBody string) b
 
 func (sm *SystemManager) GetMessageTemplates() map[string]MessageTemplate {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	templates := make(map[string]MessageTemplate)
@@ -385,7 +385,7 @@ func (sm *SystemManager) GetMessageTemplates() map[string]MessageTemplate {
 
 func (sm *SystemManager) RemoveMessageTemplate(msgID string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_SYSTEM_INTERNAL).UpdateId(
@@ -434,7 +434,7 @@ func (sm *SystemManager) GetSystemInfo(key string) MS {
 
 func (sm *SystemManager) SetCounter(params MI) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	for key := range params {
@@ -470,12 +470,12 @@ func (sm *SystemManager) setDataModelVersion(n int) bool {
 
 func (sm *SystemManager) getDataModelVersion() int {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	r := MI{}
 	if err := db.C(global.COLLECTION_SYSTEM_INTERNAL).FindId("constants").One(r); err != nil {
-		return global.DEFAULT_MODEL_VERSION
+		return global.DefaultModelVersion
 	}
 	model, _ := r[global.SYSTEM_CONSTANTS_MODEL_VERSION]
 	return model
@@ -483,7 +483,7 @@ func (sm *SystemManager) getDataModelVersion() int {
 
 func (sm *SystemManager) incrementCounter(params MI) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	for key := range params {

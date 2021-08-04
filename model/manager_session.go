@@ -51,7 +51,7 @@ func (sm *SessionManager) readFromCache(sessionID bson.ObjectId) *Session {
 
 		gobSession := new(bytes.Buffer)
 		if err := gob.NewEncoder(gobSession).Encode(session); err == nil {
-			c.Do("SETEX", keyID, global.CACHE_LIFETIME, gobSession.Bytes())
+			c.Do("SETEX", keyID, global.CacheLifetime, gobSession.Bytes())
 		}
 		return session
 	} else if err := gob.NewDecoder(bytes.NewBuffer(gobSession)).Decode(session); err == nil {
@@ -74,7 +74,7 @@ func (sm *SessionManager) updateCache(sessionID bson.ObjectId) bool {
 	if err := gob.NewEncoder(gobSession).Encode(session); err != nil {
 		return false
 	} else {
-		c.Do("SETEX", keyID, global.CACHE_LIFETIME, gobSession.Bytes())
+		c.Do("SETEX", keyID, global.CacheLifetime, gobSession.Bytes())
 	}
 	return true
 }
@@ -87,7 +87,7 @@ func (sm *SessionManager) Create(in MS) (bson.ObjectId, error) {
 
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	sk := bson.NewObjectId()
@@ -125,7 +125,7 @@ func (sm *SessionManager) Expire(sk bson.ObjectId) {
 	defer _Manager.Session.updateCache(sk)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	db.C(global.COLLECTION_SESSIONS).UpdateId(sk, bson.M{"$set": bson.M{"expired": true}})
@@ -146,7 +146,7 @@ func (sm *SessionManager) GetByUser(accountID string, pg Pagination) []Session {
 
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	s := make([]Session, 0)
@@ -182,7 +182,7 @@ func (sm *SessionManager) Set(sk bson.ObjectId, v bson.M) bool {
 	defer _Manager.Session.updateCache(sk)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_SESSIONS).Update(
@@ -205,7 +205,7 @@ func (sm *SessionManager) UpdateLastAccess(sk bson.ObjectId) bool {
 	defer _Manager.Session.updateCache(sk)
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_SESSIONS).Update(
@@ -261,7 +261,7 @@ func (s *Session) CloseOtherActives() {
 
 
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	db.C(global.COLLECTION_SESSIONS).RemoveAll(bson.M{

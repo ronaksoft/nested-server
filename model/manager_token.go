@@ -58,7 +58,7 @@ func (tm *TokenManager) readFromCache(tokenType, tokenID string) interface{} {
 			}
 			gobToken := new(bytes.Buffer)
 			if err := gob.NewEncoder(gobToken).Encode(appToken); err == nil {
-				c.Do("SETEX", keyID, global.CACHE_LIFETIME, gobToken.Bytes())
+				c.Do("SETEX", keyID, global.CacheLifetime, gobToken.Bytes())
 			}
 			return appToken
 		} else if err := gob.NewDecoder(bytes.NewBuffer(gobToken)).Decode(appToken); err == nil {
@@ -77,7 +77,7 @@ func (tm *TokenManager) readFromCache(tokenType, tokenID string) interface{} {
 // receiver : The email address this file has been sent to
 func (tm *TokenManager) CreateFileToken(uniID UniversalID, issuerID, receiverEmail string) (string, error) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	ft := FileToken{
@@ -98,7 +98,7 @@ func (tm *TokenManager) CreateFileToken(uniID UniversalID, issuerID, receiverEma
 // with no need of password set.
 func (tm *TokenManager) CreateLoginToken(uid string) string {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	token := LoginToken{
@@ -116,7 +116,7 @@ func (tm *TokenManager) CreateLoginToken(uid string) string {
 // CreateAppToken creates a token object in "tokens.apps" to let apps interact with server on behalf of users
 func (tm *TokenManager) CreateAppToken(accountID, appID string) string {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	token := AppToken{
@@ -142,7 +142,7 @@ func (tm *TokenManager) CreateAppToken(accountID, appID string) string {
 // if any error happens it returns the error message as second return argument
 func (tm *TokenManager) GetFileByToken(token string) (UniversalID, error) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	ft := new(FileToken)
@@ -156,7 +156,7 @@ func (tm *TokenManager) GetFileByToken(token string) (UniversalID, error) {
 // GetFileToken returns a pointer to FileToken struct and if any error happens it return nil
 func (tm *TokenManager) GetFileToken(token string) *FileToken {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	ft := new(FileToken)
@@ -170,7 +170,7 @@ func (tm *TokenManager) GetFileToken(token string) *FileToken {
 // GetLoginToken returns a pointer of LoginToken struct and if any error happens it returns nil
 func (tm *TokenManager) GetLoginToken(token string) *LoginToken {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	loginToken := new(LoginToken)
@@ -190,7 +190,7 @@ func (tm *TokenManager) GetLoginToken(token string) *LoginToken {
 // GetAppToken returns a pointer of AppToken struct if any error happens it returns nil
 func (tm *TokenManager) GetAppToken(token string) *AppToken {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	appToken := new(AppToken)
@@ -210,7 +210,7 @@ func (tm *TokenManager) GetAppToken(token string) *AppToken {
 // GetAppTokenByAccountID returns an array of AppTokens for the accountID
 func (tm *TokenManager) GetAppTokenByAccountID(accountID string, pg Pagination) []AppToken {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	appTokens := make([]AppToken, 0, 10)
@@ -224,7 +224,7 @@ func (tm *TokenManager) GetAppTokenByAccountID(accountID string, pg Pagination) 
 
 func (tm *TokenManager) AppTokenExists(accountID, appID string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if n, err := db.C(global.COLLECTION_TOKENS_APPS).Find(
@@ -241,7 +241,7 @@ func (tm *TokenManager) AppTokenExists(accountID, appID string) bool {
 // IncreaseAccessCounter increases the access counter of the token
 func (tm *TokenManager) IncreaseAccessCounter(token string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_TOKENS_FILES).UpdateId(
@@ -255,7 +255,7 @@ func (tm *TokenManager) IncreaseAccessCounter(token string) {
 // RevokeFileToken revokes the token. The file cannot be accessed by this token anymore.
 func (tm *TokenManager) RevokeFileToken(token string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_TOKENS_FILES).RemoveId(token); err != nil {
@@ -268,7 +268,7 @@ func (tm *TokenManager) RevokeFileToken(token string) bool {
 // RevokeLoginToken revokes the login token. This is token is disposable that means The user cannot login using this token anymore.
 func (tm *TokenManager) RevokeLoginToken(token string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_TOKENS_LOGINS).RemoveId(token); err != nil {
@@ -281,7 +281,7 @@ func (tm *TokenManager) RevokeLoginToken(token string) bool {
 // RevokeAppToken revokes the app token. The app requests will be failed after revoking the token.
 func (tm *TokenManager) RevokeAppToken(accountID, token string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_TOKENS_APPS).Remove(bson.M{
@@ -297,7 +297,7 @@ func (tm *TokenManager) RevokeAppToken(accountID, token string) bool {
 // RemoveAppToken removes app tokens for all users using app. this will be called when admin removes an app
 func (tm *TokenManager) RemoveAppTokenForAll(appId string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if _, err := db.C(global.COLLECTION_TOKENS_APPS).RemoveAll(bson.M{
@@ -312,7 +312,7 @@ func (tm *TokenManager) RemoveAppTokenForAll(appId string) bool {
 // SetAppFavoriteStatus sets favorite status of an app for user
 func (tm *TokenManager) SetAppFavoriteStatus(accountID, appID string, state bool) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_TOKENS_APPS).Update(

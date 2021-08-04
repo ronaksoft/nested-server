@@ -38,7 +38,7 @@ func (s *PostService) addLabelToPost(requester *nested.Account, request *nestedG
 		return
 	}
 
-	if post.Counters.Labels >= global.DEFAULT_POST_MAX_LABELS {
+	if post.Counters.Labels >= global.DefaultPostMaxLabels {
 		response.Error(global.ERR_LIMIT, []string{"number_of_labels"})
 		return
 	}
@@ -131,7 +131,7 @@ func (s *PostService) attachPlace(requester *nested.Account, request *nestedGate
 		response.Error(global.ERR_INCOMPLETE, []string{"old_place_id"})
 		return
 	}
-	if len(post.PlaceIDs)+len(placeIDs) > global.DEFAULT_POST_MAX_TARGETS {
+	if len(post.PlaceIDs)+len(placeIDs) > global.DefaultPostMaxTargets {
 		response.Error(global.ERR_LIMIT, []string{"targets"})
 		return
 	}
@@ -195,7 +195,7 @@ func (s *PostService) createPost(requester *nested.Account, request *nestedGatew
 	var no_comment bool
 	var labels []nested.Label
 	if v, ok := request.Data["targets"].(string); ok {
-		targets = strings.SplitN(v, ",", global.DEFAULT_POST_MAX_TARGETS)
+		targets = strings.SplitN(v, ",", global.DefaultPostMaxTargets)
 		if len(targets) == 0 {
 			response.Error(global.ERR_INVALID, []string{"targets"})
 			return
@@ -205,13 +205,13 @@ func (s *PostService) createPost(requester *nested.Account, request *nestedGatew
 		return
 	}
 	if v, ok := request.Data["label_id"].(string); ok {
-		labelIDs := strings.SplitN(v, ",", global.DEFAULT_POST_MAX_LABELS)
+		labelIDs := strings.SplitN(v, ",", global.DefaultPostMaxLabels)
 		labels = _Model.Label.GetByIDs(labelIDs)
 	} else {
 		labels = []nested.Label{}
 	}
 	if v, ok := request.Data["attaches"].(string); ok && v != "" {
-		attachments = strings.SplitN(v, ",", global.DEFAULT_POST_MAX_ATTACHMENTS)
+		attachments = strings.SplitN(v, ",", global.DefaultPostMaxAttachments)
 	} else {
 		attachments = []string{}
 	}
@@ -274,8 +274,8 @@ func (s *PostService) createPost(requester *nested.Account, request *nestedGatew
 		}
 	}
 	hasReadAccess := false
-	noWriteAccessPlaces := make([]string, 0, global.DEFAULT_POST_MAX_TARGETS)
-	notValidPlaces := make([]string, 0, global.DEFAULT_POST_MAX_TARGETS)
+	noWriteAccessPlaces := make([]string, 0, global.DefaultPostMaxTargets)
+	notValidPlaces := make([]string, 0, global.DefaultPostMaxTargets)
 	for k := range mPlaces {
 		place := _Model.Place.GetByID(k, nil)
 		if place == nil {
@@ -446,7 +446,7 @@ func (s *PostService) editPost(requester *nested.Account, request *nestedGateway
 		subject = string(subject[:255])
 	}
 
-	if post.SenderID == requester.ID && nested.Timestamp() < post.Timestamp+global.DEFAULT_POST_RETRACT_TIME {
+	if post.SenderID == requester.ID && nested.Timestamp() < post.Timestamp+global.DefaultPostRetractTime {
 		if post.Update(subject, body) {
 			s.Worker().Pusher().PostEdited(post)
 			response.Ok()
@@ -462,10 +462,10 @@ func (s *PostService) editPost(requester *nested.Account, request *nestedGateway
 // @Command:	post/get_many
 // @Input:	post_id			string	*	(comma separated)
 func (s *PostService) getManyPosts(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
-	postIDs := make([]bson.ObjectId, 0, global.DEFAULT_MAX_RESULT_LIMIT)
+	postIDs := make([]bson.ObjectId, 0, global.DefaultMaxResultLimit)
 	noAccessPostIDs := make([]bson.ObjectId, 0)
 	if v, ok := request.Data["post_id"].(string); ok {
-		for _, pid := range strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT) {
+		for _, pid := range strings.SplitN(v, ",", global.DefaultMaxResultLimit) {
 			if bson.IsObjectIdHex(pid) {
 				postID := bson.ObjectIdHex(pid)
 				if _Model.Post.HasAccess(postID, requester.ID) {
@@ -613,7 +613,7 @@ func (s *PostService) getCommentByID(requester *nested.Account, request *nestedG
 // @Input:	post_id			string	*
 // @Input:	comment_id		string	*	(comma separated)
 func (s *PostService) getManyCommentsByIDs(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
-	commentIDs := make([]bson.ObjectId, 0, global.DEFAULT_MAX_RESULT_LIMIT)
+	commentIDs := make([]bson.ObjectId, 0, global.DefaultMaxResultLimit)
 	noAccessCommentIDs := make([]bson.ObjectId, 0)
 	if v, ok := request.Data["comment_id"].(string); ok {
 		for _, cid := range strings.Split(v, ",") {
@@ -702,7 +702,7 @@ func (s *PostService) removeComment(requester *nested.Account, request *nestedGa
 	}
 
 	// if user is the sender of the comment he/she can remove in the retract time period
-	if comment.SenderID == requester.ID && comment.Timestamp+global.DEFAULT_POST_RETRACT_TIME > nested.Timestamp() {
+	if comment.SenderID == requester.ID && comment.Timestamp+global.DefaultPostRetractTime > nested.Timestamp() {
 		_Model.Post.RemoveComment(requester.ID, comment.ID)
 		s.Worker().Pusher().PostCommentRemoved(post, comment)
 		response.Ok()
@@ -874,7 +874,7 @@ func (s *PostService) retractPost(requester *nested.Account, request *nestedGate
 	}
 
 	// if user has the right permission to retract message
-	if post.SenderID == requester.ID && nested.Timestamp() < post.Timestamp+global.DEFAULT_POST_RETRACT_TIME {
+	if post.SenderID == requester.ID && nested.Timestamp() < post.Timestamp+global.DefaultPostRetractTime {
 		for _, placeID := range post.PlaceIDs {
 			if !_Model.Post.Remove(requester.ID, post.ID, placeID) {
 				response.Error(global.ERR_UNKNOWN, []string{})

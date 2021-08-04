@@ -29,7 +29,7 @@ func (s *LabelService) AddMemberToLabel(requester *nested.Account, request *nest
 		return
 	}
 
-	if label.Counters.Members+len(accountIDs) > global.DEFAULT_LABEL_MAX_MEMBERS {
+	if label.Counters.Members+len(accountIDs) > global.DefaultLabelMaxMembers {
 		response.Error(global.ERR_LIMIT, []string{"number_of_members"})
 		return
 	}
@@ -62,7 +62,7 @@ func (s *LabelService) CreateLabel(requester *nested.Account, request *nestedGat
 		if len(title) == 0 {
 			response.Error(global.ERR_INVALID, []string{"title_length_too_small"})
 			return
-		} else if len(title) > global.DEFAULT_MAX_LABEL_TITLE {
+		} else if len(title) > global.DefaultMaxLabelTitle {
 			response.Error(global.ERR_INVALID, []string{"title_length_too_large"})
 			return
 		}
@@ -117,7 +117,7 @@ func (s *LabelService) CreateLabelRequest(requester *nested.Account, request *ne
 		//	response.Error(global.ERR_INVALID, []string{"title"})
 		//	return
 		//}
-		if len(v) > global.DEFAULT_MAX_LABEL_TITLE {
+		if len(v) > global.DefaultMaxLabelTitle {
 			response.Error(global.ERR_INVALID, []string{"title_too_long"})
 			return
 		}
@@ -286,7 +286,7 @@ func (s *LabelService) UpdateLabel(requester *nested.Account, request *nestedGat
 		return
 	}
 	if v, ok := request.Data["title"].(string); ok {
-		if len(v) > global.DEFAULT_MAX_LABEL_TITLE {
+		if len(v) > global.DefaultMaxLabelTitle {
 			response.Error(global.ERR_INVALID, []string{"title_too_long"})
 			return
 		}

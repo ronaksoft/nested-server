@@ -45,7 +45,7 @@ func NewVerificationManager() *VerificationManager {
 // if verification object is nil then something has been wrong
 func (vm *VerificationManager) CreateByPhone(phone string) *Verification {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	v := new(Verification)
@@ -70,7 +70,7 @@ func (vm *VerificationManager) CreateByPhone(phone string) *Verification {
 // if verification object is nil then something has been wrong
 func (vm *VerificationManager) CreateByEmail(email string) *Verification {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	v := new(Verification)
@@ -95,7 +95,7 @@ func (vm *VerificationManager) CreateByEmail(email string) *Verification {
 // extra parameter. It returns the Verification object even if it was expired or verified ...
 func (vm *VerificationManager) GetByID(verifyID string) *Verification {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	v := new(Verification)
@@ -111,7 +111,7 @@ func (vm *VerificationManager) GetByID(verifyID string) *Verification {
 // or expire time has been passed the verification object is expired.
 func (vm *VerificationManager) Verify(verifyID, code string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	v := new(Verification)
@@ -137,7 +137,7 @@ func (vm *VerificationManager) Verify(verifyID, code string) bool {
 	}
 
 	// if attempts are more than permitted value then return false and expire the verification object
-	if v.Counters.Attempts > global.DEFAULT_MAX_VERIFICATION_ATTEMPTS {
+	if v.Counters.Attempts > global.DefaultMaxVerificationAttempts {
 		vm.Expire(verifyID)
 		return false
 	}
@@ -157,7 +157,7 @@ func (vm *VerificationManager) Verify(verifyID, code string) bool {
 // Returns true if verification identified by verifyID is verified otherwise returns false
 func (vm *VerificationManager) Verified(verifyID string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	v := new(Verification)
@@ -171,7 +171,7 @@ func (vm *VerificationManager) Verified(verifyID string) bool {
 // IncrementSmsCounter Increments the counter for number SMS messages have been sent for this Verification object.
 func (vm *VerificationManager) IncrementSmsCounter(verifyID string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	v := new(Verification)
@@ -186,7 +186,7 @@ func (vm *VerificationManager) IncrementSmsCounter(verifyID string) {
 // IncrementCallCounter Increments the counter for number of calls have been made for this Verification object.
 func (vm *VerificationManager) IncrementCallCounter(verifyID string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	v := new(Verification)
@@ -201,7 +201,7 @@ func (vm *VerificationManager) IncrementCallCounter(verifyID string) {
 // IncrementEmailCounter Increments the counter for the number of emails have been sent for this Verification object.
 func (vm *VerificationManager) IncrementEmailCounter(verifyID string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	v := new(Verification)
@@ -216,7 +216,7 @@ func (vm *VerificationManager) IncrementEmailCounter(verifyID string) {
 // Expire expires the verification identified by "verifyID" and that Verification object cannot be verified anymore.
 func (vm *VerificationManager) Expire(verifyID string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	v := new(Verification)

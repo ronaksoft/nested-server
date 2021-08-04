@@ -189,7 +189,7 @@ func (ae *ArgumentHandler) GetAccounts(request *nestedGateway.Request, response 
 	var uniqueAccountIDs []string
 	var accounts []nested.Account
 	if csAccountIDs, ok := request.Data["account_id"].(string); ok {
-		accountIDs := strings.SplitN(csAccountIDs, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		accountIDs := strings.SplitN(csAccountIDs, ",", global.DefaultMaxResultLimit)
 		mapAccountIDs := tools.MB{}
 		for _, accountID := range accountIDs {
 			mapAccountIDs[accountID] = true
@@ -206,7 +206,7 @@ func (ae *ArgumentHandler) GetAccounts(request *nestedGateway.Request, response 
 func (ae *ArgumentHandler) GetAccountIDs(request *nestedGateway.Request, response *nestedGateway.Response) []string {
 	var uniqueAccountIDs []string
 	if csAccountIDs, ok := request.Data["account_id"].(string); ok {
-		accountIDs := strings.SplitN(csAccountIDs, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		accountIDs := strings.SplitN(csAccountIDs, ",", global.DefaultMaxResultLimit)
 		mapAccountIDs := tools.MB{}
 		for _, accountID := range accountIDs {
 			mapAccountIDs[accountID] = true

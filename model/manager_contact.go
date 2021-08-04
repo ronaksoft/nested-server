@@ -20,7 +20,7 @@ func NewContactManager() *ContactManager { return new(ContactManager) }
 
 func (cm *ContactManager) AddContact(accountID, contactID string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if cm.IsContact(contactID, accountID) {
@@ -45,7 +45,7 @@ func (cm *ContactManager) AddContact(accountID, contactID string) bool {
 
 func (cm *ContactManager) AddMutualContact(accountID1, accountID2 string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	bulk := db.C(global.COLLECTION_CONTACTS).Bulk()
@@ -71,7 +71,7 @@ func (cm *ContactManager) AddMutualContact(accountID1, accountID2 string) bool {
 
 func (cm *ContactManager) AddContactToFavorite(accountID, contactID string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_CONTACTS).Update(
@@ -91,7 +91,7 @@ func (cm *ContactManager) AddContactToFavorite(accountID, contactID string) bool
 
 func (cm *ContactManager) IsContact(accountID, contactID string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if n, _ := db.C(global.COLLECTION_CONTACTS).Find(
@@ -104,7 +104,7 @@ func (cm *ContactManager) IsContact(accountID, contactID string) bool {
 
 func (cm *ContactManager) RemoveContact(accountID, contactID string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	bulk := db.C(global.COLLECTION_CONTACTS).Bulk()
@@ -130,7 +130,7 @@ func (cm *ContactManager) RemoveContact(accountID, contactID string) bool {
 
 func (cm *ContactManager) RemoveContactFromFavorite(accountID, contactID string) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_CONTACTS).Update(
@@ -149,7 +149,7 @@ func (cm *ContactManager) RemoveContactFromFavorite(accountID, contactID string)
 
 func (cm *ContactManager) GetContacts(accountID string) Contacts {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	c := Contacts{}

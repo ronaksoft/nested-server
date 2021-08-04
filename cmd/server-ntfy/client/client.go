@@ -178,7 +178,7 @@ func (c *Client) InternalPlaceActivitySyncPush(targets []string, placeID string,
 		return
 	}
 	iStart := 0
-	iLength := global.DEFAULT_MAX_RESULT_LIMIT
+	iLength := global.DefaultMaxResultLimit
 	iEnd := iStart + iLength
 	if iEnd > len(targets) {
 		iEnd = len(targets)
@@ -213,7 +213,7 @@ func (c *Client) InternalPostActivitySyncPush(targets []string, postID bson.Obje
 		return
 	}
 	iStart := 0
-	iLength := global.DEFAULT_MAX_RESULT_LIMIT
+	iLength := global.DefaultMaxResultLimit
 	iEnd := iStart + iLength
 	if iEnd > len(targets) {
 		iEnd = len(targets)
@@ -249,7 +249,7 @@ func (c *Client) InternalTaskActivitySyncPush(targets []string, taskID bson.Obje
 		return
 	}
 	iStart := 0
-	iLength := global.DEFAULT_MAX_RESULT_LIMIT
+	iLength := global.DefaultMaxResultLimit
 	iEnd := iStart + iLength
 	if iEnd > len(targets) {
 		iEnd = len(targets)
@@ -284,7 +284,7 @@ func (c *Client) InternalNotificationSyncPush(targets []string, notificationType
 		return
 	}
 	iStart := 0
-	iLength := global.DEFAULT_MAX_RESULT_LIMIT
+	iLength := global.DefaultMaxResultLimit
 	iEnd := iStart + iLength
 	if iEnd > len(targets) {
 		iEnd = len(targets)

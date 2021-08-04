@@ -42,11 +42,11 @@ func NewDeviceManager(s *mgo.Session) *DeviceManager {
 
 func (dm *DeviceManager) GetByAccountID(accountID string) []Device {
 	dbSession := dm.s.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	var devices []Device
-	if err := db.C(global.COLLECTION_ACCOUNTS_DEVICES).Find(bson.M{"uid": accountID}).Limit(global.DEFAULT_MAX_RESULT_LIMIT).All(&devices); err != nil {
+	if err := db.C(global.COLLECTION_ACCOUNTS_DEVICES).Find(bson.M{"uid": accountID}).Limit(global.DefaultMaxResultLimit).All(&devices); err != nil {
 		log.Warn(err.Error())
 	}
 	return devices
@@ -54,7 +54,7 @@ func (dm *DeviceManager) GetByAccountID(accountID string) []Device {
 
 func (dm *DeviceManager) IncrementBadge(accountID string) {
 	dbSession := dm.s.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if _, err := db.C(global.COLLECTION_ACCOUNTS_DEVICES).UpdateAll(
@@ -67,13 +67,13 @@ func (dm *DeviceManager) IncrementBadge(accountID string) {
 
 func (dm *DeviceManager) Register(deviceID, deviceToken, deviceOS, accountID string) bool {
 	dbSession := dm.s.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	// only supported devices
 	switch deviceOS {
-	case global.PLATFORM_ANDROID, global.PLATFORM_CHROME, global.PLATFORM_FIREFOX,
-		global.PLATFORM_IOS, global.PLATFORM_SAFARI:
+	case global.PlatformAndroid, global.PlatformChrome, global.PlatformFirefox,
+		global.PlatformIOS, global.PlatformSafari:
 	default:
 		return false
 	}
@@ -106,7 +106,7 @@ func (dm *DeviceManager) Register(deviceID, deviceToken, deviceOS, accountID str
 
 func (dm *DeviceManager) Remove(deviceID string) bool {
 	dbSession := dm.s.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_ACCOUNTS_DEVICES).Remove(bson.M{"_id": deviceID}); err != nil {
@@ -118,7 +118,7 @@ func (dm *DeviceManager) Remove(deviceID string) bool {
 
 func (dm *DeviceManager) SetAsConnected(deviceID, accountID string) bool {
 	dbSession := dm.s.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	bulk := db.C(global.COLLECTION_ACCOUNTS_DEVICES).Bulk()
@@ -139,7 +139,7 @@ func (dm *DeviceManager) SetAsConnected(deviceID, accountID string) bool {
 
 func (dm *DeviceManager) SetAsDisconnected(deviceID string) bool {
 	dbSession := dm.s.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_ACCOUNTS_DEVICES).Update(
@@ -154,7 +154,7 @@ func (dm *DeviceManager) SetAsDisconnected(deviceID string) bool {
 
 func (dm *DeviceManager) Update(deviceID, deviceToken, deviceOS, accountID string) bool {
 	dbSession := dm.s.Copy()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_ACCOUNTS_DEVICES).UpdateId(

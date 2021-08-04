@@ -16,7 +16,7 @@ func NewPostActivityManager() *PostActivityManager {
 
 func (pm *PostActivityManager) Remove(activityID bson.ObjectId) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	if err := db.C(global.COLLECTION_POSTS_ACTIVITIES).UpdateId(
@@ -31,7 +31,7 @@ func (pm *PostActivityManager) Remove(activityID bson.ObjectId) bool {
 
 func (pm *PostActivityManager) GetActivityByID(activityID bson.ObjectId) *PostActivity {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	postActivity := new(PostActivity)
@@ -44,7 +44,7 @@ func (pm *PostActivityManager) GetActivityByID(activityID bson.ObjectId) *PostAc
 
 func (pm *PostActivityManager) GetActivitiesByIDs(activityIDs []bson.ObjectId) []PostActivity {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	postActivities := make([]PostActivity, 0, len(activityIDs))
@@ -59,7 +59,7 @@ func (pm *PostActivityManager) GetActivitiesByIDs(activityIDs []bson.ObjectId) [
 
 func (pm *PostActivityManager) GetActivitiesByPostID(postID bson.ObjectId, pg Pagination, filter []global.PostAction) []PostActivity {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	postActivities := make([]PostActivity, pg.GetLimit())
@@ -87,7 +87,7 @@ func (pm *PostActivityManager) GetActivitiesByPostID(postID bson.ObjectId, pg Pa
 
 func (pm *PostActivityManager) CommentAdd(postID bson.ObjectId, actorID string, commentID bson.ObjectId) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	ts := Timestamp()
@@ -108,7 +108,7 @@ func (pm *PostActivityManager) CommentAdd(postID bson.ObjectId, actorID string, 
 
 func (pm *PostActivityManager) CommentRemove(postID bson.ObjectId, actorID string, commentID bson.ObjectId) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	ts := Timestamp()
@@ -129,7 +129,7 @@ func (pm *PostActivityManager) CommentRemove(postID bson.ObjectId, actorID strin
 
 func (pm *PostActivityManager) LabelAdd(postID bson.ObjectId, actorID string, labelID string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	ts := Timestamp()
@@ -150,7 +150,7 @@ func (pm *PostActivityManager) LabelAdd(postID bson.ObjectId, actorID string, la
 
 func (pm *PostActivityManager) LabelRemove(postID bson.ObjectId, actorID string, labelID string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	ts := Timestamp()
@@ -171,7 +171,7 @@ func (pm *PostActivityManager) LabelRemove(postID bson.ObjectId, actorID string,
 
 func (pm *PostActivityManager) PlaceMove(postID bson.ObjectId, actorID string, oldPlaceID string, newPlaceID string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	ts := Timestamp()
@@ -193,7 +193,7 @@ func (pm *PostActivityManager) PlaceMove(postID bson.ObjectId, actorID string, o
 
 func (pm *PostActivityManager) PlaceAttached(postID bson.ObjectId, actorID string, newPlaceID string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	ts := Timestamp()
@@ -214,7 +214,7 @@ func (pm *PostActivityManager) PlaceAttached(postID bson.ObjectId, actorID strin
 
 func (pm *PostActivityManager) Edit(postID bson.ObjectId, actorID string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	ts := Timestamp()

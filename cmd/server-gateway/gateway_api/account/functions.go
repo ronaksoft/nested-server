@@ -142,7 +142,7 @@ func (s *AccountService) getAccountInfo(requester *nested.Account, request *nest
 func (s *AccountService) getManyAccountsInfo(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	var accounts []nested.Account
 	if v, ok := request.Data["account_id"].(string); ok {
-		inputs := strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		inputs := strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 		accountIDs := make([]string, 0, len(inputs))
 		for _, input := range inputs {
 			if strings.Index(input, "@") == -1 {
@@ -518,8 +518,8 @@ func (s *AccountService) updateAccount(requester *nested.Account, request *neste
 		if len(fname) > 0 {
 			aur.FirstName = fname
 		}
-		if len(fname) > global.DEFAULT_MAX_ACCOUNT_NAME {
-			aur.FirstName = fname[:global.DEFAULT_MAX_ACCOUNT_NAME]
+		if len(fname) > global.DefaultMaxAccountName {
+			aur.FirstName = fname[:global.DefaultMaxAccountName]
 		}
 	}
 	if lname, ok := request.Data["lname"].(string); ok {
@@ -527,8 +527,8 @@ func (s *AccountService) updateAccount(requester *nested.Account, request *neste
 		if len(lname) > 0 {
 			aur.LastName = lname
 		}
-		if len(lname) > global.DEFAULT_MAX_ACCOUNT_NAME {
-			aur.LastName = lname[:global.DEFAULT_MAX_ACCOUNT_NAME]
+		if len(lname) > global.DefaultMaxAccountName {
+			aur.LastName = lname[:global.DefaultMaxAccountName]
 		}
 	}
 	if gender, ok := request.Data["gender"].(string); ok && gender != "" {
@@ -551,7 +551,7 @@ func (s *AccountService) updateAccount(requester *nested.Account, request *neste
 	}
 	if email, ok := request.Data["email"].(string); ok {
 		email = strings.Trim(email, " ")
-		if b, err := regexp.MatchString(global.DEFAULT_REGEX_EMAIL, email); err == nil && b {
+		if b, err := regexp.MatchString(global.DefaultRegexEmail, email); err == nil && b {
 			aur.Email = email
 		}
 	}

@@ -25,7 +25,7 @@ func NewPlaceActivityManager() *PlaceActivityManager {
 
 func (tm *PlaceActivityManager) Exists(activityID bson.ObjectId) bool {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	n, _ := db.C(global.COLLECTION_PLACES_ACTIVITIES).FindId(activityID).Count()
@@ -35,7 +35,7 @@ func (tm *PlaceActivityManager) Exists(activityID bson.ObjectId) bool {
 
 func (tm *PlaceActivityManager) GetByID(activityID bson.ObjectId) *PlaceActivity {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	t := new(PlaceActivity)
@@ -48,7 +48,7 @@ func (tm *PlaceActivityManager) GetByID(activityID bson.ObjectId) *PlaceActivity
 
 func (tm *PlaceActivityManager) GetActivitiesByPlace(placeID string, pg Pagination) []PlaceActivity {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	sortItem := "timestamp"
@@ -66,7 +66,7 @@ func (tm *PlaceActivityManager) GetActivitiesByPlace(placeID string, pg Paginati
 
 func (tm *PlaceActivityManager) PostAdd(actorID string, placeIDs []string, postID bson.ObjectId) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	ts := Timestamp()
@@ -93,7 +93,7 @@ func (tm *PlaceActivityManager) PostAdd(actorID string, placeIDs []string, postI
 
 func (tm *PlaceActivityManager) PostAttachPlace(actorID, newPlaceID string, postID bson.ObjectId) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	ts := Timestamp()
@@ -115,7 +115,7 @@ func (tm *PlaceActivityManager) PostAttachPlace(actorID, newPlaceID string, post
 
 func (tm *PlaceActivityManager) PostMove(actorID, oldPlaceID, newPlaceID string, postID bson.ObjectId) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	ts := Timestamp()
@@ -149,7 +149,7 @@ func (tm *PlaceActivityManager) PostMove(actorID, oldPlaceID, newPlaceID string,
 
 func (tm *PlaceActivityManager) PostRemove(actorID, placeID string, postID bson.ObjectId) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	ts := Timestamp()
@@ -169,7 +169,7 @@ func (tm *PlaceActivityManager) PostRemove(actorID, placeID string, postID bson.
 
 func (tm *PlaceActivityManager) PlaceAdd(actor, placeID string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	ts := Timestamp()
@@ -187,7 +187,7 @@ func (tm *PlaceActivityManager) PlaceAdd(actor, placeID string) {
 
 func (tm *PlaceActivityManager) PlaceRemove(placeID string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	ts := Timestamp()
@@ -212,7 +212,7 @@ func (tm *PlaceActivityManager) PlaceRemove(placeID string) {
 
 func (tm *PlaceActivityManager) MemberRemove(actor, placeID, memberID string, reason string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	ts := Timestamp()
@@ -231,7 +231,7 @@ func (tm *PlaceActivityManager) MemberRemove(actor, placeID, memberID string, re
 
 func (tm *PlaceActivityManager) MemberJoin(actor, placeID, by string) {
 	dbSession := _MongoSession.Clone()
-	db := dbSession.DB(global.DB_NAME)
+	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	ts := Timestamp()

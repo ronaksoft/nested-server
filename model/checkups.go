@@ -140,15 +140,15 @@ func StartupCheckups() {
 		if err := _MongoDB.C(global.COLLECTION_SYSTEM_INTERNAL).Insert(
 			bson.M{
 				"_id": "constants",
-				fmt.Sprintf("strings.%s", global.SYSTEM_CONSTANTS_COMPANY_NAME):              global.DEFAULT_COMPANY_NAME,
-				fmt.Sprintf("strings.%s", global.SYSTEM_CONSTANTS_COMPANY_DESC):              global.DEFAULT_COMPANY_DESC,
-				fmt.Sprintf("strings.%s", global.SYSTEM_CONSTANTS_COMPANY_LOGO):              global.DEFAULT_COMPANY_LOGO,
-				fmt.Sprintf("integers.%s", global.SYSTEM_CONSTANTS_REGISTER_MODE):            global.REGISTER_MODE,
-				fmt.Sprintf("integers.%s", global.SYSTEM_CONSTANTS_LABEL_MAX_MEMBERS):        global.DEFAULT_LABEL_MAX_MEMBERS,
-				fmt.Sprintf("integers.%s", global.SYSTEM_CONSTANTS_ACCOUNT_GRANDPLACE_LIMIT): global.DEFAULT_ACCOUNT_GRAND_PLACES,
-				fmt.Sprintf("integers.%s", global.SYSTEM_CONSTANTS_PLACE_MAX_LEVEL):          global.DEFAULT_PLACE_MAX_LEVEL,
-				fmt.Sprintf("integers.%s", global.SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS):     global.DEFAULT_PLACE_MAX_KEYHOLDERS,
-				fmt.Sprintf("integers.%s", global.SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN):       global.DEFAULT_PLACE_MAX_CHILDREN,
+				fmt.Sprintf("strings.%s", global.SYSTEM_CONSTANTS_COMPANY_NAME):              global.DefaultCompanyName,
+				fmt.Sprintf("strings.%s", global.SYSTEM_CONSTANTS_COMPANY_DESC):              global.DefaultCompanyDesc,
+				fmt.Sprintf("strings.%s", global.SYSTEM_CONSTANTS_COMPANY_LOGO):              global.DefaultCompanyLogo,
+				fmt.Sprintf("integers.%s", global.SYSTEM_CONSTANTS_REGISTER_MODE):            global.RegisterModeAdminOnly,
+				fmt.Sprintf("integers.%s", global.SYSTEM_CONSTANTS_LABEL_MAX_MEMBERS):        global.DefaultLabelMaxMembers,
+				fmt.Sprintf("integers.%s", global.SYSTEM_CONSTANTS_ACCOUNT_GRANDPLACE_LIMIT): global.DefaultAccountGrandPlaces,
+				fmt.Sprintf("integers.%s", global.SYSTEM_CONSTANTS_PLACE_MAX_LEVEL):          global.DefaultPlaceMaxLevel,
+				fmt.Sprintf("integers.%s", global.SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS):     global.DefaultPlaceMaxKeyHolders,
+				fmt.Sprintf("integers.%s", global.SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN):       global.DefaultPlaceMaxChildren,
 			},
 		); err != nil {
 			log.Warn("StartupChecks::", zap.Error(err))

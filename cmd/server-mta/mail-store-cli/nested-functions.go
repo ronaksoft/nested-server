@@ -175,7 +175,7 @@ func (m *Model) InternalPlaceActivitySyncPush(targets []string, placeID string, 
 		return
 	}
 	iStart := 0
-	iLength := global.DEFAULT_MAX_RESULT_LIMIT
+	iLength := global.DefaultMaxResultLimit
 	iEnd := iStart + iLength
 	if iEnd > len(targets) {
 		iEnd = len(targets)
@@ -486,18 +486,18 @@ func (m *Model) AddPost(pcr nested.PostCreateRequest) *nested.Post {
 	post.ForwardFrom = pcr.ForwardFrom
 	post.ContentType = pcr.ContentType
 
-	// Returns nil if targets are more than DEFAULT_POST_MAX_TARGETS
-	if len(pcr.PlaceIDs)+len(pcr.Recipients) > global.DEFAULT_POST_MAX_TARGETS {
+	// Returns nil if targets are more than DefaultPostMaxTargets
+	if len(pcr.PlaceIDs)+len(pcr.Recipients) > global.DefaultPostMaxTargets {
 		return nil
 	}
 
-	// Returns nil if number of attachments exceeds DEFAULT_POST_MAX_ATTACHMENTS
-	if len(pcr.AttachmentIDs) > global.DEFAULT_POST_MAX_ATTACHMENTS {
+	// Returns nil if number of attachments exceeds DefaultPostMaxAttachments
+	if len(pcr.AttachmentIDs) > global.DefaultPostMaxAttachments {
 		return nil
 	}
 
-	// Returns nil if number of labels exceeds DEFAULT_POST_MAX_LABELS
-	if len(pcr.LabelIDs) > global.DEFAULT_POST_MAX_LABELS {
+	// Returns nil if number of labels exceeds DefaultPostMaxLabels
+	if len(pcr.LabelIDs) > global.DefaultPostMaxLabels {
 		return nil
 	}
 

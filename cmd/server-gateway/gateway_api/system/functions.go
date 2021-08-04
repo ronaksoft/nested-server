@@ -52,7 +52,7 @@ func (s *SystemService) getSystemStringConstants(requester *nested.Account, requ
 // @Input:  place_max_keyholders				int		+
 // @Input:  register_mode					    int		+	(1: everyone, 2: admin_only)
 func (s *SystemService) setSystemIntegerConstants(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
-	if len(request.Data) > global.DEFAULT_MAX_RESULT_LIMIT {
+	if len(request.Data) > global.DefaultMaxResultLimit {
 		response.Error(global.ERR_LIMIT, []string{"too many parameters"})
 		return
 	}
@@ -68,7 +68,7 @@ func (s *SystemService) setSystemIntegerConstants(requester *nested.Account, req
 // @Input:  magic_number                string     +
 // @Input:  license_key                 string      +
 func (s *SystemService) setSystemStringConstants(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
-	if len(request.Data) > global.DEFAULT_MAX_RESULT_LIMIT {
+	if len(request.Data) > global.DefaultMaxResultLimit {
 		response.Error(global.ERR_LIMIT, []string{"too many parameters"})
 		return
 	}

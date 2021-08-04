@@ -449,7 +449,7 @@ func (m *Mapper) Post(requester *nested.Account, post nested.Post, preview bool)
 		r["iframe_url"] = post.IFrameUrl
 	}
 	// check if user can retract
-	if post.SenderID == requester.ID && nested.Timestamp() < post.Timestamp+global.DEFAULT_POST_RETRACT_TIME {
+	if post.SenderID == requester.ID && nested.Timestamp() < post.Timestamp+global.DefaultPostRetractTime {
 		r["wipe_access"] = true
 	}
 
