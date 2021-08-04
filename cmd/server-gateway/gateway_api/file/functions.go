@@ -22,20 +22,20 @@ func (s *FileService) getDownloadToken(requester *nested.Account, request *neste
 		uniID = nested.UniversalID(v)
 		fileInfo = _Model.File.GetByID(uniID, nil)
 		if fileInfo == nil {
-			response.Error(global.ERR_INVALID, []string{"universal_id"})
+			response.Error(global.ErrInvalid, []string{"universal_id"})
 			return
 		}
 		// if file is public you do not need token
 		if fileInfo.IsPublic() {
 			if token, err := nested.GenerateDownloadToken(uniID, request.SessionKey, requester.ID); err != nil {
-				response.Error(global.ERR_UNKNOWN, []string{})
+				response.Error(global.ErrUnknown, []string{})
 			} else {
 				response.OkWithData(tools.M{"token": token})
 			}
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"universal_id"})
+		response.Error(global.ErrIncomplete, []string{"universal_id"})
 		return
 	}
 
@@ -44,7 +44,7 @@ func (s *FileService) getDownloadToken(requester *nested.Account, request *neste
 		if bson.IsObjectIdHex(postID) {
 			post = s.Worker().Model().Post.GetPostByID(bson.ObjectIdHex(postID))
 			if post == nil {
-				response.Error(global.ERR_UNAVAILABLE, []string{"post_id"})
+				response.Error(global.ErrUnavailable, []string{"post_id"})
 				return
 			}
 		}
@@ -54,48 +54,48 @@ func (s *FileService) getDownloadToken(requester *nested.Account, request *neste
 
 	if post != nil {
 		if !post.HasAccess(requester.ID) {
-			response.Error(global.ERR_ACCESS, []string{"post_id"})
+			response.Error(global.ErrAccess, []string{"post_id"})
 			return
 		}
 
 		if s.Worker().Model().File.IsPostOwner(uniID, post.ID) {
 			if token, err := nested.GenerateDownloadToken(uniID, request.SessionKey, requester.ID); err != nil {
-				response.Error(global.ERR_UNKNOWN, []string{})
+				response.Error(global.ErrUnknown, []string{})
 			} else {
 				response.OkWithData(tools.M{"token": token})
 			}
 			return
 		}
-		response.Error(global.ERR_ACCESS, []string{"post_is_not_owner"})
+		response.Error(global.ErrAccess, []string{"post_is_not_owner"})
 		return
 	}
 
 	task = s.Worker().Argument().GetTask(request, response)
 	if task != nil {
 		if !task.HasAccess(requester.ID, nested.TaskAccessRead) {
-			response.Error(global.ERR_ACCESS, []string{"task_id"})
+			response.Error(global.ErrAccess, []string{"task_id"})
 			return
 		}
 		if s.Worker().Model().File.IsTaskOwner(uniID, task.ID) {
 			if token, err := nested.GenerateDownloadToken(uniID, request.SessionKey, requester.ID); err != nil {
-				response.Error(global.ERR_UNKNOWN, []string{})
+				response.Error(global.ErrUnknown, []string{})
 			} else {
 				response.OkWithData(tools.M{"token": token})
 			}
 		} else {
-			response.Error(global.ERR_INVALID, []string{"task_id"})
+			response.Error(global.ErrInvalid, []string{"task_id"})
 		}
 		return
 	}
 
-	response.Error(global.ERR_INCOMPLETE, []string{"post_id  or task_id required"})
+	response.Error(global.ErrIncomplete, []string{"post_id  or task_id required"})
 }
 
 // @Command: file/get_upload_token
 // @CommandInfo:	Creates an upload token for the user of current session
 func (s *FileService) getUploadToken(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	if token, err := nested.GenerateUploadToken(request.SessionKey); err != nil {
-		response.Error(global.ERR_UNKNOWN, []string{})
+		response.Error(global.ErrUnknown, []string{})
 	} else {
 		response.OkWithData(tools.M{"token": token})
 	}
@@ -110,11 +110,11 @@ func (s *FileService) getFileByID(requester *nested.Account, request *nestedGate
 		uniID := nested.UniversalID(v)
 		f = _Model.File.GetByID(uniID, nil)
 		if f == nil {
-			response.Error(global.ERR_INVALID, []string{"universal_id"})
+			response.Error(global.ErrInvalid, []string{"universal_id"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"universal_id"})
+		response.Error(global.ErrIncomplete, []string{"universal_id"})
 		return
 	}
 	response.OkWithData(s.Worker().Map().FileInfo(*f))
@@ -138,17 +138,17 @@ func (s *FileService) getFileByToken(requester *nested.Account, request *nestedG
 	var uniID nested.UniversalID
 	if v, ok := request.Data["token"].(string); ok {
 		if uID, err := _Model.Token.GetFileByToken(v); err != nil {
-			response.Error(global.ERR_INVALID, []string{"token"})
+			response.Error(global.ErrInvalid, []string{"token"})
 			return
 		} else {
 			uniID = uID
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"token"})
+		response.Error(global.ErrIncomplete, []string{"token"})
 		return
 	}
 	if f = _Model.File.GetByID(uniID, nil); f == nil {
-		response.Error(global.ERR_UNKNOWN, []string{})
+		response.Error(global.ErrUnknown, []string{})
 	}
 	response.OkWithData(s.Worker().Map().FileInfo(*f))
 }

@@ -98,7 +98,7 @@ func (am *AccountManager) readFromCache(accountID string) *Account {
 	defer c.Close()
 	keyID := fmt.Sprintf("account:gob:%s", accountID)
 	if gobAccount, err := redis.Bytes(c.Do("GET", keyID)); err != nil {
-		if err := _MongoDB.C(global.COLLECTION_ACCOUNTS).FindId(accountID).One(account); err != nil {
+		if err := _MongoDB.C(global.CollectionAccounts).FindId(accountID).One(account); err != nil {
 			log.Sugar().Info("Model::AccountManager::readFromCache::Error 1::", err.Error(), accountID)
 			return nil
 		}
@@ -142,7 +142,7 @@ func (am *AccountManager) readKeyFromCache(keyID string) string {
 	c := _Cache.Pool.Get()
 	defer c.Close()
 	if keyValue, err := redis.String(c.Do("GET", fmt.Sprintf("account-key:json:%s", keyID))); err != nil {
-		if err := _MongoDB.C(global.COLLECTION_ACCOUNTS_DATA).FindId(keyID).One(&doc); err != nil {
+		if err := _MongoDB.C(global.CollectionAccountsData).FindId(keyID).One(&doc); err != nil {
 			log.Sugar().Info("Model::AccountManager::readKeyFromCache::Error 1::", err.Error())
 			return ""
 		}
@@ -183,7 +183,7 @@ func (am *AccountManager) removeMultiFromCache(accountIDs []string) bool {
 // Adds the place to the bookmarked list
 func (am *AccountManager) AddPlaceToBookmarks(accountID, placeID string) {
 	defer _Manager.Account.removeCache(accountID)
-	if err := _MongoDB.C(global.COLLECTION_ACCOUNTS).UpdateId(
+	if err := _MongoDB.C(global.CollectionAccounts).UpdateId(
 		accountID,
 		bson.M{
 			"$addToSet": bson.M{
@@ -206,11 +206,11 @@ func (am *AccountManager) Available(accountID string) bool {
 	} else if !matched {
 		return false
 	}
-	n, _ := _MongoDB.C(global.COLLECTION_ACCOUNTS).FindId(accountID).Count()
+	n, _ := _MongoDB.C(global.CollectionAccounts).FindId(accountID).Count()
 	if n > 0 {
 		return false
 	}
-	n, _ = _MongoDB.C(global.COLLECTION_SYS_RESERVED_WORDS).Find(bson.M{"word": accountID}).Count()
+	n, _ = _MongoDB.C(global.CollectionSysReservedWords).Find(bson.M{"word": accountID}).Count()
 	if n > 0 {
 		return false
 	}
@@ -220,7 +220,7 @@ func (am *AccountManager) Available(accountID string) bool {
 
 // ClearRecentlyVisited clears the recently visited list of the accountID
 func (am *AccountManager) ClearRecentlyVisited(accountID string) {
-	if err := _MongoDB.C(global.COLLECTION_ACCOUNTS).UpdateId(
+	if err := _MongoDB.C(global.CollectionAccounts).UpdateId(
 		accountID,
 		bson.M{"$set": bson.M{"recently_visited": []string{}}},
 	); err != nil {
@@ -252,7 +252,7 @@ func (am *AccountManager) CreateUser(uid, pass, phone, country, fname, lname, em
 
 	acc.Limits.GrandPlaces = global.DefaultAccountGrandPlaces
 	acc.Limits.Keys = global.DefaultMaxClientObjCount
-	if err := _MongoDB.C(global.COLLECTION_ACCOUNTS).Insert(acc); err != nil {
+	if err := _MongoDB.C(global.CollectionAccounts).Insert(acc); err != nil {
 		log.Sugar().Info("Model::CreateUser::Error 1::", err.Error())
 		return false
 	}
@@ -270,7 +270,7 @@ func (am *AccountManager) CreateUser(uid, pass, phone, country, fname, lname, em
 		gender = "x"
 	}
 
-	if err := _MongoDB.C(global.COLLECTION_ACCOUNTS).Update(
+	if err := _MongoDB.C(global.CollectionAccounts).Update(
 		bson.M{
 			"_id":      uid,
 			"acc_type": ACCOUNT_TYPE_USER,
@@ -291,7 +291,7 @@ func (am *AccountManager) CreateUser(uid, pass, phone, country, fname, lname, em
 		return false
 	}
 	// Update System.Internal Counter
-	_Manager.System.incrementCounter(MI{global.SYSTEM_COUNTERS_ENABLED_ACCOUNTS: 1})
+	_Manager.System.incrementCounter(MI{global.SystemCountersEnabledAccounts: 1})
 
 	return true
 }
@@ -299,7 +299,7 @@ func (am *AccountManager) CreateUser(uid, pass, phone, country, fname, lname, em
 // Disable disables the account. Disabled accounts cannot login to the systemm
 func (am *AccountManager) Disable(accountID string) bool {
 	defer _Manager.Account.removeCache(accountID)
-	if err := _MongoDB.C(global.COLLECTION_ACCOUNTS).Update(
+	if err := _MongoDB.C(global.CollectionAccounts).Update(
 		bson.M{"_id": accountID, "disabled": false},
 		bson.M{"$set": bson.M{"disabled": true}},
 	); err != nil {
@@ -308,15 +308,15 @@ func (am *AccountManager) Disable(accountID string) bool {
 	}
 	// Update System.Internal Counter
 	_Manager.System.incrementCounter(MI{
-		global.SYSTEM_COUNTERS_DISABLED_ACCOUNTS: 1,
-		global.SYSTEM_COUNTERS_ENABLED_ACCOUNTS:  -1,
+		global.SystemCountersDisabledAccounts: 1,
+		global.SystemCountersEnabledAccounts:  -1,
 	})
 	return true
 }
 
 // EmailExists checks if email already exists
 func (am *AccountManager) EmailExists(email string) bool {
-	n, _ := _MongoDB.C(global.COLLECTION_ACCOUNTS).Find(bson.M{"email": email}).Count()
+	n, _ := _MongoDB.C(global.CollectionAccounts).Find(bson.M{"email": email}).Count()
 
 	return n > 0
 }
@@ -324,7 +324,7 @@ func (am *AccountManager) EmailExists(email string) bool {
 // Enables make the accountID enabled
 func (am *AccountManager) Enable(accountID string) bool {
 	defer _Manager.Account.removeCache(accountID)
-	if err := _MongoDB.C(global.COLLECTION_ACCOUNTS).Update(
+	if err := _MongoDB.C(global.CollectionAccounts).Update(
 		bson.M{"_id": accountID, "disabled": true},
 		bson.M{"$set": bson.M{
 			"disabled":                    false,
@@ -336,8 +336,8 @@ func (am *AccountManager) Enable(accountID string) bool {
 	}
 	// Update System.Internal Counter
 	_Manager.System.incrementCounter(MI{
-		global.SYSTEM_COUNTERS_DISABLED_ACCOUNTS: -1,
-		global.SYSTEM_COUNTERS_ENABLED_ACCOUNTS:  1,
+		global.SystemCountersDisabledAccounts: -1,
+		global.SystemCountersEnabledAccounts:  1,
 	})
 	return true
 }
@@ -346,14 +346,14 @@ func (am *AccountManager) Enable(accountID string) bool {
 // This function just check if the account id has been already created. it returns true
 // even if the account is disabled or not completely registered.
 func (am *AccountManager) Exists(accountID string) bool {
-	n, _ := _MongoDB.C(global.COLLECTION_ACCOUNTS).FindId(accountID).Count()
+	n, _ := _MongoDB.C(global.CollectionAccounts).FindId(accountID).Count()
 
 	return n > 0
 }
 
 func (am *AccountManager) ForcePasswordChange(accountID string, state bool) bool {
 	defer _Manager.Account.removeCache(accountID)
-	if err := _MongoDB.C(global.COLLECTION_ACCOUNTS).UpdateId(
+	if err := _MongoDB.C(global.CollectionAccounts).UpdateId(
 		accountID,
 		bson.M{"$set": bson.M{"flags.force_password_change": state}},
 	); err != nil {
@@ -402,7 +402,7 @@ func (am *AccountManager) GetByPhone(phone string, pj tools.M) *Account {
 			"bookmarked_places": 0,
 		}
 	}
-	if err := _MongoDB.C(global.COLLECTION_ACCOUNTS).Find(bson.M{"phone": phone}).Select(pj).One(acc); err != nil {
+	if err := _MongoDB.C(global.CollectionAccounts).Find(bson.M{"phone": phone}).Select(pj).One(acc); err != nil {
 		log.Sugar().Info("Model::AccountManager::GetByPhone::Error", err.Error())
 		return nil
 	}
@@ -419,7 +419,7 @@ func (am *AccountManager) GetByEmail(email string, pj tools.M) *Account {
 			"bookmarked_places": 0,
 		}
 	}
-	if err := _MongoDB.C(global.COLLECTION_ACCOUNTS).Find(bson.M{"email": email}).Select(pj).One(acc); err != nil {
+	if err := _MongoDB.C(global.CollectionAccounts).Find(bson.M{"email": email}).Select(pj).One(acc); err != nil {
 		return nil
 	}
 
@@ -445,7 +445,7 @@ func (am *AccountManager) GetKey(accountID, keyName string) string {
 // GetAllKeys returns a map of [keyName, keyValue] for accountID
 func (am *AccountManager) GetAllKeys(accountID string) []MS {
 	docs := make([]MS, 0)
-	_MongoDB.C(global.COLLECTION_ACCOUNTS_DATA).Find(bson.M{
+	_MongoDB.C(global.CollectionAccountsData).Find(bson.M{
 		"_id": bson.M{
 			"$regex":   fmt.Sprintf("^%s\\..*", accountID),
 			"$options": "i",
@@ -484,7 +484,7 @@ func (am *AccountManager) GetMutualPlaceIDs(accountID1, accountID2 string) []str
 // IncreaseLogins increases the login counter for user "accountID"
 func (am *AccountManager) IncreaseLogins(accountID string) {
 	defer _Manager.Account.removeCache(accountID)
-	_MongoDB.C(global.COLLECTION_ACCOUNTS).UpdateId(
+	_MongoDB.C(global.CollectionAccounts).UpdateId(
 		accountID,
 		bson.M{"$inc": bson.M{"counters.logins": 1}},
 	)
@@ -496,7 +496,7 @@ func (am *AccountManager) IncreaseLogins(accountID string) {
 func (am *AccountManager) IncrementLimit(accountID, limitKey string, n int) bool {
 	switch limitKey {
 	case "grand_places":
-		_MongoDB.C(global.COLLECTION_ACCOUNTS).UpdateId(
+		_MongoDB.C(global.CollectionAccounts).UpdateId(
 			accountID,
 			bson.M{"$inc": bson.M{"limits.grand_places": n}},
 		)
@@ -510,13 +510,13 @@ func (am *AccountManager) IncrementLimit(accountID, limitKey string, n int) bool
 // IsEnabled checks if account is registered and also not disabled
 // This function must be used if you want to make sure the account exists and is active
 func (am *AccountManager) IsEnabled(accountID string) bool {
-	n, _ := _MongoDB.C(global.COLLECTION_ACCOUNTS).Find(bson.M{"disabled": false}).Count()
+	n, _ := _MongoDB.C(global.CollectionAccounts).Find(bson.M{"disabled": false}).Count()
 	return n > 0
 }
 
 // PhoneExists checks if phone already exists
 func (am *AccountManager) PhoneExists(phone string) bool {
-	n, _ := _MongoDB.C(global.COLLECTION_ACCOUNTS).Find(bson.M{"phone": phone}).Count()
+	n, _ := _MongoDB.C(global.CollectionAccounts).Find(bson.M{"phone": phone}).Count()
 
 	return n > 0
 }
@@ -524,7 +524,7 @@ func (am *AccountManager) PhoneExists(phone string) bool {
 // RemovePlaceConnection removes 'Account <--> Place' relation points
 // Then placeIDs will not be searched in SEARCH::PLACES_FOR_COMPOSE
 func (am *AccountManager) RemovePlaceConnection(accountID string, placeIDs []string) bool {
-	if err := _MongoDB.C(global.COLLECTION_ACCOUNTS_PLACES).Remove(bson.M{
+	if err := _MongoDB.C(global.CollectionAccountsPlaces).Remove(bson.M{
 		"account_id": accountID,
 		"place_id":   bson.M{"$in": placeIDs},
 	}); err != nil {
@@ -537,7 +537,7 @@ func (am *AccountManager) RemovePlaceConnection(accountID string, placeIDs []str
 // RemovePlaceFromBookmarks removes the place identified by "placeID" from the bookmarked list of the "accountID"
 func (am *AccountManager) RemovePlaceFromBookmarks(accountID, placeID string) {
 	defer _Manager.Account.removeCache(accountID)
-	if err := _MongoDB.C(global.COLLECTION_ACCOUNTS).UpdateId(
+	if err := _MongoDB.C(global.CollectionAccounts).UpdateId(
 		accountID,
 		bson.M{"$pull": bson.M{"bookmarked_places": placeID}},
 	); err != nil {
@@ -548,7 +548,7 @@ func (am *AccountManager) RemovePlaceFromBookmarks(accountID, placeID string) {
 
 // RemoveRecipientConnection removes 'Account <--> Email Address' relation points
 func (am *AccountManager) RemoveRecipientConnection(accountID string, recipients []string) {
-	if err := _MongoDB.C(global.COLLECTION_ACCOUNTS_RECIPIENTS).Remove(bson.M{
+	if err := _MongoDB.C(global.CollectionAccountsRecipients).Remove(bson.M{
 		"account_id": accountID,
 		"recipient":  bson.M{"$in": recipients},
 	}); err != nil {
@@ -560,7 +560,7 @@ func (am *AccountManager) RemoveRecipientConnection(accountID string, recipients
 // ResetLoginAttempts reset the login attempts
 func (am *AccountManager) ResetLoginAttempts(accountID string) {
 	defer _Manager.Account.removeCache(accountID)
-	_MongoDB.C(global.COLLECTION_ACCOUNTS).UpdateId(
+	_MongoDB.C(global.CollectionAccounts).UpdateId(
 		accountID,
 		bson.M{"$set": bson.M{"counters.incorrect_attempts": 0}},
 	)
@@ -569,7 +569,7 @@ func (am *AccountManager) ResetLoginAttempts(accountID string) {
 // ResetUnreadNotificationCounter reset the notification counter for user "accountID"
 func (am *AccountManager) ResetUnreadNotificationCounter(accountID string) {
 	defer _Manager.Account.removeCache(accountID)
-	_MongoDB.C(global.COLLECTION_ACCOUNTS).UpdateId(
+	_MongoDB.C(global.CollectionAccounts).UpdateId(
 		accountID,
 		bson.M{"$set": bson.M{"counters.unread_notifications": 0}},
 	)
@@ -583,10 +583,10 @@ func (am *AccountManager) RemoveKey(accountID, keyName string) bool {
 		Remove: true,
 	}
 	keyID := fmt.Sprintf("%s.%s", accountID, keyName)
-	if chInfo, err := _MongoDB.C(global.COLLECTION_ACCOUNTS_DATA).FindId(keyID).Apply(change, nil); err != nil {
+	if chInfo, err := _MongoDB.C(global.CollectionAccountsData).FindId(keyID).Apply(change, nil); err != nil {
 		log.Sugar().Info("Model::AccountManager::RemoveKey::Error 1::", err.Error())
 	} else if chInfo.Removed > 0 {
-		if err := _MongoDB.C(global.COLLECTION_ACCOUNTS).UpdateId(
+		if err := _MongoDB.C(global.CollectionAccounts).UpdateId(
 			accountID,
 			bson.M{"$inc": bson.M{"counters.client_keys": -1}},
 		); err != nil {
@@ -610,7 +610,7 @@ func (am *AccountManager) SaveKey(accountID, keyName, keyValue string) bool {
 	// Update/Insert the value into database
 	keyID := fmt.Sprintf("%s.%s", accountID, keyName)
 	defer am.removeKeyCache(keyID)
-	if chInfo, err := _MongoDB.C(global.COLLECTION_ACCOUNTS_DATA).UpsertId(
+	if chInfo, err := _MongoDB.C(global.CollectionAccountsData).UpsertId(
 		keyID,
 		bson.M{"$set": bson.M{
 			"value":       keyValue,
@@ -621,7 +621,7 @@ func (am *AccountManager) SaveKey(accountID, keyName, keyValue string) bool {
 		return false
 	} else if chInfo.Matched == 0 {
 		// Increase the counter if it was a new key
-		if err := _MongoDB.C(global.COLLECTION_ACCOUNTS).UpdateId(
+		if err := _MongoDB.C(global.CollectionAccounts).UpdateId(
 			accountID,
 			bson.M{"$inc": bson.M{"counters.client_keys": 1}},
 		); err != nil {
@@ -634,7 +634,7 @@ func (am *AccountManager) SaveKey(accountID, keyName, keyValue string) bool {
 // SetAdmin sets or resets the  accountID as admin
 func (am *AccountManager) SetAdmin(accountID string, b bool) {
 	defer _Manager.Account.removeCache(accountID)
-	if err := _MongoDB.C(global.COLLECTION_ACCOUNTS).UpdateId(
+	if err := _MongoDB.C(global.CollectionAccounts).UpdateId(
 		accountID,
 		bson.M{"$set": bson.M{"authority.admin": b}},
 	); err != nil {
@@ -646,7 +646,7 @@ func (am *AccountManager) SetAdmin(accountID string, b bool) {
 // SetPhone set the phone number of accountID with new 'phone' number
 func (am *AccountManager) SetPhone(accountID, phone string) bool {
 	defer _Manager.Account.removeCache(accountID)
-	if err := _MongoDB.C(global.COLLECTION_ACCOUNTS).UpdateId(
+	if err := _MongoDB.C(global.CollectionAccounts).UpdateId(
 		accountID,
 		bson.M{"$set": bson.M{"phone": phone}},
 	); err != nil {
@@ -662,7 +662,7 @@ func (am *AccountManager) SetLimit(accountID, limitKey string, n int) bool {
 	defer _Manager.Account.removeCache(accountID)
 	switch limitKey {
 	case "grand_places":
-		_MongoDB.C(global.COLLECTION_ACCOUNTS).UpdateId(
+		_MongoDB.C(global.CollectionAccounts).UpdateId(
 			accountID,
 			bson.M{"$set": bson.M{"limits.grand_places": n}},
 		)
@@ -688,7 +688,7 @@ func (am *AccountManager) SetPrivacy(accountID, privacyKey string, privacyValue 
 		q["privacy.change_profile"], ok = privacyValue.(bool)
 	}
 	if ok {
-		_MongoDB.C(global.COLLECTION_ACCOUNTS).UpdateId(
+		_MongoDB.C(global.CollectionAccounts).UpdateId(
 			accountID,
 			bson.M{"$set": q},
 		)
@@ -699,13 +699,13 @@ func (am *AccountManager) SetPrivacy(accountID, privacyKey string, privacyValue 
 func (am *AccountManager) SetPicture(accountID string, p Picture) {
 	defer _Manager.Account.removeCache(accountID)
 	defer _Manager.Place.removeCache(accountID)
-	if err := _MongoDB.C(global.COLLECTION_ACCOUNTS).UpdateId(
+	if err := _MongoDB.C(global.CollectionAccounts).UpdateId(
 		accountID,
 		bson.M{"$set": bson.M{"picture": p}},
 	); err != nil {
 		log.Sugar().Info("Model::AccountManager::SetPicture::Error 1::", err.Error())
 	}
-	if err := _MongoDB.C(global.COLLECTION_PLACES).UpdateId(
+	if err := _MongoDB.C(global.CollectionPlaces).UpdateId(
 		accountID,
 		bson.M{"$set": bson.M{"picture": p}},
 	); err != nil {
@@ -735,7 +735,7 @@ func (am *AccountManager) SetPassword(accountID, newPass string) bool {
 		log.Sugar().Info("Model::AccountManager::SetPassword::Error 1::", err.Error())
 		return false
 	} else {
-		if err := _MongoDB.C(global.COLLECTION_ACCOUNTS).UpdateId(
+		if err := _MongoDB.C(global.CollectionAccounts).UpdateId(
 			accountID,
 			bson.M{"$set": bson.M{
 				"secret":                      string(hashed_pass),
@@ -758,7 +758,7 @@ func (am *AccountManager) Verify(accountID, pass string) bool {
 		Update:    bson.M{"$inc": bson.M{"counters.incorrect_attempts": 1}},
 		ReturnNew: true,
 	}
-	if _, err := _MongoDB.C(global.COLLECTION_ACCOUNTS).Find(
+	if _, err := _MongoDB.C(global.CollectionAccounts).Find(
 		bson.M{"_id": accountID},
 	).Apply(ch, acc); err != nil {
 		log.Sugar().Info("Model::AccountManager::Verify::Error 1::", err.Error())
@@ -804,16 +804,16 @@ func (am *AccountManager) Update(accountID string, aur AccountUpdateRequest) boo
 		Update:    bson.M{"$set": q},
 		ReturnNew: true,
 	}
-	if chInfo, err := _MongoDB.C(global.COLLECTION_ACCOUNTS).FindId(accountID).Apply(change, account); err != nil {
+	if chInfo, err := _MongoDB.C(global.CollectionAccounts).FindId(accountID).Apply(change, account); err != nil {
 		return false
 	} else if chInfo.Updated > 0 {
-		if err := _MongoDB.C(global.COLLECTION_ACCOUNTS).UpdateId(
+		if err := _MongoDB.C(global.CollectionAccounts).UpdateId(
 			accountID,
 			bson.M{"$set": bson.M{"full_name": fmt.Sprintf("%s %s", account.FirstName, account.LastName)}},
 		); err != nil {
 			log.Warn(err.Error())
 		}
-		if err := _MongoDB.C(global.COLLECTION_PLACES).UpdateId(
+		if err := _MongoDB.C(global.CollectionPlaces).UpdateId(
 			accountID,
 			bson.M{"$set": bson.M{"name": fmt.Sprintf("%s %s", account.FirstName, account.LastName)}},
 		); err != nil {
@@ -827,7 +827,7 @@ func (am *AccountManager) Update(accountID string, aur AccountUpdateRequest) boo
 // UpdateAuthority updates the authority sub-document of the account document
 func (am *AccountManager) UpdateAuthority(accountID string, authority AccountAuthority) bool {
 	defer _Manager.Account.removeCache(accountID)
-	if err := _MongoDB.C(global.COLLECTION_ACCOUNTS).UpdateId(
+	if err := _MongoDB.C(global.CollectionAccounts).UpdateId(
 		accountID,
 		bson.M{"$set": bson.M{"authority": authority}},
 	); err != nil {
@@ -844,13 +844,13 @@ func (am *AccountManager) UpdateLimits(accountID string, limits MI) bool {
 	for limitKey, limitValue := range limits {
 		switch limitKey {
 		case "limits.grand_places":
-			m[limitKey] = ClampInteger(limitValue, global.SYSTEM_CONSTANTS_ACCOUNT_GRANDPLACE_LIMIT_LL, global.SYSTEM_CONSTANTS_ACCOUNT_GRANDPLACE_LIMIT_UL)
+			m[limitKey] = ClampInteger(limitValue, global.SystemConstantsAccountGrandPlaceLimitLL, global.SystemConstantsAccountGrandPlaceLimitUL)
 		}
 	}
 	if len(m) == 0 {
 		return false
 	}
-	if _, err := _MongoDB.C(global.COLLECTION_ACCOUNTS).UpdateAll(
+	if _, err := _MongoDB.C(global.CollectionAccounts).UpdateAll(
 		bson.M{"_id": accountID},
 		bson.M{"$set": m},
 	); err != nil {
@@ -862,7 +862,7 @@ func (am *AccountManager) UpdateLimits(accountID string, limits MI) bool {
 
 // UpdatePlaceConnection updates 'Account <---> Place' relations points by 'c'
 func (am *AccountManager) UpdatePlaceConnection(accountID string, placeIDs []string, c int) {
-	bulk := _MongoDB.C(global.COLLECTION_ACCOUNTS_PLACES).Bulk()
+	bulk := _MongoDB.C(global.CollectionAccountsPlaces).Bulk()
 	bulk.Unordered()
 	for _, pid := range placeIDs {
 		if place := _Manager.Place.GetByID(pid, tools.M{"name": 1}); place != nil {
@@ -882,7 +882,7 @@ func (am *AccountManager) UpdatePlaceConnection(accountID string, placeIDs []str
 
 // UpdateAccountConnection updates 'Account <---> Account' relations points by 'c'
 func (am *AccountManager) UpdateAccountConnection(accountID string, otherAccountIDs []string, c int) {
-	bulk := _MongoDB.C(global.COLLECTION_ACCOUNTS_ACCOUNTS).Bulk()
+	bulk := _MongoDB.C(global.CollectionAccountsAccounts).Bulk()
 	bulk.Unordered()
 	for _, aid := range otherAccountIDs {
 		bulk.Upsert(
@@ -910,7 +910,7 @@ func (am *AccountManager) UpdateAccountConnection(accountID string, otherAccount
 // UpdateRecipientConnection updates 'Account <---> Recipients(Emails) relation points by 'c'
 func (am *AccountManager) UpdateRecipientConnection(accountID string, recipients []string, c int) {
 	for _, r := range recipients {
-		if _, err := _MongoDB.C(global.COLLECTION_ACCOUNTS_RECIPIENTS).Upsert(
+		if _, err := _MongoDB.C(global.CollectionAccountsRecipients).Upsert(
 			bson.M{
 				"account_id": accountID,
 				"recipient":  strings.ToLower(r),
@@ -924,7 +924,7 @@ func (am *AccountManager) UpdateRecipientConnection(accountID string, recipients
 
 // UnTrustRecipient removes the email address from the trusted lists for the accountID
 func (am AccountManager) UnTrustRecipient(accountID string, recipients []string) bool {
-	if err := _MongoDB.C(global.COLLECTION_ACCOUNTS_TRUSTED).UpdateId(
+	if err := _MongoDB.C(global.CollectionAccountsTrusted).UpdateId(
 		accountID,
 		bson.M{"$pull": bson.M{"recipients": bson.M{"$in": recipients}}},
 	); err != nil {
@@ -936,7 +936,7 @@ func (am AccountManager) UnTrustRecipient(accountID string, recipients []string)
 
 // TrustRecipient adds the email address to the trusted lists for accountID
 func (am AccountManager) TrustRecipient(accountID string, recipients []string) bool {
-	if _, err := _MongoDB.C(global.COLLECTION_ACCOUNTS_TRUSTED).UpsertId(
+	if _, err := _MongoDB.C(global.CollectionAccountsTrusted).UpsertId(
 		accountID,
 		bson.M{
 			"$addToSet": bson.M{"recipients": bson.M{"$each": recipients}},
@@ -955,7 +955,7 @@ func (am AccountManager) IsRecipientTrusted(accountID string, recipient string) 
 	if len(emailParts) == 2 {
 		in = append(in, fmt.Sprintf("@%s", emailParts[1]))
 	}
-	if n, err := _MongoDB.C(global.COLLECTION_ACCOUNTS_TRUSTED).Find(
+	if n, err := _MongoDB.C(global.CollectionAccountsTrusted).Find(
 		bson.M{
 			"_id":        accountID,
 			"recipients": bson.M{"$in": in},
@@ -972,7 +972,7 @@ func (am AccountManager) IsRecipientTrusted(accountID string, recipient string) 
 func (am *AccountManager) UpdateEmail(accountID string, email AccountMail) bool {
 	defer _Manager.Account.removeCache(accountID)
 	email.OutgoingSMTPPass = Encrypt(EMAIL_ENCRYPT_KEY, email.OutgoingSMTPPass)
-	if err := _MongoDB.C(global.COLLECTION_ACCOUNTS).UpdateId(
+	if err := _MongoDB.C(global.CollectionAccounts).UpdateId(
 		accountID,
 		bson.M{"$set": bson.M{"mail": email}},
 	); err != nil {
@@ -984,7 +984,7 @@ func (am *AccountManager) UpdateEmail(accountID string, email AccountMail) bool 
 
 func (am *AccountManager) UpdateUsername(accountID string, username string) bool {
 	defer _Manager.Account.removeCache(accountID)
-	if err := _MongoDB.C(global.COLLECTION_ACCOUNTS).UpdateId(
+	if err := _MongoDB.C(global.CollectionAccounts).UpdateId(
 		accountID,
 		bson.M{"$set": bson.M{"username": username}},
 	); err != nil {

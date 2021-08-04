@@ -32,7 +32,7 @@ func (pm *PhoneManager) RegisterPhoneToAccount(accountID, phoneNumber string) {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if _, err := db.C(global.COLLECTION_PHONES).UpsertId(
+	if _, err := db.C(global.CollectionPhones).UpsertId(
 		phoneNumber,
 		bson.M{"$set": bson.M{"owner_id": accountID}},
 	); err != nil {
@@ -48,7 +48,7 @@ func (pm *PhoneManager) UnRegisterPhoneToAccount(accountID, phoneNumber string) 
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if _, err := db.C(global.COLLECTION_PHONES).UpsertId(
+	if _, err := db.C(global.CollectionPhones).UpsertId(
 		phoneNumber,
 		bson.M{"$unset": bson.M{"owner_id": ""}},
 	); err != nil {
@@ -64,7 +64,7 @@ func (pm *PhoneManager) AddContactToPhone(accountID, phoneNumber string) {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if _, err := db.C(global.COLLECTION_PHONES).UpsertId(
+	if _, err := db.C(global.CollectionPhones).UpsertId(
 		phoneNumber,
 		bson.M{"$addToSet": bson.M{"contacts": accountID}},
 	); err != nil {
@@ -80,7 +80,7 @@ func (pm *PhoneManager) RemoveContactFromPhone(accountID, phoneNumber string) {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if _, err := db.C(global.COLLECTION_PHONES).UpsertId(
+	if _, err := db.C(global.CollectionPhones).UpsertId(
 		phoneNumber,
 		bson.M{"$pull": bson.M{"contacts": accountID}},
 	); err != nil {
@@ -97,7 +97,7 @@ func (pm *PhoneManager) GetContactsByPhoneNumber(phoneNumber string) []string {
 	defer dbSession.Close()
 
 	c := new(PhoneContacts)
-	db.C(global.COLLECTION_PHONES).FindId(phoneNumber).One(c)
+	db.C(global.CollectionPhones).FindId(phoneNumber).One(c)
 	return c.Contacts
 }
 
@@ -109,7 +109,7 @@ func (pm *PhoneManager) GetContactsByAccountID(accountID string) []string {
 	defer dbSession.Close()
 
 	c := new(PhoneContacts)
-	if err := db.C(global.COLLECTION_PHONES).Find(bson.M{"owner_id": accountID}).One(c); err != nil {
+	if err := db.C(global.CollectionPhones).Find(bson.M{"owner_id": accountID}).One(c); err != nil {
 		return []string{}
 	}
 	return c.Contacts

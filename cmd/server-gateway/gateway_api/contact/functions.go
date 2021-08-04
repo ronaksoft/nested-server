@@ -14,17 +14,17 @@ func (s *ContactService) addContact(requester *nested.Account, request *nestedGa
 	if v, ok := request.Data["contact_id"].(string); ok {
 		contactID = v
 		if !_Model.Account.Exists(contactID) {
-			response.Error(global.ERR_INVALID, []string{"contact_id"})
+			response.Error(global.ErrInvalid, []string{"contact_id"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"contact_id"})
+		response.Error(global.ErrIncomplete, []string{"contact_id"})
 		return
 	}
 	if _Model.Contact.AddContact(requester.ID, contactID) {
 		response.Ok()
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{})
+		response.Error(global.ErrUnknown, []string{})
 	}
 	return
 }
@@ -37,21 +37,21 @@ func (s *ContactService) addContactToFavorite(requester *nested.Account, request
 		contactID = v
 		if _Model.Account.Exists(contactID) {
 			if !_Model.Contact.IsContact(requester.ID, contactID) {
-				response.Error(global.ERR_ACCESS, []string{"must_be_contact_first"})
+				response.Error(global.ErrAccess, []string{"must_be_contact_first"})
 				return
 			}
 		} else {
-			response.Error(global.ERR_INVALID, []string{"contact_id"})
+			response.Error(global.ErrInvalid, []string{"contact_id"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"contact_id"})
+		response.Error(global.ErrIncomplete, []string{"contact_id"})
 		return
 	}
 	if _Model.Contact.AddContactToFavorite(requester.ID, contactID) {
 		response.Ok()
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{})
+		response.Error(global.ErrUnknown, []string{})
 	}
 	return
 }
@@ -63,11 +63,11 @@ func (s *ContactService) getContact(requester *nested.Account, request *nestedGa
 	if v, ok := request.Data["contact_id"].(string); ok {
 		contactID = v
 		if !_Model.Account.Exists(contactID) {
-			response.Error(global.ERR_INVALID, []string{"contact_id"})
+			response.Error(global.ErrInvalid, []string{"contact_id"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"contact_id"})
+		response.Error(global.ErrIncomplete, []string{"contact_id"})
 		return
 	}
 	c := _Model.Account.GetByID(contactID, nil)
@@ -120,21 +120,21 @@ func (s *ContactService) removeContact(requester *nested.Account, request *neste
 		contactID = v
 		if _Model.Account.Exists(contactID) {
 			if !_Model.Contact.IsContact(requester.ID, contactID) {
-				response.Error(global.ERR_ACCESS, []string{"must_be_contact_first"})
+				response.Error(global.ErrAccess, []string{"must_be_contact_first"})
 				return
 			}
 		} else {
-			response.Error(global.ERR_INVALID, []string{"contact_id"})
+			response.Error(global.ErrInvalid, []string{"contact_id"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"contact_id"})
+		response.Error(global.ErrIncomplete, []string{"contact_id"})
 		return
 	}
 	if _Model.Contact.RemoveContact(requester.ID, contactID) {
 		response.Ok()
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{})
+		response.Error(global.ErrUnknown, []string{})
 	}
 	return
 
@@ -148,21 +148,21 @@ func (s *ContactService) removeContactFromFavorite(requester *nested.Account, re
 		contactID = v
 		if _Model.Account.Exists(contactID) {
 			if !_Model.Contact.IsContact(requester.ID, contactID) {
-				response.Error(global.ERR_ACCESS, []string{"must_be_contact_first"})
+				response.Error(global.ErrAccess, []string{"must_be_contact_first"})
 				return
 			}
 		} else {
-			response.Error(global.ERR_INVALID, []string{"contact_id"})
+			response.Error(global.ErrInvalid, []string{"contact_id"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"contact_id"})
+		response.Error(global.ErrIncomplete, []string{"contact_id"})
 		return
 	}
 	if _Model.Contact.RemoveContactFromFavorite(requester.ID, contactID) {
 		response.Ok()
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{})
+		response.Error(global.ErrUnknown, []string{})
 	}
 	return
 

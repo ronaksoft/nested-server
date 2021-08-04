@@ -15,11 +15,11 @@ import (
 func (s *SessionService) close(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	session := s.Worker().Model().Session.GetByID(request.SessionKey)
 	if s == nil {
-		response.Error(global.ERR_INVALID, []string{"_sk"})
+		response.Error(global.ErrInvalid, []string{"_sk"})
 		return
 	}
 	if request.SessionKey != session.ID || request.SessionSec != session.SessionSecret {
-		response.Error(global.ERR_ACCESS, []string{"_sk", "_ss"})
+		response.Error(global.ErrAccess, []string{"_sk", "_ss"})
 		return
 	}
 	s.Worker().Model().Session.Expire(request.SessionKey)
@@ -46,17 +46,17 @@ func (s *SessionService) recall(requester *nested.Account, request *nestedGatewa
 		if bson.IsObjectIdHex(v) {
 			sk = bson.ObjectIdHex(v)
 		} else {
-			response.Error(global.ERR_INVALID, []string{"_sk"})
+			response.Error(global.ErrInvalid, []string{"_sk"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"_sk"})
+		response.Error(global.ErrIncomplete, []string{"_sk"})
 		return
 	}
 	if v, ok := request.Data["_ss"].(string); ok {
 		ss = v
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"_ss"})
+		response.Error(global.ErrIncomplete, []string{"_ss"})
 		return
 	}
 	if v, ok := request.Data["_did"].(string); ok {
@@ -72,7 +72,7 @@ func (s *SessionService) recall(requester *nested.Account, request *nestedGatewa
 	// If session key and secret do not match expire the session
 	if !s.Worker().Model().Session.Verify(sk, ss) {
 		s.Worker().Model().Session.Expire(sk)
-		response.Error(global.ERR_SESSION, []string{"_sk", "_ss"})
+		response.Error(global.ErrSession, []string{"_sk", "_ss"})
 		return
 	}
 	session := s.Worker().Model().Session.GetByID(sk)
@@ -80,7 +80,7 @@ func (s *SessionService) recall(requester *nested.Account, request *nestedGatewa
 
 	if session.AccountID == "" {
 		s.Worker().Model().Session.Expire(sk)
-		response.Error(global.ERR_SESSION, []string{"uid"})
+		response.Error(global.ErrSession, []string{"uid"})
 		return
 	}
 
@@ -115,7 +115,7 @@ func (s *SessionService) recall(requester *nested.Account, request *nestedGatewa
 		},
 	)
 	if account == nil {
-		response.Error(global.ERR_UNKNOWN, []string{})
+		response.Error(global.ErrUnknown, []string{})
 		return
 	}
 	r := tools.M{
@@ -154,13 +154,13 @@ func (s *SessionService) register(requester *nested.Account, request *nestedGate
 	if v, ok := request.Data["uid"].(string); ok {
 		uid = strings.ToLower(v)
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"uid"})
+		response.Error(global.ErrIncomplete, []string{"uid"})
 		return
 	}
 	if v, ok := request.Data["pass"].(string); ok {
 		pass = v
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"pass"})
+		response.Error(global.ErrIncomplete, []string{"pass"})
 		return
 	}
 	if v, ok := request.Data["_did"].(string); ok {
@@ -183,18 +183,18 @@ func (s *SessionService) register(requester *nested.Account, request *nestedGate
 
 	account := s.Worker().Model().Account.GetByID(uid, nil)
 	if account == nil {
-		response.Error(global.ERR_INVALID, []string{"uid", "pass"})
+		response.Error(global.ErrInvalid, []string{"uid", "pass"})
 		return
 	}
 
 	if account.Disabled {
-		response.Error(global.ERR_ACCESS, []string{"disabled"})
+		response.Error(global.ErrAccess, []string{"disabled"})
 		return
 	}
 
 	// verify if uid & pass are matched and found in our database
 	if !s.Worker().Model().Account.Verify(uid, pass) {
-		response.Error(global.ERR_INVALID, []string{"uid", "pass"})
+		response.Error(global.ErrInvalid, []string{"uid", "pass"})
 		return
 	}
 
@@ -208,7 +208,7 @@ func (s *SessionService) register(requester *nested.Account, request *nestedGate
 	}
 	sk, err := s.Worker().Model().Session.Create(info)
 	if err != nil {
-		response.Error(global.ERR_UNKNOWN, []string{"_sk"})
+		response.Error(global.ErrUnknown, []string{"_sk"})
 		return
 	}
 	ss := nested.RandomID(64)
@@ -288,28 +288,28 @@ func (s *SessionService) closeActive(requester *nested.Account, request *nestedG
 		if bson.IsObjectIdHex(v) {
 			sessionKey = bson.ObjectIdHex(v)
 		} else {
-			response.Error(global.ERR_INVALID, []string{"_sk"})
+			response.Error(global.ErrInvalid, []string{"_sk"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"_sk"})
+		response.Error(global.ErrIncomplete, []string{"_sk"})
 		return
 	}
 	// if session was not found return error
 	session := s.Worker().Model().Session.GetByID(sessionKey)
 	if session == nil {
-		response.Error(global.ERR_INVALID, []string{"_sk"})
+		response.Error(global.ErrInvalid, []string{"_sk"})
 		return
 	}
 
 	// users can only close their own sessions
 	if session.AccountID != requester.ID {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 		return
 	}
 	// users cannot close their current session using this function
 	if session.ID == request.SessionKey {
-		response.Error(global.ERR_ACCESS, []string{"current session"})
+		response.Error(global.ErrAccess, []string{"current session"})
 		return
 	}
 	s.Worker().Model().Session.Expire(sessionKey)
@@ -320,11 +320,11 @@ func (s *SessionService) closeActive(requester *nested.Account, request *nestedG
 func (s *SessionService) closeAllActives(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	session := s.Worker().Model().Session.GetByID(request.SessionKey)
 	if session == nil {
-		response.Error(global.ERR_UNKNOWN, []string{})
+		response.Error(global.ErrUnknown, []string{})
 		return
 	}
 	if nested.Timestamp()-session.CreatedOn < 3600000 {
-		response.Error(global.ERR_ACCESS, []string{"session_just_created"})
+		response.Error(global.ErrAccess, []string{"session_just_created"})
 		return
 	}
 	session.CloseOtherActives()

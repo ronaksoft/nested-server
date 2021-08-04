@@ -59,7 +59,7 @@ func (vm *VerificationManager) CreateByPhone(phone string) *Verification {
 		v.ShortCode = RandomDigit(6)
 		v.LongCode = base64.URLEncoding.EncodeToString(md5.New().Sum([]byte(RandomID(10))))
 	}
-	if err := db.C(global.COLLECTION_VERIFICATIONS).Insert(v); err != nil {
+	if err := db.C(global.CollectionVerifications).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return v
@@ -84,7 +84,7 @@ func (vm *VerificationManager) CreateByEmail(email string) *Verification {
 		v.ShortCode = RandomDigit(6)
 		v.LongCode = base64.URLEncoding.EncodeToString(md5.New().Sum([]byte(RandomID(10))))
 	}
-	if err := db.C(global.COLLECTION_VERIFICATIONS).Insert(v); err != nil {
+	if err := db.C(global.CollectionVerifications).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return v
@@ -99,7 +99,7 @@ func (vm *VerificationManager) GetByID(verifyID string) *Verification {
 	defer dbSession.Close()
 
 	v := new(Verification)
-	if err := db.C(global.COLLECTION_VERIFICATIONS).FindId(verifyID).One(v); err != nil {
+	if err := db.C(global.CollectionVerifications).FindId(verifyID).One(v); err != nil {
 		log.Warn(err.Error())
 		return nil
 	}
@@ -119,7 +119,7 @@ func (vm *VerificationManager) Verify(verifyID, code string) bool {
 		Update:    bson.M{"$inc": bson.M{"counters.attempts": 1}},
 		ReturnNew: true,
 	}
-	if _, err := db.C(global.COLLECTION_VERIFICATIONS).FindId(verifyID).Apply(ch, v); err != nil {
+	if _, err := db.C(global.CollectionVerifications).FindId(verifyID).Apply(ch, v); err != nil {
 		log.Warn(err.Error())
 		return false
 	}
@@ -144,7 +144,7 @@ func (vm *VerificationManager) Verify(verifyID, code string) bool {
 
 	if v.ShortCode == code || v.LongCode == code {
 		v.Verified = true
-		db.C(global.COLLECTION_VERIFICATIONS).UpdateId(
+		db.C(global.CollectionVerifications).UpdateId(
 			v.ID,
 			bson.M{"$set": bson.M{"verified": true}},
 		)
@@ -161,7 +161,7 @@ func (vm *VerificationManager) Verified(verifyID string) bool {
 	defer dbSession.Close()
 
 	v := new(Verification)
-	if err := db.C(global.COLLECTION_VERIFICATIONS).FindId(verifyID).One(v); err != nil {
+	if err := db.C(global.CollectionVerifications).FindId(verifyID).One(v); err != nil {
 		log.Warn(err.Error())
 		return false
 	}
@@ -175,10 +175,10 @@ func (vm *VerificationManager) IncrementSmsCounter(verifyID string) {
 	defer dbSession.Close()
 
 	v := new(Verification)
-	if err := db.C(global.COLLECTION_VERIFICATIONS).FindId(verifyID).One(v); err != nil {
+	if err := db.C(global.CollectionVerifications).FindId(verifyID).One(v); err != nil {
 		log.Warn(err.Error())
 	}
-	if err := db.C(global.COLLECTION_VERIFICATIONS).UpdateId(verifyID, bson.M{"$inc": bson.M{"counters.sms": 1}}); err != nil {
+	if err := db.C(global.CollectionVerifications).UpdateId(verifyID, bson.M{"$inc": bson.M{"counters.sms": 1}}); err != nil {
 		log.Warn(err.Error())
 	}
 }
@@ -190,10 +190,10 @@ func (vm *VerificationManager) IncrementCallCounter(verifyID string) {
 	defer dbSession.Close()
 
 	v := new(Verification)
-	if err := db.C(global.COLLECTION_VERIFICATIONS).FindId(verifyID).One(v); err != nil {
+	if err := db.C(global.CollectionVerifications).FindId(verifyID).One(v); err != nil {
 		log.Warn(err.Error())
 	}
-	if err := db.C(global.COLLECTION_VERIFICATIONS).UpdateId(verifyID, bson.M{"$inc": bson.M{"counters.call": 1}}); err != nil {
+	if err := db.C(global.CollectionVerifications).UpdateId(verifyID, bson.M{"$inc": bson.M{"counters.call": 1}}); err != nil {
 		log.Warn(err.Error())
 	}
 }
@@ -205,10 +205,10 @@ func (vm *VerificationManager) IncrementEmailCounter(verifyID string) {
 	defer dbSession.Close()
 
 	v := new(Verification)
-	if err := db.C(global.COLLECTION_VERIFICATIONS).FindId(verifyID).One(v); err != nil {
+	if err := db.C(global.CollectionVerifications).FindId(verifyID).One(v); err != nil {
 		log.Warn(err.Error())
 	}
-	if err := db.C(global.COLLECTION_VERIFICATIONS).UpdateId(verifyID, bson.M{"$inc": bson.M{"counters.email": 1}}); err != nil {
+	if err := db.C(global.CollectionVerifications).UpdateId(verifyID, bson.M{"$inc": bson.M{"counters.email": 1}}); err != nil {
 		log.Warn(err.Error())
 	}
 }
@@ -220,10 +220,10 @@ func (vm *VerificationManager) Expire(verifyID string) {
 	defer dbSession.Close()
 
 	v := new(Verification)
-	if err := db.C(global.COLLECTION_VERIFICATIONS).FindId(verifyID).One(v); err != nil {
+	if err := db.C(global.CollectionVerifications).FindId(verifyID).One(v); err != nil {
 		log.Warn(err.Error())
 	}
-	if err := db.C(global.COLLECTION_VERIFICATIONS).UpdateId(verifyID, bson.M{"$set": bson.M{"expired": true}}); err != nil {
+	if err := db.C(global.CollectionVerifications).UpdateId(verifyID, bson.M{"$set": bson.M{"expired": true}}); err != nil {
 		log.Warn(err.Error())
 	}
 }

@@ -13,32 +13,32 @@ import (
 
 func StartupCheckups() {
 	// ACCOUNTS, ACCOUNTS.POSTS, ACCOUNTS.PLACES, ACCOUNTS_RECIPIENTS, ACCOUNTS_DEVICES, ACCOUNTS_LABELS
-	_ = _MongoDB.C(global.COLLECTION_ACCOUNTS).EnsureIndex(mgo.Index{Key: []string{"email"}})
-	_ = _MongoDB.C(global.COLLECTION_ACCOUNTS).EnsureIndex(mgo.Index{Key: []string{"phone"}})
-	_ = _MongoDB.C(global.COLLECTION_ACCOUNTS).EnsureIndex(mgo.Index{Key: []string{"full_name"}})
-	_ = _MongoDB.C(global.COLLECTION_ACCOUNTS).EnsureIndex(mgo.Index{Key: []string{"username"}, Unique: true, Background: false})
-	_ = _MongoDB.C(global.COLLECTION_ACCOUNTS).EnsureIndex(mgo.Index{Key: []string{"access_places"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_ACCOUNTS_POSTS).EnsureIndex(mgo.Index{Key: []string{"account_id", "-pin_time"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_ACCOUNTS_PLACES).EnsureIndex(mgo.Index{Key: []string{"account_id", "-pts"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_ACCOUNTS_ACCOUNTS).EnsureIndex(mgo.Index{Key: []string{"account_id", "-pts"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_ACCOUNTS_RECIPIENTS).EnsureIndex(mgo.Index{Key: []string{"account_id", "-pts"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_ACCOUNTS_RECIPIENTS).EnsureIndex(mgo.Index{Key: []string{"account_id", "recipient"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_ACCOUNTS_DEVICES).EnsureIndex(mgo.Index{Key: []string{"uid"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_ACCOUNTS_LABELS).EnsureIndex(mgo.Index{Key: []string{"labels"}, Background: true})
+	_ = _MongoDB.C(global.CollectionAccounts).EnsureIndex(mgo.Index{Key: []string{"email"}})
+	_ = _MongoDB.C(global.CollectionAccounts).EnsureIndex(mgo.Index{Key: []string{"phone"}})
+	_ = _MongoDB.C(global.CollectionAccounts).EnsureIndex(mgo.Index{Key: []string{"full_name"}})
+	_ = _MongoDB.C(global.CollectionAccounts).EnsureIndex(mgo.Index{Key: []string{"username"}, Unique: true, Background: false})
+	_ = _MongoDB.C(global.CollectionAccounts).EnsureIndex(mgo.Index{Key: []string{"access_places"}, Background: true})
+	_ = _MongoDB.C(global.CollectionAccountsPosts).EnsureIndex(mgo.Index{Key: []string{"account_id", "-pin_time"}, Background: true})
+	_ = _MongoDB.C(global.CollectionAccountsPlaces).EnsureIndex(mgo.Index{Key: []string{"account_id", "-pts"}, Background: true})
+	_ = _MongoDB.C(global.CollectionAccountsAccounts).EnsureIndex(mgo.Index{Key: []string{"account_id", "-pts"}, Background: true})
+	_ = _MongoDB.C(global.CollectionAccountsRecipients).EnsureIndex(mgo.Index{Key: []string{"account_id", "-pts"}, Background: true})
+	_ = _MongoDB.C(global.CollectionAccountsRecipients).EnsureIndex(mgo.Index{Key: []string{"account_id", "recipient"}, Background: true})
+	_ = _MongoDB.C(global.CollectionAccountsDevices).EnsureIndex(mgo.Index{Key: []string{"uid"}, Background: true})
+	_ = _MongoDB.C(global.CollectionAccountsLabels).EnsureIndex(mgo.Index{Key: []string{"labels"}, Background: true})
 
 	// PLACES & PLACES.INVITATIONS
-	_ = _MongoDB.C(global.COLLECTION_PLACES).EnsureIndex(mgo.Index{Key: []string{"grand_parent_id"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_PLACES).EnsureIndex(mgo.Index{Key: []string{"$text:name", "$text:description"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_PLACES_ACTIVITIES).EnsureIndex(mgo.Index{Key: []string{"place_id", "-timestamp"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_PLACES_ACTIVITIES).EnsureIndex(mgo.Index{Key: []string{"place_id", "action", "-timestamp"}, Background: true})
+	_ = _MongoDB.C(global.CollectionPlaces).EnsureIndex(mgo.Index{Key: []string{"grand_parent_id"}, Background: true})
+	_ = _MongoDB.C(global.CollectionPlaces).EnsureIndex(mgo.Index{Key: []string{"$text:name", "$text:description"}, Background: true})
+	_ = _MongoDB.C(global.CollectionPlacesActivities).EnsureIndex(mgo.Index{Key: []string{"place_id", "-timestamp"}, Background: true})
+	_ = _MongoDB.C(global.CollectionPlacesActivities).EnsureIndex(mgo.Index{Key: []string{"place_id", "action", "-timestamp"}, Background: true})
 
 	// POSTS & POSTS.READS & POSTS.READS.COUNTERS & POSTS.COMMENTS
-	_ = _MongoDB.C(global.COLLECTION_POSTS).EnsureIndex(mgo.Index{Key: []string{"places", "-timestamp"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_POSTS).EnsureIndex(mgo.Index{Key: []string{"places", "-last_update"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_POSTS).EnsureIndex(mgo.Index{Key: []string{"recipients", "-timestamp"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_POSTS).EnsureIndex(mgo.Index{Key: []string{"sender", "-timestamp"}, Background: true})
+	_ = _MongoDB.C(global.CollectionPosts).EnsureIndex(mgo.Index{Key: []string{"places", "-timestamp"}, Background: true})
+	_ = _MongoDB.C(global.CollectionPosts).EnsureIndex(mgo.Index{Key: []string{"places", "-last_update"}, Background: true})
+	_ = _MongoDB.C(global.CollectionPosts).EnsureIndex(mgo.Index{Key: []string{"recipients", "-timestamp"}, Background: true})
+	_ = _MongoDB.C(global.CollectionPosts).EnsureIndex(mgo.Index{Key: []string{"sender", "-timestamp"}, Background: true})
 
-	_ = _MongoDB.C(global.COLLECTION_POSTS).EnsureIndex(mgo.Index{
+	_ = _MongoDB.C(global.CollectionPosts).EnsureIndex(mgo.Index{
 		Key: []string{"$text:content", "$text:subject"},
 		Weights: map[string]int{
 			"subject": 5,
@@ -46,25 +46,25 @@ func StartupCheckups() {
 		},
 		Background: true,
 	})
-	_ = _MongoDB.C(global.COLLECTION_POSTS).EnsureIndex(mgo.Index{Key: []string{"labels"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_POSTS_READS).EnsureIndex(mgo.Index{
+	_ = _MongoDB.C(global.CollectionPosts).EnsureIndex(mgo.Index{Key: []string{"labels"}, Background: true})
+	_ = _MongoDB.C(global.CollectionPostsReads).EnsureIndex(mgo.Index{
 		Key:        []string{"account_id", "place_id", "-timestamp"},
 		Unique:     true,
 		Background: true,
 	})
-	_ = _MongoDB.C(global.COLLECTION_POSTS_READS).EnsureIndex(mgo.Index{Key: []string{"place_id", "-timestamp"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_POSTS_READS).EnsureIndex(mgo.Index{Key: []string{"post_id"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_POSTS_READS_COUNTERS).EnsureIndex(mgo.Index{Key: []string{"account_id", "place_id"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_POSTS_READS_ACCOUNTS).EnsureIndex(mgo.Index{Key: []string{"post_id", "account_id"}, Background: true, Unique: true})
-	_ = _MongoDB.C(global.COLLECTION_POSTS_COMMENTS).EnsureIndex(mgo.Index{Key: []string{"post_id", "-timestamp"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_POSTS_COMMENTS).EnsureIndex(mgo.Index{Key: []string{"$text:text"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_POSTS_FILES).EnsureIndex(mgo.Index{Key: []string{"post_id", "universal_id"}, Background: true, Unique: true})
+	_ = _MongoDB.C(global.CollectionPostsReads).EnsureIndex(mgo.Index{Key: []string{"place_id", "-timestamp"}, Background: true})
+	_ = _MongoDB.C(global.CollectionPostsReads).EnsureIndex(mgo.Index{Key: []string{"post_id"}, Background: true})
+	_ = _MongoDB.C(global.CollectionPostsReadsCounters).EnsureIndex(mgo.Index{Key: []string{"account_id", "place_id"}, Background: true})
+	_ = _MongoDB.C(global.CollectionPostsReadsAccounts).EnsureIndex(mgo.Index{Key: []string{"post_id", "account_id"}, Background: true, Unique: true})
+	_ = _MongoDB.C(global.CollectionPostsComments).EnsureIndex(mgo.Index{Key: []string{"post_id", "-timestamp"}, Background: true})
+	_ = _MongoDB.C(global.CollectionPostsComments).EnsureIndex(mgo.Index{Key: []string{"$text:text"}, Background: true})
+	_ = _MongoDB.C(global.CollectionPostsFiles).EnsureIndex(mgo.Index{Key: []string{"post_id", "universal_id"}, Background: true, Unique: true})
 
 	// Tasks
-	_ = _MongoDB.C(global.COLLECTION_TASKS).EnsureIndex(mgo.Index{Key: []string{"members"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_TASKS).EnsureIndex(mgo.Index{Key: []string{"due_date"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_TASKS).EnsureIndex(mgo.Index{Key: []string{"timestamp"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_TASKS).EnsureIndex(mgo.Index{
+	_ = _MongoDB.C(global.CollectionTasks).EnsureIndex(mgo.Index{Key: []string{"members"}, Background: true})
+	_ = _MongoDB.C(global.CollectionTasks).EnsureIndex(mgo.Index{Key: []string{"due_date"}, Background: true})
+	_ = _MongoDB.C(global.CollectionTasks).EnsureIndex(mgo.Index{Key: []string{"timestamp"}, Background: true})
+	_ = _MongoDB.C(global.CollectionTasks).EnsureIndex(mgo.Index{
 		Key: []string{"$text:title", "$text:description", "$text:todos"},
 		Weights: map[string]int{
 			"title":       5,
@@ -73,41 +73,41 @@ func StartupCheckups() {
 		},
 		Background: true,
 	})
-	_ = _MongoDB.C(global.COLLECTION_TASKS_FILES).EnsureIndex(mgo.Index{Key: []string{"task_id", "universal_id"}, Background: true, Unique: true})
+	_ = _MongoDB.C(global.CollectionTasksFiles).EnsureIndex(mgo.Index{Key: []string{"task_id", "universal_id"}, Background: true, Unique: true})
 
 	// Labels
-	_ = _MongoDB.C(global.COLLECTION_LABELS).EnsureIndex(mgo.Index{Key: []string{"members"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_LABELS).EnsureIndex(mgo.Index{Key: []string{"title"}, Unique: true})
-	_ = _MongoDB.C(global.COLLECTION_LABELS).EnsureIndex(mgo.Index{Key: []string{"lower_title"}, Unique: true})
-	_ = _MongoDB.C(global.COLLECTION_LABELS_REQUESTS).EnsureIndex(mgo.Index{Key: []string{"requester_id"}, Background: true})
+	_ = _MongoDB.C(global.CollectionLabels).EnsureIndex(mgo.Index{Key: []string{"members"}, Background: true})
+	_ = _MongoDB.C(global.CollectionLabels).EnsureIndex(mgo.Index{Key: []string{"title"}, Unique: true})
+	_ = _MongoDB.C(global.CollectionLabels).EnsureIndex(mgo.Index{Key: []string{"lower_title"}, Unique: true})
+	_ = _MongoDB.C(global.CollectionLabelsRequests).EnsureIndex(mgo.Index{Key: []string{"requester_id"}, Background: true})
 
 	// Notifications
-	_ = _MongoDB.C(global.COLLECTION_NOTIFICATIONS).EnsureIndex(mgo.Index{Key: []string{"account_id", "type"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_NOTIFICATIONS).EnsureIndex(mgo.Index{Key: []string{"account_id", "post_id"}, Background: true})
+	_ = _MongoDB.C(global.CollectionNotifications).EnsureIndex(mgo.Index{Key: []string{"account_id", "type"}, Background: true})
+	_ = _MongoDB.C(global.CollectionNotifications).EnsureIndex(mgo.Index{Key: []string{"account_id", "post_id"}, Background: true})
 
 	// Files
-	_ = _MongoDB.C(global.COLLECTION_FILES).EnsureIndex(mgo.Index{Key: []string{"owners", "-upload_time"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_FILES).EnsureIndex(mgo.Index{Key: []string{"owners", "filename"}, Background: true})
+	_ = _MongoDB.C(global.CollectionFiles).EnsureIndex(mgo.Index{Key: []string{"owners", "-upload_time"}, Background: true})
+	_ = _MongoDB.C(global.CollectionFiles).EnsureIndex(mgo.Index{Key: []string{"owners", "filename"}, Background: true})
 
 	// Search
-	_ = _MongoDB.C(global.COLLECTION_SEARCH_INDEX_PLACES).EnsureIndex(mgo.Index{Key: []string{"name"}, Background: true})
+	_ = _MongoDB.C(global.CollectionSearchIndexPlaces).EnsureIndex(mgo.Index{Key: []string{"name"}, Background: true})
 
 	// Session
-	_ = _MongoDB.C(global.COLLECTION_SESSIONS).EnsureIndex(mgo.Index{Key: []string{"uid"}, Background: true})
+	_ = _MongoDB.C(global.CollectionSessions).EnsureIndex(mgo.Index{Key: []string{"uid"}, Background: true})
 
 	// Phones
-	_ = _MongoDB.C(global.COLLECTION_PHONES).EnsureIndex(mgo.Index{Key: []string{"owner_id"}, Sparse: true, Background: true})
+	_ = _MongoDB.C(global.CollectionPhones).EnsureIndex(mgo.Index{Key: []string{"owner_id"}, Sparse: true, Background: true})
 
 	// Tokens
-	_ = _MongoDB.C(global.COLLECTION_TOKENS_FILES).EnsureIndex(mgo.Index{Key: []string{"universal_id"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_TOKENS_APPS).EnsureIndex(mgo.Index{Key: []string{"account_id", "app_id"}, Background: true})
+	_ = _MongoDB.C(global.CollectionTokensFiles).EnsureIndex(mgo.Index{Key: []string{"universal_id"}, Background: true})
+	_ = _MongoDB.C(global.CollectionTokensApps).EnsureIndex(mgo.Index{Key: []string{"account_id", "app_id"}, Background: true})
 
 	// Reports
-	_ = _MongoDB.C(global.COLLECTION_REPORTS_COUNTERS).EnsureIndex(mgo.Index{Key: []string{"key", "-date"}, Background: true})
+	_ = _MongoDB.C(global.CollectionReportsCounters).EnsureIndex(mgo.Index{Key: []string{"key", "-date"}, Background: true})
 
 	// Hooks
-	_ = _MongoDB.C(global.COLLECTION_HOOKS).EnsureIndex(mgo.Index{Key: []string{"anchor_id"}, Background: true})
-	_ = _MongoDB.C(global.COLLECTION_HOOKS).EnsureIndex(mgo.Index{Key: []string{"set_by", "event_type"}, Background: true})
+	_ = _MongoDB.C(global.CollectionHooks).EnsureIndex(mgo.Index{Key: []string{"anchor_id"}, Background: true})
+	_ = _MongoDB.C(global.CollectionHooks).EnsureIndex(mgo.Index{Key: []string{"set_by", "event_type"}, Background: true})
 
 	if !_Manager.Account.Exists("nested") {
 		md5Hash := md5.New()
@@ -137,18 +137,18 @@ func StartupCheckups() {
 		_Manager.Place.AddKeyholder("nested", "nested")
 		_Manager.Place.Promote("nested", "nested")
 
-		if err := _MongoDB.C(global.COLLECTION_SYSTEM_INTERNAL).Insert(
+		if err := _MongoDB.C(global.CollectionSystemInternal).Insert(
 			bson.M{
 				"_id": "constants",
-				fmt.Sprintf("strings.%s", global.SYSTEM_CONSTANTS_COMPANY_NAME):              global.DefaultCompanyName,
-				fmt.Sprintf("strings.%s", global.SYSTEM_CONSTANTS_COMPANY_DESC):              global.DefaultCompanyDesc,
-				fmt.Sprintf("strings.%s", global.SYSTEM_CONSTANTS_COMPANY_LOGO):              global.DefaultCompanyLogo,
-				fmt.Sprintf("integers.%s", global.SYSTEM_CONSTANTS_REGISTER_MODE):            global.RegisterModeAdminOnly,
-				fmt.Sprintf("integers.%s", global.SYSTEM_CONSTANTS_LABEL_MAX_MEMBERS):        global.DefaultLabelMaxMembers,
-				fmt.Sprintf("integers.%s", global.SYSTEM_CONSTANTS_ACCOUNT_GRANDPLACE_LIMIT): global.DefaultAccountGrandPlaces,
-				fmt.Sprintf("integers.%s", global.SYSTEM_CONSTANTS_PLACE_MAX_LEVEL):          global.DefaultPlaceMaxLevel,
-				fmt.Sprintf("integers.%s", global.SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS):     global.DefaultPlaceMaxKeyHolders,
-				fmt.Sprintf("integers.%s", global.SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN):       global.DefaultPlaceMaxChildren,
+				fmt.Sprintf("strings.%s", global.SystemConstantsCompanyName):             global.DefaultCompanyName,
+				fmt.Sprintf("strings.%s", global.SystemConstantsCompanyDesc):             global.DefaultCompanyDesc,
+				fmt.Sprintf("strings.%s", global.SystemConstantsCompanyLogo):             global.DefaultCompanyLogo,
+				fmt.Sprintf("integers.%s", global.SystemConstantsRegisterMode):           global.RegisterMode,
+				fmt.Sprintf("integers.%s", global.SystemConstantsLabelMaxMembers):        global.DefaultLabelMaxMembers,
+				fmt.Sprintf("integers.%s", global.SystemConstantsAccountGrandPlaceLimit): global.DefaultAccountGrandPlaces,
+				fmt.Sprintf("integers.%s", global.SystemConstantsPlaceMaxLevel):          global.DefaultPlaceMaxLevel,
+				fmt.Sprintf("integers.%s", global.SystemConstantsPlaceMaxKeyHolders):     global.DefaultPlaceMaxKeyHolders,
+				fmt.Sprintf("integers.%s", global.SystemConstantsPlaceMaxChildren):       global.DefaultPlaceMaxChildren,
 			},
 		); err != nil {
 			log.Warn("StartupChecks::", zap.Error(err))
@@ -162,7 +162,7 @@ func StartupCheckups() {
 func migrate(currentModelVersion int) bool {
 	switch currentModelVersion {
 	case 22:
-		iter := _MongoDB.C(global.COLLECTION_TASKS).Find(bson.M{}).Iter()
+		iter := _MongoDB.C(global.CollectionTasks).Find(bson.M{}).Iter()
 		task := new(Task)
 		for iter.Next(task) {
 			memberIDs := make([]string, 0, len(task.WatcherIDs)+len(task.CandidateIDs)+len(task.EditorIDs)+2)
@@ -172,16 +172,16 @@ func migrate(currentModelVersion int) bool {
 			if task.AssigneeID != "" {
 				memberIDs = append(memberIDs, task.AssigneeID)
 			}
-			_MongoDB.C(global.COLLECTION_TASKS).Update(
+			_MongoDB.C(global.CollectionTasks).Update(
 				bson.M{"_id": task.ID},
 				bson.M{"$addToSet": bson.M{"members": bson.M{"$each": memberIDs}}},
 			)
 		}
 		iter.Close()
-		_MongoDB.C(global.COLLECTION_TASKS).DropIndex("candidates")
-		_MongoDB.C(global.COLLECTION_TASKS).DropIndex("watchers")
-		_MongoDB.C(global.COLLECTION_TASKS).DropIndex("assignor")
-		_MongoDB.C(global.COLLECTION_TASKS).DropIndex("assignee")
+		_MongoDB.C(global.CollectionTasks).DropIndex("candidates")
+		_MongoDB.C(global.CollectionTasks).DropIndex("watchers")
+		_MongoDB.C(global.CollectionTasks).DropIndex("assignor")
+		_MongoDB.C(global.CollectionTasks).DropIndex("assignee")
 	default:
 		return false
 	}

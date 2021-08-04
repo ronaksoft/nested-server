@@ -19,28 +19,28 @@ func (s *PlaceService) addPlaceMember(requester *nested.Account, request *nested
 	if placeID, ok := request.Data["place_id"].(string); ok {
 		place = s.Worker().Model().Place.GetByID(placeID, nil)
 		if place == nil {
-			response.Error(global.ERR_UNAVAILABLE, []string{"place_id"})
+			response.Error(global.ErrUnavailable, []string{"place_id"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"place_id"})
+		response.Error(global.ErrIncomplete, []string{"place_id"})
 		return
 	}
 	if v, ok := request.Data["member_id"].(string); ok {
 		memberIDs = strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"member_id"})
+		response.Error(global.ErrIncomplete, []string{"member_id"})
 		return
 	}
 	// for grand places use invite
 	if place.IsGrandPlace() {
-		response.Error(global.ERR_INVALID, []string{"cmd"})
+		response.Error(global.ErrInvalid, []string{"cmd"})
 		return
 	}
 	// check users right access
 	access := place.GetAccess(requester.ID)
 	if !access[nested.PlaceAccessAddMembers] {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 		return
 	}
 	grandPlace := place.GetGrandParent()
@@ -77,7 +77,7 @@ func (s *PlaceService) countPlaceUnreadPosts(requester *nested.Account, request 
 	if v, ok := request.Data["place_id"].(string); ok {
 		placeIDs = strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 	} else {
-		response.Error(global.ERR_INVALID, []string{"place_id"})
+		response.Error(global.ErrInvalid, []string{"place_id"})
 		return
 	}
 	if v, ok := request.Data["subs"].(bool); ok {
@@ -129,38 +129,38 @@ func (s *PlaceService) countPlaceUnreadPosts(requester *nested.Account, request 
 func (s *PlaceService) createGrandPlace(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	pcr := nested.PlaceCreateRequest{}
 	if requester.Limits.GrandPlaces == 0 {
-		response.Error(global.ERR_LIMIT, []string{"no_grand_places"})
+		response.Error(global.ErrLimit, []string{"no_grand_places"})
 		return
 	}
 	if v, ok := request.Data["place_id"].(string); ok {
 		pcr.ID = strings.ToLower(v)
 		if pcr.ID == "" || len(pcr.ID) > global.DefaultMaxPlaceID {
-			response.Error(global.ERR_INVALID, []string{"place_id"})
+			response.Error(global.ErrInvalid, []string{"place_id"})
 			return
 		}
 		if matched, err := regexp.MatchString(global.DefaultRegexGrandPlaceID, pcr.ID); err != nil {
-			response.Error(global.ERR_UNKNOWN, []string{err.Error()})
+			response.Error(global.ErrUnknown, []string{err.Error()})
 			return
 		} else if !matched {
-			response.Error(global.ERR_INVALID, []string{"place_id"})
+			response.Error(global.ErrInvalid, []string{"place_id"})
 			return
 		}
 		if !s.Worker().Model().Place.Available(pcr.ID) {
-			response.Error(global.ERR_DUPLICATE, []string{"place_id"})
+			response.Error(global.ErrDuplicate, []string{"place_id"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"place_id"})
+		response.Error(global.ErrIncomplete, []string{"place_id"})
 		return
 	}
 	if v, ok := request.Data["place_name"].(string); ok {
 		pcr.Name = v
 		if pcr.Name == "" || len(pcr.Name) > global.DefaultMaxPlaceName {
-			response.Error(global.ERR_INVALID, []string{"place_name"})
+			response.Error(global.ErrInvalid, []string{"place_name"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"place_name"})
+		response.Error(global.ErrIncomplete, []string{"place_name"})
 		return
 	}
 	if v, ok := request.Data["place_description"].(string); ok {
@@ -221,7 +221,7 @@ func (s *PlaceService) createGrandPlace(requester *nested.Account, request *nest
 	pcr.AccountID = requester.ID
 	place := s.Worker().Model().Place.CreateGrandPlace(pcr)
 	if place == nil {
-		response.Error(global.ERR_UNKNOWN, []string{"cannot_create_place"})
+		response.Error(global.ErrUnknown, []string{"cannot_create_place"})
 		return
 	}
 	// Add the creator of the place
@@ -266,36 +266,36 @@ func (s *PlaceService) createLockedPlace(requester *nested.Account, request *nes
 	if v, ok := request.Data["place_id"].(string); ok {
 		pcr.ID = strings.ToLower(v)
 		if pcr.ID == "" || len(pcr.ID) > global.DefaultMaxPlaceID {
-			response.Error(global.ERR_INVALID, []string{"place_id"})
+			response.Error(global.ErrInvalid, []string{"place_id"})
 			return
 		}
 		// check if place is a subplace
 		if pos := strings.LastIndex(pcr.ID, "."); pos == -1 {
-			response.Error(global.ERR_INVALID, []string{"place_id"})
+			response.Error(global.ErrInvalid, []string{"place_id"})
 			return
 		} else {
 			localPlaceID := string(pcr.ID[pos+1:])
 			// check if place id is a valid place id
 			if matched, err := regexp.MatchString(global.DefaultRegexPlaceID, localPlaceID); err != nil {
-				response.Error(global.ERR_UNKNOWN, []string{err.Error()})
+				response.Error(global.ErrUnknown, []string{err.Error()})
 				return
 			} else if !matched {
-				response.Error(global.ERR_INVALID, []string{"place_id"})
+				response.Error(global.ErrInvalid, []string{"place_id"})
 				return
 			}
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"place_id"})
+		response.Error(global.ErrIncomplete, []string{"place_id"})
 		return
 	}
 	if v, ok := request.Data["place_name"].(string); ok {
 		pcr.Name = v
 		if pcr.Name == "" || len(pcr.Name) > global.DefaultMaxPlaceName {
-			response.Error(global.ERR_INVALID, []string{"place_name"})
+			response.Error(global.ErrInvalid, []string{"place_name"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"place_name"})
+		response.Error(global.ErrIncomplete, []string{"place_name"})
 		return
 	}
 	if v, ok := request.Data["place_description"].(string); ok {
@@ -355,22 +355,22 @@ func (s *PlaceService) createLockedPlace(requester *nested.Account, request *nes
 	// check parent's limitations and access permissions
 	parent := s.Worker().Model().Place.GetByID(s.Worker().Model().Place.GetParentID(pcr.ID), nil)
 	if parent == nil {
-		response.Error(global.ERR_INVALID, []string{"place_id"})
+		response.Error(global.ErrInvalid, []string{"place_id"})
 		return
 	}
 	if parent.Level >= global.DefaultPlaceMaxLevel {
-		response.Error(global.ERR_LIMIT, []string{"level"})
+		response.Error(global.ErrLimit, []string{"level"})
 		return
 	}
 	if parent.HasChildLimit() {
-		response.Error(global.ERR_LIMIT, []string{"place"})
+		response.Error(global.ErrLimit, []string{"place"})
 		return
 	}
 
 	// check if user has the right to create place
 	access := parent.GetAccess(requester.ID)
 	if !access[nested.PlaceAccessAddPlace] {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 		return
 	}
 
@@ -381,13 +381,13 @@ func (s *PlaceService) createLockedPlace(requester *nested.Account, request *nes
 	if grandPlace.IsPersonal() {
 		place = s.Worker().Model().Place.CreatePersonalPlace(pcr)
 		if place == nil {
-			response.Error(global.ERR_UNKNOWN, []string{})
+			response.Error(global.ErrUnknown, []string{})
 			return
 		}
 	} else {
 		place = s.Worker().Model().Place.CreateLockedPlace(pcr)
 		if place == nil {
-			response.Error(global.ERR_UNKNOWN, []string{})
+			response.Error(global.ErrUnknown, []string{})
 			return
 		}
 	}
@@ -426,36 +426,36 @@ func (s *PlaceService) createUnlockedPlace(requester *nested.Account, request *n
 	if v, ok := request.Data["place_id"].(string); ok {
 		pcr.ID = strings.ToLower(v)
 		if pcr.ID == "" || len(pcr.ID) > global.DefaultMaxPlaceID {
-			response.Error(global.ERR_INVALID, []string{"place_id"})
+			response.Error(global.ErrInvalid, []string{"place_id"})
 			return
 		}
 		// check if place is a sub-place
 		if pos := strings.LastIndex(pcr.ID, "."); pos == -1 {
-			response.Error(global.ERR_INVALID, []string{"place_id"})
+			response.Error(global.ErrInvalid, []string{"place_id"})
 			return
 		} else {
 			localPlaceID := string(pcr.ID[pos+1:])
 			// check if place id is a valid place id
 			if matched, err := regexp.MatchString(global.DefaultRegexPlaceID, localPlaceID); err != nil {
-				response.Error(global.ERR_UNKNOWN, []string{err.Error()})
+				response.Error(global.ErrUnknown, []string{err.Error()})
 				return
 			} else if !matched {
-				response.Error(global.ERR_INVALID, []string{"place_id"})
+				response.Error(global.ErrInvalid, []string{"place_id"})
 				return
 			}
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"place_id"})
+		response.Error(global.ErrIncomplete, []string{"place_id"})
 		return
 	}
 	if v, ok := request.Data["place_name"].(string); ok {
 		pcr.Name = v
 		if pcr.Name == "" || len(pcr.Name) > global.DefaultMaxPlaceName {
-			response.Error(global.ERR_INVALID, []string{"place_name"})
+			response.Error(global.ErrInvalid, []string{"place_name"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"place_name"})
+		response.Error(global.ErrIncomplete, []string{"place_name"})
 		return
 	}
 	if v, ok := request.Data["place_description"].(string); ok {
@@ -465,22 +465,22 @@ func (s *PlaceService) createUnlockedPlace(requester *nested.Account, request *n
 	// check parent's limitations and access permissions
 	parent := s.Worker().Model().Place.GetByID(s.Worker().Model().Place.GetParentID(pcr.ID), nil)
 	if parent == nil {
-		response.Error(global.ERR_INVALID, []string{"place_id"})
+		response.Error(global.ErrInvalid, []string{"place_id"})
 		return
 	}
 	if parent.HasChildLimit() {
-		response.Error(global.ERR_LIMIT, []string{"place"})
+		response.Error(global.ErrLimit, []string{"place"})
 		return
 	}
 	if !parent.IsGrandPlace() {
-		response.Error(global.ERR_ACCESS, []string{"open_places_only_on_level_1"})
+		response.Error(global.ErrAccess, []string{"open_places_only_on_level_1"})
 		return
 	}
 
 	// check if user has the right to create place
 	access := parent.GetAccess(requester.ID)
 	if !access[nested.PlaceAccessAddPlace] {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 		return
 	}
 
@@ -489,12 +489,12 @@ func (s *PlaceService) createUnlockedPlace(requester *nested.Account, request *n
 	grandPlace := s.Worker().Model().Place.GetByID(parent.GrandParentID, nil)
 	var place *nested.Place
 	if grandPlace.IsPersonal() {
-		response.Error(global.ERR_ACCESS, []string{"no_open_place_in_personal"})
+		response.Error(global.ErrAccess, []string{"no_open_place_in_personal"})
 		return
 	}
 	place = s.Worker().Model().Place.CreateUnlockedPlace(pcr)
 	if place == nil {
-		response.Error(global.ERR_UNKNOWN, []string{})
+		response.Error(global.ErrUnknown, []string{})
 		return
 	}
 
@@ -536,19 +536,19 @@ func (s *PlaceService) demoteMember(requester *nested.Account, request *nestedGa
 	if v, ok := request.Data["member_id"].(string); ok {
 		memberID = v
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"member_id"})
+		response.Error(global.ErrIncomplete, []string{"member_id"})
 		return
 	}
 	if !place.IsCreator(requester.ID) {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 		return
 	}
 	if !place.IsCreator(memberID) {
-		response.Error(global.ERR_INVALID, []string{"member_id"})
+		response.Error(global.ErrInvalid, []string{"member_id"})
 		return
 	}
 	if place.HasKeyholderLimit() {
-		response.Error(global.ERR_LIMIT, []string{"member_id"})
+		response.Error(global.ErrLimit, []string{"member_id"})
 		return
 	}
 
@@ -572,7 +572,7 @@ func (s *PlaceService) getPlaceAccess(requester *nested.Account, request *nested
 			placeIDs := strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 			places = s.Worker().Model().Place.GetPlacesByIDs(placeIDs)
 		} else {
-			response.Error(global.ERR_INVALID, []string{"place_id"})
+			response.Error(global.ErrInvalid, []string{"place_id"})
 			return
 		}
 	}
@@ -619,7 +619,7 @@ func (s *PlaceService) getManyPlacesInfo(requester *nested.Account, request *nes
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"place_id"})
+		response.Error(global.ErrIncomplete, []string{"place_id"})
 		return
 	}
 	r := make([]tools.M, 0, len(places))
@@ -644,7 +644,7 @@ func (s *PlaceService) getPlaceActivities(requester *nested.Account, request *ne
 	}
 
 	if !place.HasReadAccess(requester.ID) {
-		response.Error(global.ERR_ACCESS, []string{""})
+		response.Error(global.ErrAccess, []string{""})
 		return
 	}
 
@@ -672,7 +672,7 @@ func (s *PlaceService) getPlaceFiles(requester *nested.Account, request *nestedG
 		return
 	}
 	if !place.HasReadAccess(requester.ID) {
-		response.Error(global.ERR_ACCESS, []string{""})
+		response.Error(global.ErrAccess, []string{""})
 		return
 	}
 	if v, ok := request.Data["filter"].(string); ok {
@@ -689,7 +689,7 @@ func (s *PlaceService) getPlaceFiles(requester *nested.Account, request *nestedG
 	}
 	access := place.GetAccess(requester.ID)
 	if !access[nested.PlaceAccessReadPost] {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 		return
 	}
 	pg := s.Worker().Argument().GetPagination(request)
@@ -718,7 +718,7 @@ func (s *PlaceService) getPlaceUnreadPosts(requester *nested.Account, request *n
 	}
 
 	if !place.HasReadAccess(requester.ID) {
-		response.Error(global.ERR_UNAVAILABLE, []string{"place_id"})
+		response.Error(global.ErrUnavailable, []string{"place_id"})
 		return
 	}
 
@@ -760,7 +760,7 @@ func (s *PlaceService) getPlaceCreators(requester *nested.Account, request *nest
 	}
 	access := place.GetAccess(requester.ID)
 	if !access[nested.PlaceAccessSeeMembers] {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 		return
 	}
 	pg := s.Worker().Argument().GetPagination(request)
@@ -793,7 +793,7 @@ func (s *PlaceService) getPlaceKeyholders(requester *nested.Account, request *ne
 	}
 	access := place.GetAccess(requester.ID)
 	if !access[nested.PlaceAccessSeeMembers] {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 		return
 	}
 	pg := s.Worker().Argument().GetPagination(request)
@@ -825,7 +825,7 @@ func (s *PlaceService) getPlaceMembers(requester *nested.Account, request *neste
 	}
 	access := place.GetAccess(requester.ID)
 	if !access[nested.PlaceAccessSeeMembers] {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 		return
 	}
 
@@ -897,11 +897,11 @@ func (s *PlaceService) getMutualPlaces(requester *nested.Account, request *neste
 	if v, ok := request.Data["account_id"].(string); ok {
 		accountID = v
 		if !s.Worker().Model().Account.Exists(accountID) {
-			response.Error(global.ERR_INVALID, []string{"account_id"})
+			response.Error(global.ErrInvalid, []string{"account_id"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"account_id"})
+		response.Error(global.ErrIncomplete, []string{"account_id"})
 		return
 	}
 	placeIDs := s.Worker().Model().Account.GetMutualPlaceIDs(requester.ID, accountID)
@@ -947,7 +947,7 @@ func (s *PlaceService) getPlacePosts(requester *nested.Account, request *nestedG
 
 	// user must have read access in place
 	if !place.HasReadAccess(requester.ID) {
-		response.Error(global.ERR_ACCESS, []string{""})
+		response.Error(global.ErrAccess, []string{""})
 		return
 	}
 
@@ -982,20 +982,20 @@ func (s *PlaceService) invitePlaceMember(requester *nested.Account, request *nes
 	if v, ok := request.Data["member_id"].(string); ok {
 		memberIDs = strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"member_id"})
+		response.Error(global.ErrIncomplete, []string{"member_id"})
 		return
 	}
 
 	// user can only invite people to grand place otherwise they must be added
 	if !place.IsGrandPlace() {
-		response.Error(global.ERR_INVALID, []string{"cmd"})
+		response.Error(global.ErrInvalid, []string{"cmd"})
 		return
 	}
 
 	// check if user has the right permission
 	access := place.GetAccess(requester.ID)
 	if !access[nested.PlaceAccessAddMembers] {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 		return
 	}
 	invalidIDs := make([]string, 0)
@@ -1038,7 +1038,7 @@ func (s *PlaceService) leavePlace(requester *nested.Account, request *nestedGate
 	}
 
 	if place.IsPersonal() {
-		response.Error(global.ERR_ACCESS, []string{"cannot_leave_personal_place"})
+		response.Error(global.ErrAccess, []string{"cannot_leave_personal_place"})
 		return
 	}
 
@@ -1065,7 +1065,7 @@ func (s *PlaceService) leavePlace(requester *nested.Account, request *nestedGate
 	} else if place.IsKeyholder(requester.ID) {
 		s.Worker().Model().Place.RemoveKeyHolder(place.ID, requester.ID, requester.ID)
 	} else {
-		response.Error(global.ERR_INVALID, []string{"you_are_not_member"})
+		response.Error(global.ErrInvalid, []string{"you_are_not_member"})
 		return
 	}
 	response.Ok()
@@ -1090,10 +1090,10 @@ func (s *PlaceService) placeIDAvailable(requester *nested.Account, request *nest
 		if s.Worker().Model().Place.Available(strings.ToLower(placeID)) {
 			response.Ok()
 		} else {
-			response.Error(global.ERR_UNAVAILABLE, []string{"place_id"})
+			response.Error(global.ErrUnavailable, []string{"place_id"})
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"place_id"})
+		response.Error(global.ErrIncomplete, []string{"place_id"})
 		return
 	}
 	return
@@ -1111,16 +1111,16 @@ func (s *PlaceService) promoteMember(requester *nested.Account, request *nestedG
 	if v, ok := request.Data["member_id"].(string); ok {
 		memberID = v
 		if requester.ID == memberID || !place.IsCreator(requester.ID) {
-			response.Error(global.ERR_ACCESS, []string{})
+			response.Error(global.ErrAccess, []string{})
 			return
 		}
 	}
 	if !place.IsKeyholder(memberID) {
-		response.Error(global.ERR_INVALID, []string{"member_id"})
+		response.Error(global.ErrInvalid, []string{"member_id"})
 		return
 	}
 	if place.HasCreatorLimit() {
-		response.Error(global.ERR_LIMIT, []string{"creators"})
+		response.Error(global.ErrLimit, []string{"creators"})
 		return
 	}
 	s.Worker().Model().Place.Promote(place.ID, memberID)
@@ -1144,11 +1144,11 @@ func (s *PlaceService) pinPost(requester *nested.Account, request *nestedGateway
 	}
 	// Only creators of the place or system admins can do it
 	if !place.IsCreator(requester.ID) && !requester.Authority.Admin {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 		return
 	}
 	if !post.IsInPlace(place.ID) {
-		response.Error(global.ERR_UNAVAILABLE, []string{"post_id"})
+		response.Error(global.ErrUnavailable, []string{"post_id"})
 		return
 	}
 	s.Worker().Model().Place.PinPost(place.ID, post.ID)
@@ -1166,11 +1166,11 @@ func (s *PlaceService) remove(requester *nested.Account, request *nestedGateway.
 	// check if user has the right permission
 	access := place.GetAccess(requester.ID)
 	if !access[nested.PlaceAccessRemovePlace] {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 		return
 	}
 	if place.Counter.Children > 0 {
-		response.Error(global.ERR_ACCESS, []string{"remove_children_first"})
+		response.Error(global.ErrAccess, []string{"remove_children_first"})
 		return
 	}
 	s.Worker().Model().Place.RemoveDefaultPlaces([]string{place.ID})
@@ -1179,7 +1179,7 @@ func (s *PlaceService) remove(requester *nested.Account, request *nestedGateway.
 		s.Worker().Model().Account.IncrementLimit(place.MainCreatorID, "grand_places", 1)
 		response.Ok()
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{})
+		response.Error(global.ErrUnknown, []string{})
 	}
 
 	// Remove Place from search index
@@ -1199,7 +1199,7 @@ func (s *PlaceService) removePlaceFromFavorites(requester *nested.Account, reque
 		s.Worker().Model().Account.RemovePlaceFromBookmarks(requester.ID, place.ID)
 		response.Ok()
 	} else {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 	}
 	return
 }
@@ -1217,12 +1217,12 @@ func (s *PlaceService) removeMember(requester *nested.Account, request *nestedGa
 		memberID = v
 	}
 	if memberID == requester.ID {
-		response.Error(global.ERR_ACCESS, []string{"cant remove yourself, leave instead"})
+		response.Error(global.ErrAccess, []string{"cant remove yourself, leave instead"})
 		return
 	}
 	access := place.GetAccess(requester.ID)
 	if !access[nested.PlaceAccessRemoveMembers] {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 		return
 	}
 
@@ -1250,7 +1250,7 @@ func (s *PlaceService) removeMember(requester *nested.Account, request *nestedGa
 	case place.IsKeyholder(memberID):
 		s.Worker().Model().Place.RemoveKeyHolder(place.ID, memberID, requester.ID)
 	default:
-		response.Error(global.ERR_INVALID, []string{"member_id"})
+		response.Error(global.ErrInvalid, []string{"member_id"})
 	}
 	response.Ok()
 	return
@@ -1268,7 +1268,7 @@ func (s *PlaceService) removePicture(requester *nested.Account, request *nestedG
 		s.Worker().Model().Place.SetPicture(place.ID, nested.Picture{})
 		response.Ok()
 	} else {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 	}
 	return
 }
@@ -1285,7 +1285,7 @@ func (s *PlaceService) setPlaceAsFavorite(requester *nested.Account, request *ne
 		s.Worker().Model().Account.AddPlaceToBookmarks(requester.ID, place.ID)
 		response.Ok()
 	} else {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 	}
 	return
 }
@@ -1305,7 +1305,7 @@ func (s *PlaceService) setPlaceNotification(requester *nested.Account, request *
 	// user must have READ access in the place
 	access := place.GetAccess(requester.ID)
 	if !access[nested.PlaceAccessReadPost] {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 		return
 	}
 	if state {
@@ -1330,14 +1330,14 @@ func (s *PlaceService) setPicture(requester *nested.Account, request *nestedGate
 		uniID = nested.UniversalID(v)
 		fileInfo := s.Worker().Model().File.GetByID(uniID, nil)
 		if fileInfo == nil {
-			response.Error(global.ERR_UNAVAILABLE, []string{"universal_id"})
+			response.Error(global.ErrUnavailable, []string{"universal_id"})
 			return
 		}
 		pic = fileInfo.Thumbnails
 	}
 	access := place.GetAccess(requester.ID)
 	if !access[nested.PlaceAccessControl] {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 		return
 	}
 	s.Worker().Model().Place.SetPicture(place.ID, pic)
@@ -1399,7 +1399,7 @@ func (s *PlaceService) update(requester *nested.Account, request *nestedGateway.
 					placeUpdateRequest["privacy.receptive"] = v
 					s.Worker().Model().Search.RemovePlaceFromSearchIndex(place.ID)
 				default:
-					response.Error(global.ERR_INVALID, []string{"privacy.receptive"})
+					response.Error(global.ErrInvalid, []string{"privacy.receptive"})
 					return
 				}
 			} else {
@@ -1411,7 +1411,7 @@ func (s *PlaceService) update(requester *nested.Account, request *nestedGateway.
 					placeUpdateRequest["privacy.search"] = false
 					s.Worker().Model().Search.RemovePlaceFromSearchIndex(place.ID)
 				default:
-					response.Error(global.ERR_INVALID, []string{"privacy.receptive"})
+					response.Error(global.ErrInvalid, []string{"privacy.receptive"})
 					return
 				}
 			}
@@ -1436,7 +1436,7 @@ func (s *PlaceService) update(requester *nested.Account, request *nestedGateway.
 	}
 	access := place.GetAccess(requester.ID)
 	if !access[nested.PlaceAccessControl] {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 		return
 	}
 	if len(placeUpdateRequest) > 0 {
@@ -1461,11 +1461,11 @@ func (s *PlaceService) unpinPost(requester *nested.Account, request *nestedGatew
 	}
 	// Only creators of the place or system admins can do it
 	if !place.IsCreator(requester.ID) && !requester.Authority.Admin {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 		return
 	}
 	if !post.IsInPlace(place.ID) {
-		response.Error(global.ERR_UNAVAILABLE, []string{"post_id"})
+		response.Error(global.ErrUnavailable, []string{"post_id"})
 		return
 	}
 	s.Worker().Model().Place.UnpinPost(place.ID, post.ID)
@@ -1481,7 +1481,7 @@ func (s *PlaceService) getBlockedAddresses(requester *nested.Account, request *n
 		return
 	}
 	if !place.HasReadAccess(requester.ID) {
-		response.Error(global.ERR_ACCESS, []string{""})
+		response.Error(global.ErrAccess, []string{""})
 		return
 	}
 	Addresses = s.Worker().Model().Place.GetPlaceBlockedAddresses(place.ID)
@@ -1501,24 +1501,24 @@ func (s *PlaceService) addToBlackList(requester *nested.Account, request *nested
 	if v, ok := request.Data["addresses"].(string); ok {
 		addresses = strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"addresses"})
+		response.Error(global.ErrIncomplete, []string{"addresses"})
 		return
 	}
 	for _, id := range addresses {
 		if id == requester.ID {
-			response.Error(global.ERR_ACCESS, []string{"cant block yourself"})
+			response.Error(global.ErrAccess, []string{"cant block yourself"})
 			return
 		}
 	}
 	// Only creators of the place or system admins can do it
 	if !place.IsCreator(requester.ID) && !requester.Authority.Admin {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 		return
 	}
 	if s.Worker().Model().Place.AddToBlacklist(place.ID, addresses) {
 		response.Ok()
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{})
+		response.Error(global.ErrUnknown, []string{})
 		return
 	}
 }
@@ -1535,18 +1535,18 @@ func (s *PlaceService) removeFromBlacklist(requester *nested.Account, request *n
 	if v, ok := request.Data["addresses"].(string); ok {
 		addresses = strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"addresses"})
+		response.Error(global.ErrIncomplete, []string{"addresses"})
 		return
 	}
 	// Only creators of the place or system admins can do it
 	if !place.IsCreator(requester.ID) && !requester.Authority.Admin {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 		return
 	}
 	if s.Worker().Model().Place.RemoveFromBlacklist(place.ID, addresses) {
 		response.Ok()
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{})
+		response.Error(global.ErrUnknown, []string{})
 		return
 	}
 }

@@ -53,7 +53,7 @@ func (s *SystemService) getSystemStringConstants(requester *nested.Account, requ
 // @Input:  register_mode					    int		+	(1: everyone, 2: admin_only)
 func (s *SystemService) setSystemIntegerConstants(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	if len(request.Data) > global.DefaultMaxResultLimit {
-		response.Error(global.ERR_LIMIT, []string{"too many parameters"})
+		response.Error(global.ErrLimit, []string{"too many parameters"})
 		return
 	}
 	s.Worker().Model().System.SetIntegerConstants(request.Data)
@@ -69,7 +69,7 @@ func (s *SystemService) setSystemIntegerConstants(requester *nested.Account, req
 // @Input:  license_key                 string      +
 func (s *SystemService) setSystemStringConstants(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	if len(request.Data) > global.DefaultMaxResultLimit {
-		response.Error(global.ERR_LIMIT, []string{"too many parameters"})
+		response.Error(global.ErrLimit, []string{"too many parameters"})
 		return
 	}
 	if v, ok := request.Data["magic_number"].(string); ok {
@@ -123,11 +123,11 @@ func (s *SystemService) getSystemStats(requester *nested.Account, request *neste
 func (s *SystemService) monitorActivity(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	if v, ok := request.Data["mon_access_token"].(string); ok {
 		if v != s.Worker().Config().GetString("MONITOR_ACCESS_TOKEN") {
-			response.Error(global.ERR_INVALID, []string{"mon_access_token"})
+			response.Error(global.ErrInvalid, []string{"mon_access_token"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_ACCESS, []string{""})
+		response.Error(global.ErrAccess, []string{""})
 		return
 	}
 	response.OkWithData(tools.M{
@@ -158,16 +158,16 @@ func (s *SystemService) setLicense(requester *nested.Account, request *nestedGat
 	if v, ok := request.Data["license_key"].(string); ok {
 		licenseKey = v
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"license_key"})
+		response.Error(global.ErrIncomplete, []string{"license_key"})
 		return
 	}
 	s.Worker().Model().License.Set(licenseKey)
 	if !s.Worker().Model().License.Load() {
-		response.Error(global.ERR_INVALID, []string{"license_key"})
+		response.Error(global.ErrInvalid, []string{"license_key"})
 		return
 	}
 	if s.Worker().Model().License.IsExpired() {
-		response.Error(global.ERR_INVALID, []string{"license_key"})
+		response.Error(global.ErrInvalid, []string{"license_key"})
 	} else {
 		s.Worker().Server().ResetLicense()
 		response.Ok()

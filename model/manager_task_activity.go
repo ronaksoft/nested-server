@@ -19,7 +19,7 @@ func (tm *TaskActivityManager) Remove(activityID bson.ObjectId) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).UpdateId(
+	if err := db.C(global.CollectionTasksActivities).UpdateId(
 		activityID,
 		bson.M{"$set": bson.M{"_removed": true}},
 	); err != nil {
@@ -35,7 +35,7 @@ func (tm *TaskActivityManager) GetActivityByID(activityID bson.ObjectId) *TaskAc
 	defer dbSession.Close()
 
 	taskActivity := new(TaskActivity)
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).FindId(activityID).One(taskActivity); err != nil {
+	if err := db.C(global.CollectionTasksActivities).FindId(activityID).One(taskActivity); err != nil {
 		log.Warn(err.Error())
 		return nil
 	}
@@ -48,7 +48,7 @@ func (tm *TaskActivityManager) GetActivitiesByIDs(activityIDs []bson.ObjectId) [
 	defer dbSession.Close()
 
 	taskActivities := make([]TaskActivity, 0, len(activityIDs))
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Find(
+	if err := db.C(global.CollectionTasksActivities).Find(
 		bson.M{"_id": bson.M{"$in": activityIDs}},
 	).All(&taskActivities); err != nil {
 		log.Warn(err.Error())
@@ -75,7 +75,7 @@ func (tm *TaskActivityManager) GetActivitiesByTaskID(taskID bson.ObjectId, pg Pa
 		q["action"] = bson.M{"$in": filter}
 	}
 
-	Q := db.C(global.COLLECTION_TASKS_ACTIVITIES).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
+	Q := db.C(global.CollectionTasksActivities).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
 	// Log Explain Query
 
 	if err := Q.All(&taskActivities); err != nil {
@@ -97,7 +97,7 @@ func (tm *TaskActivityManager) Created(taskID bson.ObjectId, actorID string) {
 		TaskID:    taskID,
 		ActorID:   actorID,
 	}
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionTasksActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -116,7 +116,7 @@ func (tm *TaskActivityManager) WatcherAdded(taskID bson.ObjectId, actorID string
 		ActorID:    actorID,
 		WatcherIDs: watcherIDs,
 	}
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionTasksActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -135,7 +135,7 @@ func (tm *TaskActivityManager) WatcherRemoved(taskID bson.ObjectId, actorID stri
 		ActorID:    actorID,
 		WatcherIDs: watcherIDs,
 	}
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionTasksActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -154,7 +154,7 @@ func (tm *TaskActivityManager) EditorAdded(taskID bson.ObjectId, actorID string,
 		ActorID:   actorID,
 		EditorIDs: editorIDs,
 	}
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionTasksActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -173,7 +173,7 @@ func (tm *TaskActivityManager) EditorRemoved(taskID bson.ObjectId, actorID strin
 		ActorID:   actorID,
 		EditorIDs: editorIDs,
 	}
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionTasksActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -192,7 +192,7 @@ func (tm *TaskActivityManager) AttachmentAdded(taskID bson.ObjectId, actorID str
 		ActorID:       actorID,
 		AttachmentIDs: attachmentIDs,
 	}
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionTasksActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 		return nil
 	}
@@ -212,7 +212,7 @@ func (tm *TaskActivityManager) AttachmentRemoved(taskID bson.ObjectId, actorID s
 		ActorID:       actorID,
 		AttachmentIDs: attachmentIDs,
 	}
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionTasksActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -231,7 +231,7 @@ func (tm *TaskActivityManager) TaskTitleChanged(taskID bson.ObjectId, actorID, t
 		ActorID:   actorID,
 		Title:     title,
 	}
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionTasksActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -250,7 +250,7 @@ func (tm *TaskActivityManager) TaskDescriptionChanged(taskID bson.ObjectId, acto
 		ActorID:   actorID,
 		Title:     desc,
 	}
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionTasksActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -269,7 +269,7 @@ func (tm *TaskActivityManager) CandidateAdded(taskID bson.ObjectId, actorID stri
 		ActorID:      actorID,
 		CandidateIDs: candidateIDs,
 	}
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionTasksActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -288,7 +288,7 @@ func (tm *TaskActivityManager) CandidateRemoved(taskID bson.ObjectId, actorID st
 		ActorID:      actorID,
 		CandidateIDs: candidateIDs,
 	}
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionTasksActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -307,7 +307,7 @@ func (tm *TaskActivityManager) StatusChanged(taskID bson.ObjectId, actorID strin
 		ActorID:   actorID,
 		Status:    newStatus,
 	}
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionTasksActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -326,7 +326,7 @@ func (tm *TaskActivityManager) ToDoAdded(taskID bson.ObjectId, actorID, todoText
 		ActorID:   actorID,
 		ToDoText:  todoText,
 	}
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionTasksActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -345,7 +345,7 @@ func (tm *TaskActivityManager) ToDoRemoved(taskID bson.ObjectId, actorID, todoTe
 		ActorID:   actorID,
 		ToDoText:  todoText,
 	}
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionTasksActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -364,7 +364,7 @@ func (tm *TaskActivityManager) ToDoChanged(taskID bson.ObjectId, actorID, todoTe
 		ActorID:   actorID,
 		ToDoText:  todoText,
 	}
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionTasksActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -383,7 +383,7 @@ func (tm *TaskActivityManager) ToDoDone(taskID bson.ObjectId, actorID, todoText 
 		ActorID:   actorID,
 		ToDoText:  todoText,
 	}
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionTasksActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -402,7 +402,7 @@ func (tm *TaskActivityManager) ToDoUndone(taskID bson.ObjectId, actorID, todoTex
 		ActorID:   actorID,
 		ToDoText:  todoText,
 	}
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionTasksActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -421,7 +421,7 @@ func (tm *TaskActivityManager) AssigneeChanged(taskID bson.ObjectId, actorID, as
 		ActorID:    actorID,
 		AssigneeID: assigneeID,
 	}
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionTasksActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -441,12 +441,12 @@ func (tm *TaskActivityManager) Comment(taskID bson.ObjectId, actorID string, com
 		CommentText: commentText,
 	}
 
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionTasksActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 		return nil
 	}
 
-	if err := db.C(global.COLLECTION_TASKS).UpdateId(
+	if err := db.C(global.CollectionTasks).UpdateId(
 		taskID,
 		bson.M{
 			"$inc": bson.M{"counters.comments": 1},
@@ -470,7 +470,7 @@ func (tm *TaskActivityManager) LabelAdded(taskID bson.ObjectId, actorID string, 
 		ActorID:   actorID,
 		LabelIDs:  labelIDs,
 	}
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionTasksActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 		return nil
 	}
@@ -490,7 +490,7 @@ func (tm *TaskActivityManager) LabelRemoved(taskID bson.ObjectId, actorID string
 		ActorID:   actorID,
 		LabelIDs:  labelIDs,
 	}
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionTasksActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -510,7 +510,7 @@ func (tm *TaskActivityManager) DueDateUpdated(taskID bson.ObjectId, actorID stri
 		DueDate:         dueDate,
 		DueDateHasClock: dueDateHasClock,
 	}
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionTasksActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -528,7 +528,7 @@ func (tm *TaskActivityManager) DueDateRemoved(taskID bson.ObjectId, actorID stri
 		TaskID:    taskID,
 		ActorID:   actorID,
 	}
-	if err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionTasksActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return

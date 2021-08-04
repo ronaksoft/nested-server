@@ -47,7 +47,7 @@ func (pm *PostManager) readFromCache(postID bson.ObjectId) *Post {
 	defer c.Close()
 	keyID := fmt.Sprintf("post:gob:%s", postID.Hex())
 	if gobPost, err := redis.Bytes(c.Do("GET", keyID)); err != nil {
-		if err := _MongoDB.C(global.COLLECTION_POSTS).FindId(postID).One(post); err != nil {
+		if err := _MongoDB.C(global.CollectionPosts).FindId(postID).One(post); err != nil {
 			log.Warn(err.Error())
 			return nil
 		}
@@ -68,7 +68,7 @@ func (pm *PostManager) readCommentFromCache(commentID bson.ObjectId) *Comment {
 	defer c.Close()
 	keyID := fmt.Sprintf("comment:gob:%s", commentID.Hex())
 	if gobComment, err := redis.Bytes(c.Do("GET", keyID)); err != nil {
-		if err := _MongoDB.C(global.COLLECTION_POSTS_COMMENTS).FindId(commentID).One(comment); err != nil {
+		if err := _MongoDB.C(global.CollectionPostsComments).FindId(commentID).One(comment); err != nil {
 			log.Warn(err.Error())
 			return nil
 		}
@@ -212,13 +212,13 @@ func (pm *PostManager) AddComment(postID bson.ObjectId, senderID string, body st
 	}
 
 	// Insert the new comment
-	if err := db.C(global.COLLECTION_POSTS_COMMENTS).Insert(c); err != nil {
+	if err := db.C(global.CollectionPostsComments).Insert(c); err != nil {
 		log.Warn(err.Error())
 		return nil
 	}
 
 	// Update post's last_update and last-comments
-	if err := db.C(global.COLLECTION_POSTS).UpdateId(c.PostID, bson.M{
+	if err := db.C(global.CollectionPosts).UpdateId(c.PostID, bson.M{
 		"$set": bson.M{"last_update": c.Timestamp},
 		"$inc": bson.M{"counters.comments": 1},
 		"$push": bson.M{
@@ -372,7 +372,7 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 		}
 	}
 
-	if err := db.C(global.COLLECTION_POSTS).Insert(post); err != nil {
+	if err := db.C(global.CollectionPosts).Insert(post); err != nil {
 		log.Warn(err.Error())
 		return nil
 	}
@@ -404,7 +404,7 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 
 		// Set Post as UNREAD for all the members of the place except the sender
 		var memberIDs []string
-		bulk := db.C(global.COLLECTION_POSTS_READS).Bulk()
+		bulk := db.C(global.CollectionPostsReads).Bulk()
 		bulk.Unordered()
 		if place.Privacy.Locked {
 			memberIDs = append(place.KeyholderIDs, place.CreatorIDs...)
@@ -428,7 +428,7 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 
 		// Update unread counters
 		if place.Privacy.Locked {
-			db.C(global.COLLECTION_POSTS_READS_COUNTERS).UpdateAll(
+			db.C(global.CollectionPostsReadsCounters).UpdateAll(
 				bson.M{
 					"account_id": bson.M{"$ne": post.SenderID},
 					"place_id":   placeID,
@@ -436,7 +436,7 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 				bson.M{"$inc": bson.M{"no_unreads": 1}},
 			)
 		} else {
-			db.C(global.COLLECTION_POSTS_READS_COUNTERS).UpdateAll(
+			db.C(global.CollectionPostsReadsCounters).UpdateAll(
 				bson.M{
 					"account_id": bson.M{"$ne": post.SenderID},
 					"place_id":   placeID,
@@ -473,7 +473,7 @@ func (pm *PostManager) AddAccountToWatcherList(postID bson.ObjectId, accountID s
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if _, err := db.C(global.COLLECTION_POSTS_WATCHERS).Upsert(
+	if _, err := db.C(global.CollectionPostsWatchers).Upsert(
 		bson.M{"_id": postID},
 		bson.M{"$addToSet": bson.M{"accounts": accountID}},
 	); err != nil {
@@ -496,7 +496,7 @@ func (pm *PostManager) AttachPlace(postID bson.ObjectId, placeID, accountID stri
 
 	// Update post's document
 	// places and last_update fields are updated
-	if err := db.C(global.COLLECTION_POSTS).UpdateId(
+	if err := db.C(global.CollectionPosts).UpdateId(
 		postID,
 		bson.M{
 			"$addToSet": bson.M{"places": placeID},
@@ -532,13 +532,13 @@ func (pm *PostManager) AddRelatedTask(postID, taskID bson.ObjectId) {
 	defer dbSession.Close()
 
 	defer _Manager.Post.removeCache(postID)
-	if err := db.C(global.COLLECTION_POSTS).Update(
+	if err := db.C(global.CollectionPosts).Update(
 		bson.M{"_id": postID},
 		bson.M{"$addToSet": bson.M{"related_tasks": taskID}},
 	); err != nil {
 		log.Warn(err.Error())
 	}
-	if err := db.C(global.COLLECTION_TASKS).Update(
+	if err := db.C(global.CollectionTasks).Update(
 		bson.M{"_id": taskID},
 		bson.M{"$set": bson.M{"related_post": postID}},
 	); err != nil {
@@ -556,13 +556,13 @@ func (pm *PostManager) RemoveRelatedTask(postID, taskID bson.ObjectId) {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_POSTS).Update(
+	if err := db.C(global.CollectionPosts).Update(
 		bson.M{"_id": postID, "related_tasks": taskID},
 		bson.M{"$pull": bson.M{"related_tasks": taskID}},
 	); err != nil {
 		log.Warn(err.Error())
 	}
-	if err := db.C(global.COLLECTION_TASKS).Update(
+	if err := db.C(global.CollectionTasks).Update(
 		bson.M{"_id": taskID},
 		bson.M{"$unset": bson.M{"related_post": postID}},
 	); err != nil {
@@ -586,7 +586,7 @@ func (pm *PostManager) Exists(postID bson.ObjectId) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	n, _ := db.C(global.COLLECTION_POSTS).Find(bson.M{
+	n, _ := db.C(global.CollectionPosts).Find(bson.M{
 		"_id":      postID,
 		"_removed": false,
 	}).Count()
@@ -624,7 +624,7 @@ func (pm *PostManager) GetPostsByPlace(placeID, sortItem string, pg Pagination) 
 	q, sortDir = pg.FillQuery(q, sortItem, sortDir)
 
 	q["places"] = placeID
-	Q := db.C(global.COLLECTION_POSTS).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
+	Q := db.C(global.CollectionPosts).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
 	// Log Explain Query
 
 	if err := Q.All(&posts); err != nil {
@@ -655,7 +655,7 @@ func (pm *PostManager) GetPostsBySender(accountID, sortItem string, pg Paginatio
 		pg.SetLimit(global.DefaultMaxResultLimit)
 	}
 	q["sender"] = accountID
-	Q := db.C(global.COLLECTION_POSTS).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
+	Q := db.C(global.CollectionPosts).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
 	// Log Explain Query
 	posts := make([]Post, 0, pg.GetLimit())
 	Q.All(&posts)
@@ -682,7 +682,7 @@ func (pm *PostManager) GetPostsOfPlaces(places []string, sortItem string, pg Pag
 	posts := make([]Post, 0, pg.GetLimit())
 	q, sortDir = pg.FillQuery(q, sortItem, sortDir)
 	q["places"] = bson.M{"$in": places}
-	Q := db.C(global.COLLECTION_POSTS).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
+	Q := db.C(global.CollectionPosts).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
 	// Log Explain Query
 
 	Q.All(&posts)
@@ -699,7 +699,7 @@ func (pm *PostManager) GetPostWatchers(postID bson.ObjectId) []string {
 		PostID   bson.ObjectId `bson:"_id"`
 		Accounts []string      `bson:"accounts"`
 	}{}
-	if err := db.C(global.COLLECTION_POSTS_WATCHERS).Find(bson.M{"_id": postID}).One(&watchers); err != nil {
+	if err := db.C(global.CollectionPostsWatchers).Find(bson.M{"_id": postID}).One(&watchers); err != nil {
 		log.Warn(err.Error())
 		return []string{}
 	}
@@ -729,7 +729,7 @@ func (pm *PostManager) GetUnreadPostsByPlace(placeID, accountID string, subPlace
 	}
 	mq, sortDir = pg.FillQuery(mq, sortItem, sortDir)
 
-	Q := db.C(global.COLLECTION_POSTS_READS).Find(mq).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
+	Q := db.C(global.CollectionPostsReads).Find(mq).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
 	// Log Explain Query
 	iter := Q.Iter()
 	defer iter.Close()
@@ -750,7 +750,7 @@ func (pm *PostManager) GetAccountsWhoReadThis(postID bson.ObjectId, pg Paginatio
 	defer dbSession.Close()
 
 	pr := make([]PostRead, 0, pg.GetLimit())
-	Q := db.C(global.COLLECTION_POSTS_READS_ACCOUNTS).Find(bson.M{"post_id": postID}).Skip(pg.GetSkip()).Limit(pg.GetLimit())
+	Q := db.C(global.CollectionPostsReadsAccounts).Find(bson.M{"post_id": postID}).Skip(pg.GetSkip()).Limit(pg.GetLimit())
 	// Log Explain Query
 	if err := Q.All(&pr); err != nil {
 		log.Warn(err.Error())
@@ -789,7 +789,7 @@ func (pm *PostManager) GetCommentsByPostID(postID bson.ObjectId, pg Pagination) 
 	sortItem := POST_SORT_TIMESTAMP
 	sortDir := fmt.Sprintf("-%s", sortItem)
 	q, sortDir = pg.FillQuery(q, sortItem, sortDir)
-	Q := db.C(global.COLLECTION_POSTS_COMMENTS).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
+	Q := db.C(global.CollectionPostsComments).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
 	// Log Explain Query
 	res := make([]Comment, 0)
 	Q.All(&res)
@@ -809,7 +809,7 @@ func (pm *PostManager) GetPinnedPosts(accountID string, pg Pagination) []Post {
 	sortDir := fmt.Sprintf("-%s", sortItem)
 	q, sortDir = pg.FillQuery(q, sortItem, sortDir)
 
-	Q := db.C(global.COLLECTION_ACCOUNTS_POSTS).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
+	Q := db.C(global.CollectionAccountsPosts).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
 	// Log Explain Query
 	iter := Q.Iter()
 	item := tools.M{}
@@ -839,7 +839,7 @@ func (pm *PostManager) HasBeenReadBy(postID bson.ObjectId, accountID string) boo
 		"account_id": accountID,
 		"read":       false,
 	}
-	Q := db.C(global.COLLECTION_POSTS_READS).Find(q)
+	Q := db.C(global.CollectionPostsReads).Find(q)
 	// Log Explain Query
 	if n, _ := Q.Count(); n > 0 {
 		return false
@@ -857,7 +857,7 @@ func (pm *PostManager) HasBeenWatchedBy(postID bson.ObjectId, accountID string) 
 		"_id":      postID,
 		"accounts": accountID,
 	}
-	Q := db.C(global.COLLECTION_POSTS_WATCHERS).Find(q)
+	Q := db.C(global.CollectionPostsWatchers).Find(q)
 	// Log Explain Query
 	if n, _ := Q.Count(); n > 0 {
 		return true
@@ -894,7 +894,7 @@ func (pm *PostManager) HideComment(commentID bson.ObjectId, accountID string) bo
 	if c == nil {
 		return false
 	}
-	if err := db.C(global.COLLECTION_POSTS_COMMENTS).Update(
+	if err := db.C(global.CollectionPostsComments).Update(
 		bson.M{
 			"_id":        commentID,
 			"removed_by": bson.M{"$exists": false},
@@ -912,7 +912,7 @@ func (pm *PostManager) HideComment(commentID bson.ObjectId, accountID string) bo
 	}
 
 	lcms := make([]bson.M, 0, 3)
-	iter := db.C(global.COLLECTION_POSTS_COMMENTS).Find(bson.M{
+	iter := db.C(global.CollectionPostsComments).Find(bson.M{
 		"post_id":  c.PostID,
 		"txt":      bson.M{"$ne": ""},
 		"_removed": false,
@@ -928,7 +928,7 @@ func (pm *PostManager) HideComment(commentID bson.ObjectId, accountID string) bo
 		})
 	}
 
-	db.C(global.COLLECTION_POSTS).UpdateId(
+	db.C(global.CollectionPosts).UpdateId(
 		c.PostID,
 		bson.M{
 			"$inc": bson.M{"counters.comments": -1},
@@ -948,7 +948,7 @@ func (pm *PostManager) MarkAsRead(postID bson.ObjectId, accountID string) bool {
 	ts := Timestamp()
 	post := pm.GetPostByID(postID)
 
-	if ci, err := db.C(global.COLLECTION_POSTS_READS).RemoveAll(
+	if ci, err := db.C(global.CollectionPostsReads).RemoveAll(
 		bson.M{
 			"account_id": accountID,
 			"post_id":    postID,
@@ -964,9 +964,9 @@ func (pm *PostManager) MarkAsRead(postID bson.ObjectId, accountID string) bool {
 			"post_id":    postID,
 			"account_id": accountID,
 		}
-		Q := db.C(global.COLLECTION_POSTS_READS_ACCOUNTS).Find(q)
+		Q := db.C(global.CollectionPostsReadsAccounts).Find(q)
 		if n, _ := Q.Count(); n == 0 {
-			db.C(global.COLLECTION_POSTS_READS_ACCOUNTS).Insert(
+			db.C(global.CollectionPostsReadsAccounts).Insert(
 				bson.M{
 					"post_id":    postID,
 					"account_id": accountID,
@@ -976,7 +976,7 @@ func (pm *PostManager) MarkAsRead(postID bson.ObjectId, accountID string) bool {
 		}
 
 		if ci.Removed > 0 {
-			db.C(global.COLLECTION_POSTS_READS_COUNTERS).UpdateAll(
+			db.C(global.CollectionPostsReadsCounters).UpdateAll(
 				bson.M{
 					"account_id": accountID,
 					"place_id":   bson.M{"$in": post.PlaceIDs},
@@ -996,7 +996,7 @@ func (pm *PostManager) MarkAsReadByPlace(placeID, accountID string) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	db.C(global.COLLECTION_POSTS_READS).RemoveAll(
+	db.C(global.CollectionPostsReads).RemoveAll(
 		bson.M{
 			"account_id": accountID,
 			"place_id":   placeID,
@@ -1005,7 +1005,7 @@ func (pm *PostManager) MarkAsReadByPlace(placeID, accountID string) bool {
 	)
 
 	// Reset unread counter for the placeID
-	db.C(global.COLLECTION_POSTS_READS_COUNTERS).UpdateAll(
+	db.C(global.CollectionPostsReadsCounters).UpdateAll(
 		bson.M{
 			"account_id": accountID,
 			"place_id":   placeID,
@@ -1028,7 +1028,7 @@ func (pm *PostManager) Move(postID bson.ObjectId, oldPlaceID, newPlaceID, accoun
 
 	// Update POSTS collection
 	// Add the new place first and then remove the old place
-	if err := db.C(global.COLLECTION_POSTS).UpdateId(
+	if err := db.C(global.CollectionPosts).UpdateId(
 		postID,
 		bson.M{
 			"$addToSet": bson.M{"places": newPlaceID},
@@ -1041,7 +1041,7 @@ func (pm *PostManager) Move(postID bson.ObjectId, oldPlaceID, newPlaceID, accoun
 		log.Warn(err.Error())
 		return false
 	}
-	if err := db.C(global.COLLECTION_POSTS).UpdateId(
+	if err := db.C(global.CollectionPosts).UpdateId(
 		postID,
 		bson.M{
 			"$pull":     bson.M{"places": oldPlaceID},
@@ -1053,14 +1053,14 @@ func (pm *PostManager) Move(postID bson.ObjectId, oldPlaceID, newPlaceID, accoun
 	}
 
 	// Update PLACES collection
-	if err := db.C(global.COLLECTION_PLACES).Update(
+	if err := db.C(global.CollectionPlaces).Update(
 		bson.M{"_id": newPlaceID},
 		bson.M{"$inc": bson.M{"counters.posts": 1}},
 	); err != nil {
 		log.Warn(err.Error())
 		return false
 	}
-	if err := db.C(global.COLLECTION_PLACES).Update(
+	if err := db.C(global.CollectionPlaces).Update(
 		bson.M{"_id": oldPlaceID},
 		bson.M{"$inc": bson.M{"counters.posts": -1}},
 	); err != nil {
@@ -1069,7 +1069,7 @@ func (pm *PostManager) Move(postID bson.ObjectId, oldPlaceID, newPlaceID, accoun
 	}
 
 	pr := new(PostRead)
-	iter := db.C(global.COLLECTION_POSTS_READS).Find(
+	iter := db.C(global.CollectionPostsReads).Find(
 		bson.M{
 			"post_id":  postID,
 			"place_id": oldPlaceID,
@@ -1078,7 +1078,7 @@ func (pm *PostManager) Move(postID bson.ObjectId, oldPlaceID, newPlaceID, accoun
 		}).Select(bson.M{"account_id": 1}).Iter()
 	defer iter.Close()
 	for iter.Next(pr) {
-		db.C(global.COLLECTION_POSTS_READS_COUNTERS).Update(
+		db.C(global.CollectionPostsReadsCounters).Update(
 			bson.M{
 				"account_id": pr.AccountID,
 				"place_id":   oldPlaceID,
@@ -1088,7 +1088,7 @@ func (pm *PostManager) Move(postID bson.ObjectId, oldPlaceID, newPlaceID, accoun
 		)
 	}
 	// remove all unreads from oldPlace
-	db.C(global.COLLECTION_POSTS_READS).RemoveAll(
+	db.C(global.CollectionPostsReads).RemoveAll(
 		bson.M{"post_id": postID, "place_id": oldPlaceID},
 	)
 
@@ -1105,7 +1105,7 @@ func (pm *PostManager) BookmarkPost(accountID string, postID bson.ObjectId) {
 	defer dbSession.Close()
 
 	if post := _Manager.Post.GetPostByID(postID); post != nil {
-		if _, err := db.C(global.COLLECTION_ACCOUNTS_POSTS).Upsert(
+		if _, err := db.C(global.CollectionAccountsPosts).Upsert(
 			bson.M{"account_id": accountID, "post_id": postID},
 			bson.M{"$set": bson.M{
 				"pin_time": Timestamp(),
@@ -1141,7 +1141,7 @@ func (pm *PostManager) Remove(accountID string, postID bson.ObjectId, placeID st
 	// Update posts collection
 	// if it is the last place of the post
 	if len(post.PlaceIDs) == 1 {
-		if err := db.C(global.COLLECTION_POSTS).Update(
+		if err := db.C(global.CollectionPosts).Update(
 			bson.M{"_id": postID},
 			bson.M{
 				"$pull":     bson.M{"places": placeID},
@@ -1152,7 +1152,7 @@ func (pm *PostManager) Remove(accountID string, postID bson.ObjectId, placeID st
 			log.Warn(err.Error())
 		}
 	} else {
-		if err := db.C(global.COLLECTION_POSTS).Update(
+		if err := db.C(global.CollectionPosts).Update(
 			bson.M{"_id": postID},
 			bson.M{
 				"$pull":     bson.M{"places": placeID},
@@ -1167,7 +1167,7 @@ func (pm *PostManager) Remove(accountID string, postID bson.ObjectId, placeID st
 	_Manager.Place.IncrementCounter([]string{placeID}, PlaceCounterPosts, -1)
 
 	pr := new(PostRead)
-	iter := db.C(global.COLLECTION_POSTS_READS).Find(
+	iter := db.C(global.CollectionPostsReads).Find(
 		bson.M{
 			"post_id":  postID,
 			"place_id": placeID,
@@ -1176,7 +1176,7 @@ func (pm *PostManager) Remove(accountID string, postID bson.ObjectId, placeID st
 		}).Select(bson.M{"account_id": 1}).Iter()
 	defer iter.Close()
 	for iter.Next(pr) {
-		db.C(global.COLLECTION_POSTS_READS_COUNTERS).Update(
+		db.C(global.CollectionPostsReadsCounters).Update(
 			bson.M{
 				"account_id": pr.AccountID,
 				"place_id":   placeID,
@@ -1185,7 +1185,7 @@ func (pm *PostManager) Remove(accountID string, postID bson.ObjectId, placeID st
 			bson.M{"$inc": bson.M{"no_unreads": -1}},
 		)
 	}
-	db.C(global.COLLECTION_POSTS_READS).RemoveAll(
+	db.C(global.CollectionPostsReads).RemoveAll(
 		bson.M{"post_id": postID, "place_id": placeID},
 	)
 
@@ -1206,7 +1206,7 @@ func (pm *PostManager) RemoveComment(accountID string, commentID bson.ObjectId) 
 		Update: bson.M{"$set": bson.M{"_removed": true}},
 	}
 	c := new(Comment)
-	if ci, err := db.C(global.COLLECTION_POSTS_COMMENTS).FindId(commentID).Apply(ch, c); err != nil {
+	if ci, err := db.C(global.CollectionPostsComments).FindId(commentID).Apply(ch, c); err != nil {
 		log.Warn(err.Error())
 		return false
 	} else {
@@ -1222,7 +1222,7 @@ func (pm *PostManager) RemoveComment(accountID string, commentID bson.ObjectId) 
 	defer _Manager.Post.removeCommentFromCache(commentID)
 	defer _Manager.Post.removeCache(c.PostID)
 	lcms := make([]bson.M, 0, 3)
-	iter := db.C(global.COLLECTION_POSTS_COMMENTS).Find(bson.M{
+	iter := db.C(global.CollectionPostsComments).Find(bson.M{
 		"post_id":  c.PostID,
 		"_removed": false,
 	}).Sort("-_id").Limit(3).Iter()
@@ -1238,7 +1238,7 @@ func (pm *PostManager) RemoveComment(accountID string, commentID bson.ObjectId) 
 		})
 	}
 
-	db.C(global.COLLECTION_POSTS).UpdateId(
+	db.C(global.CollectionPosts).UpdateId(
 		c.PostID,
 		bson.M{
 			"$inc": bson.M{"counters.comments": -1},
@@ -1258,7 +1258,7 @@ func (pm *PostManager) RemoveAccountFromWatcherList(postID bson.ObjectId, accoun
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_POSTS_WATCHERS).Update(
+	if err := db.C(global.CollectionPostsWatchers).Update(
 		bson.M{"_id": postID},
 		bson.M{"$pull": bson.M{"accounts": accountID}},
 	); err != nil {
@@ -1274,7 +1274,7 @@ func (pm *PostManager) SetEmailMessageID(postID bson.ObjectId, messageID string)
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_POSTS).UpdateId(
+	if err := db.C(global.CollectionPosts).UpdateId(
 		postID,
 		bson.M{
 			"$set": bson.M{"email_meta.message_id": messageID},
@@ -1291,7 +1291,7 @@ func (pm *PostManager) UnpinPost(accountID string, postID bson.ObjectId) {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_ACCOUNTS_POSTS).Remove(bson.M{
+	if err := db.C(global.CollectionAccountsPosts).Remove(bson.M{
 		"post_id":    postID,
 		"account_id": accountID,
 	}); err != nil {
@@ -1305,7 +1305,7 @@ func (pm *PostManager) IsPinned(accountID string, postID bson.ObjectId) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if n, err := db.C(global.COLLECTION_ACCOUNTS_POSTS).Find(bson.M{
+	if n, err := db.C(global.CollectionAccountsPosts).Find(bson.M{
 		"account_id": accountID, "post_id": postID,
 	}).Count(); err != nil {
 		log.Warn(err.Error())
@@ -1438,7 +1438,7 @@ func (p *Post) AddLabel(accountID, labelID string) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_POSTS).UpdateId(
+	if err := db.C(global.CollectionPosts).UpdateId(
 		p.ID,
 		bson.M{
 			"$addToSet": bson.M{"labels": labelID},
@@ -1466,7 +1466,7 @@ func (p *Post) RemoveLabel(accountID, labelID string) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_POSTS).UpdateId(
+	if err := db.C(global.CollectionPosts).UpdateId(
 		p.ID,
 		bson.M{
 			"$pull": bson.M{"labels": labelID},
@@ -1495,7 +1495,7 @@ func (p *Post) MarkAsRead(accountID string) bool {
 	if accountID == p.SenderID {
 		return false
 	}
-	if ci, err := db.C(global.COLLECTION_POSTS_READS).RemoveAll(
+	if ci, err := db.C(global.CollectionPostsReads).RemoveAll(
 		bson.M{
 			"account_id": accountID,
 			"post_id":    p.ID,
@@ -1511,9 +1511,9 @@ func (p *Post) MarkAsRead(accountID string) bool {
 			"post_id":    p.ID,
 			"account_id": accountID,
 		}
-		Q := db.C(global.COLLECTION_POSTS_READS_ACCOUNTS).Find(q)
+		Q := db.C(global.CollectionPostsReadsAccounts).Find(q)
 		if n, _ := Q.Count(); n == 0 {
-			db.C(global.COLLECTION_POSTS_READS_ACCOUNTS).Insert(
+			db.C(global.CollectionPostsReadsAccounts).Insert(
 				bson.M{
 					"post_id":    p.ID,
 					"account_id": accountID,
@@ -1523,7 +1523,7 @@ func (p *Post) MarkAsRead(accountID string) bool {
 		}
 
 		if ci.Removed > 0 {
-			db.C(global.COLLECTION_POSTS_READS_COUNTERS).UpdateAll(
+			db.C(global.CollectionPostsReadsCounters).UpdateAll(
 				bson.M{
 					"account_id": accountID,
 					"place_id":   bson.M{"$in": p.PlaceIDs},
@@ -1576,7 +1576,7 @@ func (p *Post) Update(postSubject, postBody string) bool {
 		return false
 	}
 
-	if err := db.C(global.COLLECTION_POSTS).UpdateId(
+	if err := db.C(global.CollectionPosts).UpdateId(
 		p.ID,
 		bson.M{
 			"$set": bson.M{

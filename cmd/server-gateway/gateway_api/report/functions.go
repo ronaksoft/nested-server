@@ -27,11 +27,11 @@ func (s *ReportService) ReportTimeSeriesSingleValue(requester *nested.Account, r
 		case nested.ReportResolutionHour, nested.ReportResolutionDay, nested.ReportResolutionMonth:
 			res = v
 		default:
-			response.Error(global.ERR_INVALID, []string{"res"})
+			response.Error(global.ErrInvalid, []string{"res"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"res"})
+		response.Error(global.ErrIncomplete, []string{"res"})
 		return
 	}
 	if v, ok := request.Data["key"].(string); ok {

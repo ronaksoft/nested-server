@@ -23,20 +23,20 @@ func (s *AuthService) getPhoneVerificationCode(requester *nested.Account, reques
 	if v, ok := request.Data["phone"].(string); ok {
 		phone = strings.TrimLeft(v, " +0")
 		if len(phone) < 8 {
-			response.Error(global.ERR_INVALID, []string{"phone"})
+			response.Error(global.ErrInvalid, []string{"phone"})
 			return
 		}
 	} else {
 		if v, ok := request.Data["uid"].(string); ok {
 			account := s.Worker().Model().Account.GetByID(v, nil)
 			if account == nil {
-				response.Error(global.ERR_INVALID, []string{"uid"})
+				response.Error(global.ErrInvalid, []string{"uid"})
 				return
 			} else {
 				phone = account.Phone
 			}
 		} else {
-			response.Error(global.ERR_INCOMPLETE, []string{})
+			response.Error(global.ErrIncomplete, []string{})
 			return
 		}
 	}
@@ -66,7 +66,7 @@ func (s *AuthService) getEmailVerificationCode(requester *nested.Account, reques
 		if v, ok := request.Data["uid"].(string); ok {
 			account := s.Worker().Model().Account.GetByID(v, nil)
 			if account == nil {
-				response.Error(global.ERR_INVALID, []string{"uid"})
+				response.Error(global.ErrInvalid, []string{"uid"})
 				return
 			} else {
 				email = account.Email
@@ -91,7 +91,7 @@ func (s *AuthService) verifyCode(requester *nested.Account, request *nestedGatew
 	if v, ok := request.Data["vid"].(string); ok {
 		verifyID = v
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"vid"})
+		response.Error(global.ErrIncomplete, []string{"vid"})
 		return
 	}
 	if v, ok := request.Data["code"].(string); ok {
@@ -100,7 +100,7 @@ func (s *AuthService) verifyCode(requester *nested.Account, request *nestedGatew
 	if s.Worker().Model().Verification.Verify(verifyID, code) {
 		response.Ok()
 	} else {
-		response.Error(global.ERR_INVALID, []string{"vid", "code"})
+		response.Error(global.ErrInvalid, []string{"vid", "code"})
 	}
 	return
 }
@@ -112,18 +112,18 @@ func (s *AuthService) sendCodeByText(requester *nested.Account, request *nestedG
 	if v, ok := request.Data["vid"].(string); ok {
 		verification = s.Worker().Model().Verification.GetByID(v)
 		if verification == nil {
-			response.Error(global.ERR_INVALID, []string{"vid"})
+			response.Error(global.ErrInvalid, []string{"vid"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"vid"})
+		response.Error(global.ErrIncomplete, []string{"vid"})
 		return
 	}
 	if verification.Phone == nested.TestPhoneNumber {
 		return
 	}
 	if verification.Counters.Sms > 3 {
-		response.Error(global.ERR_LIMIT, []string{"no_more_sms"})
+		response.Error(global.ErrLimit, []string{"no_more_sms"})
 		return
 	}
 	s.Worker().Model().Verification.IncrementSmsCounter(verification.ID)
@@ -149,12 +149,12 @@ func (s *AuthService) recoverPassword(requester *nested.Account, request *nested
 	if v, ok := request.Data["vid"].(string); ok {
 		verification = s.Worker().Model().Verification.GetByID(v)
 		if verification == nil {
-			response.Error(global.ERR_INVALID, []string{"vid"})
+			response.Error(global.ErrInvalid, []string{"vid"})
 			return
 		}
 		// check verification object is verified
 		if !verification.Verified || verification.Expired {
-			response.Error(global.ERR_INVALID, []string{"vid"})
+			response.Error(global.ErrInvalid, []string{"vid"})
 			return
 		}
 	}
@@ -162,7 +162,7 @@ func (s *AuthService) recoverPassword(requester *nested.Account, request *nested
 		//FIXME:: check password meet requirements
 		newPass = v
 	} else {
-		response.Error(global.ERR_INVALID, []string{"new_pass"})
+		response.Error(global.ErrInvalid, []string{"new_pass"})
 		return
 	}
 	if verification.Phone == nested.TestPhoneNumber {
@@ -174,7 +174,7 @@ func (s *AuthService) recoverPassword(requester *nested.Account, request *nested
 		s.Worker().Model().Account.SetPassword(account.ID, newPass)
 		response.Ok()
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{})
+		response.Error(global.ErrUnknown, []string{})
 	}
 	s.Worker().Model().Verification.Expire(verification.ID)
 }
@@ -186,16 +186,16 @@ func (s *AuthService) recoverUsername(requester *nested.Account, request *nested
 	if v, ok := request.Data["vid"].(string); ok {
 		verification = s.Worker().Model().Verification.GetByID(v)
 		if verification == nil {
-			response.Error(global.ERR_INVALID, []string{"vid"})
+			response.Error(global.ErrInvalid, []string{"vid"})
 			return
 		}
 		// check verification object is verified
 		if !verification.Verified || verification.Expired {
-			response.Error(global.ERR_INVALID, []string{"vid"})
+			response.Error(global.ErrInvalid, []string{"vid"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"vid"})
+		response.Error(global.ErrIncomplete, []string{"vid"})
 		return
 	}
 	if verification.Phone == nested.TestPhoneNumber {
@@ -209,7 +209,7 @@ func (s *AuthService) recoverUsername(requester *nested.Account, request *nested
 	if account != nil {
 		response.OkWithData(tools.M{"uid": account.ID})
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{})
+		response.Error(global.ErrUnknown, []string{})
 	}
 	s.Worker().Model().Verification.Expire(verification.ID)
 }
@@ -221,12 +221,12 @@ func (s *AuthService) phoneAvailable(requester *nested.Account, request *nestedG
 	if v, ok := request.Data["phone"].(string); ok {
 		phone = strings.TrimLeft(v, " +0")
 		systemConstants := s.Worker().Model().System.GetStringConstants()
-		if phone != systemConstants[global.SYSTEM_CONSTANTS_MAGIC_NUMBER] && s.Worker().Model().Account.PhoneExists(phone) {
-			response.Error(global.ERR_DUPLICATE, []string{"phone"})
+		if phone != systemConstants[global.SystemConstantsMagicNumber] && s.Worker().Model().Account.PhoneExists(phone) {
+			response.Error(global.ErrDuplicate, []string{"phone"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"phone"})
+		response.Error(global.ErrIncomplete, []string{"phone"})
 		return
 	}
 	response.Ok()
@@ -249,16 +249,16 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 	var uid, pass, fname, lname, gender, dob, country, email, phone string
 	var verification *nested.Verification
 
-	if global.RegisterModeAdminOnly == global.REGISTER_MODE_ADMIN_ONLY {
-		response.Error(global.ERR_ACCESS, []string{"only_admin"})
+	if global.RegisterMode == global.RegisterModeAdminOnly {
+		response.Error(global.ErrAccess, []string{"only_admin"})
 		return
 	}
 
 	// Check License Limit
 	counters := s.Worker().Model().System.GetCounters()
 	maxActiveUsers := s.Worker().Model().License.Get().MaxActiveUsers
-	if maxActiveUsers != 0 && counters[global.SYSTEM_COUNTERS_ENABLED_ACCOUNTS] >= maxActiveUsers {
-		response.Error(global.ERR_LIMIT, []string{"license_users_limit"})
+	if maxActiveUsers != 0 && counters[global.SystemCountersEnabledAccounts] >= maxActiveUsers {
+		response.Error(global.ErrLimit, []string{"license_users_limit"})
 		return
 	}
 
@@ -288,7 +288,7 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 	if v, ok := request.Data["email"].(string); ok && len(v) > 0 {
 		email = strings.ToLower(strings.Trim(v, " "))
 		if !nested.IsValidEmail(email) {
-			response.Error(global.ERR_INVALID, []string{"email"})
+			response.Error(global.ErrInvalid, []string{"email"})
 			return
 		}
 	}
@@ -301,13 +301,13 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 		if verification == nil {
 			log.Println("RegisterUserAccount::Error::Invalid_VerificationID")
 			log.Println("Arguments:", request.Data)
-			response.Error(global.ERR_INVALID, []string{"vid"})
+			response.Error(global.ErrInvalid, []string{"vid"})
 			return
 		}
 
 		// check verification object is verified
 		if !verification.Verified || verification.Phone != phone {
-			response.Error(global.ERR_INVALID, []string{"vid"})
+			response.Error(global.ErrInvalid, []string{"vid"})
 			return
 		}
 		s.Worker().Model().Verification.Expire(verification.ID)
@@ -315,31 +315,31 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 
 	// check if username match the regular expression
 	if matched, err := regexp.MatchString(global.DefaultRegexAccountID, uid); err != nil {
-		response.Error(global.ERR_UNKNOWN, []string{err.Error()})
+		response.Error(global.ErrUnknown, []string{err.Error()})
 		return
 	} else if !matched {
-		response.Error(global.ERR_INVALID, []string{"uid"})
+		response.Error(global.ErrInvalid, []string{"uid"})
 		return
 	}
 	// check if username is not taken already
 	if s.Worker().Model().Account.Exists(uid) || s.Worker().Model().Place.Exists(uid) {
-		response.Error(global.ERR_DUPLICATE, []string{"uid"})
+		response.Error(global.ErrDuplicate, []string{"uid"})
 		return
 	}
 	// check if phone is not taken already
 	systemConstants := s.Worker().Model().System.GetStringConstants()
-	if phone != systemConstants[global.SYSTEM_CONSTANTS_MAGIC_NUMBER] && s.Worker().Model().Account.PhoneExists(phone) {
-		response.Error(global.ERR_DUPLICATE, []string{"phone"})
+	if phone != systemConstants[global.SystemConstantsMagicNumber] && s.Worker().Model().Account.PhoneExists(phone) {
+		response.Error(global.ErrDuplicate, []string{"phone"})
 		return
 	}
 	// check if email is not taken already
 	if email != "" && s.Worker().Model().Account.EmailExists(email) {
-		response.Error(global.ERR_DUPLICATE, []string{"email"})
+		response.Error(global.ErrDuplicate, []string{"email"})
 		return
 	}
 	// check that fname and lname cannot both be empty text
 	if fname == "" && lname == "" {
-		response.Error(global.ERR_INVALID, []string{"fname", "lname"})
+		response.Error(global.ErrInvalid, []string{"fname", "lname"})
 		return
 	}
 
@@ -349,7 +349,7 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 	}
 
 	if !s.Worker().Model().Account.CreateUser(uid, pass, verification.Phone, country, fname, lname, email, dob, gender) {
-		response.Error(global.ERR_UNKNOWN, []string{""})
+		response.Error(global.ErrUnknown, []string{""})
 		return
 	}
 
@@ -443,13 +443,13 @@ func (s *AuthService) authorizeApp(requester *nested.Account, request *nestedGat
 	if v, ok := request.Data["app_id"].(string); ok {
 		appID = v
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"app_id"})
+		response.Error(global.ErrIncomplete, []string{"app_id"})
 		return
 	}
 	if v, ok := request.Data["app_name"].(string); ok {
 		appName = v
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"app_name"})
+		response.Error(global.ErrIncomplete, []string{"app_name"})
 		return
 	}
 	_, _, _, _ = appID, appName, appHomepage, appCallbackUrl

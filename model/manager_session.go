@@ -44,7 +44,7 @@ func (sm *SessionManager) readFromCache(sessionID bson.ObjectId) *Session {
 	defer c.Close()
 	keyID := fmt.Sprintf("session:gob:%s", sessionID.Hex())
 	if gobSession, err := redis.Bytes(c.Do("GET", keyID)); err != nil {
-		if err := _MongoDB.C(global.COLLECTION_SESSIONS).FindId(sessionID).One(session); err != nil {
+		if err := _MongoDB.C(global.CollectionSessions).FindId(sessionID).One(session); err != nil {
 			log.Warn(err.Error())
 			return nil
 		}
@@ -65,7 +65,7 @@ func (sm *SessionManager) updateCache(sessionID bson.ObjectId) bool {
 	c := _Cache.Pool.Get()
 	defer c.Close()
 	keyID := fmt.Sprintf("session:gob:%s", sessionID.Hex())
-	if err := _MongoDB.C(global.COLLECTION_SESSIONS).FindId(sessionID).One(session); err != nil {
+	if err := _MongoDB.C(global.CollectionSessions).FindId(sessionID).One(session); err != nil {
 		log.Warn(err.Error())
 		c.Do("DEL", keyID)
 		return false
@@ -98,7 +98,7 @@ func (sm *SessionManager) Create(in MS) (bson.ObjectId, error) {
 	_Manager.Report.CountSessionLogin()
 
 	ts := Timestamp()
-	if err := db.C(global.COLLECTION_SESSIONS).Insert(
+	if err := db.C(global.CollectionSessions).Insert(
 		Session{
 			ID:         sk,
 			CreatedOn:  ts,
@@ -128,7 +128,7 @@ func (sm *SessionManager) Expire(sk bson.ObjectId) {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	db.C(global.COLLECTION_SESSIONS).UpdateId(sk, bson.M{"$set": bson.M{"expired": true}})
+	db.C(global.CollectionSessions).UpdateId(sk, bson.M{"$set": bson.M{"expired": true}})
 }
 
 // GetByID return Session by sessionID
@@ -150,7 +150,7 @@ func (sm *SessionManager) GetByUser(accountID string, pg Pagination) []Session {
 	defer dbSession.Close()
 
 	s := make([]Session, 0)
-	if err := db.C(global.COLLECTION_SESSIONS).Find(bson.M{
+	if err := db.C(global.CollectionSessions).Find(bson.M{
 		"uid":     accountID,
 		"expired": false,
 	}).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&s); err != nil {
@@ -185,7 +185,7 @@ func (sm *SessionManager) Set(sk bson.ObjectId, v bson.M) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_SESSIONS).Update(
+	if err := db.C(global.CollectionSessions).Update(
 		bson.M{
 			"_id":     sk,
 			"expired": false,
@@ -208,7 +208,7 @@ func (sm *SessionManager) UpdateLastAccess(sk bson.ObjectId) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_SESSIONS).Update(
+	if err := db.C(global.CollectionSessions).Update(
 		bson.M{
 			"_id":     sk,
 			"expired": false,
@@ -264,7 +264,7 @@ func (s *Session) CloseOtherActives() {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	db.C(global.COLLECTION_SESSIONS).RemoveAll(bson.M{
+	db.C(global.CollectionSessions).RemoveAll(bson.M{
 		"uid": s.AccountID,
 		"_id": bson.M{"$ne": s.ID},
 	})

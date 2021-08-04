@@ -19,13 +19,13 @@ func (s *AccountService) accountIDAvailable(requester *nested.Account, request *
 	if v, ok := request.Data["account_id"].(string); ok {
 		accountID = strings.ToLower(v)
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"account_id"})
+		response.Error(global.ErrIncomplete, []string{"account_id"})
 		return
 	}
 	if _Model.Account.Available(accountID) {
 		response.Ok()
 	} else {
-		response.Error(global.ERR_UNAVAILABLE, []string{"account_id"})
+		response.Error(global.ErrUnavailable, []string{"account_id"})
 	}
 	return
 }
@@ -38,11 +38,11 @@ func (s *AccountService) addToTrustList(requester *nested.Account, request *nest
 	if v, ok := request.Data["email_addr"].(string); ok {
 		emailAddr = v
 		if !nested.IsValidEmail(emailAddr) {
-			response.Error(global.ERR_INVALID, []string{"email_addr"})
+			response.Error(global.ErrInvalid, []string{"email_addr"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"email_addr"})
+		response.Error(global.ErrIncomplete, []string{"email_addr"})
 		return
 	}
 	if v, ok := request.Data["domain"].(bool); ok && v {
@@ -63,48 +63,48 @@ func (s *AccountService) changePhone(requester *nested.Account, request *nestedG
 	var verification *nested.Verification
 	var password, phone string
 	if !requester.Privacy.ChangeProfile {
-		response.Error(global.ERR_ACCESS, []string{"contact_admin"})
+		response.Error(global.ErrAccess, []string{"contact_admin"})
 		return
 	}
 	if v, ok := request.Data["vid"].(string); ok {
 		verification = _Model.Verification.GetByID(v)
 		if verification == nil {
-			response.Error(global.ERR_INVALID, []string{"vid"})
+			response.Error(global.ErrInvalid, []string{"vid"})
 			return
 		}
 		// check verification object is verified
 		if !verification.Verified || verification.Expired {
-			response.Error(global.ERR_INVALID, []string{"vid"})
+			response.Error(global.ErrInvalid, []string{"vid"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"vid"})
+		response.Error(global.ErrIncomplete, []string{"vid"})
 		return
 	}
 	if v, ok := request.Data["pass"].(string); ok {
 		password = v
 		if !_Model.Account.Verify(requester.ID, password) {
-			response.Error(global.ERR_INVALID, []string{"pass"})
+			response.Error(global.ErrInvalid, []string{"pass"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"pass"})
+		response.Error(global.ErrIncomplete, []string{"pass"})
 		return
 	}
 	if v, ok := request.Data["phone"].(string); ok {
 		phone = v
 		if verification.Phone != phone {
-			response.Error(global.ERR_INVALID, []string{"phone"})
+			response.Error(global.ErrInvalid, []string{"phone"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"phone"})
+		response.Error(global.ErrIncomplete, []string{"phone"})
 		return
 	}
 	if _Model.Account.SetPhone(requester.ID, phone) {
 		response.Ok()
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{})
+		response.Error(global.ErrUnknown, []string{})
 	}
 }
 
@@ -125,7 +125,7 @@ func (s *AccountService) getAccountInfo(requester *nested.Account, request *nest
 				response.OkWithData(d)
 				return
 			} else {
-				response.Error(global.ERR_UNAVAILABLE, []string{"account_id"})
+				response.Error(global.ErrUnavailable, []string{"account_id"})
 				return
 			}
 		}
@@ -155,7 +155,7 @@ func (s *AccountService) getManyAccountsInfo(requester *nested.Account, request 
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"account_id"})
+		response.Error(global.ErrIncomplete, []string{"account_id"})
 		return
 	}
 	r := make([]tools.M, 0, len(accounts))
@@ -172,11 +172,11 @@ func (s *AccountService) getAccountInfoByToken(requester *nested.Account, reques
 	if v, ok := request.Data["token"].(string); ok {
 		account = _Model.Account.GetAccountByLoginToken(v)
 		if account == nil {
-			response.Error(global.ERR_INVALID, []string{"token"})
+			response.Error(global.ErrInvalid, []string{"token"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"token"})
+		response.Error(global.ErrIncomplete, []string{"token"})
 		return
 	}
 	response.OkWithData(s.Worker().Map().Account(*account, true))
@@ -344,30 +344,30 @@ func (s *AccountService) setAccountPassword(requester *nested.Account, request *
 	if v, ok := request.Data["old_pass"].(string); ok {
 		oldPass = v
 	} else {
-		response.Error(global.ERR_INVALID, []string{"old_pass"})
+		response.Error(global.ErrInvalid, []string{"old_pass"})
 		return
 	}
 	if v, ok := request.Data["new_pass"].(string); ok {
 		newPass = v
 	} else {
-		response.Error(global.ERR_INVALID, []string{"new_pass"})
+		response.Error(global.ErrInvalid, []string{"new_pass"})
 		return
 	}
 	if v, ok := request.Data["account_id"].(string); ok {
 		accountID = v
 		account = s.Worker().Model().Account.GetByID(v, nil)
 		if account == nil {
-			response.Error(global.ERR_INVALID, []string{"account_id"})
+			response.Error(global.ErrInvalid, []string{"account_id"})
 			return
 		} else if account.Disabled {
-			response.Error(global.ERR_ACCESS, []string{"account_is_disabled"})
+			response.Error(global.ErrAccess, []string{"account_is_disabled"})
 			return
 		}
 	} else {
 		if requester != nil {
 			accountID = requester.ID
 		} else {
-			response.Error(global.ERR_INCOMPLETE, []string{"account_id"})
+			response.Error(global.ErrIncomplete, []string{"account_id"})
 			return
 		}
 	}
@@ -375,7 +375,7 @@ func (s *AccountService) setAccountPassword(requester *nested.Account, request *
 	if _Model.Account.Verify(accountID, oldPass) {
 		_Model.Account.SetPassword(accountID, newPass)
 	} else {
-		response.Error(global.ERR_INVALID, []string{})
+		response.Error(global.ErrInvalid, []string{})
 		return
 	}
 	response.Ok()
@@ -391,17 +391,17 @@ func (s *AccountService) setAccountPasswordByLoginToken(requester *nested.Accoun
 		token = v
 		account = _Model.Account.GetAccountByLoginToken(token)
 		if account == nil {
-			response.Error(global.ERR_INVALID, []string{"token"})
+			response.Error(global.ErrInvalid, []string{"token"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"token"})
+		response.Error(global.ErrIncomplete, []string{"token"})
 		return
 	}
 	if v, ok := request.Data["new_pass"].(string); ok {
 		newPass = v
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"new_pass"})
+		response.Error(global.ErrIncomplete, []string{"new_pass"})
 		return
 	}
 	if _Model.Account.SetPassword(account.ID, newPass) {
@@ -409,7 +409,7 @@ func (s *AccountService) setAccountPasswordByLoginToken(requester *nested.Accoun
 		_Model.Token.RevokeLoginToken(token)
 		response.Ok()
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{})
+		response.Error(global.ErrUnknown, []string{})
 	}
 	return
 }
@@ -419,13 +419,13 @@ func (s *AccountService) setAccountPasswordByLoginToken(requester *nested.Accoun
 func (s *AccountService) setAccountPicture(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	var uni_id nested.UniversalID
 	if !requester.Privacy.ChangePicture {
-		response.Error(global.ERR_ACCESS, []string{"contact_admin"})
+		response.Error(global.ErrAccess, []string{"contact_admin"})
 		return
 	}
 	if v, ok := request.Data["universal_id"].(string); ok {
 		uni_id = nested.UniversalID(v)
 		if !_Model.File.Exists(uni_id) {
-			response.Error(global.ERR_UNAVAILABLE, []string{"universal_id"})
+			response.Error(global.ErrUnavailable, []string{"universal_id"})
 			return
 		}
 	}
@@ -453,11 +453,11 @@ func (s *AccountService) removeFromTrustList(requester *nested.Account, request 
 	if v, ok := request.Data["email_addr"].(string); ok {
 		emailAddr = v
 		if !nested.IsValidEmail(emailAddr) {
-			response.Error(global.ERR_INVALID, []string{"email_addr"})
+			response.Error(global.ErrInvalid, []string{"email_addr"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"email_addr"})
+		response.Error(global.ErrIncomplete, []string{"email_addr"})
 		return
 	}
 	_Model.Account.UnTrustRecipient(requester.ID, []string{emailAddr})
@@ -510,7 +510,7 @@ func (s *AccountService) updateAccount(requester *nested.Account, request *neste
 	aur := nested.AccountUpdateRequest{}
 	placeUpdateRequest := tools.M{}
 	if !requester.Privacy.ChangeProfile {
-		response.Error(global.ERR_ACCESS, []string{"contact_admin"})
+		response.Error(global.ErrAccess, []string{"contact_admin"})
 		return
 	}
 	if fname, ok := request.Data["fname"].(string); ok {
@@ -594,12 +594,12 @@ func (s *AccountService) updateEmail(requester *nested.Account, request *nestedG
 			u = strings.ToLower(u)
 			index := strings.Index(u, "@")
 			if len(u) == 0 || index == -1 {
-				response.Error(global.ERR_INVALID, []string{"user-name"})
+				response.Error(global.ErrInvalid, []string{"user-name"})
 				return
 			} else {
 				username = u
 				if !nested.IsValidEmail(username) {
-					response.Error(global.ERR_INVALID, []string{"user-name"})
+					response.Error(global.ErrInvalid, []string{"user-name"})
 					return
 				}
 				switch u[index+1:] {
@@ -613,20 +613,20 @@ func (s *AccountService) updateEmail(requester *nested.Account, request *nestedG
 					if h, ok := request.Data["host"].(string); ok {
 						host = h
 					} else {
-						response.Error(global.ERR_INVALID, []string{"host"})
+						response.Error(global.ErrInvalid, []string{"host"})
 						return
 					}
 					if p, ok := request.Data["port"].(int); ok {
 						port = p
 					} else {
-						response.Error(global.ERR_INVALID, []string{"port"})
+						response.Error(global.ErrInvalid, []string{"port"})
 						return
 					}
 				}
 			}
 		}
 	} else {
-		response.Error(global.ERR_INVALID, []string{"user-name"})
+		response.Error(global.ErrInvalid, []string{"user-name"})
 		return
 	}
 	if p, ok := request.Data["password"].(string); ok {
@@ -636,13 +636,13 @@ func (s *AccountService) updateEmail(requester *nested.Account, request *nestedG
 			password = p
 		}
 	} else {
-		response.Error(global.ERR_INVALID, []string{"password"})
+		response.Error(global.ErrInvalid, []string{"password"})
 		return
 	}
 	if p, ok := request.Data["status"].(bool); ok {
 		status = p
 	} else {
-		response.Error(global.ERR_INVALID, []string{"status"})
+		response.Error(global.ErrInvalid, []string{"status"})
 		return
 	}
 	accountMail := nested.AccountMail{
@@ -656,7 +656,7 @@ func (s *AccountService) updateEmail(requester *nested.Account, request *nestedG
 		response.Ok()
 		return
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{})
+		response.Error(global.ErrUnknown, []string{})
 	}
 }
 
@@ -673,6 +673,6 @@ func (s *AccountService) removeEmail(requester *nested.Account, request *nestedG
 		response.Ok()
 		return
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{})
+		response.Error(global.ErrUnknown, []string{})
 	}
 }

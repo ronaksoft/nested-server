@@ -31,7 +31,7 @@ func (fs *Server) ServeFileByFileToken(ctx iris.Context) {
 	resp := new(nestedGateway.Response)
 	if v, err := _NestedModel.Token.GetFileByToken(fileToken); err != nil {
 		ctx.StatusCode(http.StatusUnauthorized)
-		resp.Error(global.ERR_INVALID, []string{"fileToken"})
+		resp.Error(global.ErrInvalid, []string{"fileToken"})
 		ctx.JSON(resp)
 		return
 	} else {
@@ -48,7 +48,7 @@ func (fs *Server) ServePublicFiles(ctx iris.Context) {
 	resp := new(nestedGateway.Response)
 	if v := _NestedModel.File.GetByID(universalID, nil); v == nil {
 		ctx.StatusCode(http.StatusUnauthorized)
-		resp.Error(global.ERR_INVALID, []string{"universal_id"})
+		resp.Error(global.ErrInvalid, []string{"universal_id"})
 		ctx.JSON(resp)
 		return
 	} else {
@@ -58,7 +58,7 @@ func (fs *Server) ServePublicFiles(ctx iris.Context) {
 	case nested.FileStatusPublic, nested.FileStatusThumbnail:
 	default:
 		ctx.StatusCode(http.StatusUnauthorized)
-		resp.Error(global.ERR_ACCESS, []string{})
+		resp.Error(global.ErrAccess, []string{})
 		ctx.JSON(resp)
 		return
 	}
@@ -74,14 +74,14 @@ func (fs *Server) ServePrivateFiles(ctx iris.Context) {
 
 	//if !bson.IsObjectIdHex(sessionID) {
 	//    ctx.StatusCode(http.StatusUnauthorized)
-	//    resp.Error(global.ERR_ACCESS, []string{})
+	//    resp.Error(global.ErrAccess, []string{})
 	//    ctx.JSON(resp)
 	//    return
 	//} else {
 	//    session := _NestedModel.Session.GetByID(bson.ObjectIdHex(sessionID))
 	//    if session == nil {
 	//        ctx.StatusCode(http.StatusUnauthorized)
-	//        resp.Error(global.ERR_ACCESS, []string{})
+	//        resp.Error(global.ErrAccess, []string{})
 	//        ctx.JSON(resp)
 	//        return
 	//    }
@@ -89,12 +89,12 @@ func (fs *Server) ServePrivateFiles(ctx iris.Context) {
 
 	if valid, uniID := nested.UseDownloadToken(downloadToken); !valid {
 		ctx.StatusCode(http.StatusUnauthorized)
-		resp.Error(global.ERR_ACCESS, []string{})
+		resp.Error(global.ErrAccess, []string{})
 		ctx.JSON(resp)
 		return
 	} else if universalID != uniID {
 		ctx.StatusCode(http.StatusUnauthorized)
-		resp.Error(global.ERR_ACCESS, []string{})
+		resp.Error(global.ErrAccess, []string{})
 		ctx.JSON(resp)
 		return
 	}
@@ -107,7 +107,7 @@ func (fs *Server) ServerFileBySystem(ctx iris.Context) {
 	resp := new(nestedGateway.Response)
 	if apiKey != fs.apiKey {
 		ctx.StatusCode(http.StatusUnauthorized)
-		resp.Error(global.ERR_ACCESS, []string{})
+		resp.Error(global.ErrAccess, []string{})
 		ctx.JSON(resp)
 		return
 	}
@@ -124,7 +124,7 @@ func (fs *Server) Download(ctx iris.Context) {
 	forceDownload, _ := ctx.Values().GetBool("forceDownload")
 	if v := _NestedModel.File.GetByID(universalID, nil); v == nil {
 		ctx.StatusCode(http.StatusUnauthorized)
-		resp.Error(global.ERR_INVALID, []string{"universal_id"})
+		resp.Error(global.ErrInvalid, []string{"universal_id"})
 		ctx.JSON(resp)
 		return
 	} else {
@@ -133,7 +133,7 @@ func (fs *Server) Download(ctx iris.Context) {
 
 	if v, err := _NestedModel.Store.GetFile(universalID); err != nil {
 		ctx.StatusCode(http.StatusExpectationFailed)
-		resp.Error(global.ERR_UNAVAILABLE, []string{"universal_id"})
+		resp.Error(global.ErrUnavailable, []string{"universal_id"})
 		ctx.JSON(resp)
 		return
 	} else {
@@ -166,7 +166,7 @@ func (fs *Server) UploadSystem(ctx iris.Context) {
 	resp := new(nestedGateway.Response)
 	if apiKey != fs.apiKey {
 		ctx.StatusCode(http.StatusUnauthorized)
-		resp.Error(global.ERR_ACCESS, []string{})
+		resp.Error(global.ErrAccess, []string{})
 		ctx.JSON(resp)
 	}
 
@@ -174,7 +174,7 @@ func (fs *Server) UploadSystem(ctx iris.Context) {
 	uploadType := strings.ToUpper(ctx.Params().Get("uploadType"))
 	if r, err := ctx.Request().MultipartReader(); err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
-		resp.Error(global.ERR_INVALID, []string{"request"})
+		resp.Error(global.ErrInvalid, []string{"request"})
 		ctx.JSON(resp)
 		return
 	} else {
@@ -186,7 +186,7 @@ func (fs *Server) UploadSystem(ctx iris.Context) {
 		var fileInfos []nested.FileInfo
 		for part, err := multipartReader.NextPart(); nil == err; part, err = multipartReader.NextPart() {
 			if fileInfo, err := uploadFile(part, uploadType, uploaderID, false); err != nil {
-				resp.Error(global.ERR_UNKNOWN, []string{})
+				resp.Error(global.ErrUnknown, []string{})
 				ctx.StatusCode(http.StatusExpectationFailed)
 				ctx.JSON(resp)
 				return
@@ -213,13 +213,13 @@ func (fs *Server) UploadSystem(ctx iris.Context) {
 		resp.OkWithData(tools.M{"files": r})
 	case nested.UploadTypePlacePicture, nested.UploadTypeProfilePicture:
 		if p, err := multipartReader.NextPart(); err != nil {
-			resp.Error(global.ERR_UNKNOWN, []string{})
+			resp.Error(global.ErrUnknown, []string{})
 			ctx.StatusCode(http.StatusExpectationFailed)
 			ctx.JSON(resp)
 			return
 
 		} else if fileInfo, err := uploadFile(p, uploadType, uploaderID, false); err != nil {
-			resp.Error(global.ERR_INVALID, []string{})
+			resp.Error(global.ErrInvalid, []string{})
 			ctx.StatusCode(http.StatusExpectationFailed)
 			ctx.JSON(resp)
 			return
@@ -240,7 +240,7 @@ func (fs *Server) UploadSystem(ctx iris.Context) {
 		}
 	default:
 		ctx.StatusCode(http.StatusBadRequest)
-		resp.Error(global.ERR_INVALID, []string{"request"})
+		resp.Error(global.ErrInvalid, []string{"request"})
 	}
 	ctx.JSON(resp)
 }
@@ -252,14 +252,14 @@ func (fs *Server) UploadUser(ctx iris.Context) {
 	resp := new(nestedGateway.Response)
 	if !bson.IsObjectIdHex(sessionID) {
 		ctx.StatusCode(http.StatusUnauthorized)
-		resp.Error(global.ERR_ACCESS, []string{})
+		resp.Error(global.ErrAccess, []string{})
 		ctx.JSON(resp)
 		return
 	} else {
 		session = _NestedModel.Session.GetByID(bson.ObjectIdHex(sessionID))
 		if session == nil {
 			ctx.StatusCode(http.StatusUnauthorized)
-			resp.Error(global.ERR_ACCESS, []string{})
+			resp.Error(global.ErrAccess, []string{})
 			ctx.JSON(resp)
 			return
 		}
@@ -268,7 +268,7 @@ func (fs *Server) UploadUser(ctx iris.Context) {
 
 	if r, err := ctx.Request().MultipartReader(); err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
-		resp.Error(global.ERR_INVALID, []string{"request"})
+		resp.Error(global.ErrInvalid, []string{"request"})
 		ctx.JSON(resp)
 		return
 	} else {
@@ -280,7 +280,7 @@ func (fs *Server) UploadUser(ctx iris.Context) {
 		var fileInfos []nested.FileInfo
 		for part, err := multipartReader.NextPart(); nil == err; part, err = multipartReader.NextPart() {
 			if fileInfo, err := uploadFile(part, uploadType, uploaderID, false); err != nil {
-				resp.Error(global.ERR_UNKNOWN, []string{})
+				resp.Error(global.ErrUnknown, []string{})
 				ctx.StatusCode(http.StatusExpectationFailed)
 				ctx.JSON(resp)
 				return
@@ -307,13 +307,13 @@ func (fs *Server) UploadUser(ctx iris.Context) {
 		resp.OkWithData(tools.M{"files": r})
 	case nested.UploadTypePlacePicture, nested.UploadTypeProfilePicture:
 		if p, err := multipartReader.NextPart(); err != nil {
-			resp.Error(global.ERR_UNKNOWN, []string{})
+			resp.Error(global.ErrUnknown, []string{})
 			ctx.StatusCode(http.StatusExpectationFailed)
 			ctx.JSON(resp)
 			return
 
 		} else if fileInfo, err := uploadFile(p, uploadType, uploaderID, false); err != nil {
-			resp.Error(global.ERR_INVALID, []string{})
+			resp.Error(global.ErrInvalid, []string{})
 			ctx.StatusCode(http.StatusExpectationFailed)
 			ctx.JSON(resp)
 			return
@@ -334,7 +334,7 @@ func (fs *Server) UploadUser(ctx iris.Context) {
 		}
 	default:
 		ctx.StatusCode(http.StatusBadRequest)
-		resp.Error(global.ERR_INVALID, []string{"request"})
+		resp.Error(global.ErrInvalid, []string{"request"})
 
 	}
 	ctx.JSON(resp)
@@ -347,7 +347,7 @@ func (fs *Server) UploadApp(ctx iris.Context) {
 	token := _NestedModel.Token.GetAppToken(appToken)
 	if token == nil {
 		ctx.StatusCode(http.StatusUnauthorized)
-		resp.Error(global.ERR_ACCESS, []string{})
+		resp.Error(global.ErrAccess, []string{})
 		ctx.JSON(resp)
 		return
 	}
@@ -356,7 +356,7 @@ func (fs *Server) UploadApp(ctx iris.Context) {
 
 	if r, err := ctx.Request().MultipartReader(); err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
-		resp.Error(global.ERR_INVALID, []string{"request"})
+		resp.Error(global.ErrInvalid, []string{"request"})
 		ctx.JSON(resp)
 		return
 	} else {
@@ -368,7 +368,7 @@ func (fs *Server) UploadApp(ctx iris.Context) {
 		var fileInfos []nested.FileInfo
 		for part, err := multipartReader.NextPart(); nil == err; part, err = multipartReader.NextPart() {
 			if fileInfo, err := uploadFile(part, uploadType, uploaderID, false); err != nil {
-				resp.Error(global.ERR_UNKNOWN, []string{})
+				resp.Error(global.ErrUnknown, []string{})
 				ctx.StatusCode(http.StatusExpectationFailed)
 				ctx.JSON(resp)
 				return
@@ -395,13 +395,13 @@ func (fs *Server) UploadApp(ctx iris.Context) {
 		resp.OkWithData(tools.M{"files": r})
 	case nested.UploadTypePlacePicture, nested.UploadTypeProfilePicture:
 		if p, err := multipartReader.NextPart(); err != nil {
-			resp.Error(global.ERR_UNKNOWN, []string{})
+			resp.Error(global.ErrUnknown, []string{})
 			ctx.StatusCode(http.StatusExpectationFailed)
 			ctx.JSON(resp)
 			return
 
 		} else if fileInfo, err := uploadFile(p, uploadType, uploaderID, false); err != nil {
-			resp.Error(global.ERR_INVALID, []string{})
+			resp.Error(global.ErrInvalid, []string{})
 			ctx.StatusCode(http.StatusExpectationFailed)
 			ctx.JSON(resp)
 			return
@@ -422,7 +422,7 @@ func (fs *Server) UploadApp(ctx iris.Context) {
 		}
 	default:
 		ctx.StatusCode(http.StatusBadRequest)
-		resp.Error(global.ERR_INVALID, []string{"request"})
+		resp.Error(global.ErrInvalid, []string{"request"})
 
 	}
 	ctx.JSON(resp)

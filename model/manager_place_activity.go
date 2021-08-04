@@ -28,7 +28,7 @@ func (tm *PlaceActivityManager) Exists(activityID bson.ObjectId) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	n, _ := db.C(global.COLLECTION_PLACES_ACTIVITIES).FindId(activityID).Count()
+	n, _ := db.C(global.CollectionPlacesActivities).FindId(activityID).Count()
 
 	return n > 0
 }
@@ -39,7 +39,7 @@ func (tm *PlaceActivityManager) GetByID(activityID bson.ObjectId) *PlaceActivity
 	defer dbSession.Close()
 
 	t := new(PlaceActivity)
-	if err := db.C(global.COLLECTION_PLACES_ACTIVITIES).FindId(activityID).One(&t); err != nil {
+	if err := db.C(global.CollectionPlacesActivities).FindId(activityID).One(&t); err != nil {
 		log.Warn(err.Error())
 		return nil
 	}
@@ -60,7 +60,7 @@ func (tm *PlaceActivityManager) GetActivitiesByPlace(placeID string, pg Paginati
 	q, sortDir = pg.FillQuery(q, sortItem, sortDir)
 
 	a := make([]PlaceActivity, 0, pg.GetLimit())
-	db.C(global.COLLECTION_PLACES_ACTIVITIES).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&a)
+	db.C(global.CollectionPlacesActivities).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&a)
 	return a
 }
 
@@ -70,7 +70,7 @@ func (tm *PlaceActivityManager) PostAdd(actorID string, placeIDs []string, postI
 	defer dbSession.Close()
 
 	ts := Timestamp()
-	bulk := db.C(global.COLLECTION_PLACES_ACTIVITIES).Bulk()
+	bulk := db.C(global.CollectionPlacesActivities).Bulk()
 	bulk.Unordered()
 	v := PlaceActivity{
 		Timestamp:  ts,
@@ -107,7 +107,7 @@ func (tm *PlaceActivityManager) PostAttachPlace(actorID, newPlaceID string, post
 		PostID:     postID,
 		PlaceID:    newPlaceID,
 	}
-	if err := db.C(global.COLLECTION_PLACES_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionPlacesActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 
@@ -119,7 +119,7 @@ func (tm *PlaceActivityManager) PostMove(actorID, oldPlaceID, newPlaceID string,
 	defer dbSession.Close()
 
 	ts := Timestamp()
-	bulk := db.C(global.COLLECTION_PLACES_ACTIVITIES).Bulk()
+	bulk := db.C(global.CollectionPlacesActivities).Bulk()
 	bulk.Unordered()
 	v := PlaceActivity{
 		Timestamp:  ts,
@@ -160,7 +160,7 @@ func (tm *PlaceActivityManager) PostRemove(actorID, placeID string, postID bson.
 		Actor:     actorID,
 		PostID:    postID,
 	}
-	if err := db.C(global.COLLECTION_PLACES_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionPlacesActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 
@@ -181,7 +181,7 @@ func (tm *PlaceActivityManager) PlaceAdd(actor, placeID string) {
 		"actor":       actor,
 		"place_id":    placeID,
 	}
-	db.C(global.COLLECTION_PLACES_ACTIVITIES).Insert(v)
+	db.C(global.CollectionPlacesActivities).Insert(v)
 	return
 }
 
@@ -193,7 +193,7 @@ func (tm *PlaceActivityManager) PlaceRemove(placeID string) {
 	ts := Timestamp()
 
 	// remove all the activities of PLACE_ADD
-	if _, err := db.C(global.COLLECTION_PLACES_ACTIVITIES).UpdateAll(
+	if _, err := db.C(global.CollectionPlacesActivities).UpdateAll(
 		bson.M{"action": PlaceActivityActionPlaceAdd, "place_id": placeID, "_removed": false},
 		bson.M{"$set": bson.M{"_removed": true, "last_update": ts}},
 	); err != nil {
@@ -201,7 +201,7 @@ func (tm *PlaceActivityManager) PlaceRemove(placeID string) {
 	}
 
 	// remove all the MEMBER_JOIN actions
-	if _, err := db.C(global.COLLECTION_PLACES_ACTIVITIES).UpdateAll(
+	if _, err := db.C(global.CollectionPlacesActivities).UpdateAll(
 		bson.M{"action": PlaceActivityActionMemberJoin, "place_id": placeID},
 		bson.M{"$set": bson.M{"_removed": true, "last_update": ts}},
 	); err != nil {
@@ -225,7 +225,7 @@ func (tm *PlaceActivityManager) MemberRemove(actor, placeID, memberID string, re
 		"place_id":    placeID,
 		"member_id":   memberID,
 		"reason":      reason}
-	db.C(global.COLLECTION_PLACES_ACTIVITIES).Insert(v)
+	db.C(global.CollectionPlacesActivities).Insert(v)
 	return
 }
 
@@ -243,7 +243,7 @@ func (tm *PlaceActivityManager) MemberJoin(actor, placeID, by string) {
 		"actor":       actor,
 		"place_id":    placeID,
 		"by":          by}
-	db.C(global.COLLECTION_PLACES_ACTIVITIES).Insert(v)
+	db.C(global.CollectionPlacesActivities).Insert(v)
 	return
 }
 

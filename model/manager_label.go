@@ -77,7 +77,7 @@ func (lm *LabelManager) AddMembers(labelID string, memberIDs []string) bool {
 	defer dbSession.Close()
 
 	// Update POSTS.LABELS collection
-	if err := db.C(global.COLLECTION_LABELS).Update(
+	if err := db.C(global.CollectionLabels).Update(
 		bson.M{"_id": labelID, "members": bson.M{"$nin": memberIDs}},
 		bson.M{
 			"$addToSet": bson.M{"members": bson.M{"$each": memberIDs}},
@@ -89,7 +89,7 @@ func (lm *LabelManager) AddMembers(labelID string, memberIDs []string) bool {
 	}
 
 	// Updates ACCOUNT.LABELS collection
-	bulk := db.C(global.COLLECTION_ACCOUNTS_LABELS).Bulk()
+	bulk := db.C(global.CollectionAccountsLabels).Bulk()
 	bulk.Unordered()
 	for _, accountID := range memberIDs {
 		bulk.Upsert(
@@ -126,7 +126,7 @@ func (lm *LabelManager) CreatePrivate(id, title, code, creatorID string) bool {
 		ColourCode: code,
 		Public:     false,
 	}
-	if err := db.C(global.COLLECTION_LABELS).Insert(label); err != nil {
+	if err := db.C(global.CollectionLabels).Insert(label); err != nil {
 		log.Warn(err.Error())
 		return false
 	}
@@ -148,14 +148,14 @@ func (lm *LabelManager) CreatePublic(id, title, code, creatorID string) bool {
 		ColourCode: code,
 		Public:     true,
 	}
-	if err := db.C(global.COLLECTION_LABELS).Insert(label); err != nil {
+	if err := db.C(global.CollectionLabels).Insert(label); err != nil {
 		log.Warn(err.Error())
 		return false
 	}
 
 	// _PUBLIC_LABELS is a special document in ACCOUNTS.LABELS which all the public labels will
 	// be added in this document
-	if _, err := db.C(global.COLLECTION_ACCOUNTS_LABELS).Upsert(
+	if _, err := db.C(global.CollectionAccountsLabels).Upsert(
 		bson.M{
 			"_id":    PublicLabelsID,
 			"labels": bson.M{"$ne": label.ID},
@@ -188,7 +188,7 @@ func (lm *LabelManager) CreateRequest(requesterID, labelID, title, colourCode st
 		LastUpdate:  ts,
 		Status:      LabelRequestStatusPending,
 	}
-	if err := db.C(global.COLLECTION_LABELS_REQUESTS).Insert(labelRequest); err != nil {
+	if err := db.C(global.CollectionLabelsRequests).Insert(labelRequest); err != nil {
 		log.Warn(err.Error())
 		return false
 	}
@@ -202,7 +202,7 @@ func (lm *LabelManager) GetByID(id string) *Label {
 	defer dbSession.Close()
 
 	label := new(Label)
-	if err := db.C(global.COLLECTION_LABELS).FindId(id).One(label); err != nil {
+	if err := db.C(global.CollectionLabels).FindId(id).One(label); err != nil {
 		log.Warn(err.Error())
 		return nil
 	}
@@ -216,7 +216,7 @@ func (lm *LabelManager) GetByIDs(ids []string) []Label {
 	defer dbSession.Close()
 
 	var labels []Label
-	if err := db.C(global.COLLECTION_LABELS).Find(bson.M{"_id": bson.M{"$in": ids}}).All(&labels); err != nil {
+	if err := db.C(global.CollectionLabels).Find(bson.M{"_id": bson.M{"$in": ids}}).All(&labels); err != nil {
 		log.Warn(err.Error())
 		return []Label{}
 	}
@@ -230,7 +230,7 @@ func (lm *LabelManager) GetByTitles(titles []string) []Label {
 	defer dbSession.Close()
 
 	var labels []Label
-	if err := db.C(global.COLLECTION_LABELS).Find(bson.M{"title": bson.M{"$in": titles}}).All(&labels); err != nil {
+	if err := db.C(global.CollectionLabels).Find(bson.M{"title": bson.M{"$in": titles}}).All(&labels); err != nil {
 		log.Warn(err.Error())
 		return []Label{}
 	}
@@ -244,7 +244,7 @@ func (lm *LabelManager) GetRequestByID(requestID bson.ObjectId) *LabelRequest {
 	defer dbSession.Close()
 
 	labelRequest := new(LabelRequest)
-	if err := db.C(global.COLLECTION_LABELS_REQUESTS).FindId(requestID).One(labelRequest); err != nil {
+	if err := db.C(global.CollectionLabelsRequests).FindId(requestID).One(labelRequest); err != nil {
 		log.Warn(err.Error())
 		return nil
 	}
@@ -259,7 +259,7 @@ func (lm *LabelManager) GetRequests(status string, pg Pagination) []LabelRequest
 	defer dbSession.Close()
 
 	labelRequests := make([]LabelRequest, 0, pg.GetLimit())
-	if err := db.C(global.COLLECTION_LABELS_REQUESTS).Find(
+	if err := db.C(global.CollectionLabelsRequests).Find(
 		bson.M{"status": status},
 	).Sort("-timestamp").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&labelRequests); err != nil {
 		log.Warn(err.Error())
@@ -275,7 +275,7 @@ func (lm *LabelManager) GetRequestsByAccountID(accountID string, pg Pagination) 
 	defer dbSession.Close()
 
 	labelRequests := make([]LabelRequest, 0, pg.GetLimit())
-	if err := db.C(global.COLLECTION_LABELS_REQUESTS).Find(
+	if err := db.C(global.CollectionLabelsRequests).Find(
 		bson.M{
 			"status":       LabelRequestStatusPending,
 			"requester_id": accountID,
@@ -295,7 +295,7 @@ func (lm *LabelManager) IncrementCounter(labelID string, counterName string, val
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_LABELS).UpdateId(
+	if err := db.C(global.CollectionLabels).UpdateId(
 		labelID,
 		bson.M{
 			"$inc": bson.M{fmt.Sprintf("counters.%s", counterName): value},
@@ -313,14 +313,14 @@ func (lm *LabelManager) Remove(labelID string) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_LABELS).RemoveId(labelID); err != nil {
+	if err := db.C(global.CollectionLabels).RemoveId(labelID); err != nil {
 		log.Warn(err.Error())
 		return false
 	}
 
 	// Update all the posts
 	// TODO:: update posts in cache?!! or let them update gradually
-	if _, err := db.C(global.COLLECTION_POSTS).UpdateAll(
+	if _, err := db.C(global.CollectionPosts).UpdateAll(
 		bson.M{"labels": labelID},
 		bson.M{"$pull": bson.M{"labels": labelID}},
 	); err != nil {
@@ -328,7 +328,7 @@ func (lm *LabelManager) Remove(labelID string) bool {
 		return false
 	}
 
-	if _, err := db.C(global.COLLECTION_ACCOUNTS_LABELS).UpdateAll(
+	if _, err := db.C(global.CollectionAccountsLabels).UpdateAll(
 		bson.M{"labels": labelID},
 		bson.M{
 			"$pull": bson.M{"labels": labelID},
@@ -347,7 +347,7 @@ func (lm *LabelManager) RemoveMember(labelID, memberID string) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_LABELS).Update(
+	if err := db.C(global.CollectionLabels).Update(
 		bson.M{"_id": labelID, "members": memberID},
 		bson.M{
 			"$pull": bson.M{"members": memberID},
@@ -357,7 +357,7 @@ func (lm *LabelManager) RemoveMember(labelID, memberID string) bool {
 		log.Warn(err.Error())
 		return false
 	}
-	if err := db.C(global.COLLECTION_ACCOUNTS_LABELS).Update(
+	if err := db.C(global.CollectionAccountsLabels).Update(
 		bson.M{"_id": memberID, "labels": labelID},
 		bson.M{
 			"$pull": bson.M{"labels": labelID},
@@ -388,7 +388,7 @@ func (lm *LabelManager) TitleExists(title string) bool {
 	defer dbSession.Close()
 
 	label := new(Label)
-	if err := db.C(global.COLLECTION_LABELS).Find(bson.M{"title": title}).One(label); err != nil {
+	if err := db.C(global.CollectionLabels).Find(bson.M{"title": title}).One(label); err != nil {
 		return false
 	}
 	return true
@@ -400,7 +400,7 @@ func (lm *LabelManager) UpdateRequestStatus(updaterAccountID string, requestID b
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_LABELS_REQUESTS).UpdateId(
+	if err := db.C(global.CollectionLabelsRequests).UpdateId(
 		requestID,
 		bson.M{"$set": bson.M{
 			"last_update":  Timestamp(),
@@ -429,7 +429,7 @@ func (lm *LabelManager) Update(labelID, colourCode, title string) bool {
 		q["lower_title"] = strings.ToLower(title)
 		q["title"] = title
 	}
-	if err := db.C(global.COLLECTION_LABELS).UpdateId(labelID, bson.M{"$set": q}); err != nil {
+	if err := db.C(global.CollectionLabels).UpdateId(labelID, bson.M{"$set": q}); err != nil {
 		log.Warn(err.Error())
 		return false
 	}

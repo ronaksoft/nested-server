@@ -46,7 +46,7 @@ func (dm *DeviceManager) GetByAccountID(accountID string) []Device {
 	defer dbSession.Close()
 
 	var devices []Device
-	if err := db.C(global.COLLECTION_ACCOUNTS_DEVICES).Find(bson.M{"uid": accountID}).Limit(global.DefaultMaxResultLimit).All(&devices); err != nil {
+	if err := db.C(global.CollectionAccountsDevices).Find(bson.M{"uid": accountID}).Limit(global.DefaultMaxResultLimit).All(&devices); err != nil {
 		log.Warn(err.Error())
 	}
 	return devices
@@ -57,7 +57,7 @@ func (dm *DeviceManager) IncrementBadge(accountID string) {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if _, err := db.C(global.COLLECTION_ACCOUNTS_DEVICES).UpdateAll(
+	if _, err := db.C(global.CollectionAccountsDevices).UpdateAll(
 		bson.M{"uid": accountID},
 		bson.M{"$inc": bson.M{"badge": 1}},
 	); err != nil {
@@ -88,8 +88,8 @@ func (dm *DeviceManager) Register(deviceID, deviceToken, deviceOS, accountID str
 		UpdatedOn:    time.Now().Unix(),
 		TotalUpdates: 0,
 	}
-	if err := db.C(global.COLLECTION_ACCOUNTS_DEVICES).Insert(d); err != nil {
-		_ = db.C(global.COLLECTION_ACCOUNTS_DEVICES).UpdateId(
+	if err := db.C(global.CollectionAccountsDevices).Insert(d); err != nil {
+		_ = db.C(global.CollectionAccountsDevices).UpdateId(
 			deviceID,
 			bson.M{
 				"$set": bson.M{
@@ -109,7 +109,7 @@ func (dm *DeviceManager) Remove(deviceID string) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_ACCOUNTS_DEVICES).Remove(bson.M{"_id": deviceID}); err != nil {
+	if err := db.C(global.CollectionAccountsDevices).Remove(bson.M{"_id": deviceID}); err != nil {
 		log.Warn(err.Error())
 		return false
 	}
@@ -121,7 +121,7 @@ func (dm *DeviceManager) SetAsConnected(deviceID, accountID string) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	bulk := db.C(global.COLLECTION_ACCOUNTS_DEVICES).Bulk()
+	bulk := db.C(global.CollectionAccountsDevices).Bulk()
 	bulk.UpdateAll(
 		bson.M{"uid": accountID},
 		bson.M{"$set": bson.M{"badge": 0}},
@@ -142,7 +142,7 @@ func (dm *DeviceManager) SetAsDisconnected(deviceID string) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_ACCOUNTS_DEVICES).Update(
+	if err := db.C(global.CollectionAccountsDevices).Update(
 		bson.M{"_id": deviceID},
 		bson.M{"$set": bson.M{"connected": false}},
 	); err != nil {
@@ -157,7 +157,7 @@ func (dm *DeviceManager) Update(deviceID, deviceToken, deviceOS, accountID strin
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_ACCOUNTS_DEVICES).UpdateId(
+	if err := db.C(global.CollectionAccountsDevices).UpdateId(
 		deviceID,
 		bson.M{
 			"$set": bson.M{

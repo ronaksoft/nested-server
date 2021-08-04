@@ -23,7 +23,7 @@ func (gm *GroupManager) CreatePlaceGroup(placeID, name string) string {
 	defer dbSession.Close()
 
 	groupID := bson.NewObjectId().Hex() + RandomID(24)
-	if err := db.C(global.COLLECTION_PLACES_GROUPS).Insert(bson.M{
+	if err := db.C(global.CollectionPlacesGroups).Insert(bson.M{
 		"_id":   groupID,
 		"items": []string{},
 	}); err != nil {
@@ -46,7 +46,7 @@ func (gm *GroupManager) AddItems(groupID string, items []string) {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_PLACES_GROUPS).Update(
+	if err := db.C(global.CollectionPlacesGroups).Update(
 		bson.M{"_id": groupID},
 		bson.M{"$addToSet": bson.M{
 			"items": bson.M{"$each": items},
@@ -62,7 +62,7 @@ func (gm *GroupManager) RemoveItems(groupID string, items []string) {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_PLACES_GROUPS).Update(
+	if err := db.C(global.CollectionPlacesGroups).Update(
 		bson.M{"_id": groupID},
 		bson.M{"$pullAll": bson.M{"items": items}},
 	); err != nil {
@@ -80,7 +80,7 @@ func (gm *GroupManager) GetItems(groupID string) []string {
 		ID    string   `json:"_id" bson:"_id"`
 		Items []string `json:"items" bson:"items"`
 	}{}
-	if err := db.C(global.COLLECTION_PLACES_GROUPS).FindId(groupID).One(&v); err != nil {
+	if err := db.C(global.CollectionPlacesGroups).FindId(groupID).One(&v); err != nil {
 		return []string{}
 	}
 	return v.Items
@@ -92,7 +92,7 @@ func (gm *GroupManager) ItemExists(groupID string, item string) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	n, _ := db.C(global.COLLECTION_PLACES_GROUPS).Find(bson.M{
+	n, _ := db.C(global.CollectionPlacesGroups).Find(bson.M{
 		"_id":   groupID,
 		"items": item,
 	}).Count()

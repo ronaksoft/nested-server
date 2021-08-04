@@ -36,7 +36,7 @@ func NewLicenceManager() *LicenseManager {
 // Load reads the appropriate key from SYSTEM_INTERNAL collection and unmarshal it.
 func (m *LicenseManager) Load() bool {
 	r := MS{}
-	if err := _MongoDB.C(global.COLLECTION_SYSTEM_INTERNAL).FindId("license_key").One(r); err != nil {
+	if err := _MongoDB.C(global.CollectionSystemInternal).FindId("license_key").One(r); err != nil {
 		log.Warn(err.Error())
 		return false
 	}
@@ -66,7 +66,7 @@ func (m *LicenseManager) Get() *License {
 }
 
 func (m *LicenseManager) Set(licenseKey string) {
-	if _, err := _MongoDB.C(global.COLLECTION_SYSTEM_INTERNAL).UpsertId(
+	if _, err := _MongoDB.C(global.CollectionSystemInternal).UpsertId(
 		"license_key",
 		bson.M{"$set": bson.M{
 			"value": licenseKey,

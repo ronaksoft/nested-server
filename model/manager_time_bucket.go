@@ -36,7 +36,7 @@ func (bm *TimeBucketManager) GetBucketsBefore(timestamp uint64) []TimeBucket {
 
 	bucketID := _Manager.TimeBucket.GetBucketID(timestamp)
 	buckets := make([]TimeBucket, 0)
-	if err := db.C(global.COLLECTION_TIME_BUCKETS).Find(
+	if err := db.C(global.CollectionTimeBuckets).Find(
 		bson.M{"_id": bson.M{"$lt": bucketID}},
 	).All(&buckets); err != nil {
 		log.Warn(err.Error())
@@ -50,7 +50,7 @@ func (bm *TimeBucketManager) GetByID(bucketID string) *TimeBucket {
 	defer dbSession.Close()
 
 	bucket := new(TimeBucket)
-	if err := db.C(global.COLLECTION_TIME_BUCKETS).FindId(bucketID).One(bucket); err != nil {
+	if err := db.C(global.CollectionTimeBuckets).FindId(bucketID).One(bucket); err != nil {
 		log.Warn(err.Error())
 		return nil
 	}
@@ -63,7 +63,7 @@ func (bm *TimeBucketManager) AddOverdueTask(timestamp uint64, taskID bson.Object
 	defer dbSession.Close()
 
 	bucketID := bm.GetBucketID(timestamp)
-	if _, err := db.C(global.COLLECTION_TIME_BUCKETS).Upsert(
+	if _, err := db.C(global.CollectionTimeBuckets).Upsert(
 		bson.M{"_id": bucketID},
 		bson.M{"$addToSet": bson.M{"overdue_tasks": taskID}},
 	); err != nil {
@@ -79,7 +79,7 @@ func (bm *TimeBucketManager) RemoveOverdueTask(timestamp uint64, taskID bson.Obj
 	defer dbSession.Close()
 
 	bucketID := bm.GetBucketID(timestamp)
-	if err := db.C(global.COLLECTION_TIME_BUCKETS).Update(
+	if err := db.C(global.CollectionTimeBuckets).Update(
 		bson.M{"_id": bucketID, "overdue_tasks": taskID},
 		bson.M{"$pull": bson.M{"overdue_tasks": taskID}},
 	); err != nil {
@@ -94,7 +94,7 @@ func (bm *TimeBucketManager) Remove(bucketID string) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_TIME_BUCKETS).RemoveId(bucketID); err != nil {
+	if err := db.C(global.CollectionTimeBuckets).RemoveId(bucketID); err != nil {
 		log.Warn(err.Error())
 		return false
 	}

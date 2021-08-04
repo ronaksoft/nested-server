@@ -21,7 +21,7 @@ func (m *Model) PlaceExist(placeID string) bool {
 	db := dbSession.DB(m.DB)
 	defer dbSession.Close()
 
-	n, _ := db.C(global.COLLECTION_PLACES).FindId(placeID).Count()
+	n, _ := db.C(global.CollectionPlaces).FindId(placeID).Count()
 
 	return n > 0
 }
@@ -31,7 +31,7 @@ func (m *Model) AccountExist(accountID string) bool {
 	db := dbSession.DB(m.DB)
 	defer dbSession.Close()
 
-	n, _ := db.C(global.COLLECTION_ACCOUNTS).FindId(accountID).Count()
+	n, _ := db.C(global.CollectionAccounts).FindId(accountID).Count()
 	return n > 0
 }
 
@@ -47,7 +47,7 @@ func (m *Model) CreateFileToken(uniID nested.UniversalID, issuerID, receiverEmai
 		Issuer:   issuerID,
 		Receiver: receiverEmail,
 	}
-	if err := db.C(global.COLLECTION_TOKENS_FILES).Insert(ft); err != nil {
+	if err := db.C(global.CollectionTokensFiles).Insert(ft); err != nil {
 		_LOG.Error(err.Error())
 		return "", err
 	}
@@ -60,7 +60,7 @@ func (m *Model) GetPlaceByID(placeID string) *nested.Place {
 	defer dbSession.Close()
 
 	place := new(nested.Place)
-	if err := db.C(global.COLLECTION_PLACES).FindId(placeID).One(place); err != nil {
+	if err := db.C(global.CollectionPlaces).FindId(placeID).One(place); err != nil {
 		_LOG.Error(err.Error())
 		return nil
 	}
@@ -76,7 +76,7 @@ func (m *Model) GetItems(groupID string) []string {
 		ID    string   `json:"_id" bson:"_id"`
 		Items []string `json:"items" bson:"items"`
 	}{}
-	if err := db.C(global.COLLECTION_PLACES_GROUPS).FindId(groupID).One(&v); err != nil {
+	if err := db.C(global.CollectionPlacesGroups).FindId(groupID).One(&v); err != nil {
 		return []string{}
 	}
 	return v.Items
@@ -88,7 +88,7 @@ func (m *Model) GetAccountByID(accountID string) *nested.Account {
 	defer dbSession.Close()
 
 	account := new(nested.Account)
-	if err := db.C(global.COLLECTION_ACCOUNTS).FindId(accountID).One(account); err != nil {
+	if err := db.C(global.CollectionAccounts).FindId(accountID).One(account); err != nil {
 		_LOG.Error(err.Error(), zap.String("accountID", accountID))
 		return nil
 	}
@@ -238,20 +238,20 @@ func (m *Model) AddPostAsOwner(uniID nested.UniversalID, postID bson.ObjectId) {
 	db := dbSession.DB(m.DB)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_FILES).UpdateId(
+	if err := db.C(global.CollectionFiles).UpdateId(
 		uniID,
 		bson.M{"$inc": bson.M{"ref_count": 1}},
 	); err != nil {
-		_LOG.Error(err.Error(), zap.String("Function", "AddPostAsOwner::COLLECTION_FILES"))
+		_LOG.Error(err.Error(), zap.String("Function", "AddPostAsOwner::CollectionFiles"))
 	}
 
-	if err := db.C(global.COLLECTION_POSTS_FILES).Insert(
+	if err := db.C(global.CollectionPostsFiles).Insert(
 		bson.M{
 			"universal_id": uniID,
 			"post_id":      postID,
 		},
 	); err != nil {
-		_LOG.Error(err.Error(), zap.String("Function", "AddPostAsOwner::COLLECTION_POSTS_FILES"))
+		_LOG.Error(err.Error(), zap.String("Function", "AddPostAsOwner::CollectionPostsFiles"))
 	}
 }
 
@@ -273,7 +273,7 @@ func (m *Model) IncrementCounter(placeIDs []string, counterName string, c int) b
 		nested.PlaceCounterCreators, nested.PlaceCounterKeyHolders,
 		nested.PlaceCounterPosts, nested.PlaceCounterQuota:
 		keyName := fmt.Sprintf("counters.%s", counterName)
-		if err := db.C(global.COLLECTION_PLACES).Update(
+		if err := db.C(global.CollectionPlaces).Update(
 			bson.M{"_id": bson.M{"$in": placeIDs}},
 			bson.M{"$inc": bson.M{keyName: c}},
 		); err != nil {
@@ -289,7 +289,7 @@ func (m *Model) UpdatePlaceConnection(accountID string, placeIDs []string, c int
 	db := dbSession.DB(m.DB)
 	defer dbSession.Close()
 
-	bulk := db.C(global.COLLECTION_ACCOUNTS_PLACES).Bulk()
+	bulk := db.C(global.CollectionAccountsPlaces).Bulk()
 	bulk.Unordered()
 	for _, pid := range placeIDs {
 		if place := m.GetPlaceByID(pid); place != nil {
@@ -312,7 +312,7 @@ func (m *Model) UpdateRecipientConnection(accountID string, recipients []string,
 	db := dbSession.DB(m.DB)
 	defer dbSession.Close()
 	for _, r := range recipients {
-		if _, err := db.C(global.COLLECTION_ACCOUNTS_RECIPIENTS).Upsert(
+		if _, err := db.C(global.CollectionAccountsRecipients).Upsert(
 			bson.M{
 				"account_id": accountID,
 				"recipient":  strings.ToLower(r),
@@ -341,7 +341,7 @@ func (m *Model) AddAccountToWatcherList(postID bson.ObjectId, accountID string) 
 	db := dbSession.DB(m.DB)
 	defer dbSession.Close()
 
-	if _, err := db.C(global.COLLECTION_POSTS_WATCHERS).Upsert(
+	if _, err := db.C(global.CollectionPostsWatchers).Upsert(
 		bson.M{"_id": postID},
 		bson.M{"$addToSet": bson.M{"accounts": accountID}},
 	); err != nil {
@@ -356,7 +356,7 @@ func (m *Model) LableIncrementCounter(labelID string, counterName string, value 
 	db := dbSession.DB(m.DB)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_LABELS).UpdateId(
+	if err := db.C(global.CollectionLabels).UpdateId(
 		labelID,
 		bson.M{
 			"$inc": bson.M{fmt.Sprintf("counters.%s", counterName): value},
@@ -374,7 +374,7 @@ func (m *Model) PostAdd(actorID string, placeIDs []string, postID bson.ObjectId)
 	defer dbSession.Close()
 
 	ts := nested.Timestamp()
-	bulk := db.C(global.COLLECTION_PLACES_ACTIVITIES).Bulk()
+	bulk := db.C(global.CollectionPlacesActivities).Bulk()
 	bulk.Unordered()
 	v := nested.PlaceActivity{
 		Timestamp:  ts,
@@ -416,7 +416,7 @@ func (m *Model) SetFileStatus(uniID nested.UniversalID, fileStatus string) bool 
 
 	switch fileStatus {
 	case nested.FileStatusPublic, nested.FileStatusTemp, nested.FileStatusThumbnail:
-		if err := db.C(global.COLLECTION_FILES).UpdateId(
+		if err := db.C(global.CollectionFiles).UpdateId(
 			uniID,
 			bson.M{"$set": bson.M{
 				"upload_time": time.Now().UnixNano(),
@@ -427,7 +427,7 @@ func (m *Model) SetFileStatus(uniID nested.UniversalID, fileStatus string) bool 
 			return false
 		}
 	case nested.FileStatusAttached:
-		if err := db.C(global.COLLECTION_FILES).Update(
+		if err := db.C(global.CollectionFiles).Update(
 			bson.M{"_id": uniID, "status": bson.M{"$ne": nested.FileStatusPublic}},
 			bson.M{"$set": bson.M{"status": fileStatus}},
 		); err != nil {
@@ -435,7 +435,7 @@ func (m *Model) SetFileStatus(uniID nested.UniversalID, fileStatus string) bool 
 			return false
 		}
 	case nested.FileStatusInternal:
-		if err := db.C(global.COLLECTION_FILES).Update(
+		if err := db.C(global.CollectionFiles).Update(
 			bson.M{"_id": uniID},
 			bson.M{"$set": bson.M{"status": fileStatus}},
 		); err != nil {
@@ -454,7 +454,7 @@ func (m *Model) GetFileByID(uniID nested.UniversalID, pj tools.M) *nested.FileIn
 	defer dbSession.Close()
 
 	file := new(nested.FileInfo)
-	if err := db.C(global.COLLECTION_FILES).FindId(uniID).One(file); err != nil {
+	if err := db.C(global.CollectionFiles).FindId(uniID).One(file); err != nil {
 		_LOG.Error(err.Error(), zap.String("Function", "GetFileByID"))
 		return nil
 	}
@@ -466,7 +466,7 @@ func (m *Model) IsBlocked(placeID, address string) bool {
 	db := dbSession.DB(m.DB)
 	defer dbSession.Close()
 	_LOG.Debug("IsBlocked", zap.String("palceID", placeID), zap.String("address", address))
-	n, err := db.C(global.COLLECTION_PLACES_BLOCKED_ADDRESSES).Find(bson.M{"_id": placeID, "addresses": address}).Count()
+	n, err := db.C(global.CollectionPlacesBlockedAddresses).Find(bson.M{"_id": placeID, "addresses": address}).Count()
 	if err != nil {
 		_LOG.Warn(err.Error())
 		return false
@@ -570,7 +570,7 @@ func (m *Model) AddPost(pcr nested.PostCreateRequest) *nested.Post {
 		}
 	}
 
-	if err := db.C(global.COLLECTION_POSTS).Insert(post); err != nil {
+	if err := db.C(global.CollectionPosts).Insert(post); err != nil {
 		_LOG.Error(err.Error())
 		return nil
 	}
@@ -602,7 +602,7 @@ func (m *Model) AddPost(pcr nested.PostCreateRequest) *nested.Post {
 
 		// Set Post as UNREAD for all the members of the place except the sender
 		var memberIDs []string
-		bulk := db.C(global.COLLECTION_POSTS_READS).Bulk()
+		bulk := db.C(global.CollectionPostsReads).Bulk()
 		bulk.Unordered()
 		if place.Privacy.Locked {
 			memberIDs = append(place.KeyholderIDs, place.CreatorIDs...)
@@ -629,7 +629,7 @@ func (m *Model) AddPost(pcr nested.PostCreateRequest) *nested.Post {
 
 		// Update unread counters
 		if place.Privacy.Locked {
-			db.C(global.COLLECTION_POSTS_READS_COUNTERS).UpdateAll(
+			db.C(global.CollectionPostsReadsCounters).UpdateAll(
 				bson.M{
 					"account_id": bson.M{"$ne": post.SenderID},
 					"place_id":   placeID,
@@ -637,7 +637,7 @@ func (m *Model) AddPost(pcr nested.PostCreateRequest) *nested.Post {
 				bson.M{"$inc": bson.M{"no_unreads": 1}},
 			)
 		} else {
-			db.C(global.COLLECTION_POSTS_READS_COUNTERS).UpdateAll(
+			db.C(global.CollectionPostsReadsCounters).UpdateAll(
 				bson.M{
 					"account_id": bson.M{"$ne": post.SenderID},
 					"place_id":   placeID,

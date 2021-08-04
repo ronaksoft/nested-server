@@ -28,7 +28,7 @@ func (cm *ContactManager) AddContact(accountID, contactID string) bool {
 		return true
 	}
 
-	if _, err := db.C(global.COLLECTION_CONTACTS).UpsertId(
+	if _, err := db.C(global.CollectionContacts).UpsertId(
 		accountID,
 		bson.M{
 			"$addToSet": bson.M{"contacts": contactID},
@@ -48,7 +48,7 @@ func (cm *ContactManager) AddMutualContact(accountID1, accountID2 string) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	bulk := db.C(global.COLLECTION_CONTACTS).Bulk()
+	bulk := db.C(global.CollectionContacts).Bulk()
 
 	bulk.Upsert(
 		bson.M{"_id": accountID1},
@@ -74,7 +74,7 @@ func (cm *ContactManager) AddContactToFavorite(accountID, contactID string) bool
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_CONTACTS).Update(
+	if err := db.C(global.CollectionContacts).Update(
 		bson.M{"_id": accountID, "contacts": contactID},
 		bson.M{
 			"$addToSet": bson.M{"favorite_contacts": contactID},
@@ -94,7 +94,7 @@ func (cm *ContactManager) IsContact(accountID, contactID string) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if n, _ := db.C(global.COLLECTION_CONTACTS).Find(
+	if n, _ := db.C(global.CollectionContacts).Find(
 		bson.M{"_id": accountID, "contacts": contactID},
 	).Count(); n > 0 {
 		return true
@@ -107,7 +107,7 @@ func (cm *ContactManager) RemoveContact(accountID, contactID string) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	bulk := db.C(global.COLLECTION_CONTACTS).Bulk()
+	bulk := db.C(global.CollectionContacts).Bulk()
 	bulk.Update(
 		bson.M{"_id": accountID},
 		bson.M{
@@ -133,7 +133,7 @@ func (cm *ContactManager) RemoveContactFromFavorite(accountID, contactID string)
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_CONTACTS).Update(
+	if err := db.C(global.CollectionContacts).Update(
 		bson.M{"_id": accountID, "favorite_contacts": contactID},
 		bson.M{
 			"$pull": bson.M{"favorite_contacts": contactID},
@@ -153,7 +153,7 @@ func (cm *ContactManager) GetContacts(accountID string) Contacts {
 	defer dbSession.Close()
 
 	c := Contacts{}
-	if err := db.C(global.COLLECTION_CONTACTS).FindId(accountID).One(&c); err != nil {
+	if err := db.C(global.CollectionContacts).FindId(accountID).One(&c); err != nil {
 		log.Warn(err.Error())
 	}
 	return c

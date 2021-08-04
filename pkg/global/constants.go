@@ -38,9 +38,9 @@ const (
 
 // Adjustable Default Parameters
 var (
-	CacheLifetime         = 3600 // Seconds
-	RegisterModeAdminOnly = REGISTER_MODE_ADMIN_ONLY
-	DefaultMaxUploadSize  = "100MB"
+	CacheLifetime        = 3600 // Seconds
+	RegisterMode         = RegisterModeAdminOnly
+	DefaultMaxUploadSize = "100MB"
 
 	DefaultPlaceMaxChildren   = 10
 	DefaultPlaceMaxCreators   = 5
@@ -68,134 +68,126 @@ var (
 
 // MONGODB COLLECTIONS
 const (
-	COLLECTION_SYSTEM_INTERNAL          = "model.internal"
-	COLLECTION_APPS                     = "apps"
-	COLLECTION_ACCOUNTS                 = "accounts"
-	COLLECTION_ACCOUNTS_DATA            = "accounts.data" // Account's clients data
-	COLLECTION_ACCOUNTS_DEVICES         = "accounts.devices"
-	COLLECTION_ACCOUNTS_TRUSTED         = "accounts.trusted"
-	COLLECTION_ACCOUNTS_RECIPIENTS      = "accounts.recipients" // Account's most related emails
-	COLLECTION_ACCOUNTS_PLACES          = "accounts.places"     // Account's most related places
-	COLLECTION_ACCOUNTS_ACCOUNTS        = "accounts.accounts"   // Account's most related accounts
-	COLLECTION_ACCOUNTS_POSTS           = "accounts.posts"      // Account's bookmarked posts
-	COLLECTION_ACCOUNTS_LABELS          = "accounts.labels"
-	COLLECTION_ACCOUNTS_SEARCH_HISTORY  = "accounts.search.history"
-	COLLECTION_CONTACTS                 = "contacts"
-	COLLECTION_FILES                    = "files"
-	COLLECTION_HOOKS                    = "hooks"
-	COLLECTION_NOTIFICATIONS            = "notifications"
-	COLLECTION_LABELS                   = "labels"
-	COLLECTION_LABELS_REQUESTS          = "labels.requests"
-	COLLECTION_PHONES                   = "phones"
-	COLLECTION_PLACES                   = "places"
-	COLLECTION_PLACES_ACTIVITIES        = "places.activities"
-	COLLECTION_PLACES_DEFAULT           = "places.default"
-	COLLECTION_PLACES_GROUPS            = "places.groups"
-	COLLECTION_PLACES_BLOCKED_ADDRESSES = "places.blocked_addresses"
-	COLLECTION_POSTS                    = "posts"
-	COLLECTION_POSTS_ACTIVITIES         = "posts.activities"
-	COLLECTION_POSTS_COMMENTS           = "posts.comments"
-	COLLECTION_POSTS_READS              = "posts.reads"
-	COLLECTION_POSTS_READS_COUNTERS     = "posts.reads.counters"
-	COLLECTION_POSTS_READS_ACCOUNTS     = "posts.reads.accounts"
-	COLLECTION_POSTS_WATCHERS           = "posts.watchers"
-	COLLECTION_POSTS_FILES              = "posts.files"
-	COLLECTION_REPORTS_COUNTERS         = "reports.counters"
-	COLLECTION_SESSIONS                 = "sessions"
-	COLLECTION_SYS_RESERVED_WORDS       = "nsys.reserved_words"
-	COLLECTION_SEARCH_INDEX_PLACES      = "search.index.place"
-	COLLECTION_TASKS                    = "tasks"
-	COLLECTION_TASKS_ACTIVITIES         = "tasks.activities"
-	COLLECTION_TASKS_FILES              = "tasks.files"
-	COLLECTION_TOKENS_APPS              = "tokens.apps"
-	COLLECTION_TOKENS_FILES             = "tokens.files"
-	COLLECTION_TOKENS_LOGINS            = "tokens.logins"
-	COLLECTION_VERIFICATIONS            = "verifications"
-	COLLECTION_LOGS                     = "logs"
-	COLLECTION_TIME_BUCKETS             = "time_buckets"
+	CollectionSystemInternal         = "model.internal"
+	CollectionApps                   = "apps"
+	CollectionAccounts               = "accounts"
+	CollectionAccountsData           = "accounts.data" // Account's clients data
+	CollectionAccountsDevices        = "accounts.devices"
+	CollectionAccountsTrusted        = "accounts.trusted"
+	CollectionAccountsRecipients     = "accounts.recipients" // Account's most related emails
+	CollectionAccountsPlaces         = "accounts.places"     // Account's most related places
+	CollectionAccountsAccounts       = "accounts.accounts"   // Account's most related accounts
+	CollectionAccountsPosts          = "accounts.posts"      // Account's bookmarked posts
+	CollectionAccountsLabels         = "accounts.labels"
+	CollectionAccountsSearchHistory  = "accounts.search.history"
+	CollectionContacts               = "contacts"
+	CollectionFiles                  = "files"
+	CollectionHooks                  = "hooks"
+	CollectionNotifications          = "notifications"
+	CollectionLabels                 = "labels"
+	CollectionLabelsRequests         = "labels.requests"
+	CollectionPhones                 = "phones"
+	CollectionPlaces                 = "places"
+	CollectionPlacesActivities       = "places.activities"
+	CollectionPlacesDefault          = "places.default"
+	CollectionPlacesGroups           = "places.groups"
+	CollectionPlacesBlockedAddresses = "places.blocked_addresses"
+	CollectionPosts                  = "posts"
+	CollectionPostsActivities        = "posts.activities"
+	CollectionPostsComments          = "posts.comments"
+	CollectionPostsReads             = "posts.reads"
+	CollectionPostsReadsCounters     = "posts.reads.counters"
+	CollectionPostsReadsAccounts     = "posts.reads.accounts"
+	CollectionPostsWatchers          = "posts.watchers"
+	CollectionPostsFiles             = "posts.files"
+	CollectionReportsCounters        = "reports.counters"
+	CollectionSessions               = "sessions"
+	CollectionSysReservedWords       = "nsys.reserved_words"
+	CollectionSearchIndexPlaces      = "search.index.place"
+	CollectionTasks                  = "tasks"
+	CollectionTasksActivities        = "tasks.activities"
+	CollectionTasksFiles             = "tasks.files"
+	CollectionTokensApps             = "tokens.apps"
+	CollectionTokensFiles            = "tokens.files"
+	CollectionTokensLogins           = "tokens.logins"
+	CollectionVerifications          = "verifications"
+	CollectionLogs                   = "logs"
+	CollectionTimeBuckets            = "time_buckets"
 )
 
-// ErrorCode
 type ErrorCode int
 
 const (
-	ERR_UNKNOWN     ErrorCode = 0x00
-	ERR_ACCESS      ErrorCode = 0x01
-	ERR_UNAVAILABLE ErrorCode = 0x02
-	ERR_INVALID     ErrorCode = 0x03
-	ERR_INCOMPLETE  ErrorCode = 0x04
-	ERR_DUPLICATE   ErrorCode = 0x05
-	ERR_LIMIT       ErrorCode = 0x06
-	ERR_TIMEOUT     ErrorCode = 0x07
-	ERR_SESSION     ErrorCode = 0x08
+	ErrUnknown     ErrorCode = 0x00
+	ErrAccess      ErrorCode = 0x01
+	ErrUnavailable ErrorCode = 0x02
+	ErrInvalid     ErrorCode = 0x03
+	ErrIncomplete  ErrorCode = 0x04
+	ErrDuplicate   ErrorCode = 0x05
+	ErrLimit       ErrorCode = 0x06
+	ErrTimeout     ErrorCode = 0x07
+	ErrSession     ErrorCode = 0x08
 )
 
 // REGISTER MODE
 const (
-	REGISTER_MODE_EVERYONE   int = 0x01
-	REGISTER_MODE_ADMIN_ONLY int = 0x02
-)
-
-// DEBUG LEVELS
-const (
-	DEBUG_LEVEL_0 int = 0
-	DEBUG_LEVEL_1 int = 1
-	DEBUG_LEVEL_2 int = 2
+	RegisterModeEveryone  int = 0x01
+	RegisterModeAdminOnly int = 0x02
 )
 
 // SYSTEM COUNTERS
 const (
-	SYSTEM_COUNTERS_ENABLED_ACCOUNTS  = "enabled_accounts"
-	SYSTEM_COUNTERS_DISABLED_ACCOUNTS = "disabled_accounts"
-	SYSTEM_COUNTERS_PERSONAL_PLACES   = "personal_places"
-	SYSTEM_COUNTERS_GRAND_PLACES      = "grand_places"
-	SYSTEM_COUNTERS_LOCKED_PLACES     = "locked_places"
-	SYSTEM_COUNTERS_UNLOCKED_PLACES   = "unlocked_places"
+	SystemCountersEnabledAccounts  = "enabled_accounts"
+	SystemCountersDisabledAccounts = "disabled_accounts"
+	SystemCountersPersonalPlaces   = "personal_places"
+	SystemCountersGrandPlaces      = "grand_places"
+	SystemCountersLockedPlaces     = "locked_places"
+	SystemCountersUnlockedPlaces   = "unlocked_places"
 )
 
 // SYSTEM CONSTANTS
 const (
-	SYSTEM_CONSTANTS_MODEL_VERSION            = "model_version"
-	SYSTEM_CONSTANTS_CACHE_LIFETIME           = "cache_lifetime"
-	SYSTEM_CONSTANTS_POST_MAX_TARGETS         = "post_max_targets"
-	SYSTEM_CONSTANTS_POST_MAX_ATTACHMENTS     = "post_max_attachments"
-	SYSTEM_CONSTANTS_POST_RETRACT_TIME        = "post_retract_time"
-	SYSTEM_CONSTANTS_POST_MAX_LABELS          = "post_max_labels"
-	SYSTEM_CONSTANTS_ACCOUNT_GRANDPLACE_LIMIT = "account_grandplaces_limit"
-	SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN       = "place_max_children"
-	SYSTEM_CONSTANTS_PLACE_MAX_CREATORS       = "place_max_creators"
-	SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS     = "place_max_keyholders"
-	SYSTEM_CONSTANTS_PLACE_MAX_LEVEL          = "place_max_level"
-	SYSTEM_CONSTANTS_LABEL_MAX_MEMBERS        = "label_max_members"
-	SYSTEM_CONSTANTS_REGISTER_MODE            = "register_mode"
-	SYSTEM_CONSTANTS_UPLOAD_MAX_SIZE          = "upload_max_size"
-	SYSTEM_CONSTANTS_COMPANY_NAME             = "company_name"
-	SYSTEM_CONSTANTS_COMPANY_DESC             = "company_desc"
-	SYSTEM_CONSTANTS_COMPANY_LOGO             = "company_logo"
-	SYSTEM_CONSTANTS_SYSTEM_LANG              = "system_lang"
-	SYSTEM_CONSTANTS_MAGIC_NUMBER             = "magic_number"
-	SYSTEM_CONSTANTS_LICENSE_KEY              = "license_key"
+	SystemConstantsModelVersion           = "model_version"
+	SystemConstantsCacheLifetime          = "cache_lifetime"
+	SystemConstantsPostMaxTargets         = "post_max_targets"
+	SystemConstantsPostMaxAttachments     = "post_max_attachments"
+	SystemConstantsPostRetractTime        = "post_retract_time"
+	SystemConstantsPostMaxLabels          = "post_max_labels"
+	SystemConstantsAccountGrandPlaceLimit = "account_grandplaces_limit"
+	SystemConstantsPlaceMaxChildren       = "place_max_children"
+	SystemConstantsPlaceMaxCreators       = "place_max_creators"
+	SystemConstantsPlaceMaxKeyHolders     = "place_max_keyholders"
+	SystemConstantsPlaceMaxLevel          = "place_max_level"
+	SystemConstantsLabelMaxMembers        = "label_max_members"
+	SystemConstantsRegisterMode           = "register_mode"
+	SystemConstantsUploadMaxSize          = "upload_max_size"
+	SystemConstantsCompanyName            = "company_name"
+	SystemConstantsCompanyDesc            = "company_desc"
+	SystemConstantsCompanyLogo            = "company_logo"
+	SystemConstantsSystemLang             = "system_lang"
+	SystemConstantsMagicNumber            = "magic_number"
+	SystemConstantsLicenseKey             = "license_key"
 
-	SYSTEM_CONSTANTS_CACHE_LIFETIME_UL           int = 86400 // seconds
-	SYSTEM_CONSTANTS_CACHE_LIFETIME_LL           int = 60
-	SYSTEM_CONSTANTS_POST_MAX_TARGETS_UL         int = 50
-	SYSTEM_CONSTANTS_POST_MAX_TARGETS_LL         int = 5
-	SYSTEM_CONSTANTS_POST_MAX_ATTACHMENTS_LL     int = 5
-	SYSTEM_CONSTANTS_POST_MAX_ATTACHMENTS_UL     int = 50
-	SYSTEM_CONSTANTS_POST_MAX_LABELS_LL          int = 1
-	SYSTEM_CONSTANTS_POST_MAX_LABELS_UL          int = 25
-	SYSTEM_CONSTANTS_POST_RETRACT_TIME_LL        int = 0
-	SYSTEM_CONSTANTS_POST_RETRACT_TIME_UL        int = 86400000 // milliseconds
-	SYSTEM_CONSTANTS_ACCOUNT_GRANDPLACE_LIMIT_LL int = 0
-	SYSTEM_CONSTANTS_ACCOUNT_GRANDPLACE_LIMIT_UL int = 1000
-	SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN_LL       int = 0
-	SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN_UL       int = 50
-	SYSTEM_CONSTANTS_PLACE_MAX_CREATORS_LL       int = 1
-	SYSTEM_CONSTANTS_PLACE_MAX_CREATORS_UL       int = 200
-	SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS_LL     int = 1
-	SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS_UL     int = 2500
-	SYSTEM_CONSTANTS_PLACE_MAX_LEVEL_LL          int = 3
-	SYSTEM_CONSTANTS_PLACE_MAX_LEVEL_UL          int = 5
-	SYSTEM_CONSTANTS_LABEL_MAX_MEMBERS_UL        int = 50
-	SYSTEM_CONSTANTS_LABEL_MAX_MEMBERS_LL        int = 1
+	SystemConstantsCacheLifetimeUL          int = 86400 // seconds
+	SystemConstantsCacheLifetimeLL          int = 60
+	SystemConstantsPostMaxTargetsUL         int = 50
+	SystemConstantsPostMaxTargetsLL         int = 5
+	SystemConstantsPostMaxAttachmentsLL     int = 5
+	SystemConstantsPostMaxAttachmentsUL     int = 50
+	SystemConstantsPostMaxLabelsLL          int = 1
+	SystemConstantsPostMaxLabelsUL          int = 25
+	SystemConstantsPostRetractTimeLL        int = 0
+	SystemConstantsPostRetractTimeUL        int = 86400000 // milliseconds
+	SystemConstantsAccountGrandPlaceLimitLL int = 0
+	SystemConstantsAccountGrandPlaceLimitUL int = 1000
+	SystemConstantsPlaceMaxChildrenLL       int = 0
+	SystemConstantsPlaceMaxChildrenUL       int = 50
+	SystemConstantsPlaceMaxCreatorsLL       int = 1
+	SystemConstantsPlaceMaxCreatorsUl       int = 200
+	SystemConstantsPlaceMaxKeyHoldersLL     int = 1
+	SystemConstantsPlaceMaxKeyHoldersUL     int = 2500
+	SystemConstantsPlaceMaxLevelLL          int = 3
+	SystemConstantsPlaceMaxLevelUL          int = 5
+	SystemConstantsLabelMaxMembersUL        int = 50
+	SystemConstantsLabelMaxMembersLL        int = 1
 )

@@ -475,7 +475,7 @@ func (rcm *ReportManager) FlushToDB() {
 
 	t := time.Now()
 	valKey := fmt.Sprintf("values.%2d", t.Minute())
-	bulk := db.C(global.COLLECTION_REPORTS_COUNTERS).Bulk()
+	bulk := db.C(global.CollectionReportsCounters).Bulk()
 	bulk.Unordered()
 
 	// Count General Counters
@@ -586,14 +586,14 @@ func (rcm *ReportManager) GetTimeSeriesSingleValue(from, to, key, resolution str
 	x := make([]TimeSeriesSingleValueHourly, 0, global.DefaultMaxResultLimit)
 	switch resolution {
 	case ReportResolutionHour:
-		if err := db.C(global.COLLECTION_REPORTS_COUNTERS).Find(bson.M{
+		if err := db.C(global.CollectionReportsCounters).Find(bson.M{
 			"date": bson.M{"$gte": from, "$lte": to},
 			"key":  key,
 		}).Limit(global.DefaultMaxResultLimit).All(&x); err != nil {
 			log.Warn("Model::ReportManager::GetTimeSeriesSingleValue::Error 1::", zap.Error(err))
 		}
 	case ReportResolutionDay:
-		if err := db.C(global.COLLECTION_REPORTS_COUNTERS).Pipe([]bson.M{
+		if err := db.C(global.CollectionReportsCounters).Pipe([]bson.M{
 			{"$match": bson.M{
 				"date": bson.M{"$gte": from, "$lte": to},
 				"key":  key,
@@ -621,7 +621,7 @@ func (rcm *ReportManager) GetAPICounters() MI {
 	defer dbSession.Close()
 
 	m := MI{}
-	if err := db.C(global.COLLECTION_REPORTS_COUNTERS).FindId("apiCommands").One(&m); err != nil {
+	if err := db.C(global.CollectionReportsCounters).FindId("apiCommands").One(&m); err != nil {
 		log.Warn(err.Error())
 		return nil
 	}

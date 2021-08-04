@@ -79,7 +79,7 @@ func (fm *FileManager) readFromCache(fileID UniversalID) *FileInfo {
 	defer c.Close()
 	keyID := fmt.Sprintf("file:gob:%s", fileID)
 	if gobFile, err := redis.Bytes(c.Do("GET", keyID)); err != nil {
-		if err := _MongoDB.C(global.COLLECTION_FILES).FindId(fileID).One(file); err != nil {
+		if err := _MongoDB.C(global.CollectionFiles).FindId(fileID).One(file); err != nil {
 			log.Warn(err.Error())
 			return nil
 		}
@@ -134,7 +134,7 @@ func (fm *FileManager) AddFile(f FileInfo) bool {
 	if f.Filename == "" {
 		return false
 	}
-	if err := db.C(global.COLLECTION_FILES).Insert(f); err != nil {
+	if err := db.C(global.CollectionFiles).Insert(f); err != nil {
 		log.Warn(err.Error())
 	}
 	return true
@@ -145,14 +145,14 @@ func (fm *FileManager) AddPostAsOwner(uniID UniversalID, postID bson.ObjectId) {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_FILES).UpdateId(
+	if err := db.C(global.CollectionFiles).UpdateId(
 		uniID,
 		bson.M{"$inc": bson.M{"ref_count": 1}},
 	); err != nil {
 		log.Warn(err.Error())
 	}
 
-	if err := db.C(global.COLLECTION_POSTS_FILES).Insert(
+	if err := db.C(global.CollectionPostsFiles).Insert(
 		bson.M{
 			"universal_id": uniID,
 			"post_id":      postID,
@@ -167,14 +167,14 @@ func (fm *FileManager) AddTaskAsOwner(uniID UniversalID, taskID bson.ObjectId) {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_FILES).UpdateId(
+	if err := db.C(global.CollectionFiles).UpdateId(
 		uniID,
 		bson.M{"$inc": bson.M{"ref_count": 1}},
 	); err != nil {
 		log.Warn(err.Error())
 	}
 
-	if err := _MongoDB.C(global.COLLECTION_TASKS_FILES).Insert(
+	if err := _MongoDB.C(global.CollectionTasksFiles).Insert(
 		bson.M{
 			"universal_id": uniID,
 			"task_id":      taskID,
@@ -192,7 +192,7 @@ func (fm *FileManager) Exists(uniID UniversalID) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	n, _ := db.C(global.COLLECTION_FILES).FindId(uniID).Count()
+	n, _ := db.C(global.CollectionFiles).FindId(uniID).Count()
 
 	return n > 0
 }
@@ -206,7 +206,7 @@ func (fm *FileManager) SetStatus(uniID UniversalID, fileStatus string) bool {
 
 	switch fileStatus {
 	case FileStatusPublic, FileStatusTemp, FileStatusThumbnail:
-		if err := db.C(global.COLLECTION_FILES).UpdateId(
+		if err := db.C(global.CollectionFiles).UpdateId(
 			uniID,
 			bson.M{"$set": bson.M{
 				"upload_time": time.Now().UnixNano(),
@@ -216,14 +216,14 @@ func (fm *FileManager) SetStatus(uniID UniversalID, fileStatus string) bool {
 			log.Warn(err.Error())
 		}
 	case FileStatusAttached:
-		if err := db.C(global.COLLECTION_FILES).Update(
+		if err := db.C(global.CollectionFiles).Update(
 			bson.M{"_id": uniID, "status": bson.M{"$ne": FileStatusPublic}},
 			bson.M{"$set": bson.M{"status": fileStatus}},
 		); err != nil {
 			log.Warn(err.Error())
 		}
 	case FileStatusInternal:
-		if err := db.C(global.COLLECTION_FILES).Update(
+		if err := db.C(global.CollectionFiles).Update(
 			bson.M{"_id": uniID},
 			bson.M{"$set": bson.M{"status": fileStatus}},
 		); err != nil {
@@ -241,7 +241,7 @@ func (fm *FileManager) SetMetadata(uniID UniversalID, meta interface{}) {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_FILES).Update(
+	if err := db.C(global.CollectionFiles).Update(
 		bson.M{"_id": uniID},
 		bson.M{"$set": bson.M{"metadata": meta}},
 	); err != nil {
@@ -285,7 +285,7 @@ func (fm *FileManager) GetFilesByPlace(placeID, filter, filename string, pg Pagi
 		}},
 		{"$match": bson.M{"places": placeID, "counters.attaches": bson.M{"$gt": 0}}},
 		{"$lookup": bson.M{
-			"from":         global.COLLECTION_FILES,
+			"from":         global.CollectionFiles,
 			"localField":   "attaches",
 			"foreignField": "_id",
 			"as":           "file",
@@ -301,7 +301,7 @@ func (fm *FileManager) GetFilesByPlace(placeID, filter, filename string, pg Pagi
 		{"$skip": pg.GetSkip()},
 		{"$limit": pg.GetLimit()},
 	}
-	iter := db.C(global.COLLECTION_POSTS).Pipe(q).Iter()
+	iter := db.C(global.CollectionPosts).Pipe(q).Iter()
 	defer iter.Close()
 	fetchedDoc := struct {
 		PostID bson.ObjectId `bson:"_id"`
@@ -341,7 +341,7 @@ func (fm *FileManager) GetFilesByPlaces(placeIDs []string, pg Pagination) []File
 
 	post := new(Post)
 	attachmentIDs := make([]UniversalID, 0, pg.GetLimit())
-	iter := db.C(global.COLLECTION_POSTS).Find(
+	iter := db.C(global.CollectionPosts).Find(
 		bson.M{"places": bson.M{"$in": placeIDs}, "counters.attaches": bson.M{"$gt": 0}},
 	).Sort("-timestamp").Skip(pg.GetSkip()).Iter()
 	defer iter.Close()
@@ -363,14 +363,14 @@ func (fm *FileManager) RemoveTaskAsOwner(uniID UniversalID, taskID bson.ObjectId
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_FILES).UpdateId(
+	if err := db.C(global.CollectionFiles).UpdateId(
 		uniID,
 		bson.M{"$inc": bson.M{"ref_count": -1}},
 	); err != nil {
 		log.Warn(err.Error())
 	}
 
-	if err := db.C(global.COLLECTION_TASKS_FILES).Remove(
+	if err := db.C(global.CollectionTasksFiles).Remove(
 		bson.M{"universal_id": uniID, "task_id": taskID},
 	); err != nil {
 		log.Warn(err.Error())
@@ -384,14 +384,14 @@ func (fm *FileManager) RemovePostAsOwner(uniID UniversalID, postID bson.ObjectId
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_FILES).UpdateId(
+	if err := db.C(global.CollectionFiles).UpdateId(
 		uniID,
 		bson.M{"$inc": bson.M{"ref_count": -1}},
 	); err != nil {
 		log.Warn(err.Error())
 	}
 
-	if err := db.C(global.COLLECTION_POSTS_FILES).Remove(
+	if err := db.C(global.CollectionPostsFiles).Remove(
 		bson.M{"universal_id": uniID, "post_id": postID},
 	); err != nil {
 		log.Warn(err.Error())
@@ -404,7 +404,7 @@ func (fm *FileManager) SetDimension(uniID UniversalID, width, height int64) bool
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_FILES).UpdateId(
+	if err := db.C(global.CollectionFiles).UpdateId(
 		uniID,
 		bson.M{"$set": bson.M{
 			"width":  width,
@@ -423,7 +423,7 @@ func (fm *FileManager) SetThumbnails(uniID UniversalID, thumbs Picture) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_FILES).UpdateId(
+	if err := db.C(global.CollectionFiles).UpdateId(
 		uniID,
 		bson.M{"$set": bson.M{
 			"thumbs": thumbs,
@@ -441,7 +441,7 @@ func (fm *FileManager) IncrementDownloadCounter(uniID UniversalID, count int) bo
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_FILES).UpdateId(uniID, bson.M{"$inc": bson.M{"downloads": count}}); err != nil {
+	if err := db.C(global.CollectionFiles).UpdateId(uniID, bson.M{"$inc": bson.M{"downloads": count}}); err != nil {
 		log.Warn(err.Error())
 		return false
 	}
@@ -455,7 +455,7 @@ func (fm *FileManager) IsTaskOwner(uniID UniversalID, taskID bson.ObjectId) bool
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if n, err := db.C(global.COLLECTION_TASKS_FILES).Find(
+	if n, err := db.C(global.CollectionTasksFiles).Find(
 		bson.M{"universal_id": uniID, "task_id": taskID},
 	).Count(); err != nil || n == 0 {
 		return false
@@ -470,7 +470,7 @@ func (fm *FileManager) IsPostOwner(uniID UniversalID, postID bson.ObjectId) bool
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if n, err := db.C(global.COLLECTION_POSTS_FILES).Find(
+	if n, err := db.C(global.CollectionPostsFiles).Find(
 		bson.M{"universal_id": uniID, "post_id": postID},
 	).Count(); err != nil || n == 0 {
 		return false

@@ -16,11 +16,11 @@ func (s *NotificationService) getNotificationByID(requester *nested.Account, req
 	if v, ok := request.Data["notification_id"].(string); ok {
 		notif = _Model.Notification.GetByID(v)
 		if notif == nil {
-			response.Error(global.ERR_INVALID, []string{"notification_id"})
+			response.Error(global.ErrInvalid, []string{"notification_id"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"notification_id"})
+		response.Error(global.ErrIncomplete, []string{"notification_id"})
 		return
 	}
 	response.OkWithData(s.Worker().Map().Notification(requester, *notif))
@@ -98,7 +98,7 @@ func (s *NotificationService) markNotificationAsRead(requester *nested.Account, 
 		}
 		response.Ok()
 	} else {
-		response.Error(global.ERR_INVALID, []string{"notification_id"})
+		response.Error(global.ErrInvalid, []string{"notification_id"})
 	}
 	return
 }
@@ -109,7 +109,7 @@ func (s *NotificationService) markNotificationAsReadByPost(requester *nested.Acc
 	var post *nested.Post
 
 	if post = s.Worker().Argument().GetPost(request, response); post == nil {
-		response.Error(global.ERR_INVALID, []string{"post_id"})
+		response.Error(global.ErrInvalid, []string{"post_id"})
 		return
 	}
 	notificationIDs := _Model.Notification.MarkAsReadByPostID(post.ID, requester.ID)
@@ -136,7 +136,7 @@ func (s *NotificationService) removeNotification(requester *nested.Account, requ
 		}
 		response.Ok()
 	} else {
-		response.Error(global.ERR_INVALID, []string{"notification_id"})
+		response.Error(global.ErrInvalid, []string{"notification_id"})
 	}
 
 }
@@ -156,7 +156,7 @@ func (s *NotificationService) getNotificationCounter(requester *nested.Account, 
 			"total_notifications":  account.Counters.TotalNotifications,
 		})
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{})
+		response.Error(global.ErrUnknown, []string{})
 	}
 	return
 }

@@ -375,7 +375,7 @@ func (s *SearchService) conversation(requester *nested.Account, request *nestedG
 	if v, ok := request.Data["account_id"].(string); ok {
 		accountID = v
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"account_id"})
+		response.Error(global.ErrIncomplete, []string{"account_id"})
 		return
 	}
 	if v, ok := request.Data["keywords"].(string); ok {

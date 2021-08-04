@@ -39,7 +39,7 @@ func (s *ClientService) uploadContacts(requester *nested.Account, request *neste
 	contacts := new(ClientContacts)
 	if v, ok := request.Data["contacts"].(string); ok {
 		if err := json.Unmarshal([]byte(v), contacts); err != nil {
-			response.Error(global.ERR_INVALID, []string{"contacts"})
+			response.Error(global.ErrInvalid, []string{"contacts"})
 			return
 		}
 		// fix the phone numbers
@@ -54,7 +54,7 @@ func (s *ClientService) uploadContacts(requester *nested.Account, request *neste
 			//_Model.Phone.SaveContact(c)
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"contacts"})
+		response.Error(global.ErrIncomplete, []string{"contacts"})
 		return
 	}
 
@@ -69,27 +69,27 @@ func (s *ClientService) saveKey(requester *nested.Account, request *nestedGatewa
 	if v, ok := request.Data["key_name"].(string); ok {
 		keyName = v
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"key_name"})
+		response.Error(global.ErrIncomplete, []string{"key_name"})
 		return
 	}
 	if v, ok := request.Data["key_value"].(string); ok {
 		if len(keyValue) > global.DefaultMaxClientObjSize {
-			response.Error(global.ERR_LIMIT, []string{"key_value"})
+			response.Error(global.ErrLimit, []string{"key_value"})
 			return
 		}
 		keyValue = v
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"key_value"})
+		response.Error(global.ErrIncomplete, []string{"key_value"})
 		return
 	}
 	if requester.Counters.Keys >= requester.Limits.Keys {
-		response.Error(global.ERR_LIMIT, []string{"keys"})
+		response.Error(global.ErrLimit, []string{"keys"})
 		return
 	}
 	if _Model.Account.SaveKey(requester.ID, keyName, keyValue) {
 		response.Ok()
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{})
+		response.Error(global.ErrUnknown, []string{})
 	}
 }
 
@@ -100,7 +100,7 @@ func (s *ClientService) getKey(requester *nested.Account, request *nestedGateway
 	if v, ok := request.Data["key_name"].(string); ok {
 		keyName = v
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"key_name"})
+		response.Error(global.ErrIncomplete, []string{"key_name"})
 		return
 	}
 	keyValue := _Model.Account.GetKey(requester.ID, keyName)
@@ -128,7 +128,7 @@ func (s *ClientService) removeKey(requester *nested.Account, request *nestedGate
 	if v, ok := request.Data["key_name"].(string); ok {
 		keyName = v
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"key_name"})
+		response.Error(global.ErrIncomplete, []string{"key_name"})
 		return
 	}
 	_Model.Account.RemoveKey(requester.ID, keyName)

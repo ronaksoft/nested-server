@@ -19,7 +19,7 @@ func (s *AppService) exists(requester *nested.Account, request *nestedGateway.Re
 
 	app := s.Worker().Model().App.GetByID(appID)
 	if app == nil {
-		response.Error(global.ERR_UNAVAILABLE, []string{"app_id"})
+		response.Error(global.ErrUnavailable, []string{"app_id"})
 		return
 	}
 	response.OkWithData(tools.M{"exists": true})
@@ -36,7 +36,7 @@ func (s *AppService) generateAppToken(requester *nested.Account, request *nested
 
 	app := s.Worker().Model().App.GetByID(appID)
 	if app == nil {
-		response.Error(global.ERR_INVALID, []string{"app_id"})
+		response.Error(global.ErrInvalid, []string{"app_id"})
 		return
 	}
 	appToken := s.Worker().Model().Token.CreateAppToken(
@@ -59,7 +59,7 @@ func (s *AppService) revokeAppToken(requester *nested.Account, request *nestedGa
 	if s.Worker().Model().Token.RevokeAppToken(requester.ID, appToken) {
 		response.Ok()
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{"internal_error"})
+		response.Error(global.ErrUnknown, []string{"internal_error"})
 	}
 }
 
@@ -86,7 +86,7 @@ func (s *AppService) getManyApps(requester *nested.Account, request *nestedGatew
 	if v, ok := request.Data["app_id"].(string); ok {
 		appIDs = strings.SplitN(v, ",", global.DefaultMaxResultLimit)
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"app_id"})
+		response.Error(global.ErrIncomplete, []string{"app_id"})
 		return
 	}
 	apps := s.Worker().Model().App.GetManyByIDs(appIDs)
@@ -125,13 +125,13 @@ func (s *AppService) register(requester *nested.Account, request *nestedGateway.
 	}
 
 	if s.Worker().Model().App.Exists(appID) {
-		response.Error(global.ERR_DUPLICATE, []string{"app_id"})
+		response.Error(global.ErrDuplicate, []string{"app_id"})
 		return
 	}
 	if s.Worker().Model().App.Register(appID, appName, homepage, callbackUrl, developer, iconSmallUrl, iconLargeUrl) {
 		response.Ok()
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{"internal_error"})
+		response.Error(global.ErrUnknown, []string{"internal_error"})
 	}
 }
 
@@ -144,7 +144,7 @@ func (s *AppService) remove(requester *nested.Account, request *nestedGateway.Re
 	}
 	app := s.Worker().Model().App.GetByID(appID)
 	if app == nil {
-		response.Error(global.ERR_INVALID, []string{"app_id"})
+		response.Error(global.ErrInvalid, []string{"app_id"})
 		return
 	}
 
@@ -154,7 +154,7 @@ func (s *AppService) remove(requester *nested.Account, request *nestedGateway.Re
 		}
 		response.Ok()
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{"internal_error"})
+		response.Error(global.ErrUnknown, []string{"internal_error"})
 	}
 }
 
@@ -169,7 +169,7 @@ func (s *AppService) hasToken(requester *nested.Account, request *nestedGateway.
 	if s.Worker().Model().Token.AppTokenExists(requester.ID, appID) {
 		response.Ok()
 	} else {
-		response.Error(global.ERR_INVALID, []string{})
+		response.Error(global.ErrInvalid, []string{})
 	}
 }
 
@@ -188,6 +188,6 @@ func (s *AppService) setFavStatus(requester *nested.Account, request *nestedGate
 	if s.Worker().Model().Token.SetAppFavoriteStatus(requester.ID, appID, status) {
 		response.Ok()
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{"internal_error"})
+		response.Error(global.ErrUnknown, []string{"internal_error"})
 	}
 }

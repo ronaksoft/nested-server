@@ -221,7 +221,7 @@ func (gw *GatewayServer) httpOnConnection(ctx iris.Context) {
 	if err := ctx.ReadJSON(userRequest); err != nil {
 		ctx.JSON(iris.Map{
 			"status":     "err",
-			"error_code": global.ERR_INVALID,
+			"error_code": global.ErrInvalid,
 			"err_items":  []string{"not_valid_json"},
 		})
 		return

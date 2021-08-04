@@ -39,7 +39,7 @@ func (sm *SystemManager) GetIntegerConstants() MI {
 	defer dbSession.Close()
 
 	r := new(SystemConstants)
-	if err := db.C(global.COLLECTION_SYSTEM_INTERNAL).FindId("constants").One(r); err != nil {
+	if err := db.C(global.CollectionSystemInternal).FindId("constants").One(r); err != nil {
 		log.Sugar().Info("Model::SystemManager::GetIntegerConstants::Error 1::", err.Error())
 		return nil
 	}
@@ -51,49 +51,49 @@ func (sm *SystemManager) GetIntegerConstants() MI {
 	}
 
 	// Place Constants
-	if _, ok := r.Integers[global.SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN]; !ok {
-		r.Integers[global.SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN] = global.DefaultPlaceMaxChildren
+	if _, ok := r.Integers[global.SystemConstantsPlaceMaxChildren]; !ok {
+		r.Integers[global.SystemConstantsPlaceMaxChildren] = global.DefaultPlaceMaxChildren
 	}
-	if _, ok := r.Integers[global.SYSTEM_CONSTANTS_PLACE_MAX_CREATORS]; !ok {
-		r.Integers[global.SYSTEM_CONSTANTS_PLACE_MAX_CREATORS] = global.DefaultPlaceMaxCreators
+	if _, ok := r.Integers[global.SystemConstantsPlaceMaxCreators]; !ok {
+		r.Integers[global.SystemConstantsPlaceMaxCreators] = global.DefaultPlaceMaxCreators
 	}
-	if _, ok := r.Integers[global.SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS]; !ok {
-		r.Integers[global.SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS] = global.DefaultPlaceMaxKeyHolders
+	if _, ok := r.Integers[global.SystemConstantsPlaceMaxKeyHolders]; !ok {
+		r.Integers[global.SystemConstantsPlaceMaxKeyHolders] = global.DefaultPlaceMaxKeyHolders
 	}
-	if _, ok := r.Integers[global.SYSTEM_CONSTANTS_PLACE_MAX_LEVEL]; !ok {
-		r.Integers[global.SYSTEM_CONSTANTS_PLACE_MAX_LEVEL] = global.DefaultPlaceMaxLevel
+	if _, ok := r.Integers[global.SystemConstantsPlaceMaxLevel]; !ok {
+		r.Integers[global.SystemConstantsPlaceMaxLevel] = global.DefaultPlaceMaxLevel
 	}
 
 	// Post Constants
-	if _, ok := r.Integers[global.SYSTEM_CONSTANTS_POST_MAX_ATTACHMENTS]; !ok {
-		r.Integers[global.SYSTEM_CONSTANTS_POST_MAX_ATTACHMENTS] = global.DefaultPostMaxAttachments
+	if _, ok := r.Integers[global.SystemConstantsPostMaxAttachments]; !ok {
+		r.Integers[global.SystemConstantsPostMaxAttachments] = global.DefaultPostMaxAttachments
 	}
-	if _, ok := r.Integers[global.SYSTEM_CONSTANTS_POST_MAX_TARGETS]; !ok {
-		r.Integers[global.SYSTEM_CONSTANTS_POST_MAX_TARGETS] = global.DefaultPostMaxTargets
+	if _, ok := r.Integers[global.SystemConstantsPostMaxTargets]; !ok {
+		r.Integers[global.SystemConstantsPostMaxTargets] = global.DefaultPostMaxTargets
 	}
-	if _, ok := r.Integers[global.SYSTEM_CONSTANTS_POST_MAX_LABELS]; !ok {
-		r.Integers[global.SYSTEM_CONSTANTS_POST_MAX_LABELS] = global.DefaultPostMaxLabels
+	if _, ok := r.Integers[global.SystemConstantsPostMaxLabels]; !ok {
+		r.Integers[global.SystemConstantsPostMaxLabels] = global.DefaultPostMaxLabels
 	}
-	if _, ok := r.Integers[global.SYSTEM_CONSTANTS_POST_RETRACT_TIME]; !ok {
-		r.Integers[global.SYSTEM_CONSTANTS_POST_RETRACT_TIME] = int(global.DefaultPostRetractTime)
+	if _, ok := r.Integers[global.SystemConstantsPostRetractTime]; !ok {
+		r.Integers[global.SystemConstantsPostRetractTime] = int(global.DefaultPostRetractTime)
 	}
 
 	// Account Constants
-	if _, ok := r.Integers[global.SYSTEM_CONSTANTS_ACCOUNT_GRANDPLACE_LIMIT]; !ok {
-		r.Integers[global.SYSTEM_CONSTANTS_ACCOUNT_GRANDPLACE_LIMIT] = global.DefaultAccountGrandPlaces
+	if _, ok := r.Integers[global.SystemConstantsAccountGrandPlaceLimit]; !ok {
+		r.Integers[global.SystemConstantsAccountGrandPlaceLimit] = global.DefaultAccountGrandPlaces
 	}
 
 	// Label Constants
-	if _, ok := r.Integers[global.SYSTEM_CONSTANTS_LABEL_MAX_MEMBERS]; !ok {
-		r.Integers[global.SYSTEM_CONSTANTS_LABEL_MAX_MEMBERS] = global.DefaultLabelMaxMembers
+	if _, ok := r.Integers[global.SystemConstantsLabelMaxMembers]; !ok {
+		r.Integers[global.SystemConstantsLabelMaxMembers] = global.DefaultLabelMaxMembers
 	}
 
 	// Misc Constants
-	if _, ok := r.Integers[global.SYSTEM_CONSTANTS_CACHE_LIFETIME]; !ok {
-		r.Integers[global.SYSTEM_CONSTANTS_CACHE_LIFETIME] = global.CacheLifetime
+	if _, ok := r.Integers[global.SystemConstantsCacheLifetime]; !ok {
+		r.Integers[global.SystemConstantsCacheLifetime] = global.CacheLifetime
 	}
-	if _, ok := r.Integers[global.SYSTEM_CONSTANTS_REGISTER_MODE]; !ok {
-		r.Integers[global.SYSTEM_CONSTANTS_REGISTER_MODE] = global.RegisterModeAdminOnly
+	if _, ok := r.Integers[global.SystemConstantsRegisterMode]; !ok {
+		r.Integers[global.SystemConstantsRegisterMode] = global.RegisterMode
 	}
 
 	return r.Integers
@@ -102,7 +102,7 @@ func (sm *SystemManager) GetIntegerConstants() MI {
 // GetStringConstants returns a map with string values
 func (sm *SystemManager) GetStringConstants() MS {
 	r := new(SystemConstants)
-	if err := _MongoDB.C(global.COLLECTION_SYSTEM_INTERNAL).FindId("constants").One(r); err != nil {
+	if err := _MongoDB.C(global.CollectionSystemInternal).FindId("constants").One(r); err != nil {
 		log.Sugar().Info("Model::SystemManager::GetIntegerConstants::Error 1::", err.Error())
 		return nil
 	}
@@ -113,23 +113,23 @@ func (sm *SystemManager) GetStringConstants() MS {
 		r.Strings = MS{}
 	}
 	// Company Constants
-	if _, ok := r.Strings[global.SYSTEM_CONSTANTS_COMPANY_NAME]; !ok {
-		r.Strings[global.SYSTEM_CONSTANTS_COMPANY_NAME] = global.DefaultCompanyName
+	if _, ok := r.Strings[global.SystemConstantsCompanyName]; !ok {
+		r.Strings[global.SystemConstantsCompanyName] = global.DefaultCompanyName
 	}
-	if _, ok := r.Strings[global.SYSTEM_CONSTANTS_COMPANY_DESC]; !ok {
-		r.Strings[global.SYSTEM_CONSTANTS_COMPANY_DESC] = global.DefaultCompanyDesc
+	if _, ok := r.Strings[global.SystemConstantsCompanyDesc]; !ok {
+		r.Strings[global.SystemConstantsCompanyDesc] = global.DefaultCompanyDesc
 	}
-	if _, ok := r.Strings[global.SYSTEM_CONSTANTS_COMPANY_LOGO]; !ok {
-		r.Strings[global.SYSTEM_CONSTANTS_COMPANY_LOGO] = global.DefaultCompanyLogo
+	if _, ok := r.Strings[global.SystemConstantsCompanyLogo]; !ok {
+		r.Strings[global.SystemConstantsCompanyLogo] = global.DefaultCompanyLogo
 	}
-	if _, ok := r.Strings[global.SYSTEM_CONSTANTS_SYSTEM_LANG]; !ok {
-		r.Strings[global.SYSTEM_CONSTANTS_SYSTEM_LANG] = global.DefaultSystemLang
+	if _, ok := r.Strings[global.SystemConstantsSystemLang]; !ok {
+		r.Strings[global.SystemConstantsSystemLang] = global.DefaultSystemLang
 	}
-	if _, ok := r.Strings[global.SYSTEM_CONSTANTS_MAGIC_NUMBER]; !ok {
-		r.Strings[global.SYSTEM_CONSTANTS_MAGIC_NUMBER] = global.DefaultMagicNumber
+	if _, ok := r.Strings[global.SystemConstantsMagicNumber]; !ok {
+		r.Strings[global.SystemConstantsMagicNumber] = global.DefaultMagicNumber
 	}
-	if _, ok := r.Strings[global.SYSTEM_CONSTANTS_LICENSE_KEY]; !ok {
-		r.Strings[global.SYSTEM_CONSTANTS_LICENSE_KEY] = ""
+	if _, ok := r.Strings[global.SystemConstantsLicenseKey]; !ok {
+		r.Strings[global.SystemConstantsLicenseKey] = ""
 	}
 	return r.Strings
 }
@@ -147,7 +147,7 @@ func (sm *SystemManager) GetCounters() MI {
 	defer dbSession.Close()
 
 	m := MI{}
-	if err := db.C(global.COLLECTION_SYSTEM_INTERNAL).FindId("counters").One(m); err != nil {
+	if err := db.C(global.CollectionSystemInternal).FindId("counters").One(m); err != nil {
 		log.Warn(err.Error())
 	}
 	return m
@@ -166,83 +166,83 @@ func (sm *SystemManager) SetIntegerConstants(m tools.M) {
 			iVal = int(v.(float64))
 		}
 		switch key {
-		case global.SYSTEM_CONSTANTS_ACCOUNT_GRANDPLACE_LIMIT:
+		case global.SystemConstantsAccountGrandPlaceLimit:
 			q[fmt.Sprintf("integers.%s", key)] = ClampInteger(
 				iVal,
-				global.SYSTEM_CONSTANTS_ACCOUNT_GRANDPLACE_LIMIT_LL,
-				global.SYSTEM_CONSTANTS_ACCOUNT_GRANDPLACE_LIMIT_UL,
+				global.SystemConstantsAccountGrandPlaceLimitLL,
+				global.SystemConstantsAccountGrandPlaceLimitUL,
 			)
-		case global.SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN:
+		case global.SystemConstantsPlaceMaxChildren:
 			q[fmt.Sprintf("integers.%s", key)] = ClampInteger(
 				iVal,
-				global.SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN_LL,
-				global.SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN_UL,
+				global.SystemConstantsPlaceMaxChildrenLL,
+				global.SystemConstantsPlaceMaxChildrenUL,
 			)
-		case global.SYSTEM_CONSTANTS_PLACE_MAX_CREATORS:
+		case global.SystemConstantsPlaceMaxCreators:
 			q[fmt.Sprintf("integers.%s", key)] = ClampInteger(
 				iVal,
-				global.SYSTEM_CONSTANTS_PLACE_MAX_CREATORS_LL,
-				global.SYSTEM_CONSTANTS_PLACE_MAX_CREATORS_UL,
+				global.SystemConstantsPlaceMaxCreatorsLL,
+				global.SystemConstantsPlaceMaxCreatorsUl,
 			)
-		case global.SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS:
+		case global.SystemConstantsPlaceMaxKeyHolders:
 			q[fmt.Sprintf("integers.%s", key)] = ClampInteger(
 				iVal,
-				global.SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS_LL,
-				global.SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS_UL,
+				global.SystemConstantsPlaceMaxKeyHoldersLL,
+				global.SystemConstantsPlaceMaxKeyHoldersUL,
 			)
-		case global.SYSTEM_CONSTANTS_PLACE_MAX_LEVEL:
+		case global.SystemConstantsPlaceMaxLevel:
 			q[fmt.Sprintf("integers.%s", key)] = ClampInteger(
 				iVal,
-				global.SYSTEM_CONSTANTS_PLACE_MAX_LEVEL_LL,
-				global.SYSTEM_CONSTANTS_PLACE_MAX_LEVEL_UL,
+				global.SystemConstantsPlaceMaxLevelLL,
+				global.SystemConstantsPlaceMaxLevelUL,
 			)
-		case global.SYSTEM_CONSTANTS_POST_MAX_ATTACHMENTS:
+		case global.SystemConstantsPostMaxAttachments:
 			q[fmt.Sprintf("integers.%s", key)] = ClampInteger(
 				iVal,
-				global.SYSTEM_CONSTANTS_POST_MAX_TARGETS_LL,
-				global.SYSTEM_CONSTANTS_POST_MAX_TARGETS_UL,
+				global.SystemConstantsPostMaxTargetsLL,
+				global.SystemConstantsPostMaxTargetsUL,
 			)
-		case global.SYSTEM_CONSTANTS_POST_MAX_TARGETS:
+		case global.SystemConstantsPostMaxTargets:
 			q[fmt.Sprintf("integers.%s", key)] = ClampInteger(
 				iVal,
-				global.SYSTEM_CONSTANTS_POST_MAX_TARGETS_LL,
-				global.SYSTEM_CONSTANTS_POST_MAX_TARGETS_UL,
+				global.SystemConstantsPostMaxTargetsLL,
+				global.SystemConstantsPostMaxTargetsUL,
 			)
-		case global.SYSTEM_CONSTANTS_POST_MAX_LABELS:
+		case global.SystemConstantsPostMaxLabels:
 			q[fmt.Sprintf("integers.%s", key)] = ClampInteger(
 				iVal,
-				global.SYSTEM_CONSTANTS_POST_MAX_LABELS_LL,
-				global.SYSTEM_CONSTANTS_POST_MAX_LABELS_UL,
+				global.SystemConstantsPostMaxLabelsLL,
+				global.SystemConstantsPostMaxLabelsUL,
 			)
-		case global.SYSTEM_CONSTANTS_POST_RETRACT_TIME:
+		case global.SystemConstantsPostRetractTime:
 			q[fmt.Sprintf("integers.%s", key)] = ClampInteger(
 				iVal,
-				global.SYSTEM_CONSTANTS_POST_RETRACT_TIME_LL,
-				global.SYSTEM_CONSTANTS_POST_RETRACT_TIME_UL,
+				global.SystemConstantsPostRetractTimeLL,
+				global.SystemConstantsPostRetractTimeUL,
 			)
-		case global.SYSTEM_CONSTANTS_LABEL_MAX_MEMBERS:
+		case global.SystemConstantsLabelMaxMembers:
 			q[fmt.Sprintf("integers.%s", key)] = ClampInteger(
 				iVal,
-				global.SYSTEM_CONSTANTS_LABEL_MAX_MEMBERS_LL,
-				global.SYSTEM_CONSTANTS_LABEL_MAX_MEMBERS_UL,
+				global.SystemConstantsLabelMaxMembersLL,
+				global.SystemConstantsLabelMaxMembersUL,
 			)
-		case global.SYSTEM_CONSTANTS_CACHE_LIFETIME:
+		case global.SystemConstantsCacheLifetime:
 			q[fmt.Sprintf("integers.%s", key)] = ClampInteger(
 				iVal,
-				global.SYSTEM_CONSTANTS_CACHE_LIFETIME_LL,
-				global.SYSTEM_CONSTANTS_CACHE_LIFETIME_UL,
+				global.SystemConstantsCacheLifetimeLL,
+				global.SystemConstantsCacheLifetimeUL,
 			)
-		case global.SYSTEM_CONSTANTS_REGISTER_MODE:
+		case global.SystemConstantsRegisterMode:
 			switch iVal {
-			case global.REGISTER_MODE_ADMIN_ONLY, global.REGISTER_MODE_EVERYONE:
+			case global.RegisterModeAdminOnly, global.RegisterModeEveryone:
 			default:
-				iVal = global.REGISTER_MODE_ADMIN_ONLY
+				iVal = global.RegisterModeAdminOnly
 			}
 			q[fmt.Sprintf("integers.%s", key)] = iVal
 		}
 
 	}
-	_MongoDB.C(global.COLLECTION_SYSTEM_INTERNAL).UpdateId(
+	_MongoDB.C(global.CollectionSystemInternal).UpdateId(
 		"constants",
 		bson.M{"$set": q},
 	)
@@ -260,13 +260,13 @@ func (sm *SystemManager) SetStringConstants(m tools.M) {
 			sVal = v.(string)
 		}
 		switch key {
-		case global.SYSTEM_CONSTANTS_COMPANY_NAME, global.SYSTEM_CONSTANTS_COMPANY_DESC,
-			global.SYSTEM_CONSTANTS_COMPANY_LOGO, global.SYSTEM_CONSTANTS_MAGIC_NUMBER,
-			global.SYSTEM_CONSTANTS_SYSTEM_LANG, global.SYSTEM_CONSTANTS_LICENSE_KEY:
+		case global.SystemConstantsCompanyName, global.SystemConstantsCompanyDesc,
+			global.SystemConstantsCompanyLogo, global.SystemConstantsMagicNumber,
+			global.SystemConstantsSystemLang, global.SystemConstantsLicenseKey:
 			q[fmt.Sprintf("strings.%s", key)] = sVal
 		}
 	}
-	_MongoDB.C(global.COLLECTION_SYSTEM_INTERNAL).UpdateId(
+	_MongoDB.C(global.CollectionSystemInternal).UpdateId(
 		"constants",
 		bson.M{"$set": q},
 	)
@@ -277,87 +277,87 @@ func (sm *SystemManager) LoadIntegerConstants() {
 	iConstants := sm.GetIntegerConstants()
 	// Place Constants
 	global.DefaultPlaceMaxChildren = ClampInteger(
-		iConstants[global.SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN],
-		global.SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN_LL,
-		global.SYSTEM_CONSTANTS_PLACE_MAX_CHILDREN_UL,
+		iConstants[global.SystemConstantsPlaceMaxChildren],
+		global.SystemConstantsPlaceMaxChildrenLL,
+		global.SystemConstantsPlaceMaxChildrenUL,
 	)
 	global.DefaultPlaceMaxCreators = ClampInteger(
-		iConstants[global.SYSTEM_CONSTANTS_PLACE_MAX_CREATORS],
-		global.SYSTEM_CONSTANTS_PLACE_MAX_CREATORS_LL,
-		global.SYSTEM_CONSTANTS_PLACE_MAX_CREATORS_UL,
+		iConstants[global.SystemConstantsPlaceMaxCreators],
+		global.SystemConstantsPlaceMaxCreatorsLL,
+		global.SystemConstantsPlaceMaxCreatorsUl,
 	)
 	global.DefaultPlaceMaxKeyHolders = ClampInteger(
-		iConstants[global.SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS],
-		global.SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS_LL,
-		global.SYSTEM_CONSTANTS_PLACE_MAX_KEYHOLDERS_UL,
+		iConstants[global.SystemConstantsPlaceMaxKeyHolders],
+		global.SystemConstantsPlaceMaxKeyHoldersLL,
+		global.SystemConstantsPlaceMaxKeyHoldersUL,
 	)
 	global.DefaultPlaceMaxLevel = ClampInteger(
-		iConstants[global.SYSTEM_CONSTANTS_PLACE_MAX_LEVEL],
-		global.SYSTEM_CONSTANTS_PLACE_MAX_LEVEL_LL,
-		global.SYSTEM_CONSTANTS_PLACE_MAX_LEVEL_UL,
+		iConstants[global.SystemConstantsPlaceMaxLevel],
+		global.SystemConstantsPlaceMaxLevelLL,
+		global.SystemConstantsPlaceMaxLevelUL,
 	)
 
 	// Post Constants
 	global.DefaultPostMaxAttachments = ClampInteger(
-		iConstants[global.SYSTEM_CONSTANTS_POST_MAX_ATTACHMENTS],
-		global.SYSTEM_CONSTANTS_POST_MAX_ATTACHMENTS_LL,
-		global.SYSTEM_CONSTANTS_POST_MAX_ATTACHMENTS_UL,
+		iConstants[global.SystemConstantsPostMaxAttachments],
+		global.SystemConstantsPostMaxAttachmentsLL,
+		global.SystemConstantsPostMaxAttachmentsUL,
 	)
 	global.DefaultPostMaxTargets = ClampInteger(
-		iConstants[global.SYSTEM_CONSTANTS_POST_MAX_TARGETS],
-		global.SYSTEM_CONSTANTS_POST_MAX_TARGETS_LL,
-		global.SYSTEM_CONSTANTS_POST_MAX_TARGETS_UL,
+		iConstants[global.SystemConstantsPostMaxTargets],
+		global.SystemConstantsPostMaxTargetsLL,
+		global.SystemConstantsPostMaxTargetsUL,
 	)
 	global.DefaultPostRetractTime = uint64(ClampInteger(
-		iConstants[global.SYSTEM_CONSTANTS_POST_RETRACT_TIME],
-		global.SYSTEM_CONSTANTS_POST_RETRACT_TIME_LL,
-		global.SYSTEM_CONSTANTS_POST_RETRACT_TIME_UL,
+		iConstants[global.SystemConstantsPostRetractTime],
+		global.SystemConstantsPostRetractTimeLL,
+		global.SystemConstantsPostRetractTimeUL,
 	))
 	global.DefaultPostMaxLabels = ClampInteger(
-		iConstants[global.SYSTEM_CONSTANTS_POST_MAX_LABELS],
-		global.SYSTEM_CONSTANTS_POST_MAX_LABELS_LL,
-		global.SYSTEM_CONSTANTS_POST_MAX_LABELS_UL,
+		iConstants[global.SystemConstantsPostMaxLabels],
+		global.SystemConstantsPostMaxLabelsLL,
+		global.SystemConstantsPostMaxLabelsUL,
 	)
 
 	// Account Constants
 	global.DefaultAccountGrandPlaces = ClampInteger(
-		iConstants[global.SYSTEM_CONSTANTS_ACCOUNT_GRANDPLACE_LIMIT],
-		global.SYSTEM_CONSTANTS_ACCOUNT_GRANDPLACE_LIMIT_LL,
-		global.SYSTEM_CONSTANTS_ACCOUNT_GRANDPLACE_LIMIT_UL,
+		iConstants[global.SystemConstantsAccountGrandPlaceLimit],
+		global.SystemConstantsAccountGrandPlaceLimitLL,
+		global.SystemConstantsAccountGrandPlaceLimitUL,
 	)
 
 	// Label Constants
 	global.DefaultLabelMaxMembers = ClampInteger(
-		iConstants[global.SYSTEM_CONSTANTS_LABEL_MAX_MEMBERS],
-		global.SYSTEM_CONSTANTS_LABEL_MAX_MEMBERS_LL,
-		global.SYSTEM_CONSTANTS_LABEL_MAX_MEMBERS_UL,
+		iConstants[global.SystemConstantsLabelMaxMembers],
+		global.SystemConstantsLabelMaxMembersLL,
+		global.SystemConstantsLabelMaxMembersUL,
 	)
 
 	// Misc Constants
 	global.CacheLifetime = ClampInteger(
-		iConstants[global.SYSTEM_CONSTANTS_CACHE_LIFETIME],
-		global.SYSTEM_CONSTANTS_CACHE_LIFETIME_LL,
-		global.SYSTEM_CONSTANTS_CACHE_LIFETIME_UL,
+		iConstants[global.SystemConstantsCacheLifetime],
+		global.SystemConstantsCacheLifetimeLL,
+		global.SystemConstantsCacheLifetimeUL,
 	)
 
-	switch iConstants[global.SYSTEM_CONSTANTS_REGISTER_MODE] {
-	case global.REGISTER_MODE_ADMIN_ONLY, global.REGISTER_MODE_EVERYONE:
-		global.RegisterModeAdminOnly = iConstants[global.SYSTEM_CONSTANTS_REGISTER_MODE]
+	switch iConstants[global.SystemConstantsRegisterMode] {
+	case global.RegisterModeAdminOnly, global.RegisterModeEveryone:
+		global.RegisterMode = iConstants[global.SystemConstantsRegisterMode]
 	default:
-		global.RegisterModeAdminOnly = global.REGISTER_MODE_ADMIN_ONLY
+		global.RegisterMode = global.RegisterModeAdminOnly
 	}
 }
 
 func (sm *SystemManager) LoadStringConstants() {
 	sConstants := sm.GetStringConstants()
-	global.DefaultCompanyName = sConstants[global.SYSTEM_CONSTANTS_COMPANY_NAME]
-	global.DefaultCompanyDesc = sConstants[global.SYSTEM_CONSTANTS_COMPANY_DESC]
-	global.DefaultCompanyLogo = sConstants[global.SYSTEM_CONSTANTS_COMPANY_LOGO]
-	global.DefaultMagicNumber = sConstants[global.SYSTEM_CONSTANTS_MAGIC_NUMBER]
+	global.DefaultCompanyName = sConstants[global.SystemConstantsCompanyName]
+	global.DefaultCompanyDesc = sConstants[global.SystemConstantsCompanyDesc]
+	global.DefaultCompanyLogo = sConstants[global.SystemConstantsCompanyLogo]
+	global.DefaultMagicNumber = sConstants[global.SystemConstantsMagicNumber]
 }
 
 func (sm *SystemManager) SetMessageTemplate(msgID, msgSubject, msgBody string) bool {
-	if _, err := _MongoDB.C(global.COLLECTION_SYSTEM_INTERNAL).UpsertId(
+	if _, err := _MongoDB.C(global.CollectionSystemInternal).UpsertId(
 		"message_templates",
 		bson.M{"$set": bson.M{
 			msgID: bson.M{
@@ -377,7 +377,7 @@ func (sm *SystemManager) GetMessageTemplates() map[string]MessageTemplate {
 	defer dbSession.Close()
 
 	templates := make(map[string]MessageTemplate)
-	if err := db.C(global.COLLECTION_SYSTEM_INTERNAL).FindId("message_templates").One(&templates); err != nil {
+	if err := db.C(global.CollectionSystemInternal).FindId("message_templates").One(&templates); err != nil {
 		log.Warn(err.Error())
 	}
 	return templates
@@ -388,7 +388,7 @@ func (sm *SystemManager) RemoveMessageTemplate(msgID string) {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_SYSTEM_INTERNAL).UpdateId(
+	if err := db.C(global.CollectionSystemInternal).UpdateId(
 		"message_templates",
 		bson.M{
 			"$unset": bson.M{msgID: ""},
@@ -439,14 +439,14 @@ func (sm *SystemManager) SetCounter(params MI) bool {
 
 	for key := range params {
 		switch key {
-		case global.SYSTEM_COUNTERS_ENABLED_ACCOUNTS, global.SYSTEM_COUNTERS_DISABLED_ACCOUNTS,
-			global.SYSTEM_COUNTERS_GRAND_PLACES, global.SYSTEM_COUNTERS_LOCKED_PLACES, global.SYSTEM_COUNTERS_UNLOCKED_PLACES,
-			global.SYSTEM_COUNTERS_PERSONAL_PLACES:
+		case global.SystemCountersEnabledAccounts, global.SystemCountersDisabledAccounts,
+			global.SystemCountersGrandPlaces, global.SystemCountersLockedPlaces, global.SystemCountersUnlockedPlaces,
+			global.SystemCountersPersonalPlaces:
 		default:
 			delete(params, key)
 		}
 	}
-	if _, err := db.C(global.COLLECTION_SYSTEM_INTERNAL).UpsertId(
+	if _, err := db.C(global.CollectionSystemInternal).UpsertId(
 		"counters",
 		bson.M{"$set": params},
 	); err != nil {
@@ -458,9 +458,9 @@ func (sm *SystemManager) SetCounter(params MI) bool {
 
 // Private methods
 func (sm *SystemManager) setDataModelVersion(n int) bool {
-	if _, err := _MongoDB.C(global.COLLECTION_SYSTEM_INTERNAL).UpsertId(
+	if _, err := _MongoDB.C(global.CollectionSystemInternal).UpsertId(
 		"constants",
-		bson.M{"$set": bson.M{global.SYSTEM_CONSTANTS_MODEL_VERSION: n}},
+		bson.M{"$set": bson.M{global.SystemConstantsModelVersion: n}},
 	); err != nil {
 		log.Sugar().Info("Model::SystemManager::SetDataModelVersion::Error 1::", err.Error())
 		return false
@@ -474,10 +474,10 @@ func (sm *SystemManager) getDataModelVersion() int {
 	defer dbSession.Close()
 
 	r := MI{}
-	if err := db.C(global.COLLECTION_SYSTEM_INTERNAL).FindId("constants").One(r); err != nil {
+	if err := db.C(global.CollectionSystemInternal).FindId("constants").One(r); err != nil {
 		return global.DefaultModelVersion
 	}
-	model, _ := r[global.SYSTEM_CONSTANTS_MODEL_VERSION]
+	model, _ := r[global.SystemConstantsModelVersion]
 	return model
 }
 
@@ -488,13 +488,13 @@ func (sm *SystemManager) incrementCounter(params MI) bool {
 
 	for key := range params {
 		switch key {
-		case global.SYSTEM_COUNTERS_ENABLED_ACCOUNTS, global.SYSTEM_COUNTERS_DISABLED_ACCOUNTS,
-			global.SYSTEM_COUNTERS_GRAND_PLACES, global.SYSTEM_COUNTERS_LOCKED_PLACES, global.SYSTEM_COUNTERS_UNLOCKED_PLACES:
+		case global.SystemCountersEnabledAccounts, global.SystemCountersDisabledAccounts,
+			global.SystemCountersGrandPlaces, global.SystemCountersLockedPlaces, global.SystemCountersUnlockedPlaces:
 		default:
 			delete(params, key)
 		}
 	}
-	if _, err := db.C(global.COLLECTION_SYSTEM_INTERNAL).UpsertId(
+	if _, err := db.C(global.CollectionSystemInternal).UpsertId(
 		"counters",
 		bson.M{"$inc": params},
 	); err != nil {

@@ -25,19 +25,19 @@ func (s *HookService) addPlaceHook(requester *nested.Account, request *nestedGat
 	}
 
 	if !place.IsCreator(requester.ID) {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 		return
 	}
 
 	if v, ok := request.Data["url"].(string); ok {
 		url = v
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"url"})
+		response.Error(global.ErrIncomplete, []string{"url"})
 		return
 	}
 	if v, ok := request.Data["hook_name"].(string); ok {
 		if len(v) == 0 {
-			response.Error(global.ERR_INVALID, []string{"event_type"})
+			response.Error(global.ErrInvalid, []string{"event_type"})
 			return
 		}
 		hookName = v
@@ -47,14 +47,14 @@ func (s *HookService) addPlaceHook(requester *nested.Account, request *nestedGat
 	} else if v, ok := request.Data["event_type"].(string); ok {
 		eventType, _ = strconv.Atoi(v)
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"event_type"})
+		response.Error(global.ErrIncomplete, []string{"event_type"})
 		return
 	}
 
 	if s.Worker().Model().Hook.AddHook(requester.ID, hookName, place.ID, eventType, url) {
 		response.Ok()
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{"internal_error"})
+		response.Error(global.ErrUnknown, []string{"internal_error"})
 	}
 }
 
@@ -73,19 +73,19 @@ func (s *HookService) addAccountHook(requester *nested.Account, request *nestedG
 	}
 
 	if account.ID != requester.ID && !account.Authority.Admin {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 		return
 	}
 
 	if v, ok := request.Data["url"].(string); ok {
 		url = v
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"url"})
+		response.Error(global.ErrIncomplete, []string{"url"})
 		return
 	}
 	if v, ok := request.Data["hook_name"].(string); ok {
 		if len(v) == 0 {
-			response.Error(global.ERR_INVALID, []string{"event_type"})
+			response.Error(global.ErrInvalid, []string{"event_type"})
 			return
 		}
 		hookName = v
@@ -95,14 +95,14 @@ func (s *HookService) addAccountHook(requester *nested.Account, request *nestedG
 	} else if v, ok := request.Data["event_type"].(string); ok {
 		eventType, _ = strconv.Atoi(v)
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"event_type"})
+		response.Error(global.ErrIncomplete, []string{"event_type"})
 		return
 	}
 
 	if s.Worker().Model().Hook.AddHook(requester.ID, hookName, account.ID, eventType, url) {
 		response.Ok()
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{"internal_error"})
+		response.Error(global.ErrUnknown, []string{"internal_error"})
 	}
 }
 
@@ -112,18 +112,18 @@ func (s *HookService) removeHook(requester *nested.Account, request *nestedGatew
 	var hookID bson.ObjectId
 	if v, ok := request.Data["hook_id"].(string); ok {
 		if !bson.IsObjectIdHex(v) {
-			response.Error(global.ERR_INVALID, []string{"hook_id"})
+			response.Error(global.ErrInvalid, []string{"hook_id"})
 			return
 		}
 		hookID = bson.ObjectIdHex(v)
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"hook_id"})
+		response.Error(global.ErrIncomplete, []string{"hook_id"})
 		return
 	}
 	if s.Worker().Model().Hook.RemoveHook(hookID) {
 		response.Ok()
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{"internal_error"})
+		response.Error(global.ErrUnknown, []string{"internal_error"})
 		return
 	}
 }

@@ -28,18 +28,18 @@ func (s *PostService) addLabelToPost(requester *nested.Account, request *nestedG
 	// If label is not public and user is not member of the label then he/she has no permission
 	// to add this label to posts
 	if !label.Public && !label.IsMember(requester.ID) {
-		response.Error(global.ERR_ACCESS, []string{"not_member_of_label"})
+		response.Error(global.ErrAccess, []string{"not_member_of_label"})
 		return
 	}
 
 	// If user has no access to the post, then he/she cannot add label to post
 	if !post.HasAccess(requester.ID) {
-		response.Error(global.ERR_ACCESS, []string{"no_access_to_post"})
+		response.Error(global.ErrAccess, []string{"no_access_to_post"})
 		return
 	}
 
 	if post.Counters.Labels >= global.DefaultPostMaxLabels {
-		response.Error(global.ERR_LIMIT, []string{"number_of_labels"})
+		response.Error(global.ErrLimit, []string{"number_of_labels"})
 		return
 	}
 
@@ -50,7 +50,7 @@ func (s *PostService) addLabelToPost(requester *nested.Account, request *nestedG
 
 		response.Ok()
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{""})
+		response.Error(global.ErrUnknown, []string{""})
 	}
 	return
 }
@@ -72,12 +72,12 @@ func (s *PostService) addComment(requester *nested.Account, request *nestedGatew
 
 	// if post does not allow commenting return error
 	if post.SystemData.NoComment {
-		response.Error(global.ERR_ACCESS, []string{"no_comment"})
+		response.Error(global.ErrAccess, []string{"no_comment"})
 		return
 	}
 
 	if !post.HasAccess(requester.ID) {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 		return
 	}
 
@@ -85,14 +85,14 @@ func (s *PostService) addComment(requester *nested.Account, request *nestedGatew
 		attachmentID = nested.UniversalID(v)
 		attachment := s.Worker().Model().File.GetByID(attachmentID, nil)
 		if attachment == nil {
-			response.Error(global.ERR_INVALID, []string{"attachment_id"})
+			response.Error(global.ErrInvalid, []string{"attachment_id"})
 			return
 		}
 		txt = "[VOICE COMMENT]"
 	} else {
 		// comment with empty text is not allowed
 		if txt == "" {
-			response.Error(global.ERR_INVALID, []string{"txt"})
+			response.Error(global.ErrInvalid, []string{"txt"})
 			return
 		}
 	}
@@ -100,7 +100,7 @@ func (s *PostService) addComment(requester *nested.Account, request *nestedGatew
 	// create the comment object
 	c := _Model.Post.AddComment(post.ID, requester.ID, txt, attachmentID)
 	if c == nil {
-		response.Error(global.ERR_UNKNOWN, []string{"internal_error"})
+		response.Error(global.ErrUnknown, []string{"internal_error"})
 	}
 
 	// mark post as read
@@ -128,17 +128,17 @@ func (s *PostService) attachPlace(requester *nested.Account, request *nestedGate
 	if v, ok := request.Data["place_id"].(string); ok {
 		placeIDs = strings.Split(v, ",")
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"old_place_id"})
+		response.Error(global.ErrIncomplete, []string{"old_place_id"})
 		return
 	}
 	if len(post.PlaceIDs)+len(placeIDs) > global.DefaultPostMaxTargets {
-		response.Error(global.ERR_LIMIT, []string{"targets"})
+		response.Error(global.ErrLimit, []string{"targets"})
 		return
 	}
 
 	// User must be sender of the post and have at-least READ ACCESS to the post
 	if !post.HasAccess(requester.ID) || post.SenderID != requester.ID {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 		return
 	}
 
@@ -197,11 +197,11 @@ func (s *PostService) createPost(requester *nested.Account, request *nestedGatew
 	if v, ok := request.Data["targets"].(string); ok {
 		targets = strings.SplitN(v, ",", global.DefaultPostMaxTargets)
 		if len(targets) == 0 {
-			response.Error(global.ERR_INVALID, []string{"targets"})
+			response.Error(global.ErrInvalid, []string{"targets"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INVALID, []string{"targets"})
+		response.Error(global.ErrInvalid, []string{"targets"})
 		return
 	}
 	if v, ok := request.Data["label_id"].(string); ok {
@@ -249,7 +249,7 @@ func (s *PostService) createPost(requester *nested.Account, request *nestedGatew
 	}
 
 	if "" == strings.Trim(subject, " ") && "" == strings.Trim(body, " ") && len(attachments) == 0 {
-		response.Error(global.ERR_INCOMPLETE, []string{"subject", "body"})
+		response.Error(global.ErrIncomplete, []string{"subject", "body"})
 		return
 	}
 	// Separate places and emails
@@ -295,7 +295,7 @@ func (s *PostService) createPost(requester *nested.Account, request *nestedGatew
 	}
 
 	if len(mPlaces) == 0 && len(mEmails) == 0 {
-		response.Error(global.ERR_INVALID, []string{"targets"})
+		response.Error(global.ErrInvalid, []string{"targets"})
 		return
 	}
 
@@ -358,7 +358,7 @@ func (s *PostService) createPost(requester *nested.Account, request *nestedGatew
 
 	post := _Model.Post.AddPost(pcr)
 	if post == nil {
-		response.Error(global.ERR_UNKNOWN, []string{})
+		response.Error(global.ErrUnknown, []string{})
 		return
 	}
 
@@ -412,7 +412,7 @@ func (s *PostService) getPost(requester *nested.Account, request *nestedGateway.
 		markAsRead = v
 	}
 	if !post.HasAccess(requester.ID) {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 		return
 	}
 
@@ -451,10 +451,10 @@ func (s *PostService) editPost(requester *nested.Account, request *nestedGateway
 			s.Worker().Pusher().PostEdited(post)
 			response.Ok()
 		} else {
-			response.Error(global.ERR_UNKNOWN, []string{})
+			response.Error(global.ErrUnknown, []string{})
 		}
 	} else {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 	}
 
 }
@@ -476,7 +476,7 @@ func (s *PostService) getManyPosts(requester *nested.Account, request *nestedGat
 			}
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"post_id"})
+		response.Error(global.ErrIncomplete, []string{"post_id"})
 		return
 	}
 	posts := _Model.Post.GetPostsByIDs(postIDs)
@@ -549,7 +549,7 @@ func (s *PostService) getPostActivities(requester *nested.Account, request *nest
 	}
 
 	if !post.HasAccess(requester.ID) {
-		response.Error(global.ERR_ACCESS, []string{""})
+		response.Error(global.ErrAccess, []string{""})
 		return
 	}
 
@@ -588,7 +588,7 @@ func (s *PostService) getCommentsByPost(requester *nested.Account, request *nest
 			"comments":       r,
 		})
 	} else {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 	}
 	return
 }
@@ -627,11 +627,11 @@ func (s *PostService) getManyCommentsByIDs(requester *nested.Account, request *n
 			}
 		}
 		if len(commentIDs) == 0 {
-			response.Error(global.ERR_INVALID, []string{"comment_id"})
+			response.Error(global.ErrInvalid, []string{"comment_id"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"comment_id"})
+		response.Error(global.ErrIncomplete, []string{"comment_id"})
 		return
 	}
 
@@ -655,7 +655,7 @@ func (s *PostService) markPostAsRead(requester *nested.Account, request *nestedG
 	}
 
 	if !post.HasAccess(requester.ID) {
-		response.Error(global.ERR_ACCESS, []string{"post_id"})
+		response.Error(global.ErrAccess, []string{"post_id"})
 		return
 	}
 	post.MarkAsRead(requester.ID)
@@ -680,7 +680,7 @@ func (s *PostService) addToBookmarks(requester *nested.Account, request *nestedG
 
 	// check if user has access to the post
 	if !post.HasAccess(requester.ID) {
-		response.Error(global.ERR_ACCESS, []string{"post_id"})
+		response.Error(global.ErrAccess, []string{"post_id"})
 		return
 	}
 
@@ -722,7 +722,7 @@ func (s *PostService) removeComment(requester *nested.Account, request *nestedGa
 			return
 		}
 	}
-	response.Error(global.ERR_ACCESS, []string{})
+	response.Error(global.ErrAccess, []string{})
 
 	return
 
@@ -739,7 +739,7 @@ func (s *PostService) setPostNotification(requester *nested.Account, request *ne
 
 	// check if user has access to post
 	if !post.HasAccess(requester.ID) {
-		response.Error(global.ERR_ACCESS, []string{"post_id"})
+		response.Error(global.ErrAccess, []string{"post_id"})
 		return
 	}
 	if v, ok := request.Data["state"].(bool); ok {
@@ -772,7 +772,7 @@ func (s *PostService) removePost(requester *nested.Account, request *nestedGatew
 		_Model.Post.Remove(requester.ID, post.ID, place.ID)
 		response.Ok()
 	} else {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 	}
 	return
 
@@ -794,13 +794,13 @@ func (s *PostService) removeLabelFromPost(requester *nested.Account, request *ne
 	// If label is not public and user is not member of the label then he/she has no permission
 	// to add this label to posts
 	if !label.Public && !label.IsMember(requester.ID) {
-		response.Error(global.ERR_ACCESS, []string{"not_member_of_label"})
+		response.Error(global.ErrAccess, []string{"not_member_of_label"})
 		return
 	}
 
 	// If user has no access to the post, then he/she cannot add label to post
 	if !post.HasAccess(requester.ID) {
-		response.Error(global.ERR_ACCESS, []string{"no_access_to_post"})
+		response.Error(global.ErrAccess, []string{"no_access_to_post"})
 		return
 	}
 
@@ -810,7 +810,7 @@ func (s *PostService) removeLabelFromPost(requester *nested.Account, request *ne
 
 		response.Ok()
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{})
+		response.Error(global.ErrUnknown, []string{})
 	}
 }
 
@@ -827,26 +827,26 @@ func (s *PostService) movePost(requester *nested.Account, request *nestedGateway
 	if oldPlaceID, ok := request.Data["old_place_id"].(string); ok {
 		oldPlace = _Model.Place.GetByID(oldPlaceID, nil)
 		if oldPlace == nil {
-			response.Error(global.ERR_INVALID, []string{"old_place_id"})
+			response.Error(global.ErrInvalid, []string{"old_place_id"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"old_place_id"})
+		response.Error(global.ErrIncomplete, []string{"old_place_id"})
 		return
 	}
 	if newPlaceID, ok := request.Data["new_place_id"].(string); ok {
 		newPlace = _Model.Place.GetByID(newPlaceID, nil)
 		if newPlace == nil {
-			response.Error(global.ERR_INVALID, []string{"new_place_id"})
+			response.Error(global.ErrInvalid, []string{"new_place_id"})
 			return
 		}
 	} else {
-		response.Error(global.ERR_INCOMPLETE, []string{"new_place_id"})
+		response.Error(global.ErrIncomplete, []string{"new_place_id"})
 	}
 
 	// Post must already be in oldPlaceID and must not be in newPlaceID
 	if !post.IsInPlace(oldPlace.ID) || post.IsInPlace(newPlace.ID) {
-		response.Error(global.ERR_INVALID, []string{"old_place_id", "new_place_id"})
+		response.Error(global.ErrInvalid, []string{"old_place_id", "new_place_id"})
 		return
 	}
 
@@ -854,14 +854,14 @@ func (s *PostService) movePost(requester *nested.Account, request *nestedGateway
 	oldAccess := oldPlace.GetAccess(requester.ID)
 	newAccess := newPlace.GetAccess(requester.ID)
 	if !oldAccess[nested.PlaceAccessControl] || !newAccess[nested.PlaceAccessControl] {
-		response.Error(global.ERR_ACCESS, []string{"must_be_creator"})
+		response.Error(global.ErrAccess, []string{"must_be_creator"})
 		return
 	}
 	if _Model.Post.Move(post.ID, oldPlace.ID, newPlace.ID, requester.ID) {
 		go s.Worker().Pusher().PostMovedTo(post, oldPlace, newPlace)
 		response.Ok()
 	} else {
-		response.Error(global.ERR_UNKNOWN, []string{})
+		response.Error(global.ErrUnknown, []string{})
 	}
 }
 
@@ -877,13 +877,13 @@ func (s *PostService) retractPost(requester *nested.Account, request *nestedGate
 	if post.SenderID == requester.ID && nested.Timestamp() < post.Timestamp+global.DefaultPostRetractTime {
 		for _, placeID := range post.PlaceIDs {
 			if !_Model.Post.Remove(requester.ID, post.ID, placeID) {
-				response.Error(global.ERR_UNKNOWN, []string{})
+				response.Error(global.ErrUnknown, []string{})
 				return
 			}
 		}
 		response.Ok()
 	} else {
-		response.Error(global.ERR_ACCESS, []string{})
+		response.Error(global.ErrAccess, []string{})
 	}
 	return
 
@@ -909,7 +909,7 @@ func (s *PostService) whoHaveReadThisPost(requester *nested.Account, request *ne
 		return
 	}
 	if post.SenderID != requester.ID {
-		response.Error(global.ERR_ACCESS, []string{"post_id"})
+		response.Error(global.ErrAccess, []string{"post_id"})
 		return
 	}
 	pg := s.Worker().Argument().GetPagination(request)

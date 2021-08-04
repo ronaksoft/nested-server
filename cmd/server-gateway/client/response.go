@@ -51,7 +51,7 @@ func (r *Response) SessionInvalid() {
 	r.Type = "r"
 	r.Status = "err"
 	r.Data = tools.M{
-		"err_code": global.ERR_SESSION,
+		"err_code": global.ErrSession,
 		"items":    []string{"session is invalid"},
 	}
 }
@@ -59,7 +59,7 @@ func (r *Response) Timeout() {
 	r.Type = "r"
 	r.Status = "err"
 	r.Data = tools.M{
-		"err_code": global.ERR_TIMEOUT,
+		"err_code": global.ErrTimeout,
 		"items":    []string{"timeout"},
 	}
 }

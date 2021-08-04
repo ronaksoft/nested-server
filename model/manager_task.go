@@ -57,7 +57,7 @@ func (tm *TaskManager) readFromCache(taskID bson.ObjectId) *Task {
 	defer c.Close()
 	keyID := fmt.Sprintf("task:gob:%s", taskID.Hex())
 	if gobTask, err := redis.Bytes(c.Do("GET", keyID)); err != nil {
-		if err := _MongoDB.C(global.COLLECTION_TASKS).Find(
+		if err := _MongoDB.C(global.CollectionTasks).Find(
 			bson.M{"_id": taskID, "_removed": false},
 		).One(task); err != nil {
 			log.Warn(err.Error())
@@ -153,7 +153,7 @@ func (tm *TaskManager) CreateTask(tcr TaskCreateRequest) *Task {
 	}
 
 	// Create the task object in db
-	if err := db.C(global.COLLECTION_TASKS).Insert(task); err != nil {
+	if err := db.C(global.CollectionTasks).Insert(task); err != nil {
 		log.Warn(err.Error())
 		return nil
 	}
@@ -164,7 +164,7 @@ func (tm *TaskManager) CreateTask(tcr TaskCreateRequest) *Task {
 	}
 
 	// Update post document by adding the taskID to the post's related tasks set
-	if err := db.C(global.COLLECTION_POSTS).UpdateId(
+	if err := db.C(global.CollectionPosts).UpdateId(
 		task.RelatedPost,
 		bson.M{"$addToSet": bson.M{"related_tasks": task.ID}},
 	); err != nil {
@@ -182,7 +182,7 @@ func (tm *TaskManager) CreateTask(tcr TaskCreateRequest) *Task {
 
 	// Update the parent task if exists
 	defer _Manager.Task.removeCache(task.RelatedTo)
-	if err := db.C(global.COLLECTION_TASKS).Update(
+	if err := db.C(global.CollectionTasks).Update(
 		bson.M{
 			"_id":           task.RelatedTo,
 			"related_tasks": bson.M{"$ne": task.ID},
@@ -233,7 +233,7 @@ func (tm *TaskManager) GetByAssigneeID(accountID string, pg Pagination, filter [
 	if len(filter) > 0 {
 		q["status"] = bson.M{"$in": filter}
 	}
-	if err := db.C(global.COLLECTION_TASKS).Find(q).Sort("-_id").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&tasks); err != nil {
+	if err := db.C(global.CollectionTasks).Find(q).Sort("-_id").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&tasks); err != nil {
 		log.Warn(err.Error())
 	}
 	return tasks
@@ -255,7 +255,7 @@ func (tm *TaskManager) GetByAssignorID(accountID string, pg Pagination, filter [
 	if len(filter) > 0 {
 		q["status"] = bson.M{"$in": filter}
 	}
-	if err := db.C(global.COLLECTION_TASKS).Find(q).Sort("-_id").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&tasks); err != nil {
+	if err := db.C(global.CollectionTasks).Find(q).Sort("-_id").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&tasks); err != nil {
 		log.Warn(err.Error())
 	}
 	return tasks
@@ -280,7 +280,7 @@ func (tm *TaskManager) GetByWatcherEditorID(accountID string, pg Pagination, fil
 	if len(filter) > 0 {
 		q["status"] = bson.M{"$in": filter}
 	}
-	if err := db.C(global.COLLECTION_TASKS).Find(q).Sort("-_id").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&tasks); err != nil {
+	if err := db.C(global.CollectionTasks).Find(q).Sort("-_id").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&tasks); err != nil {
 		log.Warn(err.Error())
 	}
 	return tasks
@@ -302,7 +302,7 @@ func (tm *TaskManager) GetByCandidateID(accountID string, pg Pagination, filter 
 	if len(filter) > 0 {
 		q["status"] = bson.M{"$in": filter}
 	}
-	if err := db.C(global.COLLECTION_TASKS).Find(q).Sort("-_id").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&tasks); err != nil {
+	if err := db.C(global.CollectionTasks).Find(q).Sort("-_id").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&tasks); err != nil {
 		log.Warn(err.Error())
 	}
 	return tasks
@@ -362,7 +362,7 @@ func (tm *TaskManager) GetByCustomFilter(
 	}
 
 	task := new(Task)
-	iter := db.C(global.COLLECTION_TASKS).Find(q).Sort("-_id").Skip(pg.GetSkip()).Iter()
+	iter := db.C(global.CollectionTasks).Find(q).Sort("-_id").Skip(pg.GetSkip()).Iter()
 	defer iter.Close()
 	for iter.Next(task) {
 		if task.HasAccess(accountID, TaskAccessRead) {
@@ -389,7 +389,7 @@ func (tm *TaskManager) GetUpcomingTasks(accountID string, pg Pagination) []Task 
 		"status":   TaskStatusAssigned,
 		"_removed": false,
 	}
-	if err := db.C(global.COLLECTION_TASKS).Find(q).Sort("-due_date").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&tasks); err != nil {
+	if err := db.C(global.CollectionTasks).Find(q).Sort("-due_date").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&tasks); err != nil {
 		log.Warn(err.Error())
 	}
 	return tasks
@@ -407,7 +407,7 @@ func (tm *TaskManager) RemoveTask(taskID bson.ObjectId) bool {
 	task := _Manager.Task.GetByID(taskID)
 
 	// Remove the task document
-	if err := db.C(global.COLLECTION_TASKS).UpdateId(
+	if err := db.C(global.CollectionTasks).UpdateId(
 		taskID,
 		bson.M{"$set": bson.M{"_removed": true}},
 	); err != nil {
@@ -416,7 +416,7 @@ func (tm *TaskManager) RemoveTask(taskID bson.ObjectId) bool {
 	}
 
 	// Remove all related task activities
-	if _, err := db.C(global.COLLECTION_TASKS_ACTIVITIES).UpdateAll(
+	if _, err := db.C(global.CollectionTasksActivities).UpdateAll(
 		bson.M{"task_id": taskID},
 		bson.M{"$set": bson.M{"_removed": true}},
 	); err != nil {
@@ -426,7 +426,7 @@ func (tm *TaskManager) RemoveTask(taskID bson.ObjectId) bool {
 
 	// Remove the relation
 	if len(task.RelatedTasks) > 0 {
-		if _, err := db.C(global.COLLECTION_TASKS).UpdateAll(
+		if _, err := db.C(global.CollectionTasks).UpdateAll(
 			bson.M{"_id": bson.M{"$in": task.RelatedTasks}},
 			bson.M{"$unset": bson.M{"related_to": true}},
 		); err != nil {
@@ -435,7 +435,7 @@ func (tm *TaskManager) RemoveTask(taskID bson.ObjectId) bool {
 	}
 
 	if len(task.RelatedTo.Hex()) > 0 {
-		if err := db.C(global.COLLECTION_TASKS).Update(
+		if err := db.C(global.CollectionTasks).Update(
 			bson.M{"_id": task.RelatedTo, "related_tasks": task.ID},
 			bson.M{
 				"$pull": bson.M{"related_tasks": task.ID},
@@ -540,7 +540,7 @@ func (t *Task) AddAttachments(accountID string, fileIDs []UniversalID) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_TASKS).Update(
+	if err := db.C(global.CollectionTasks).Update(
 		bson.M{
 			"_id":         t.ID,
 			"attachments": bson.M{"$nin": fileIDs},
@@ -574,7 +574,7 @@ func (t *Task) AddLabels(accountID string, labelIDs []string) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_TASKS).Update(
+	if err := db.C(global.CollectionTasks).Update(
 		bson.M{
 			"_id":    t.ID,
 			"labels": bson.M{"$nin": labelIDs},
@@ -610,7 +610,7 @@ func (t *Task) AddToDo(accountID string, txt string, weight int) *TaskToDo {
 		Weight: weight,
 	}
 	t.ToDos = append(t.ToDos, toDo)
-	if err := db.C(global.COLLECTION_TASKS).UpdateId(
+	if err := db.C(global.CollectionTasks).UpdateId(
 		t.ID,
 		bson.M{
 			"$set": bson.M{"todos": t.ToDos},
@@ -637,7 +637,7 @@ func (t *Task) AddWatchers(adderID string, watcherIDs []string) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_TASKS).Update(
+	if err := db.C(global.CollectionTasks).Update(
 		bson.M{
 			"_id":      t.ID,
 			"watchers": bson.M{"$nin": watcherIDs},
@@ -669,7 +669,7 @@ func (t *Task) AddEditors(adderID string, editorIDs []string) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_TASKS).Update(
+	if err := db.C(global.CollectionTasks).Update(
 		bson.M{
 			"_id":     t.ID,
 			"editors": bson.M{"$nin": editorIDs},
@@ -702,7 +702,7 @@ func (t *Task) AddCandidates(adderID string, candidateIDs []string) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_TASKS).Update(
+	if err := db.C(global.CollectionTasks).Update(
 		bson.M{
 			"_id":        t.ID,
 			"candidates": bson.M{"$nin": candidateIDs},
@@ -733,7 +733,7 @@ func (t *Task) RemoveAttachments(accountID string, fileIDs []UniversalID) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_TASKS).Update(
+	if err := db.C(global.CollectionTasks).Update(
 		bson.M{
 			"_id":         t.ID,
 			"attachments": bson.M{"$all": fileIDs},
@@ -766,7 +766,7 @@ func (t *Task) RemoveLabels(accountID string, labelIDs []string) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_TASKS).Update(
+	if err := db.C(global.CollectionTasks).Update(
 		bson.M{
 			"_id":    t.ID,
 			"labels": bson.M{"$all": labelIDs},
@@ -805,7 +805,7 @@ func (t *Task) RemoveToDo(accountID string, todoID int) bool {
 			break
 		}
 	}
-	if err := db.C(global.COLLECTION_TASKS).UpdateId(
+	if err := db.C(global.CollectionTasks).UpdateId(
 		t.ID,
 		bson.M{"$pull": bson.M{"todos": bson.M{"_id": todoID}}},
 	); err != nil {
@@ -840,7 +840,7 @@ func (t *Task) RemoveEditors(removerID string, editorIDs []string) bool {
 			onlyEditorIDs = append(onlyEditorIDs, editorID)
 		}
 	}
-	if err := db.C(global.COLLECTION_TASKS).Update(
+	if err := db.C(global.CollectionTasks).Update(
 		bson.M{
 			"_id":     t.ID,
 			"editors": bson.M{"$all": editorIDs},
@@ -885,7 +885,7 @@ func (t *Task) RemoveWatchers(removerID string, watcherIDs []string) bool {
 			onlyWatcherIDs = append(onlyWatcherIDs, watcherID)
 		}
 	}
-	if err := db.C(global.COLLECTION_TASKS).Update(
+	if err := db.C(global.CollectionTasks).Update(
 		bson.M{
 			"_id":      t.ID,
 			"watchers": bson.M{"$all": watcherIDs},
@@ -917,7 +917,7 @@ func (t *Task) RemoveCandidates(removerID string, candidateIDs []string) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_TASKS).Update(
+	if err := db.C(global.CollectionTasks).Update(
 		bson.M{
 			"_id":        t.ID,
 			"candidates": bson.M{"$all": candidateIDs},
@@ -946,7 +946,7 @@ func (t *Task) UpdateMemberIDs() {
 	defer dbSession.Close()
 	memberIDs := tools.MB{}
 	memberIDs.AddKeys(t.WatcherIDs, t.EditorIDs, t.CandidateIDs, []string{t.AssigneeID, t.AssignorID})
-	if err := db.C(global.COLLECTION_TASKS).UpdateId(
+	if err := db.C(global.CollectionTasks).UpdateId(
 		t.ID,
 		bson.M{"$set": bson.M{"members": memberIDs.KeysToArray()}},
 	); err != nil {
@@ -967,7 +967,7 @@ func (t *Task) UpdateStatus(accountID string, newStatus TaskStatus) bool {
 	}
 	switch newStatus {
 	case TaskStatusCompleted:
-		if err := db.C(global.COLLECTION_TASKS).UpdateId(
+		if err := db.C(global.CollectionTasks).UpdateId(
 			t.ID,
 			bson.M{"$set": bson.M{
 				"status":       newStatus,
@@ -981,7 +981,7 @@ func (t *Task) UpdateStatus(accountID string, newStatus TaskStatus) bool {
 		_Manager.Report.CountTaskCompleted()
 	case TaskStatusAssigned, TaskStatusCanceled, TaskStatusFailed,
 		TaskStatusHold, TaskStatusNotAssigned, TaskStatusRejected, TaskStatusOverdue:
-		if err := db.C(global.COLLECTION_TASKS).UpdateId(
+		if err := db.C(global.CollectionTasks).UpdateId(
 			t.ID,
 			bson.M{"$set": bson.M{
 				"status":       newStatus,
@@ -1017,7 +1017,7 @@ func (t *Task) UpdateTodo(accountID string, todoID int, text string, weight int,
 		return false
 	}
 
-	if err := db.C(global.COLLECTION_TASKS).Update(
+	if err := db.C(global.CollectionTasks).Update(
 		bson.M{
 			"_id":       t.ID,
 			"todos._id": todoID,
@@ -1055,7 +1055,7 @@ func (t *Task) Update(accountID string, title, desc string, dueDate uint64, dueD
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_TASKS).UpdateId(
+	if err := db.C(global.CollectionTasks).UpdateId(
 		t.ID,
 		bson.M{
 			"$set": bson.M{
@@ -1100,7 +1100,7 @@ func (t *Task) UpdateAssignee(accountID string, candidateIDs []string) bool {
 	defer dbSession.Close()
 
 	if len(candidateIDs) == 1 {
-		if err := db.C(global.COLLECTION_TASKS).UpdateId(
+		if err := db.C(global.CollectionTasks).UpdateId(
 			t.ID,
 			bson.M{
 				"$set": bson.M{
@@ -1118,7 +1118,7 @@ func (t *Task) UpdateAssignee(accountID string, candidateIDs []string) bool {
 			_Manager.TaskActivity.StatusChanged(t.ID, accountID, TaskStatusAssigned)
 		}
 	} else {
-		if err := db.C(global.COLLECTION_TASKS).UpdateId(
+		if err := db.C(global.CollectionTasks).UpdateId(
 			t.ID,
 			bson.M{
 				"$set": bson.M{
@@ -1253,7 +1253,7 @@ func (t *Task) HasActivity(activityID bson.ObjectId) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if n, err := db.C(global.COLLECTION_TASKS_ACTIVITIES).Find(
+	if n, err := db.C(global.CollectionTasksActivities).Find(
 		bson.M{"_id": activityID, "task_id": t.ID},
 	).Count(); err != nil {
 		return false
@@ -1290,7 +1290,7 @@ func (t *Task) Accept(accountID string) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_TASKS).UpdateId(
+	if err := db.C(global.CollectionTasks).UpdateId(
 		t.ID,
 		bson.M{
 			"$set": bson.M{
@@ -1317,7 +1317,7 @@ func (t *Task) Reject(accountID, reason string) bool {
 	defer dbSession.Close()
 
 	if t.Counters.Candidates > 1 {
-		if err := db.C(global.COLLECTION_TASKS).Update(
+		if err := db.C(global.CollectionTasks).Update(
 			bson.M{
 				"_id":        t.ID,
 				"candidates": accountID,
@@ -1333,7 +1333,7 @@ func (t *Task) Reject(accountID, reason string) bool {
 
 		_Manager.TaskActivity.CandidateRemoved(t.ID, accountID, []string{accountID})
 	} else {
-		if err := db.C(global.COLLECTION_TASKS).Update(
+		if err := db.C(global.CollectionTasks).Update(
 			bson.M{
 				"_id":        t.ID,
 				"candidates": accountID,
@@ -1365,7 +1365,7 @@ func (t *Task) Resign(accountID, reason string) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_TASKS).Update(
+	if err := db.C(global.CollectionTasks).Update(
 		bson.M{
 			"_id":      t.ID,
 			"assignee": accountID,

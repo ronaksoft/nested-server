@@ -19,7 +19,7 @@ func (pm *PostActivityManager) Remove(activityID bson.ObjectId) bool {
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	if err := db.C(global.COLLECTION_POSTS_ACTIVITIES).UpdateId(
+	if err := db.C(global.CollectionPostsActivities).UpdateId(
 		activityID,
 		bson.M{"$set": bson.M{"_removed": true}},
 	); err != nil {
@@ -35,7 +35,7 @@ func (pm *PostActivityManager) GetActivityByID(activityID bson.ObjectId) *PostAc
 	defer dbSession.Close()
 
 	postActivity := new(PostActivity)
-	if err := db.C(global.COLLECTION_POSTS_ACTIVITIES).FindId(activityID).One(postActivity); err != nil {
+	if err := db.C(global.CollectionPostsActivities).FindId(activityID).One(postActivity); err != nil {
 		log.Warn(err.Error())
 		return nil
 	}
@@ -48,7 +48,7 @@ func (pm *PostActivityManager) GetActivitiesByIDs(activityIDs []bson.ObjectId) [
 	defer dbSession.Close()
 
 	postActivities := make([]PostActivity, 0, len(activityIDs))
-	if err := db.C(global.COLLECTION_POSTS_ACTIVITIES).Find(
+	if err := db.C(global.CollectionPostsActivities).Find(
 		bson.M{"_id": bson.M{"$in": activityIDs}},
 	).All(&postActivities); err != nil {
 		log.Warn(err.Error())
@@ -75,7 +75,7 @@ func (pm *PostActivityManager) GetActivitiesByPostID(postID bson.ObjectId, pg Pa
 		q["action"] = bson.M{"$in": filter}
 	}
 
-	Q := db.C(global.COLLECTION_POSTS_ACTIVITIES).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
+	Q := db.C(global.CollectionPostsActivities).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
 	// Log Explain Query
 
 	if err := Q.All(&postActivities); err != nil {
@@ -100,7 +100,7 @@ func (pm *PostActivityManager) CommentAdd(postID bson.ObjectId, actorID string, 
 		CommentID: commentID,
 	}
 
-	if err := db.C(global.COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionPostsActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -121,7 +121,7 @@ func (pm *PostActivityManager) CommentRemove(postID bson.ObjectId, actorID strin
 		CommentID: commentID,
 	}
 
-	if err := db.C(global.COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionPostsActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -142,7 +142,7 @@ func (pm *PostActivityManager) LabelAdd(postID bson.ObjectId, actorID string, la
 		LabelID:   labelID,
 	}
 
-	if err := db.C(global.COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionPostsActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -163,7 +163,7 @@ func (pm *PostActivityManager) LabelRemove(postID bson.ObjectId, actorID string,
 		LabelID:   labelID,
 	}
 
-	if err := db.C(global.COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionPostsActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -185,7 +185,7 @@ func (pm *PostActivityManager) PlaceMove(postID bson.ObjectId, actorID string, o
 		NewPlaceID: newPlaceID,
 	}
 
-	if err := db.C(global.COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionPostsActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -206,7 +206,7 @@ func (pm *PostActivityManager) PlaceAttached(postID bson.ObjectId, actorID strin
 		NewPlaceID: newPlaceID,
 	}
 
-	if err := db.C(global.COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionPostsActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
@@ -226,7 +226,7 @@ func (pm *PostActivityManager) Edit(postID bson.ObjectId, actorID string) {
 		ActorID:   actorID,
 	}
 
-	if err := db.C(global.COLLECTION_POSTS_ACTIVITIES).Insert(v); err != nil {
+	if err := db.C(global.CollectionPostsActivities).Insert(v); err != nil {
 		log.Warn(err.Error())
 	}
 	return
