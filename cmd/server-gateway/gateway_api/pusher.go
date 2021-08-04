@@ -2,6 +2,7 @@ package api
 
 import (
 	"git.ronaksoft.com/nested/server/pkg/global"
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"regexp"
 	"strings"
 
@@ -145,7 +146,7 @@ func (pm *PushManager) PostCommentAdded(post *nested.Post, comment *nested.Comme
 	// find mentioned ids and External Notifications
 	regx, _ := regexp.Compile(`@([a-zA-Z0-9-]*)(\s|$)`)
 	matches := regx.FindAllString(comment.Body, 100)
-	mentionedIDs := nested.MB{}
+	mentionedIDs := tools.MB{}
 	for _, m := range matches {
 		mentionedID := strings.Trim(string(m[1:]), " ") // remove @ from the mentioned id
 		if post.HasAccess(mentionedID) {
@@ -254,7 +255,7 @@ func (pm *PushManager) TaskAccepted(task *nested.Task, actorID string) {
 	pm.Notification.InternalNotificationSyncPush([]string{task.AssignorID}, nested.NotificationTypeTaskAccepted)
 
 	// send task activity sync over the wire
-	accountIDs := nested.MB{}
+	accountIDs := tools.MB{}
 	accountIDs.AddKeys(
 		[]string{task.AssignorID, task.AssigneeID},
 		task.CandidateIDs,
@@ -275,7 +276,7 @@ func (pm *PushManager) TaskFailed(task *nested.Task, actorID string) {
 	}
 
 	// send task activity sync over the wire
-	accountIDs := nested.MB{}
+	accountIDs := tools.MB{}
 	accountIDs.AddKeys(
 		[]string{task.AssignorID, task.AssigneeID},
 		task.CandidateIDs,
@@ -296,7 +297,7 @@ func (pm *PushManager) TaskCompleted(task *nested.Task, actorID string) {
 	}
 
 	// send task activity sync over the wire
-	accountIDs := nested.MB{}
+	accountIDs := tools.MB{}
 	accountIDs.AddKeys(
 		[]string{task.AssignorID, task.AssigneeID},
 		task.CandidateIDs,
@@ -317,7 +318,7 @@ func (pm *PushManager) TaskHold(task *nested.Task, actorID string) {
 	}
 
 	// send task activity sync over the wire
-	accountIDs := nested.MB{}
+	accountIDs := tools.MB{}
 	accountIDs.AddKeys(
 		[]string{task.AssignorID, task.AssigneeID},
 		task.CandidateIDs,
@@ -338,7 +339,7 @@ func (pm *PushManager) TaskInProgress(task *nested.Task, actorID string) {
 	}
 
 	// send task activity sync over the wire
-	accountIDs := nested.MB{}
+	accountIDs := tools.MB{}
 	accountIDs.AddKeys(
 		[]string{task.AssignorID, task.AssigneeID},
 		task.CandidateIDs,
@@ -350,7 +351,7 @@ func (pm *PushManager) TaskCommentAdded(task *nested.Task, actorID string, activ
 	// find mentioned ids and External Notifications
 	regx, _ := regexp.Compile(`@([a-zA-Z0-9-]*)(\s|$)`)
 	matches := regx.FindAllString(commentText, 100)
-	mentionedIDs := nested.MB{}
+	mentionedIDs := tools.MB{}
 	for _, m := range matches {
 		mentionedID := strings.Trim(string(m[1:]), " ") // remove @ from the mentioned id
 		if task.HasAccess(mentionedID, nested.TaskAccessRead) {
@@ -376,7 +377,7 @@ func (pm *PushManager) TaskCommentAdded(task *nested.Task, actorID string, activ
 	}
 
 	// send task activity sync over the wire
-	accountIDs := nested.MB{}
+	accountIDs := tools.MB{}
 	accountIDs.AddKeys(
 		[]string{task.AssignorID, task.AssigneeID},
 		task.CandidateIDs,
@@ -394,7 +395,7 @@ func (pm *PushManager) TaskAddedToCandidates(task *nested.Task, actorID string, 
 	pm.Notification.InternalNotificationSyncPush(memberIDs, nested.NotificationTypeTaskAddToCandidates)
 
 	// send task activity sync over the wire
-	accountIDs := nested.MB{}
+	accountIDs := tools.MB{}
 	accountIDs.AddKeys(
 		[]string{task.AssignorID, task.AssigneeID},
 		task.CandidateIDs,
@@ -413,7 +414,7 @@ func (pm *PushManager) TaskAddedToWatchers(task *nested.Task, actorID string, me
 	pm.Notification.InternalNotificationSyncPush(memberIDs, nested.NotificationTypeTaskAddToWatchers)
 
 	// send task activity sync over the wire
-	accountIDs := nested.MB{}
+	accountIDs := tools.MB{}
 	accountIDs.AddKeys(
 		[]string{task.AssignorID, task.AssigneeID},
 		task.CandidateIDs,
@@ -432,7 +433,7 @@ func (pm *PushManager) TaskAddedToEditors(task *nested.Task, actorID string, mem
 	pm.Notification.InternalNotificationSyncPush(memberIDs, nested.NotificationTypeTaskAddToEditors)
 
 	// send task activity sync over the wire
-	accountIDs := nested.MB{}
+	accountIDs := tools.MB{}
 	accountIDs.AddKeys(
 		[]string{task.AssignorID, task.AssigneeID},
 		task.CandidateIDs,
@@ -443,7 +444,7 @@ func (pm *PushManager) TaskAddedToEditors(task *nested.Task, actorID string, mem
 }
 func (pm *PushManager) TaskNewActivity(task *nested.Task, action global.TaskAction) {
 	// send task activity sync over the wire
-	accountIDs := nested.MB{}
+	accountIDs := tools.MB{}
 	accountIDs.AddKeys(
 		[]string{task.AssignorID, task.AssigneeID},
 		task.CandidateIDs,

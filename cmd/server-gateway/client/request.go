@@ -2,8 +2,8 @@ package nestedGateway
 
 import (
 	"encoding/json"
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 
-	"git.ronaksoft.com/nested/server/model"
 	"github.com/globalsign/mgo/bson"
 )
 
@@ -22,7 +22,7 @@ type Request struct {
 	ClientIP        string        `json:"_cip"`
 	UserAgent       string        `json:"_ua"`
 	WebsocketID     string        `json:"ws_id"`
-	Data            nested.M      `json:"data"`
+	Data            tools.M       `json:"data"`
 	PacketSize      int           `json:"-"`
 	ResponseChannel chan Response
 }

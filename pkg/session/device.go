@@ -1,4 +1,4 @@
-package pusher
+package session
 
 import (
 	"git.ronaksoft.com/nested/server/pkg/global"

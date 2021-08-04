@@ -1,6 +1,8 @@
 package api
 
 import (
+	"git.ronaksoft.com/nested/server/pkg/global"
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"strconv"
 	"strings"
 	"time"
@@ -70,7 +72,7 @@ func (sw *Worker) Execute(request *nestedGateway.Request, response *nestedGatewa
 		if sw.Model().Session.Verify(request.SessionKey, request.SessionSec) {
 			requester = sw.Model().Session.GetAccount(request.SessionKey)
 			if requester == nil {
-				response.Error(nested.ERR_UNKNOWN, []string{"internal error"})
+				response.Error(global.ERR_UNKNOWN, []string{"internal error"})
 				return
 			}
 			if requester.Authority.Admin {
@@ -80,7 +82,7 @@ func (sw *Worker) Execute(request *nestedGateway.Request, response *nestedGatewa
 			}
 		} else {
 			// response with ERR_SESSION  and go to next request
-			response.Error(nested.ERR_INVALID, []string{"session invalid"})
+			response.Error(global.ERR_INVALID, []string{"session invalid"})
 			return
 		}
 	} else if len(request.AppToken) > 0 {
@@ -96,7 +98,7 @@ func (sw *Worker) Execute(request *nestedGateway.Request, response *nestedGatewa
 	}
 
 	if requester != nil && requester.Disabled {
-		response.Error(nested.ERR_ACCESS, []string{"account_is_disabled"})
+		response.Error(global.ERR_ACCESS, []string{"account_is_disabled"})
 		return
 	}
 
@@ -174,11 +176,11 @@ func (ae *ArgumentHandler) GetAccount(request *nestedGateway.Request, response *
 	if accountID, ok := request.Data["account_id"].(string); ok {
 		account = ae.worker.Model().Account.GetByID(accountID, nil)
 		if account == nil {
-			response.Error(nested.ERR_INVALID, []string{"account_id"})
+			response.Error(global.ERR_INVALID, []string{"account_id"})
 			return nil
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"account_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"account_id"})
 		return nil
 	}
 	return account
@@ -187,8 +189,8 @@ func (ae *ArgumentHandler) GetAccounts(request *nestedGateway.Request, response 
 	var uniqueAccountIDs []string
 	var accounts []nested.Account
 	if csAccountIDs, ok := request.Data["account_id"].(string); ok {
-		accountIDs := strings.SplitN(csAccountIDs, ",", nested.DEFAULT_MAX_RESULT_LIMIT)
-		mapAccountIDs := nested.MB{}
+		accountIDs := strings.SplitN(csAccountIDs, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		mapAccountIDs := tools.MB{}
 		for _, accountID := range accountIDs {
 			mapAccountIDs[accountID] = true
 		}
@@ -197,15 +199,15 @@ func (ae *ArgumentHandler) GetAccounts(request *nestedGateway.Request, response 
 		}
 		accounts = ae.worker.Model().Account.GetAccountsByIDs(uniqueAccountIDs)
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"account_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"account_id"})
 	}
 	return accounts
 }
 func (ae *ArgumentHandler) GetAccountIDs(request *nestedGateway.Request, response *nestedGateway.Response) []string {
 	var uniqueAccountIDs []string
 	if csAccountIDs, ok := request.Data["account_id"].(string); ok {
-		accountIDs := strings.SplitN(csAccountIDs, ",", nested.DEFAULT_MAX_RESULT_LIMIT)
-		mapAccountIDs := nested.MB{}
+		accountIDs := strings.SplitN(csAccountIDs, ",", global.DEFAULT_MAX_RESULT_LIMIT)
+		mapAccountIDs := tools.MB{}
 		for _, accountID := range accountIDs {
 			mapAccountIDs[accountID] = true
 		}
@@ -213,7 +215,7 @@ func (ae *ArgumentHandler) GetAccountIDs(request *nestedGateway.Request, respons
 			uniqueAccountIDs = append(uniqueAccountIDs, accountID)
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"account_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"account_id"})
 	}
 	return uniqueAccountIDs
 }
@@ -223,15 +225,15 @@ func (ae *ArgumentHandler) GetComment(request *nestedGateway.Request, response *
 		if bson.IsObjectIdHex(commentID) {
 			comment = ae.worker.Model().Post.GetCommentByID(bson.ObjectIdHex(commentID))
 			if comment == nil {
-				response.Error(nested.ERR_UNAVAILABLE, []string{"comment_id"})
+				response.Error(global.ERR_UNAVAILABLE, []string{"comment_id"})
 				return nil
 			}
 		} else {
-			response.Error(nested.ERR_INVALID, []string{"comment_id"})
+			response.Error(global.ERR_INVALID, []string{"comment_id"})
 			return nil
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"comment_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"comment_id"})
 		return nil
 	}
 	return comment
@@ -241,11 +243,11 @@ func (ae *ArgumentHandler) GetLabel(request *nestedGateway.Request, response *ne
 	if labelID, ok := request.Data["label_id"].(string); ok {
 		label = ae.worker.Model().Label.GetByID(labelID)
 		if label == nil {
-			response.Error(nested.ERR_INVALID, []string{"label_id"})
+			response.Error(global.ERR_INVALID, []string{"label_id"})
 			return nil
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"label_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"label_id"})
 		return nil
 	}
 	return label
@@ -255,16 +257,16 @@ func (ae *ArgumentHandler) GetLabelRequest(request *nestedGateway.Request, respo
 
 	if labelRequestID, ok := request.Data["request_id"].(string); ok {
 		if !bson.IsObjectIdHex(labelRequestID) {
-			response.Error(nested.ERR_INVALID, []string{"request_id"})
+			response.Error(global.ERR_INVALID, []string{"request_id"})
 			return nil
 		}
 		labelRequest = ae.worker.Model().Label.GetRequestByID(bson.ObjectIdHex(labelRequestID))
 		if labelRequest == nil {
-			response.Error(nested.ERR_INVALID, []string{"request_id"})
+			response.Error(global.ERR_INVALID, []string{"request_id"})
 			return nil
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"request_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"request_id"})
 		return nil
 	}
 	return labelRequest
@@ -274,11 +276,11 @@ func (ae *ArgumentHandler) GetPlace(request *nestedGateway.Request, response *ne
 	if placeID, ok := request.Data["place_id"].(string); ok {
 		place = ae.worker.Model().Place.GetByID(placeID, nil)
 		if place == nil {
-			response.Error(nested.ERR_INVALID, []string{"place_id"})
+			response.Error(global.ERR_INVALID, []string{"place_id"})
 			return nil
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"place_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"place_id"})
 		return nil
 	}
 	return place
@@ -289,15 +291,15 @@ func (ae *ArgumentHandler) GetPost(request *nestedGateway.Request, response *nes
 		if bson.IsObjectIdHex(postID) {
 			post = ae.worker.Model().Post.GetPostByID(bson.ObjectIdHex(postID))
 			if post == nil {
-				response.Error(nested.ERR_UNAVAILABLE, []string{"post_id"})
+				response.Error(global.ERR_UNAVAILABLE, []string{"post_id"})
 				return nil
 			}
 		} else {
-			response.Error(nested.ERR_INVALID, []string{"post_id"})
+			response.Error(global.ERR_INVALID, []string{"post_id"})
 			return nil
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"post_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"post_id"})
 		return nil
 	}
 	return post
@@ -336,15 +338,15 @@ func (ae *ArgumentHandler) GetTask(request *nestedGateway.Request, response *nes
 		if bson.IsObjectIdHex(taskID) {
 			task = ae.worker.Model().Task.GetByID(bson.ObjectIdHex(taskID))
 			if task == nil {
-				response.Error(nested.ERR_UNAVAILABLE, []string{"task_id"})
+				response.Error(global.ERR_UNAVAILABLE, []string{"task_id"})
 				return nil
 			}
 		} else {
-			response.Error(nested.ERR_INVALID, []string{"task_id"})
+			response.Error(global.ERR_INVALID, []string{"task_id"})
 			return nil
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"task_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"task_id"})
 		return nil
 	}
 	return task

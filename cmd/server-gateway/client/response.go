@@ -1,7 +1,8 @@
 package nestedGateway
 
 import (
-	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/pkg/global"
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 )
 
 // Response
@@ -11,13 +12,13 @@ type Response struct {
 	RequestID string   `json:"_reqid" bson:"_reqid"`
 	Status    string   `json:"status" bson:"status"`
 	Late      bool     `json:"late" bson:"late"`
-	Data      nested.M `json:"data" bson:"data"`
+	Data      tools.M `json:"data" bson:"data"`
 }
 
-func (r *Response) Error(code nested.ErrorCode, items []string) {
+func (r *Response) Error(code global.ErrorCode, items []string) {
 	r.Type = "r"
 	r.Status = "err"
-	r.Data = nested.M{
+	r.Data = tools.M{
 		"err_code": code,
 		"items":    items,
 	}
@@ -25,7 +26,7 @@ func (r *Response) Error(code nested.ErrorCode, items []string) {
 func (r *Response) NotImplemented() {
 	r.Type = "r"
 	r.Status = "err"
-	r.Data = nested.M{
+	r.Data = tools.M{
 		"err_code": -1,
 		"items":    []string{"API Not Implemented."},
 	}
@@ -33,7 +34,7 @@ func (r *Response) NotImplemented() {
 func (r *Response) NotAuthorized() {
 	r.Type = "r"
 	r.Status = "err"
-	r.Data = nested.M{
+	r.Data = tools.M{
 		"err_code": -1,
 		"items":    []string{"You are not authorized."},
 	}
@@ -41,7 +42,7 @@ func (r *Response) NotAuthorized() {
 func (r *Response) NotInitialized() {
 	r.Type = "r"
 	r.Status = "err"
-	r.Data = nested.M{
+	r.Data = tools.M{
 		"err_code": -1,
 		"items":    []string{"Response not initialized."},
 	}
@@ -49,28 +50,28 @@ func (r *Response) NotInitialized() {
 func (r *Response) SessionInvalid() {
 	r.Type = "r"
 	r.Status = "err"
-	r.Data = nested.M{
-		"err_code": nested.ERR_SESSION,
+	r.Data = tools.M{
+		"err_code": global.ERR_SESSION,
 		"items":    []string{"session is invalid"},
 	}
 }
 func (r *Response) Timeout() {
 	r.Type = "r"
 	r.Status = "err"
-	r.Data = nested.M{
-		"err_code": nested.ERR_TIMEOUT,
+	r.Data = tools.M{
+		"err_code": global.ERR_TIMEOUT,
 		"items":    []string{"timeout"},
 	}
 }
 
-func (r *Response) OkWithData(data nested.M) {
+func (r *Response) OkWithData(data tools.M) {
 	r.Type = "r"
 	r.Status = "ok"
 	r.Data = data
 }
 func (r *Response) Ok() {
 	r.Type = "r"
-	r.Data = nested.M{}
+	r.Data = tools.M{}
 	r.Status = "ok"
 }
 func (r *Response) SetLate(reqID string) {

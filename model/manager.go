@@ -7,7 +7,7 @@ import (
 	"git.ronaksoft.com/nested/server/pkg/cache"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
-	"git.ronaksoft.com/nested/server/pkg/pusher"
+	"git.ronaksoft.com/nested/server/pkg/session"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 	"go.uber.org/zap"
@@ -49,8 +49,8 @@ func init() {
 
 // Manager is the wrapper around all the other managers
 type Manager struct {
-	Device        *pusher.DeviceManager
-	Websocket     *pusher.WebsocketManager
+	Device        *session.DeviceManager
+	Websocket     *session.WebsocketManager
 	Account       *AccountManager
 	App           *AppManager
 	Contact       *ContactManager
@@ -123,8 +123,8 @@ func NewManager(instanceID, mongoDSN, redisDSN string, logLevel int) (*Manager, 
 	}
 
 	_Manager = new(Manager)
-	_Manager.Device = pusher.NewDeviceManager(_MongoSession)
-	_Manager.Websocket = pusher.NewWebsocketManager(_Cache)
+	_Manager.Device = session.NewDeviceManager(_MongoSession)
+	_Manager.Websocket = session.NewWebsocketManager(_Cache)
 
 	_Manager.Account = NewAccountManager()
 	_Manager.App = NewAppManager()

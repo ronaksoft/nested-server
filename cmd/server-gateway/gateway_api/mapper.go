@@ -3,6 +3,7 @@ package api
 import (
 	"git.ronaksoft.com/nested/server/model"
 	"git.ronaksoft.com/nested/server/pkg/global"
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"github.com/globalsign/mgo/bson"
 	"sort"
 )
@@ -26,8 +27,8 @@ func NewMapper(worker *Worker) *Mapper {
 	m.worker = worker
 	return m
 }
-func (m *Mapper) Account(account nested.Account, details bool) nested.M {
-	r := nested.M{
+func (m *Mapper) Account(account nested.Account, details bool) tools.M {
+	r := tools.M{
 		"_id":     account.ID,
 		"fname":   account.FirstName,
 		"lname":   account.LastName,
@@ -60,11 +61,11 @@ func (m *Mapper) Account(account nested.Account, details bool) nested.M {
 	}
 	return r
 }
-func (m *Mapper) Comment(comment nested.Comment) nested.M {
+func (m *Mapper) Comment(comment nested.Comment) tools.M {
 	s := m.worker.Model().Account.GetByID(comment.SenderID, nil)
-	r := nested.M{
+	r := tools.M{
 		"_id": comment.ID.Hex(),
-		"sender": nested.M{
+		"sender": tools.M{
 			"_id":     s.ID,
 			"fname":   s.FirstName,
 			"lname":   s.LastName,
@@ -85,7 +86,7 @@ func (m *Mapper) Comment(comment nested.Comment) nested.M {
 	}
 	return r
 }
-func (m *Mapper) Contact(requester *nested.Account, account nested.Account) nested.M {
+func (m *Mapper) Contact(requester *nested.Account, account nested.Account) tools.M {
 	// TODO:: this is awful code fix it as soon as possible
 	contacts := m.worker.Model().Contact.GetContacts(requester.ID)
 	var isMutual, isFavorite, isContact bool
@@ -110,7 +111,7 @@ func (m *Mapper) Contact(requester *nested.Account, account nested.Account) nest
 			}
 		}
 	}
-	r := nested.M{
+	r := tools.M{
 		"_id":         account.ID,
 		"fname":       account.FirstName,
 		"lname":       account.LastName,
@@ -121,12 +122,12 @@ func (m *Mapper) Contact(requester *nested.Account, account nested.Account) nest
 	}
 	return r
 }
-func (m *Mapper) FileInfo(f nested.FileInfo) nested.M {
+func (m *Mapper) FileInfo(f nested.FileInfo) tools.M {
 	// if UploadType is not set then set upload type as FILE
 	if f.UploadType == "" {
 		f.UploadType = nested.UploadTypeFile
 	}
-	r := nested.M{
+	r := tools.M{
 		"_id":         f.ID,
 		"filename":    f.Filename,
 		"type":        f.Type,
@@ -141,8 +142,8 @@ func (m *Mapper) FileInfo(f nested.FileInfo) nested.M {
 	}
 	return r
 }
-func (m *Mapper) Label(requester *nested.Account, label nested.Label, details bool) nested.M {
-	r := nested.M{
+func (m *Mapper) Label(requester *nested.Account, label nested.Label, details bool) tools.M {
+	r := tools.M{
 		"_id":       label.ID,
 		"title":     label.Title,
 		"code":      label.ColourCode,
@@ -158,7 +159,7 @@ func (m *Mapper) Label(requester *nested.Account, label nested.Label, details bo
 		} else {
 			members = m.worker.Model().Account.GetAccountsByIDs(label.Members)
 		}
-		var topMembers []nested.M
+		var topMembers []tools.M
 		for _, member := range members {
 			topMembers = append(topMembers, m.Account(member, false))
 		}
@@ -167,10 +168,10 @@ func (m *Mapper) Label(requester *nested.Account, label nested.Label, details bo
 	}
 	return r
 }
-func (m *Mapper) LabelRequest(labelRequest nested.LabelRequest) nested.M {
+func (m *Mapper) LabelRequest(labelRequest nested.LabelRequest) tools.M {
 	var label *nested.Label
 	account := m.worker.Model().Account.GetByID(labelRequest.RequesterID, nil)
-	r := nested.M{
+	r := tools.M{
 		"_id":       labelRequest.ID,
 		"title":     labelRequest.Title,
 		"code":      labelRequest.ColourCode,
@@ -179,7 +180,7 @@ func (m *Mapper) LabelRequest(labelRequest nested.LabelRequest) nested.M {
 	}
 	if len(labelRequest.LabelID) > 0 {
 		label = m.worker.Model().Label.GetByID(labelRequest.LabelID)
-		r["label"] = nested.M{
+		r["label"] = tools.M{
 			"_id":   label.ID,
 			"title": label.Title,
 			"code":  label.ColourCode,
@@ -187,8 +188,8 @@ func (m *Mapper) LabelRequest(labelRequest nested.LabelRequest) nested.M {
 	}
 	return r
 }
-func (m *Mapper) Notification(requester *nested.Account, n nested.Notification) nested.M {
-	r := nested.M{
+func (m *Mapper) Notification(requester *nested.Account, n nested.Notification) tools.M {
+	r := tools.M{
 		"_id":         n.ID,
 		"type":        n.Type,
 		"actor_id":    n.ActorID,
@@ -199,7 +200,7 @@ func (m *Mapper) Notification(requester *nested.Account, n nested.Notification) 
 	}
 	s := m.worker.Model().Account.GetByID(n.ActorID, nil)
 	if s != nil {
-		r["actor"] = nested.M{
+		r["actor"] = tools.M{
 			"_id":     s.ID,
 			"fname":   s.FirstName,
 			"lname":   s.LastName,
@@ -220,7 +221,7 @@ func (m *Mapper) Notification(requester *nested.Account, n nested.Notification) 
 		}
 	case nested.NotificationTypeComment:
 		comment := m.worker.Model().Post.GetCommentByID(n.CommentID)
-		otherCommenters := make([]nested.M, 0, len(n.Data.Others))
+		otherCommenters := make([]tools.M, 0, len(n.Data.Others))
 		r["post_id"] = n.PostID.Hex()
 		r["comment"] = m.worker.Map().Comment(*comment)
 		for _, account := range m.worker.Model().Account.GetAccountsByIDs(n.Data.Others) {
@@ -235,7 +236,7 @@ func (m *Mapper) Notification(requester *nested.Account, n nested.Notification) 
 			r["comment_text"] = comment.Body
 		}
 	case nested.NotificationTypeJoinedPlace:
-		p := m.worker.Model().Place.GetByID(n.PlaceID, nested.M{"name": 1, "picture": 1})
+		p := m.worker.Model().Place.GetByID(n.PlaceID, tools.M{"name": 1, "picture": 1})
 		if p != nil {
 			r["place"] = m.worker.Map().Place(requester, *p, p.GetAccess(requester.ID))
 			// TODO:: Deprecate it
@@ -282,9 +283,9 @@ func (m *Mapper) Notification(requester *nested.Account, n nested.Notification) 
 
 	return r
 }
-func (m *Mapper) Place(requester *nested.Account, place nested.Place, access nested.MB) nested.M {
+func (m *Mapper) Place(requester *nested.Account, place nested.Place, access tools.MB) tools.M {
 	if access == nil {
-		return nested.M{
+		return tools.M{
 			"_id":         place.ID,
 			"name":        place.Name,
 			"description": place.Description,
@@ -299,7 +300,7 @@ func (m *Mapper) Place(requester *nested.Account, place nested.Place, access nes
 	}
 
 	if !access[nested.PlaceAccessReadPost] {
-		r := nested.M{
+		r := tools.M{
 			"_id":         place.ID,
 			"type":        place.Type,
 			"name":        place.Name,
@@ -313,11 +314,11 @@ func (m *Mapper) Place(requester *nested.Account, place nested.Place, access nes
 		return r
 	}
 
-	memberType := nested.MemberTypeKeyHolder
+	memberType := tools.MemberTypeKeyHolder
 	if access[nested.PlaceAccessControl] {
-		memberType = nested.MemberTypeCreator
+		memberType = tools.MemberTypeCreator
 	}
-	r := nested.M{
+	r := tools.M{
 		"_id":             place.ID,
 		"type":            place.Type,
 		"name":            place.Name,
@@ -337,12 +338,12 @@ func (m *Mapper) Place(requester *nested.Account, place nested.Place, access nes
 	}
 	return r
 }
-func (m *Mapper) PlaceActivity(requester *nested.Account, placeActivity nested.PlaceActivity, details bool) nested.M {
+func (m *Mapper) PlaceActivity(requester *nested.Account, placeActivity nested.PlaceActivity, details bool) tools.M {
 	if details {
 		var post *nested.Post
 		actor := m.worker.Model().Account.GetByID(placeActivity.Actor, nil)
 		place := m.worker.Model().Place.GetByID(placeActivity.PlaceID, nil)
-		r := nested.M{
+		r := tools.M{
 			"_id":       placeActivity.ID.Hex(),
 			"actor_id":  placeActivity.Actor,
 			"action":    placeActivity.Action,
@@ -359,7 +360,7 @@ func (m *Mapper) PlaceActivity(requester *nested.Account, placeActivity nested.P
 			post = m.worker.Model().Post.GetPostByID(placeActivity.PostID)
 			if post != nil {
 				if !post.Internal {
-					r["actor"] = nested.M{
+					r["actor"] = tools.M{
 						"_id":     post.SenderID,
 						"fname":   post.EmailMetadata.Name,
 						"lname":   "",
@@ -381,7 +382,7 @@ func (m *Mapper) PlaceActivity(requester *nested.Account, placeActivity nested.P
 			post = m.worker.Model().Post.GetPostByID(placeActivity.PostID)
 			if post != nil {
 				if !post.Internal {
-					r["actor"] = nested.M{
+					r["actor"] = tools.M{
 						"_id":     post.SenderID,
 						"fname":   post.EmailMetadata.Name,
 						"lname":   "",
@@ -401,7 +402,7 @@ func (m *Mapper) PlaceActivity(requester *nested.Account, placeActivity nested.P
 		}
 		return r
 	}
-	r := nested.M{
+	r := tools.M{
 		"_id":          placeActivity.ID.Hex(),
 		"actor_id":     placeActivity.Actor,
 		"action":       placeActivity.Action,
@@ -416,7 +417,7 @@ func (m *Mapper) PlaceActivity(requester *nested.Account, placeActivity nested.P
 	}
 	return r
 }
-func (m *Mapper) Post(requester *nested.Account, post nested.Post, preview bool) nested.M {
+func (m *Mapper) Post(requester *nested.Account, post nested.Post, preview bool) tools.M {
 	isTrusted := true
 	if !post.Internal {
 		if !m.worker.Model().Account.IsRecipientTrusted(requester.ID, post.SenderID) {
@@ -424,7 +425,7 @@ func (m *Mapper) Post(requester *nested.Account, post nested.Post, preview bool)
 		}
 	}
 	s := new(nested.Account)
-	r := nested.M{
+	r := tools.M{
 		"_id":             post.ID.Hex(),
 		"type":            post.Type,
 		"subject":         post.Subject,
@@ -447,7 +448,7 @@ func (m *Mapper) Post(requester *nested.Account, post nested.Post, preview bool)
 		r["iframe_url"] = post.IFrameUrl
 	}
 	// check if user can retract
-	if post.SenderID == requester.ID && nested.Timestamp() < post.Timestamp+nested.DEFAULT_POST_RETRACT_TIME {
+	if post.SenderID == requester.ID && nested.Timestamp() < post.Timestamp+global.DEFAULT_POST_RETRACT_TIME {
 		r["wipe_access"] = true
 	}
 
@@ -465,7 +466,7 @@ func (m *Mapper) Post(requester *nested.Account, post nested.Post, preview bool)
 		s = m.worker.Model().Account.GetByID(post.SenderID, nil)
 		r["sender"] = m.Account(*s, false)
 	} else {
-		r["email_sender"] = nested.M{
+		r["email_sender"] = tools.M{
 			"_id":     post.SenderID,
 			"name":    post.EmailMetadata.Name,
 			"picture": post.EmailMetadata.Picture,
@@ -484,7 +485,7 @@ func (m *Mapper) Post(requester *nested.Account, post nested.Post, preview bool)
 
 	// present post_comments
 	var postRecentCommentIDs []bson.ObjectId
-	var postRecentComments []nested.M
+	var postRecentComments []tools.M
 	for _, comment := range post.RecentComments {
 		postRecentCommentIDs = append(postRecentCommentIDs, comment.ID)
 	}
@@ -496,9 +497,9 @@ func (m *Mapper) Post(requester *nested.Account, post nested.Post, preview bool)
 
 	// present post_places
 	places := m.worker.Model().Place.GetPlacesByIDs(post.PlaceIDs)
-	postPlaces := make([]nested.M, 0, len(places))
+	postPlaces := make([]tools.M, 0, len(places))
 	for _, place := range places {
-		r := nested.M{
+		r := tools.M{
 			"_id":         place.ID,
 			"name":        place.Name,
 			"description": place.Description,
@@ -511,7 +512,7 @@ func (m *Mapper) Post(requester *nested.Account, post nested.Post, preview bool)
 
 	// present post_labels
 	labels := m.worker.Model().Label.GetByIDs(post.LabelIDs)
-	postLabels := make([]nested.M, 0, len(labels))
+	postLabels := make([]tools.M, 0, len(labels))
 	for _, label := range labels {
 		postLabels = append(postLabels, m.Label(requester, label, false))
 	}
@@ -519,10 +520,10 @@ func (m *Mapper) Post(requester *nested.Account, post nested.Post, preview bool)
 
 	// present and sort post_attachments
 	files := m.worker.Model().File.GetFilesByIDs(post.AttachmentIDs)
-	sort.Slice(files, func(i,j int) bool {
+	sort.Slice(files, func(i, j int) bool {
 		return int(files[i].UploadTimestamp) < int(files[j].UploadTimestamp)
 	})
-	postAttachments := make([]nested.M, 0, len(files))
+	postAttachments := make([]tools.M, 0, len(files))
 	for _, f := range files {
 		postAttachments = append(postAttachments, m.FileInfo(f))
 	}
@@ -530,18 +531,18 @@ func (m *Mapper) Post(requester *nested.Account, post nested.Post, preview bool)
 
 	// present post related tasks
 	tasks := m.worker.Model().Task.GetTasksByIDs(post.RelatedTasks)
-	postTasks := make([]nested.M, 0, len(tasks))
+	postTasks := make([]tools.M, 0, len(tasks))
 	for _, task := range tasks {
 		postTasks = append(postTasks, m.Task(requester, task, false))
 	}
 	r["related_tasks"] = postTasks
 	return r
 }
-func (m *Mapper) PostActivity(requester *nested.Account, postActivity nested.PostActivity, details bool) nested.M {
+func (m *Mapper) PostActivity(requester *nested.Account, postActivity nested.PostActivity, details bool) tools.M {
 	if details {
 		var comment *nested.Comment
 		actor := m.worker.Model().Account.GetByID(postActivity.ActorID, nil)
-		r := nested.M{
+		r := tools.M{
 			"_id":       postActivity.ID.Hex(),
 			"actor_id":  postActivity.ActorID,
 			"action":    postActivity.Action,
@@ -586,7 +587,7 @@ func (m *Mapper) PostActivity(requester *nested.Account, postActivity nested.Pos
 		}
 		return r
 	}
-	r := nested.M{
+	r := tools.M{
 		"_id":        postActivity.ID.Hex(),
 		"actor_id":   postActivity.ActorID,
 		"action":     postActivity.Action,
@@ -596,9 +597,9 @@ func (m *Mapper) PostActivity(requester *nested.Account, postActivity nested.Pos
 	}
 	return r
 }
-func (m *Mapper) Task(requester *nested.Account, task nested.Task, details bool) nested.M {
+func (m *Mapper) Task(requester *nested.Account, task nested.Task, details bool) tools.M {
 	if !details {
-		r := nested.M{
+		r := tools.M{
 			"_id":                task.ID.Hex(),
 			"title":              task.Title,
 			"description":        task.Description,
@@ -609,7 +610,7 @@ func (m *Mapper) Task(requester *nested.Account, task nested.Task, details bool)
 		}
 		return r
 	}
-	r := nested.M{
+	r := tools.M{
 		"_id":                task.ID.Hex(),
 		"title":              task.Title,
 		"description":        task.Description,
@@ -639,7 +640,7 @@ func (m *Mapper) Task(requester *nested.Account, task nested.Task, details bool)
 	// Task Candidates
 	if len(task.CandidateIDs) > 0 {
 		candidates := m.worker.Model().Account.GetAccountsByIDs(task.CandidateIDs)
-		taskCandidates := make([]nested.M, 0, len(candidates))
+		taskCandidates := make([]tools.M, 0, len(candidates))
 		for _, candidate := range candidates {
 			taskCandidates = append(taskCandidates, m.Account(candidate, false))
 		}
@@ -649,7 +650,7 @@ func (m *Mapper) Task(requester *nested.Account, task nested.Task, details bool)
 	// Task Watchers
 	if len(task.WatcherIDs) > 0 {
 		watchers := m.worker.Model().Account.GetAccountsByIDs(task.WatcherIDs)
-		taskWatchers := make([]nested.M, 0, len(watchers))
+		taskWatchers := make([]tools.M, 0, len(watchers))
 		for _, watcher := range watchers {
 			taskWatchers = append(taskWatchers, m.Account(watcher, false))
 		}
@@ -659,7 +660,7 @@ func (m *Mapper) Task(requester *nested.Account, task nested.Task, details bool)
 	// Task Editors
 	if len(task.EditorIDs) > 0 {
 		editors := m.worker.Model().Account.GetAccountsByIDs(task.EditorIDs)
-		taskEditors := make([]nested.M, 0, len(editors))
+		taskEditors := make([]tools.M, 0, len(editors))
 		for _, editor := range editors {
 			taskEditors = append(taskEditors, m.Account(editor, false))
 		}
@@ -669,7 +670,7 @@ func (m *Mapper) Task(requester *nested.Account, task nested.Task, details bool)
 	// Task Labels
 	if len(task.LabelIDs) > 0 {
 		labels := m.worker.Model().Label.GetByIDs(task.LabelIDs)
-		taskLabels := make([]nested.M, 0, len(labels))
+		taskLabels := make([]tools.M, 0, len(labels))
 		for _, label := range labels {
 			taskLabels = append(taskLabels, m.Label(requester, label, false))
 		}
@@ -679,7 +680,7 @@ func (m *Mapper) Task(requester *nested.Account, task nested.Task, details bool)
 	// Task Attachments
 	if len(task.AttachmentIDs) > 0 {
 		attachments := m.worker.Model().File.GetFilesByIDs(task.AttachmentIDs)
-		taskAttachments := make([]nested.M, 0, len(attachments))
+		taskAttachments := make([]tools.M, 0, len(attachments))
 		for _, attachment := range attachments {
 			taskAttachments = append(taskAttachments, m.FileInfo(attachment))
 		}
@@ -696,7 +697,7 @@ func (m *Mapper) Task(requester *nested.Account, task nested.Task, details bool)
 	if len(task.RelatedTo.Hex()) > 0 {
 		rTask := m.worker.Model().Task.GetByID(task.RelatedTo)
 		if rTask != nil && rTask.HasAccess(requester.ID, nested.TaskAccessRead) {
-			r["related_to"] = nested.M{
+			r["related_to"] = tools.M{
 				"_id":   rTask.ID.Hex(),
 				"title": rTask.Title,
 			}
@@ -706,10 +707,10 @@ func (m *Mapper) Task(requester *nested.Account, task nested.Task, details bool)
 	// Related Tasks
 	if len(task.RelatedTasks) > 0 {
 		rTasks := m.worker.Model().Task.GetTasksByIDs(task.RelatedTasks)
-		var relatedTasks []nested.M
+		var relatedTasks []tools.M
 		for _, t := range rTasks {
 			if t.HasAccess(requester.ID, nested.TaskAccessRead) {
-				relatedTasks = append(relatedTasks, nested.M{
+				relatedTasks = append(relatedTasks, tools.M{
 					"_id":   t.ID,
 					"title": t.Title,
 				})
@@ -721,8 +722,8 @@ func (m *Mapper) Task(requester *nested.Account, task nested.Task, details bool)
 	return r
 
 }
-func (m *Mapper) TaskActivity(requester *nested.Account, taskActivity nested.TaskActivity, details bool) nested.M {
-	r := nested.M{
+func (m *Mapper) TaskActivity(requester *nested.Account, taskActivity nested.TaskActivity, details bool) tools.M {
+	r := tools.M{
 		"_id":       taskActivity.ID,
 		"timestamp": taskActivity.Timestamp,
 		"action":    taskActivity.Action,
@@ -736,21 +737,21 @@ func (m *Mapper) TaskActivity(requester *nested.Account, taskActivity nested.Tas
 	switch taskActivity.Action {
 	case global.TaskActivityWatcherAdded, global.TaskActivityWatcherRemoved:
 		watchers := m.worker.Model().Account.GetAccountsByIDs(taskActivity.WatcherIDs)
-		d := make([]nested.M, 0, len(watchers))
+		d := make([]tools.M, 0, len(watchers))
 		for _, w := range watchers {
 			d = append(d, m.Account(w, false))
 		}
 		r["watchers"] = d
 	case global.TaskActivityEditorAdded, global.TaskActivityEditorRemoved:
 		editors := m.worker.Model().Account.GetAccountsByIDs(taskActivity.EditorIDs)
-		d := make([]nested.M, 0, len(editors))
+		d := make([]tools.M, 0, len(editors))
 		for _, w := range editors {
 			d = append(d, m.Account(w, false))
 		}
 		r["editors"] = d
 	case global.TaskActivityAttachmentAdded, global.TaskActivityAttachmentRemoved:
 		attachments := m.worker.Model().File.GetFilesByIDs(taskActivity.AttachmentIDs)
-		d := make([]nested.M, 0, len(attachments))
+		d := make([]tools.M, 0, len(attachments))
 		for _, a := range attachments {
 			d = append(d, m.FileInfo(a))
 		}
@@ -763,7 +764,7 @@ func (m *Mapper) TaskActivity(requester *nested.Account, taskActivity nested.Tas
 		r["description"] = taskActivity.Desc
 	case global.TaskActivityCandidateAdded, global.TaskActivityCandidateRemoved:
 		candidates := m.worker.Model().Account.GetAccountsByIDs(taskActivity.CandidateIDs)
-		var d []nested.M
+		var d []tools.M
 		for _, w := range candidates {
 			d = append(d, m.Account(w, false))
 		}
@@ -775,7 +776,7 @@ func (m *Mapper) TaskActivity(requester *nested.Account, taskActivity nested.Tas
 		r["status"] = taskActivity.Status
 	case global.TaskActivityLabelAdded, global.TaskActivityLabelRemoved:
 		labels := m.worker.Model().Label.GetByIDs(taskActivity.LabelIDs)
-		var mapLabels []nested.M
+		var mapLabels []tools.M
 		for _, label := range labels {
 			mapLabels = append(mapLabels, m.Label(requester, label, false))
 		}
@@ -789,8 +790,8 @@ func (m *Mapper) TaskActivity(requester *nested.Account, taskActivity nested.Tas
 	}
 	return r
 }
-func (m *Mapper) App(app nested.App) nested.M {
-	r := nested.M{
+func (m *Mapper) App(app nested.App) tools.M {
+	r := tools.M{
 		"_id":            app.ID,
 		"name":           app.Name,
 		"developer":      app.Developer,
@@ -800,8 +801,8 @@ func (m *Mapper) App(app nested.App) nested.M {
 	}
 	return r
 }
-func (m *Mapper) AppToken(appToken nested.AppToken) nested.M {
-	r := nested.M{
+func (m *Mapper) AppToken(appToken nested.AppToken) tools.M {
+	r := tools.M{
 		"_id": appToken.ID,
 	}
 	if account := m.worker.Model().Account.GetByID(appToken.AccountID, nil); account != nil {

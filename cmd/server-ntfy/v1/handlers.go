@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/session"
 
 	"firebase.google.com/go/messaging"
 	"git.ronaksoft.com/nested/server/cmd/server-ntfy/client"
-	"git.ronaksoft.com/nested/server/model"
 	"git.ronaksoft.com/nested/server/pkg/rpc"
 	"go.uber.org/zap"
 )
@@ -147,7 +147,7 @@ func pushExternal(in rpc.Message) rpc.Message {
 	return ResultOk()
 }
 
-func FCM(d nested.Device, req ntfy.CMDPushExternal) {
+func FCM(d session.Device, req ntfy.CMDPushExternal) {
 	message := messaging.Message{
 		Data:  req.Data,
 		Token: d.Token,

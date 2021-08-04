@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/pkg/global"
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"github.com/globalsign/mgo/bson"
 	"github.com/microcosm-cc/bluemonday"
 	"go.uber.org/zap"
@@ -19,7 +21,7 @@ func (m *Model) PlaceExist(placeID string) bool {
 	db := dbSession.DB(m.DB)
 	defer dbSession.Close()
 
-	n, _ := db.C(nested.COLLECTION_PLACES).FindId(placeID).Count()
+	n, _ := db.C(global.COLLECTION_PLACES).FindId(placeID).Count()
 
 	return n > 0
 }
@@ -29,7 +31,7 @@ func (m *Model) AccountExist(accountID string) bool {
 	db := dbSession.DB(m.DB)
 	defer dbSession.Close()
 
-	n, _ := db.C(nested.COLLECTION_ACCOUNTS).FindId(accountID).Count()
+	n, _ := db.C(global.COLLECTION_ACCOUNTS).FindId(accountID).Count()
 	return n > 0
 }
 
@@ -45,7 +47,7 @@ func (m *Model) CreateFileToken(uniID nested.UniversalID, issuerID, receiverEmai
 		Issuer:   issuerID,
 		Receiver: receiverEmail,
 	}
-	if err := db.C(nested.COLLECTION_TOKENS_FILES).Insert(ft); err != nil {
+	if err := db.C(global.COLLECTION_TOKENS_FILES).Insert(ft); err != nil {
 		_LOG.Error(err.Error())
 		return "", err
 	}
@@ -58,7 +60,7 @@ func (m *Model) GetPlaceByID(placeID string) *nested.Place {
 	defer dbSession.Close()
 
 	place := new(nested.Place)
-	if err := db.C(nested.COLLECTION_PLACES).FindId(placeID).One(place); err != nil {
+	if err := db.C(global.COLLECTION_PLACES).FindId(placeID).One(place); err != nil {
 		_LOG.Error(err.Error())
 		return nil
 	}
@@ -74,7 +76,7 @@ func (m *Model) GetItems(groupID string) []string {
 		ID    string   `json:"_id" bson:"_id"`
 		Items []string `json:"items" bson:"items"`
 	}{}
-	if err := db.C(nested.COLLECTION_PLACES_GROUPS).FindId(groupID).One(&v); err != nil {
+	if err := db.C(global.COLLECTION_PLACES_GROUPS).FindId(groupID).One(&v); err != nil {
 		return []string{}
 	}
 	return v.Items
@@ -86,7 +88,7 @@ func (m *Model) GetAccountByID(accountID string) *nested.Account {
 	defer dbSession.Close()
 
 	account := new(nested.Account)
-	if err := db.C(nested.COLLECTION_ACCOUNTS).FindId(accountID).One(account); err != nil {
+	if err := db.C(global.COLLECTION_ACCOUNTS).FindId(accountID).One(account); err != nil {
 		_LOG.Error(err.Error(), zap.String("accountID", accountID))
 		return nil
 	}
@@ -173,16 +175,16 @@ func (m *Model) InternalPlaceActivitySyncPush(targets []string, placeID string, 
 		return
 	}
 	iStart := 0
-	iLength := nested.DEFAULT_MAX_RESULT_LIMIT
+	iLength := global.DEFAULT_MAX_RESULT_LIMIT
 	iEnd := iStart + iLength
 	if iEnd > len(targets) {
 		iEnd = len(targets)
 	}
 	for {
-		msg := nested.M{
+		msg := tools.M{
 			"type": "p",
 			"cmd":  "sync-a",
-			"data": nested.M{
+			"data": tools.M{
 				"place_id": placeID,
 				"action":   action,
 			},
@@ -236,14 +238,14 @@ func (m *Model) AddPostAsOwner(uniID nested.UniversalID, postID bson.ObjectId) {
 	db := dbSession.DB(m.DB)
 	defer dbSession.Close()
 
-	if err := db.C(nested.COLLECTION_FILES).UpdateId(
+	if err := db.C(global.COLLECTION_FILES).UpdateId(
 		uniID,
 		bson.M{"$inc": bson.M{"ref_count": 1}},
 	); err != nil {
 		_LOG.Error(err.Error(), zap.String("Function", "AddPostAsOwner::COLLECTION_FILES"))
 	}
 
-	if err := db.C(nested.COLLECTION_POSTS_FILES).Insert(
+	if err := db.C(global.COLLECTION_POSTS_FILES).Insert(
 		bson.M{
 			"universal_id": uniID,
 			"post_id":      postID,
@@ -271,7 +273,7 @@ func (m *Model) IncrementCounter(placeIDs []string, counterName string, c int) b
 		nested.PlaceCounterCreators, nested.PlaceCounterKeyHolders,
 		nested.PlaceCounterPosts, nested.PlaceCounterQuota:
 		keyName := fmt.Sprintf("counters.%s", counterName)
-		if err := db.C(nested.COLLECTION_PLACES).Update(
+		if err := db.C(global.COLLECTION_PLACES).Update(
 			bson.M{"_id": bson.M{"$in": placeIDs}},
 			bson.M{"$inc": bson.M{keyName: c}},
 		); err != nil {
@@ -287,7 +289,7 @@ func (m *Model) UpdatePlaceConnection(accountID string, placeIDs []string, c int
 	db := dbSession.DB(m.DB)
 	defer dbSession.Close()
 
-	bulk := db.C(nested.COLLECTION_ACCOUNTS_PLACES).Bulk()
+	bulk := db.C(global.COLLECTION_ACCOUNTS_PLACES).Bulk()
 	bulk.Unordered()
 	for _, pid := range placeIDs {
 		if place := m.GetPlaceByID(pid); place != nil {
@@ -310,7 +312,7 @@ func (m *Model) UpdateRecipientConnection(accountID string, recipients []string,
 	db := dbSession.DB(m.DB)
 	defer dbSession.Close()
 	for _, r := range recipients {
-		if _, err := db.C(nested.COLLECTION_ACCOUNTS_RECIPIENTS).Upsert(
+		if _, err := db.C(global.COLLECTION_ACCOUNTS_RECIPIENTS).Upsert(
 			bson.M{
 				"account_id": accountID,
 				"recipient":  strings.ToLower(r),
@@ -339,7 +341,7 @@ func (m *Model) AddAccountToWatcherList(postID bson.ObjectId, accountID string) 
 	db := dbSession.DB(m.DB)
 	defer dbSession.Close()
 
-	if _, err := db.C(nested.COLLECTION_POSTS_WATCHERS).Upsert(
+	if _, err := db.C(global.COLLECTION_POSTS_WATCHERS).Upsert(
 		bson.M{"_id": postID},
 		bson.M{"$addToSet": bson.M{"accounts": accountID}},
 	); err != nil {
@@ -354,7 +356,7 @@ func (m *Model) LableIncrementCounter(labelID string, counterName string, value 
 	db := dbSession.DB(m.DB)
 	defer dbSession.Close()
 
-	if err := db.C(nested.COLLECTION_LABELS).UpdateId(
+	if err := db.C(global.COLLECTION_LABELS).UpdateId(
 		labelID,
 		bson.M{
 			"$inc": bson.M{fmt.Sprintf("counters.%s", counterName): value},
@@ -372,7 +374,7 @@ func (m *Model) PostAdd(actorID string, placeIDs []string, postID bson.ObjectId)
 	defer dbSession.Close()
 
 	ts := nested.Timestamp()
-	bulk := db.C(nested.COLLECTION_PLACES_ACTIVITIES).Bulk()
+	bulk := db.C(global.COLLECTION_PLACES_ACTIVITIES).Bulk()
 	bulk.Unordered()
 	v := nested.PlaceActivity{
 		Timestamp:  ts,
@@ -414,7 +416,7 @@ func (m *Model) SetFileStatus(uniID nested.UniversalID, fileStatus string) bool 
 
 	switch fileStatus {
 	case nested.FileStatusPublic, nested.FileStatusTemp, nested.FileStatusThumbnail:
-		if err := db.C(nested.COLLECTION_FILES).UpdateId(
+		if err := db.C(global.COLLECTION_FILES).UpdateId(
 			uniID,
 			bson.M{"$set": bson.M{
 				"upload_time": time.Now().UnixNano(),
@@ -425,7 +427,7 @@ func (m *Model) SetFileStatus(uniID nested.UniversalID, fileStatus string) bool 
 			return false
 		}
 	case nested.FileStatusAttached:
-		if err := db.C(nested.COLLECTION_FILES).Update(
+		if err := db.C(global.COLLECTION_FILES).Update(
 			bson.M{"_id": uniID, "status": bson.M{"$ne": nested.FileStatusPublic}},
 			bson.M{"$set": bson.M{"status": fileStatus}},
 		); err != nil {
@@ -433,7 +435,7 @@ func (m *Model) SetFileStatus(uniID nested.UniversalID, fileStatus string) bool 
 			return false
 		}
 	case nested.FileStatusInternal:
-		if err := db.C(nested.COLLECTION_FILES).Update(
+		if err := db.C(global.COLLECTION_FILES).Update(
 			bson.M{"_id": uniID},
 			bson.M{"$set": bson.M{"status": fileStatus}},
 		); err != nil {
@@ -446,13 +448,13 @@ func (m *Model) SetFileStatus(uniID nested.UniversalID, fileStatus string) bool 
 	return true
 }
 
-func (m *Model) GetFileByID(uniID nested.UniversalID, pj nested.M) *nested.FileInfo {
+func (m *Model) GetFileByID(uniID nested.UniversalID, pj tools.M) *nested.FileInfo {
 	dbSession := m.Session.Clone()
 	db := dbSession.DB(m.DB)
 	defer dbSession.Close()
 
 	file := new(nested.FileInfo)
-	if err := db.C(nested.COLLECTION_FILES).FindId(uniID).One(file); err != nil {
+	if err := db.C(global.COLLECTION_FILES).FindId(uniID).One(file); err != nil {
 		_LOG.Error(err.Error(), zap.String("Function", "GetFileByID"))
 		return nil
 	}
@@ -464,7 +466,7 @@ func (m *Model) IsBlocked(placeID, address string) bool {
 	db := dbSession.DB(m.DB)
 	defer dbSession.Close()
 	_LOG.Debug("IsBlocked", zap.String("palceID", placeID), zap.String("address", address))
-	n, err := db.C(nested.COLLECTION_PLACES_BLOCKED_ADDRESSES).Find(bson.M{"_id": placeID, "addresses": address}).Count()
+	n, err := db.C(global.COLLECTION_PLACES_BLOCKED_ADDRESSES).Find(bson.M{"_id": placeID, "addresses": address}).Count()
 	if err != nil {
 		_LOG.Warn(err.Error())
 		return false
@@ -485,17 +487,17 @@ func (m *Model) AddPost(pcr nested.PostCreateRequest) *nested.Post {
 	post.ContentType = pcr.ContentType
 
 	// Returns nil if targets are more than DEFAULT_POST_MAX_TARGETS
-	if len(pcr.PlaceIDs)+len(pcr.Recipients) > nested.DEFAULT_POST_MAX_TARGETS {
+	if len(pcr.PlaceIDs)+len(pcr.Recipients) > global.DEFAULT_POST_MAX_TARGETS {
 		return nil
 	}
 
 	// Returns nil if number of attachments exceeds DEFAULT_POST_MAX_ATTACHMENTS
-	if len(pcr.AttachmentIDs) > nested.DEFAULT_POST_MAX_ATTACHMENTS {
+	if len(pcr.AttachmentIDs) > global.DEFAULT_POST_MAX_ATTACHMENTS {
 		return nil
 	}
 
 	// Returns nil if number of labels exceeds DEFAULT_POST_MAX_LABELS
-	if len(pcr.LabelIDs) > nested.DEFAULT_POST_MAX_LABELS {
+	if len(pcr.LabelIDs) > global.DEFAULT_POST_MAX_LABELS {
 		return nil
 	}
 
@@ -568,7 +570,7 @@ func (m *Model) AddPost(pcr nested.PostCreateRequest) *nested.Post {
 		}
 	}
 
-	if err := db.C(nested.COLLECTION_POSTS).Insert(post); err != nil {
+	if err := db.C(global.COLLECTION_POSTS).Insert(post); err != nil {
 		_LOG.Error(err.Error())
 		return nil
 	}
@@ -600,7 +602,7 @@ func (m *Model) AddPost(pcr nested.PostCreateRequest) *nested.Post {
 
 		// Set Post as UNREAD for all the members of the place except the sender
 		var memberIDs []string
-		bulk := db.C(nested.COLLECTION_POSTS_READS).Bulk()
+		bulk := db.C(global.COLLECTION_POSTS_READS).Bulk()
 		bulk.Unordered()
 		if place.Privacy.Locked {
 			memberIDs = append(place.KeyholderIDs, place.CreatorIDs...)
@@ -622,12 +624,12 @@ func (m *Model) AddPost(pcr nested.PostCreateRequest) *nested.Post {
 			_LOG.Error(err.Error())
 		}
 
-		//// Clear the slice
-		//memberIDs = memberIDs[:0]
+		// // Clear the slice
+		// memberIDs = memberIDs[:0]
 
 		// Update unread counters
 		if place.Privacy.Locked {
-			db.C(nested.COLLECTION_POSTS_READS_COUNTERS).UpdateAll(
+			db.C(global.COLLECTION_POSTS_READS_COUNTERS).UpdateAll(
 				bson.M{
 					"account_id": bson.M{"$ne": post.SenderID},
 					"place_id":   placeID,
@@ -635,7 +637,7 @@ func (m *Model) AddPost(pcr nested.PostCreateRequest) *nested.Post {
 				bson.M{"$inc": bson.M{"no_unreads": 1}},
 			)
 		} else {
-			db.C(nested.COLLECTION_POSTS_READS_COUNTERS).UpdateAll(
+			db.C(global.COLLECTION_POSTS_READS_COUNTERS).UpdateAll(
 				bson.M{
 					"account_id": bson.M{"$ne": post.SenderID},
 					"place_id":   placeID,
@@ -645,13 +647,13 @@ func (m *Model) AddPost(pcr nested.PostCreateRequest) *nested.Post {
 		}
 		// todo implement hook
 		// Create the hook event and send it to the hooker
-		//_Manager.Hook.chEvents <- NewPostEvent{
+		// _Manager.Hook.chEvents <- NewPostEvent{
 		//	PlaceID:          placeID,
 		//	PostID:           post.ID,
 		//	PostTitle:        post.Subject,
 		//	AttachmentsCount: post.Counters.Attachments,
 		//	SenderID:         post.SenderID,
-		//}
+		// }
 	}
 
 	// Update label counters

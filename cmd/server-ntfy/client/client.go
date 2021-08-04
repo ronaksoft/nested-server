@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"git.ronaksoft.com/nested/server/pkg/global"
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"log"
 	"strconv"
 
@@ -177,16 +178,16 @@ func (c *Client) InternalPlaceActivitySyncPush(targets []string, placeID string,
 		return
 	}
 	iStart := 0
-	iLength := nested.DEFAULT_MAX_RESULT_LIMIT
+	iLength := global.DEFAULT_MAX_RESULT_LIMIT
 	iEnd := iStart + iLength
 	if iEnd > len(targets) {
 		iEnd = len(targets)
 	}
 	for {
-		msg := nested.M{
+		msg := tools.M{
 			"type": "p",
 			"cmd":  "sync-a",
-			"data": nested.M{
+			"data": tools.M{
 				"place_id": placeID,
 				"action":   action,
 			},
@@ -212,16 +213,16 @@ func (c *Client) InternalPostActivitySyncPush(targets []string, postID bson.Obje
 		return
 	}
 	iStart := 0
-	iLength := nested.DEFAULT_MAX_RESULT_LIMIT
+	iLength := global.DEFAULT_MAX_RESULT_LIMIT
 	iEnd := iStart + iLength
 	if iEnd > len(targets) {
 		iEnd = len(targets)
 	}
 	for {
-		msg := nested.M{
+		msg := tools.M{
 			"type": "p",
 			"cmd":  "sync-p",
-			"data": nested.M{
+			"data": tools.M{
 				"post_id": postID.Hex(),
 				"action":  action,
 				"places":  placeIDs,
@@ -248,16 +249,16 @@ func (c *Client) InternalTaskActivitySyncPush(targets []string, taskID bson.Obje
 		return
 	}
 	iStart := 0
-	iLength := nested.DEFAULT_MAX_RESULT_LIMIT
+	iLength := global.DEFAULT_MAX_RESULT_LIMIT
 	iEnd := iStart + iLength
 	if iEnd > len(targets) {
 		iEnd = len(targets)
 	}
 	for {
-		msg := nested.M{
+		msg := tools.M{
 			"type": "p",
 			"cmd":  "sync-t",
-			"data": nested.M{
+			"data": tools.M{
 				"task_id": taskID,
 				"action":  action,
 			},
@@ -283,16 +284,16 @@ func (c *Client) InternalNotificationSyncPush(targets []string, notificationType
 		return
 	}
 	iStart := 0
-	iLength := nested.DEFAULT_MAX_RESULT_LIMIT
+	iLength := global.DEFAULT_MAX_RESULT_LIMIT
 	iEnd := iStart + iLength
 	if iEnd > len(targets) {
 		iEnd = len(targets)
 	}
 	for {
-		msg := nested.M{
+		msg := tools.M{
 			"type": "p",
 			"cmd":  "sync-n",
-			"data": nested.M{
+			"data": tools.M{
 				"type": notificationType,
 			},
 		}
@@ -331,7 +332,7 @@ func (c *Client) ExternalPush(targets []string, data map[string]string) error {
 func (c *Client) ExternalPushNotification(n *nested.Notification) {
 	actor := c.model.Account.GetByID(n.ActorID, nil)
 
-	pushData := nested.MS{
+	pushData := tools.MS{
 		"actor_id":        actor.ID,
 		"actor_name":      fmt.Sprintf("%s %s", actor.FirstName, actor.LastName),
 		"actor_picture":   string(actor.Picture.X128),
@@ -367,7 +368,7 @@ func (c *Client) ExternalPushNotification(n *nested.Notification) {
 		pushData["msg"] = txt
 		pushData["sound"] = "nc.aiff"
 	case nested.NotificationTypeJoinedPlace:
-		place := c.model.Place.GetByID(n.PlaceID, nested.M{"name": 1})
+		place := c.model.Place.GetByID(n.PlaceID, tools.M{"name": 1})
 		if place == nil {
 			log.Println("ExternalPushNotification::Error::Place_Not_Exists")
 			log.Println("Arguments:", n.ID)
@@ -378,7 +379,7 @@ func (c *Client) ExternalPushNotification(n *nested.Notification) {
 		pushData["msg"] = txt
 		pushData["sound"] = "nc.aiff"
 	case nested.NotificationTypePromoted:
-		place := c.model.Place.GetByID(n.PlaceID, nested.M{"name": 1})
+		place := c.model.Place.GetByID(n.PlaceID, tools.M{"name": 1})
 		if place == nil {
 			log.Println("ExternalPushNotification::Error::Place_Not_Exists")
 			log.Println("Arguments:", n.ID)
@@ -389,7 +390,7 @@ func (c *Client) ExternalPushNotification(n *nested.Notification) {
 		pushData["msg"] = txt
 		pushData["sound"] = "nc.aiff"
 	case nested.NotificationTypeDemoted:
-		place := c.model.Place.GetByID(n.PlaceID, nested.M{"name": 1})
+		place := c.model.Place.GetByID(n.PlaceID, tools.M{"name": 1})
 		if place == nil {
 			log.Println("ExternalPushNotification::Error::Place_Not_Exists")
 			log.Println("Arguments:", n.ID)
@@ -400,7 +401,7 @@ func (c *Client) ExternalPushNotification(n *nested.Notification) {
 		pushData["msg"] = txt
 		pushData["sound"] = "nc.aiff"
 	case nested.NotificationTypePlaceSettingsChanged:
-		place := c.model.Place.GetByID(n.PlaceID, nested.M{"name": 1})
+		place := c.model.Place.GetByID(n.PlaceID, tools.M{"name": 1})
 		if place == nil {
 			log.Println("ExternalPushNotification::Error::Place_Not_Exists")
 			log.Println("Arguments:", n.ID)
@@ -467,7 +468,7 @@ func (c *Client) ExternalPushNotification(n *nested.Notification) {
 }
 
 func (c *Client) ExternalPushPlaceActivityPostAdded(post *nested.Post) {
-	pushData := nested.MS{
+	pushData := tools.MS{
 		"type":   "a",
 		"action": fmt.Sprintf("%d", nested.PlaceActivityActionPostAdd),
 	}
@@ -501,7 +502,7 @@ func (c *Client) ExternalPushPlaceActivityPostAdded(post *nested.Post) {
 	}
 
 	for _, placeID := range post.PlaceIDs {
-		place := c.model.Place.GetByID(placeID, nested.M{"groups": 1})
+		place := c.model.Place.GetByID(placeID, tools.M{"groups": 1})
 		if place == nil {
 			log.Println("ExternalPushActivityAddPost::Error::Place_Not_Exists")
 			log.Println("Arguments:", post.ID)
@@ -519,7 +520,7 @@ func (c *Client) ExternalPushPlaceActivityPostAdded(post *nested.Post) {
 }
 
 func (c *Client) ExternalPushPlaceActivityPostAttached(post *nested.Post, placeIDs []string) {
-	pushData := nested.MS{
+	pushData := tools.MS{
 		"type":   "a",
 		"action": strconv.Itoa(nested.PlaceActivityActionPostAdd),
 	}
@@ -553,7 +554,7 @@ func (c *Client) ExternalPushPlaceActivityPostAttached(post *nested.Post, placeI
 	}
 
 	for _, placeID := range placeIDs {
-		place := c.model.Place.GetByID(placeID, nested.M{"groups": 1})
+		place := c.model.Place.GetByID(placeID, tools.M{"groups": 1})
 		if place == nil {
 			log.Println("ExternalPushActivityAddPost::Error::Place_Not_Exists")
 			log.Println("Arguments:", post.ID)
@@ -571,7 +572,7 @@ func (c *Client) ExternalPushPlaceActivityPostAttached(post *nested.Post, placeI
 }
 
 func (c *Client) ExternalPushClear(n *nested.Notification) {
-	pushData := nested.MS{
+	pushData := tools.MS{
 		"notification_id": n.ID,
 		"subject":         "clear",
 	}
@@ -579,7 +580,7 @@ func (c *Client) ExternalPushClear(n *nested.Notification) {
 }
 
 func (c *Client) ExternalPushClearAll(accountID string) {
-	pushData := nested.MS{
+	pushData := tools.MS{
 		"notification_id": "all",
 		"subject":         "clear",
 	}
