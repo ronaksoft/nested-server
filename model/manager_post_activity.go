@@ -8,17 +8,6 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
-// POST ACTIVITY ACTIONS
-const (
-	PostActivityActionCommentAdd    PostAction = 0x002
-	PostActivityActionCommentRemove PostAction = 0x003
-	PostActivityActionLabelAdd      PostAction = 0x011
-	PostActivityActionLabelRemove   PostAction = 0x012
-	PostActivityActionEdited        PostAction = 0x015
-	PostActivityActionPlaceMove     PostAction = 0x016
-	PostActivityActionPlaceAttach   PostAction = 0x017
-)
-
 type PostActivityManager struct{}
 
 func NewPostActivityManager() *PostActivityManager {
@@ -68,7 +57,7 @@ func (pm *PostActivityManager) GetActivitiesByIDs(activityIDs []bson.ObjectId) [
 	return postActivities
 }
 
-func (pm *PostActivityManager) GetActivitiesByPostID(postID bson.ObjectId, pg Pagination, filter []PostAction) []PostActivity {
+func (pm *PostActivityManager) GetActivitiesByPostID(postID bson.ObjectId, pg Pagination, filter []global.PostAction) []PostActivity {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
@@ -106,7 +95,7 @@ func (pm *PostActivityManager) CommentAdd(postID bson.ObjectId, actorID string, 
 		ID:        bson.NewObjectId(),
 		PostID:    postID,
 		Timestamp: ts,
-		Action:    PostActivityActionCommentAdd,
+		Action:    global.PostActivityActionCommentAdd,
 		ActorID:   actorID,
 		CommentID: commentID,
 	}
@@ -127,7 +116,7 @@ func (pm *PostActivityManager) CommentRemove(postID bson.ObjectId, actorID strin
 		ID:        bson.NewObjectId(),
 		PostID:    postID,
 		Timestamp: ts,
-		Action:    PostActivityActionCommentRemove,
+		Action:    global.PostActivityActionCommentRemove,
 		ActorID:   actorID,
 		CommentID: commentID,
 	}
@@ -148,7 +137,7 @@ func (pm *PostActivityManager) LabelAdd(postID bson.ObjectId, actorID string, la
 		ID:        bson.NewObjectId(),
 		PostID:    postID,
 		Timestamp: ts,
-		Action:    PostActivityActionLabelAdd,
+		Action:    global.PostActivityActionLabelAdd,
 		ActorID:   actorID,
 		LabelID:   labelID,
 	}
@@ -169,7 +158,7 @@ func (pm *PostActivityManager) LabelRemove(postID bson.ObjectId, actorID string,
 		ID:        bson.NewObjectId(),
 		PostID:    postID,
 		Timestamp: ts,
-		Action:    PostActivityActionLabelRemove,
+		Action:    global.PostActivityActionLabelRemove,
 		ActorID:   actorID,
 		LabelID:   labelID,
 	}
@@ -190,7 +179,7 @@ func (pm *PostActivityManager) PlaceMove(postID bson.ObjectId, actorID string, o
 		ID:         bson.NewObjectId(),
 		PostID:     postID,
 		Timestamp:  ts,
-		Action:     PostActivityActionPlaceMove,
+		Action:     global.PostActivityActionPlaceMove,
 		ActorID:    actorID,
 		OldPlaceID: oldPlaceID,
 		NewPlaceID: newPlaceID,
@@ -212,7 +201,7 @@ func (pm *PostActivityManager) PlaceAttached(postID bson.ObjectId, actorID strin
 		ID:         bson.NewObjectId(),
 		PostID:     postID,
 		Timestamp:  ts,
-		Action:     PostActivityActionPlaceAttach,
+		Action:     global.PostActivityActionPlaceAttach,
 		ActorID:    actorID,
 		NewPlaceID: newPlaceID,
 	}
@@ -233,7 +222,7 @@ func (pm *PostActivityManager) Edit(postID bson.ObjectId, actorID string) {
 		ID:        bson.NewObjectId(),
 		PostID:    postID,
 		Timestamp: ts,
-		Action:    PostActivityActionEdited,
+		Action:    global.PostActivityActionEdited,
 		ActorID:   actorID,
 	}
 
@@ -244,18 +233,17 @@ func (pm *PostActivityManager) Edit(postID bson.ObjectId, actorID string) {
 
 }
 
-type PostAction int
 type PostActivity struct {
-	ID           bson.ObjectId `bson:"_id" json:"_id"`
-	PostID       bson.ObjectId `bson:"post_id" json:"post_id"`
-	Timestamp    uint64        `bson:"timestamp" json:"timestamp"`
-	Action       PostAction    `bson:"action" json:"action"`
-	ActorID      string        `bson:"actor_id" json:"actor_id"`
-	AttachmentID UniversalID   `bson:"attachment_id" json:"attachment_id,omitempty"`
-	CommentID    bson.ObjectId `bson:"comment_id,omitempty" json:"comment_id,omitempty"`
-	LabelID      string        `bson:"label_id" json:"label_id,omitempty"`
-	OldPlaceID   string        `bson:"old_place_id,omitempty" json:"old_place_id,omitempty"`
-	NewPlaceID   string        `bson:"new_place_id,omitempty" json:"new_place_id,omitempty"`
-	Removed      bool          `bson:"_removed" json:"_removed,omitempty"`
-	RemovedBy    string        `bson:"removed_by,omitempty" json:"removed_by,omitempty"`
+	ID           bson.ObjectId     `bson:"_id" json:"_id"`
+	PostID       bson.ObjectId     `bson:"post_id" json:"post_id"`
+	Timestamp    uint64            `bson:"timestamp" json:"timestamp"`
+	Action       global.PostAction `bson:"action" json:"action"`
+	ActorID      string            `bson:"actor_id" json:"actor_id"`
+	AttachmentID UniversalID       `bson:"attachment_id" json:"attachment_id,omitempty"`
+	CommentID    bson.ObjectId     `bson:"comment_id,omitempty" json:"comment_id,omitempty"`
+	LabelID      string            `bson:"label_id" json:"label_id,omitempty"`
+	OldPlaceID   string            `bson:"old_place_id,omitempty" json:"old_place_id,omitempty"`
+	NewPlaceID   string            `bson:"new_place_id,omitempty" json:"new_place_id,omitempty"`
+	Removed      bool              `bson:"_removed" json:"_removed,omitempty"`
+	RemovedBy    string            `bson:"removed_by,omitempty" json:"removed_by,omitempty"`
 }

@@ -2,6 +2,7 @@ package nestedServicePost
 
 import (
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/global"
 	"strings"
 
 	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
@@ -552,7 +553,7 @@ func (s *PostService) getPostActivities(requester *nested.Account, request *nest
 	}
 
 	pg := s.Worker().Argument().GetPagination(request)
-	ta := s.Worker().Model().PostActivity.GetActivitiesByPostID(post.ID, pg, []nested.PostAction{})
+	ta := s.Worker().Model().PostActivity.GetActivitiesByPostID(post.ID, pg, []global.PostAction{})
 	d := make([]nested.M, 0, pg.GetLimit())
 	for _, v := range ta {
 		d = append(d, s.Worker().Map().PostActivity(requester, v, details))

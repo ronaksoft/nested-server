@@ -2,6 +2,7 @@ package api
 
 import (
 	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/pkg/global"
 	"github.com/globalsign/mgo/bson"
 	"sort"
 )
@@ -550,24 +551,24 @@ func (m *Mapper) PostActivity(requester *nested.Account, postActivity nested.Pos
 			r["actor"] = m.Account(*actor, false)
 		}
 		switch postActivity.Action {
-		case nested.PostActivityActionCommentAdd,
-			nested.PostActivityActionCommentRemove:
+		case global.PostActivityActionCommentAdd,
+			global.PostActivityActionCommentRemove:
 			comment = m.worker.Model().Post.GetCommentByID(postActivity.CommentID)
 			if comment != nil {
 				r["comment"] = m.worker.Map().Comment(*comment)
 			}
-		case nested.PostActivityActionLabelAdd,
-			nested.PostActivityActionLabelRemove:
+		case global.PostActivityActionLabelAdd,
+			global.PostActivityActionLabelRemove:
 			label := m.worker.Model().Label.GetByID(postActivity.LabelID)
 			if label != nil {
 				r["label"] = m.Label(requester, *label, false)
 			}
-		case nested.PostActivityActionPlaceAttach:
+		case global.PostActivityActionPlaceAttach:
 			newPlace := m.worker.Model().Place.GetByID(postActivity.NewPlaceID, nil)
 			if newPlace != nil {
 				r["new_place"] = m.worker.Map().Place(requester, *newPlace, nil)
 			}
-		case nested.PostActivityActionPlaceMove:
+		case global.PostActivityActionPlaceMove:
 			oldPlace := m.worker.Model().Place.GetByID(postActivity.OldPlaceID, nil)
 			newPlace := m.worker.Model().Place.GetByID(postActivity.NewPlaceID, nil)
 			if oldPlace != nil {
@@ -576,7 +577,7 @@ func (m *Mapper) PostActivity(requester *nested.Account, postActivity nested.Pos
 			if newPlace != nil {
 				r["new_place"] = m.worker.Map().Place(requester, *newPlace, nil)
 			}
-		case nested.PostActivityActionEdited:
+		case global.PostActivityActionEdited:
 			post := m.worker.Model().Post.GetPostByID(postActivity.PostID)
 			if post != nil {
 				r["post"] = m.worker.Map().Post(requester, *post, true)
@@ -733,56 +734,56 @@ func (m *Mapper) TaskActivity(requester *nested.Account, taskActivity nested.Tas
 	actor := m.worker.Model().Account.GetByID(taskActivity.ActorID, nil)
 	r["actor"] = m.Account(*actor, false)
 	switch taskActivity.Action {
-	case nested.TaskActivityWatcherAdded, nested.TaskActivityWatcherRemoved:
+	case global.TaskActivityWatcherAdded, global.TaskActivityWatcherRemoved:
 		watchers := m.worker.Model().Account.GetAccountsByIDs(taskActivity.WatcherIDs)
 		d := make([]nested.M, 0, len(watchers))
 		for _, w := range watchers {
 			d = append(d, m.Account(w, false))
 		}
 		r["watchers"] = d
-	case nested.TaskActivityEditorAdded, nested.TaskActivityEditorRemoved:
+	case global.TaskActivityEditorAdded, global.TaskActivityEditorRemoved:
 		editors := m.worker.Model().Account.GetAccountsByIDs(taskActivity.EditorIDs)
 		d := make([]nested.M, 0, len(editors))
 		for _, w := range editors {
 			d = append(d, m.Account(w, false))
 		}
 		r["editors"] = d
-	case nested.TaskActivityAttachmentAdded, nested.TaskActivityAttachmentRemoved:
+	case global.TaskActivityAttachmentAdded, global.TaskActivityAttachmentRemoved:
 		attachments := m.worker.Model().File.GetFilesByIDs(taskActivity.AttachmentIDs)
 		d := make([]nested.M, 0, len(attachments))
 		for _, a := range attachments {
 			d = append(d, m.FileInfo(a))
 		}
 		r["attachments"] = d
-	case nested.TaskActivityComment:
+	case global.TaskActivityComment:
 		r["comment_text"] = taskActivity.CommentText
-	case nested.TaskActivityTitleChanged:
+	case global.TaskActivityTitleChanged:
 		r["title"] = taskActivity.Title
-	case nested.TaskActivityDescChanged:
+	case global.TaskActivityDescChanged:
 		r["description"] = taskActivity.Desc
-	case nested.TaskActivityCandidateAdded, nested.TaskActivityCandidateRemoved:
+	case global.TaskActivityCandidateAdded, global.TaskActivityCandidateRemoved:
 		candidates := m.worker.Model().Account.GetAccountsByIDs(taskActivity.CandidateIDs)
 		var d []nested.M
 		for _, w := range candidates {
 			d = append(d, m.Account(w, false))
 		}
 		r["candidates"] = d
-	case nested.TaskActivityTodoAdded, nested.TaskActivityTodoRemoved, nested.TaskActivityTodoChanged,
-		nested.TaskActivityTodoDone, nested.TaskActivityTodoUndone:
+	case global.TaskActivityTodoAdded, global.TaskActivityTodoRemoved, global.TaskActivityTodoChanged,
+		global.TaskActivityTodoDone, global.TaskActivityTodoUndone:
 		r["todo_text"] = taskActivity.ToDoText
-	case nested.TaskActivityStatusChanged:
+	case global.TaskActivityStatusChanged:
 		r["status"] = taskActivity.Status
-	case nested.TaskActivityLabelAdded, nested.TaskActivityLabelRemoved:
+	case global.TaskActivityLabelAdded, global.TaskActivityLabelRemoved:
 		labels := m.worker.Model().Label.GetByIDs(taskActivity.LabelIDs)
 		var mapLabels []nested.M
 		for _, label := range labels {
 			mapLabels = append(mapLabels, m.Label(requester, label, false))
 		}
 		r["labels"] = mapLabels
-	case nested.TaskActivityDueDateUpdated, nested.TaskActivityDueDateRemoved:
+	case global.TaskActivityDueDateUpdated, global.TaskActivityDueDateRemoved:
 		r["due_date"] = taskActivity.DueDate
 		r["due_date_has_clock"] = taskActivity.DueDateHasClock
-	case nested.TaskActivityAssigneeChanged:
+	case global.TaskActivityAssigneeChanged:
 		assignee := m.worker.Model().Account.GetByID(taskActivity.AssigneeID, nil)
 		r["assignee"] = m.Account(*assignee, false)
 	}

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"git.ronaksoft.com/nested/server/pkg/global"
 	"regexp"
 	"strings"
 
@@ -90,7 +91,7 @@ func (pm *PushManager) PostEdited(post *nested.Post) {
 	for _, placeID := range post.PlaceIDs {
 		place := pm.worker.Model().Place.GetByID(placeID, nil)
 		memberIDs := place.GetMemberIDs()
-		pm.Notification.InternalPostActivitySyncPush(memberIDs, post.ID, nested.PostActivityActionEdited, post.PlaceIDs)
+		pm.Notification.InternalPostActivitySyncPush(memberIDs, post.ID, global.PostActivityActionEdited, post.PlaceIDs)
 	}
 }
 func (pm *PushManager) PostMovedTo(post *nested.Post, oldPlace, newPlace *nested.Place) {
@@ -112,7 +113,7 @@ func (pm *PushManager) PostMovedTo(post *nested.Post, oldPlace, newPlace *nested
 		pm.Notification.InternalPostActivitySyncPush(
 			place.GetMemberIDs(),
 			post.ID,
-			nested.PostActivityActionPlaceMove,
+			global.PostActivityActionPlaceMove,
 			post.PlaceIDs,
 		)
 	}
@@ -134,7 +135,7 @@ func (pm *PushManager) PostAttached(post *nested.Post, attachedPlaceIDs []string
 			pm.Notification.InternalPostActivitySyncPush(
 				place.GetMemberIDs(),
 				post.ID,
-				nested.PostActivityActionPlaceAttach,
+				global.PostActivityActionPlaceAttach,
 				post.PlaceIDs,
 			)
 		}
@@ -175,7 +176,7 @@ func (pm *PushManager) PostCommentAdded(post *nested.Post, comment *nested.Comme
 	for _, placeID := range post.PlaceIDs {
 		place := pm.worker.Model().Place.GetByID(placeID, nil)
 		memberIDs := place.GetMemberIDs()
-		pm.Notification.InternalPostActivitySyncPush(memberIDs, post.ID, nested.PostActivityActionCommentAdd, post.PlaceIDs)
+		pm.Notification.InternalPostActivitySyncPush(memberIDs, post.ID, global.PostActivityActionCommentAdd, post.PlaceIDs)
 	}
 }
 func (pm *PushManager) PostCommentRemoved(post *nested.Post, comment *nested.Comment) {
@@ -183,7 +184,7 @@ func (pm *PushManager) PostCommentRemoved(post *nested.Post, comment *nested.Com
 	for _, placeID := range post.PlaceIDs {
 		place := pm.worker.Model().Place.GetByID(placeID, nil)
 		memberIDs := place.GetMemberIDs()
-		pm.Notification.InternalPostActivitySyncPush(memberIDs, post.ID, nested.PostActivityActionCommentRemove, post.PlaceIDs)
+		pm.Notification.InternalPostActivitySyncPush(memberIDs, post.ID, global.PostActivityActionCommentRemove, post.PlaceIDs)
 	}
 }
 func (pm *PushManager) PostLabelAdded(post *nested.Post, label *nested.Label) {
@@ -191,7 +192,7 @@ func (pm *PushManager) PostLabelAdded(post *nested.Post, label *nested.Label) {
 	for _, placeID := range post.PlaceIDs {
 		place := pm.worker.Model().Place.GetByID(placeID, nil)
 		memberIDs := place.GetMemberIDs()
-		pm.Notification.InternalPostActivitySyncPush(memberIDs, post.ID, nested.PostActivityActionLabelAdd, post.PlaceIDs)
+		pm.Notification.InternalPostActivitySyncPush(memberIDs, post.ID, global.PostActivityActionLabelAdd, post.PlaceIDs)
 	}
 }
 func (pm *PushManager) PostLabelRemoved(post *nested.Post, label *nested.Label) {
@@ -199,7 +200,7 @@ func (pm *PushManager) PostLabelRemoved(post *nested.Post, label *nested.Label) 
 	for _, placeID := range post.PlaceIDs {
 		place := pm.worker.Model().Place.GetByID(placeID, nil)
 		memberIDs := place.GetMemberIDs()
-		pm.Notification.InternalPostActivitySyncPush(memberIDs, post.ID, nested.PostActivityActionLabelRemove, post.PlaceIDs)
+		pm.Notification.InternalPostActivitySyncPush(memberIDs, post.ID, global.PostActivityActionLabelRemove, post.PlaceIDs)
 	}
 }
 
@@ -259,7 +260,7 @@ func (pm *PushManager) TaskAccepted(task *nested.Task, actorID string) {
 		task.CandidateIDs,
 		task.WatcherIDs,
 	)
-	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TaskActivityStatusChanged)
+	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, global.TaskActivityStatusChanged)
 }
 func (pm *PushManager) TaskFailed(task *nested.Task, actorID string) {
 	if actorID != task.AssigneeID {
@@ -280,7 +281,7 @@ func (pm *PushManager) TaskFailed(task *nested.Task, actorID string) {
 		task.CandidateIDs,
 		task.WatcherIDs,
 	)
-	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TaskActivityStatusChanged)
+	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, global.TaskActivityStatusChanged)
 }
 func (pm *PushManager) TaskCompleted(task *nested.Task, actorID string) {
 	if actorID != task.AssigneeID {
@@ -301,7 +302,7 @@ func (pm *PushManager) TaskCompleted(task *nested.Task, actorID string) {
 		task.CandidateIDs,
 		task.WatcherIDs,
 	)
-	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TaskActivityStatusChanged)
+	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, global.TaskActivityStatusChanged)
 }
 func (pm *PushManager) TaskHold(task *nested.Task, actorID string) {
 	if actorID != task.AssignorID {
@@ -322,7 +323,7 @@ func (pm *PushManager) TaskHold(task *nested.Task, actorID string) {
 		task.CandidateIDs,
 		task.WatcherIDs,
 	)
-	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TaskActivityStatusChanged)
+	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, global.TaskActivityStatusChanged)
 }
 func (pm *PushManager) TaskInProgress(task *nested.Task, actorID string) {
 	if actorID != task.AssignorID {
@@ -343,7 +344,7 @@ func (pm *PushManager) TaskInProgress(task *nested.Task, actorID string) {
 		task.CandidateIDs,
 		task.WatcherIDs,
 	)
-	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TaskActivityStatusChanged)
+	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, global.TaskActivityStatusChanged)
 }
 func (pm *PushManager) TaskCommentAdded(task *nested.Task, actorID string, activityID bson.ObjectId, commentText string) {
 	// find mentioned ids and External Notifications
@@ -381,7 +382,7 @@ func (pm *PushManager) TaskCommentAdded(task *nested.Task, actorID string, activ
 		task.CandidateIDs,
 		task.WatcherIDs,
 	)
-	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TaskActivityComment)
+	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, global.TaskActivityComment)
 }
 func (pm *PushManager) TaskAddedToCandidates(task *nested.Task, actorID string, memberIDs []string) {
 	for _, memberID := range memberIDs {
@@ -399,7 +400,7 @@ func (pm *PushManager) TaskAddedToCandidates(task *nested.Task, actorID string, 
 		task.CandidateIDs,
 		task.WatcherIDs,
 	)
-	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TaskActivityCandidateAdded)
+	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, global.TaskActivityCandidateAdded)
 
 }
 func (pm *PushManager) TaskAddedToWatchers(task *nested.Task, actorID string, memberIDs []string) {
@@ -418,7 +419,7 @@ func (pm *PushManager) TaskAddedToWatchers(task *nested.Task, actorID string, me
 		task.CandidateIDs,
 		task.WatcherIDs,
 	)
-	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TaskActivityWatcherAdded)
+	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, global.TaskActivityWatcherAdded)
 
 }
 func (pm *PushManager) TaskAddedToEditors(task *nested.Task, actorID string, memberIDs []string) {
@@ -437,10 +438,10 @@ func (pm *PushManager) TaskAddedToEditors(task *nested.Task, actorID string, mem
 		task.CandidateIDs,
 		task.WatcherIDs,
 	)
-	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TaskActivityEditorAdded)
+	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, global.TaskActivityEditorAdded)
 
 }
-func (pm *PushManager) TaskNewActivity(task *nested.Task, action nested.TaskAction) {
+func (pm *PushManager) TaskNewActivity(task *nested.Task, action global.TaskAction) {
 	// send task activity sync over the wire
 	accountIDs := nested.MB{}
 	accountIDs.AddKeys(

@@ -2,6 +2,7 @@ package nestedServiceTask
 
 import (
 	"encoding/base64"
+	"git.ronaksoft.com/nested/server/pkg/global"
 	"strconv"
 	"strings"
 
@@ -257,7 +258,7 @@ func (s *TaskService) addLabel(requester *nested.Account, request *nestedGateway
 		return
 	}
 	if task.AddLabels(requester.ID, labelIDs) {
-		go s.Worker().Pusher().TaskNewActivity(task, nested.TaskActivityLabelAdded)
+		go s.Worker().Pusher().TaskNewActivity(task, global.TaskActivityLabelAdded)
 		response.Ok()
 	} else {
 		response.Error(nested.ERR_UNKNOWN, []string{"internal_error"})
@@ -298,7 +299,7 @@ func (s *TaskService) addTodo(requester *nested.Account, request *nestedGateway.
 		response.Error(nested.ERR_UNKNOWN, []string{"internal_error"})
 		return
 	}
-	go s.Worker().Pusher().TaskNewActivity(task, nested.TaskActivityTodoAdded)
+	go s.Worker().Pusher().TaskNewActivity(task, global.TaskActivityTodoAdded)
 	response.OkWithData(nested.M{
 		"todo_id": taskToDo.ID,
 		"done":    taskToDo.Done,
@@ -398,10 +399,10 @@ func (s *TaskService) updateAssignee(requester *nested.Account, request *nestedG
 		response.Ok()
 		if len(accountIDs) == 1 {
 			go s.Worker().Pusher().TaskAssigned(task1)
-			go s.Worker().Pusher().TaskNewActivity(task1, nested.TaskActivityAssigneeChanged)
+			go s.Worker().Pusher().TaskNewActivity(task1, global.TaskActivityAssigneeChanged)
 		} else {
 			go s.Worker().Pusher().TaskAddedToCandidates(task1, requester.ID, accountIDs)
-			go s.Worker().Pusher().TaskNewActivity(task1, nested.TaskActivityCandidateAdded)
+			go s.Worker().Pusher().TaskNewActivity(task1, global.TaskActivityCandidateAdded)
 		}
 	} else {
 		response.Error(nested.ERR_UNKNOWN, []string{"internal_error"})
@@ -607,13 +608,13 @@ func (s *TaskService) getActivities(requester *nested.Account, request *nestedGa
 		activities = s.Worker().Model().TaskActivity.GetActivitiesByTaskID(
 			task.ID,
 			s.Worker().Argument().GetPagination(request),
-			[]nested.TaskAction{nested.TaskActivityComment},
+			[]global.TaskAction{global.TaskActivityComment},
 		)
 	} else {
 		activities = s.Worker().Model().TaskActivity.GetActivitiesByTaskID(
 			task.ID,
 			s.Worker().Argument().GetPagination(request),
-			[]nested.TaskAction{},
+			[]global.TaskAction{},
 		)
 	}
 	var r []nested.M
@@ -780,7 +781,7 @@ func (s *TaskService) removeLabel(requester *nested.Account, request *nestedGate
 	}
 
 	if task.RemoveLabels(requester.ID, labelIDs) {
-		go s.Worker().Pusher().TaskNewActivity(task, nested.TaskActivityLabelRemoved)
+		go s.Worker().Pusher().TaskNewActivity(task, global.TaskActivityLabelRemoved)
 		response.Ok()
 	} else {
 		response.Error(nested.ERR_UNKNOWN, []string{"internal_error"})
@@ -815,7 +816,7 @@ func (s *TaskService) removeTodo(requester *nested.Account, request *nestedGatew
 	for _, todoID := range todoIDs {
 		task.RemoveToDo(requester.ID, todoID)
 	}
-	go s.Worker().Pusher().TaskNewActivity(task, nested.TaskActivityTodoRemoved)
+	go s.Worker().Pusher().TaskNewActivity(task, global.TaskActivityTodoRemoved)
 	response.Ok()
 }
 
@@ -841,7 +842,7 @@ func (s *TaskService) removeWatcher(requester *nested.Account, request *nestedGa
 	}
 
 	if task.RemoveWatchers(requester.ID, watcherIDs) {
-		go s.Worker().Pusher().TaskNewActivity(task, nested.TaskActivityWatcherRemoved)
+		go s.Worker().Pusher().TaskNewActivity(task, global.TaskActivityWatcherRemoved)
 		response.Ok()
 	} else {
 		response.Error(nested.ERR_UNKNOWN, []string{})
@@ -870,7 +871,7 @@ func (s *TaskService) removeEditor(requester *nested.Account, request *nestedGat
 	}
 
 	if task.RemoveEditors(requester.ID, editorIDs) {
-		go s.Worker().Pusher().TaskNewActivity(task, nested.TaskActivityEditorRemoved)
+		go s.Worker().Pusher().TaskNewActivity(task, global.TaskActivityEditorRemoved)
 		response.Ok()
 	} else {
 		response.Error(nested.ERR_UNKNOWN, []string{})
@@ -899,7 +900,7 @@ func (s *TaskService) removeCandidate(requester *nested.Account, request *nested
 	}
 
 	if task.RemoveCandidates(requester.ID, candidateIDs) {
-		go s.Worker().Pusher().TaskNewActivity(task, nested.TaskActivityCandidateRemoved)
+		go s.Worker().Pusher().TaskNewActivity(task, global.TaskActivityCandidateRemoved)
 		response.Ok()
 	} else {
 		response.Error(nested.ERR_UNKNOWN, []string{})
@@ -1120,7 +1121,7 @@ func (s *TaskService) update(requester *nested.Account, request *nestedGateway.R
 
 	if task.Update(requester.ID, title, desc, dueDate, dueDateHasClock) {
 		response.Ok()
-		go s.Worker().Pusher().TaskNewActivity(task, nested.TaskActivityUpdated)
+		go s.Worker().Pusher().TaskNewActivity(task, global.TaskActivityUpdated)
 	} else {
 		response.Error(nested.ERR_UNKNOWN, []string{"internal_error"})
 	}

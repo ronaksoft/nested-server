@@ -2,6 +2,7 @@ package pusher
 
 import (
 	nested "git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/pkg/global"
 	"github.com/globalsign/mgo/bson"
 )
 
@@ -16,8 +17,8 @@ import (
 
 type Internal interface {
 	PlaceActivity(targets []string, placeID string, action int)
-	PostActivity(targets []string, postID bson.ObjectId, action nested.PostAction, placeIDs []string)
-	TaskActivity(targets []string, taskID bson.ObjectId, action nested.TaskAction)
+	PostActivity(targets []string, postID bson.ObjectId, action global.PostAction, placeIDs []string)
+	TaskActivity(targets []string, taskID bson.ObjectId, action global.TaskAction)
 	Notification(targets []string, notificationType int)
 }
 

@@ -3,6 +3,7 @@ package ntfy
 import (
 	"encoding/json"
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/global"
 	"log"
 	"strconv"
 
@@ -206,7 +207,7 @@ func (c *Client) InternalPlaceActivitySyncPush(targets []string, placeID string,
 	}
 }
 
-func (c *Client) InternalPostActivitySyncPush(targets []string, postID bson.ObjectId, action nested.PostAction, placeIDs []string) {
+func (c *Client) InternalPostActivitySyncPush(targets []string, postID bson.ObjectId, action global.PostAction, placeIDs []string) {
 	if len(targets) == 0 {
 		return
 	}
@@ -242,7 +243,7 @@ func (c *Client) InternalPostActivitySyncPush(targets []string, postID bson.Obje
 	}
 }
 
-func (c *Client) InternalTaskActivitySyncPush(targets []string, taskID bson.ObjectId, action nested.TaskAction) {
+func (c *Client) InternalTaskActivitySyncPush(targets []string, taskID bson.ObjectId, action global.TaskAction) {
 	if len(targets) == 0 {
 		return
 	}

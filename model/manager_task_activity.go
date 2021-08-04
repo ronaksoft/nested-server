@@ -8,33 +8,6 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
-const (
-	TaskActivityWatcherAdded      TaskAction = 0x0001
-	TaskActivityWatcherRemoved    TaskAction = 0x0002
-	TaskActivityAttachmentAdded   TaskAction = 0x0003
-	TaskActivityAttachmentRemoved TaskAction = 0x0004
-	TaskActivityComment           TaskAction = 0x0006
-	TaskActivityTitleChanged      TaskAction = 0x0007
-	TaskActivityDescChanged       TaskAction = 0x0008
-	TaskActivityCandidateAdded    TaskAction = 0x0011
-	TaskActivityCandidateRemoved  TaskAction = 0x0012
-	TaskActivityTodoAdded         TaskAction = 0x0013
-	TaskActivityTodoRemoved       TaskAction = 0x0014
-	TaskActivityTodoChanged       TaskAction = 0x0015
-	TaskActivityTodoDone          TaskAction = 0x0016
-	TaskActivityTodoUndone        TaskAction = 0x0017
-	TaskActivityStatusChanged     TaskAction = 0x0018
-	TaskActivityLabelAdded        TaskAction = 0x0019
-	TaskActivityLabelRemoved      TaskAction = 0x0020
-	TaskActivityDueDateUpdated    TaskAction = 0x0021
-	TaskActivityDueDateRemoved    TaskAction = 0x0022
-	TaskActivityCreated           TaskAction = 0x0023
-	TaskActivityAssigneeChanged   TaskAction = 0x0024
-	TaskActivityEditorAdded       TaskAction = 0x0025
-	TaskActivityEditorRemoved     TaskAction = 0x0026
-	TaskActivityUpdated           TaskAction = 0x0100
-)
-
 type TaskActivityManager struct{}
 
 func NewTaskActivityManager() *TaskActivityManager {
@@ -84,7 +57,7 @@ func (tm *TaskActivityManager) GetActivitiesByIDs(activityIDs []bson.ObjectId) [
 	return taskActivities
 }
 
-func (tm *TaskActivityManager) GetActivitiesByTaskID(taskID bson.ObjectId, pg Pagination, filter []TaskAction) []TaskActivity {
+func (tm *TaskActivityManager) GetActivitiesByTaskID(taskID bson.ObjectId, pg Pagination, filter []global.TaskAction) []TaskActivity {
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
@@ -119,7 +92,7 @@ func (tm *TaskActivityManager) Created(taskID bson.ObjectId, actorID string) {
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TaskActivityCreated,
+		Action:    global.TaskActivityCreated,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -137,7 +110,7 @@ func (tm *TaskActivityManager) WatcherAdded(taskID bson.ObjectId, actorID string
 
 	v := TaskActivity{
 		ID:         bson.NewObjectId(),
-		Action:     TaskActivityWatcherAdded,
+		Action:     global.TaskActivityWatcherAdded,
 		Timestamp:  Timestamp(),
 		TaskID:     taskID,
 		ActorID:    actorID,
@@ -156,7 +129,7 @@ func (tm *TaskActivityManager) WatcherRemoved(taskID bson.ObjectId, actorID stri
 
 	v := TaskActivity{
 		ID:         bson.NewObjectId(),
-		Action:     TaskActivityWatcherRemoved,
+		Action:     global.TaskActivityWatcherRemoved,
 		Timestamp:  Timestamp(),
 		TaskID:     taskID,
 		ActorID:    actorID,
@@ -175,7 +148,7 @@ func (tm *TaskActivityManager) EditorAdded(taskID bson.ObjectId, actorID string,
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TaskActivityEditorAdded,
+		Action:    global.TaskActivityEditorAdded,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -194,7 +167,7 @@ func (tm *TaskActivityManager) EditorRemoved(taskID bson.ObjectId, actorID strin
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TaskActivityEditorRemoved,
+		Action:    global.TaskActivityEditorRemoved,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -213,7 +186,7 @@ func (tm *TaskActivityManager) AttachmentAdded(taskID bson.ObjectId, actorID str
 
 	v := TaskActivity{
 		ID:            bson.NewObjectId(),
-		Action:        TaskActivityAttachmentAdded,
+		Action:        global.TaskActivityAttachmentAdded,
 		Timestamp:     Timestamp(),
 		TaskID:        taskID,
 		ActorID:       actorID,
@@ -233,7 +206,7 @@ func (tm *TaskActivityManager) AttachmentRemoved(taskID bson.ObjectId, actorID s
 
 	v := TaskActivity{
 		ID:            bson.NewObjectId(),
-		Action:        TaskActivityAttachmentRemoved,
+		Action:        global.TaskActivityAttachmentRemoved,
 		Timestamp:     Timestamp(),
 		TaskID:        taskID,
 		ActorID:       actorID,
@@ -252,7 +225,7 @@ func (tm *TaskActivityManager) TaskTitleChanged(taskID bson.ObjectId, actorID, t
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TaskActivityTitleChanged,
+		Action:    global.TaskActivityTitleChanged,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -271,7 +244,7 @@ func (tm *TaskActivityManager) TaskDescriptionChanged(taskID bson.ObjectId, acto
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TaskActivityDescChanged,
+		Action:    global.TaskActivityDescChanged,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -290,7 +263,7 @@ func (tm *TaskActivityManager) CandidateAdded(taskID bson.ObjectId, actorID stri
 
 	v := TaskActivity{
 		ID:           bson.NewObjectId(),
-		Action:       TaskActivityCandidateAdded,
+		Action:       global.TaskActivityCandidateAdded,
 		Timestamp:    Timestamp(),
 		TaskID:       taskID,
 		ActorID:      actorID,
@@ -309,7 +282,7 @@ func (tm *TaskActivityManager) CandidateRemoved(taskID bson.ObjectId, actorID st
 
 	v := TaskActivity{
 		ID:           bson.NewObjectId(),
-		Action:       TaskActivityCandidateRemoved,
+		Action:       global.TaskActivityCandidateRemoved,
 		Timestamp:    Timestamp(),
 		TaskID:       taskID,
 		ActorID:      actorID,
@@ -328,7 +301,7 @@ func (tm *TaskActivityManager) StatusChanged(taskID bson.ObjectId, actorID strin
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TaskActivityStatusChanged,
+		Action:    global.TaskActivityStatusChanged,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -347,7 +320,7 @@ func (tm *TaskActivityManager) ToDoAdded(taskID bson.ObjectId, actorID, todoText
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TaskActivityTodoAdded,
+		Action:    global.TaskActivityTodoAdded,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -366,7 +339,7 @@ func (tm *TaskActivityManager) ToDoRemoved(taskID bson.ObjectId, actorID, todoTe
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TaskActivityTodoRemoved,
+		Action:    global.TaskActivityTodoRemoved,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -385,7 +358,7 @@ func (tm *TaskActivityManager) ToDoChanged(taskID bson.ObjectId, actorID, todoTe
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TaskActivityTodoChanged,
+		Action:    global.TaskActivityTodoChanged,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -404,7 +377,7 @@ func (tm *TaskActivityManager) ToDoDone(taskID bson.ObjectId, actorID, todoText 
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TaskActivityTodoDone,
+		Action:    global.TaskActivityTodoDone,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -423,7 +396,7 @@ func (tm *TaskActivityManager) ToDoUndone(taskID bson.ObjectId, actorID, todoTex
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TaskActivityTodoUndone,
+		Action:    global.TaskActivityTodoUndone,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -442,7 +415,7 @@ func (tm *TaskActivityManager) AssigneeChanged(taskID bson.ObjectId, actorID, as
 
 	v := TaskActivity{
 		ID:         bson.NewObjectId(),
-		Action:     TaskActivityAssigneeChanged,
+		Action:     global.TaskActivityAssigneeChanged,
 		Timestamp:  Timestamp(),
 		TaskID:     taskID,
 		ActorID:    actorID,
@@ -461,7 +434,7 @@ func (tm *TaskActivityManager) Comment(taskID bson.ObjectId, actorID string, com
 
 	v := TaskActivity{
 		ID:          bson.NewObjectId(),
-		Action:      TaskActivityComment,
+		Action:      global.TaskActivityComment,
 		Timestamp:   Timestamp(),
 		TaskID:      taskID,
 		ActorID:     actorID,
@@ -491,7 +464,7 @@ func (tm *TaskActivityManager) LabelAdded(taskID bson.ObjectId, actorID string, 
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TaskActivityLabelAdded,
+		Action:    global.TaskActivityLabelAdded,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -511,7 +484,7 @@ func (tm *TaskActivityManager) LabelRemoved(taskID bson.ObjectId, actorID string
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TaskActivityLabelRemoved,
+		Action:    global.TaskActivityLabelRemoved,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -530,7 +503,7 @@ func (tm *TaskActivityManager) DueDateUpdated(taskID bson.ObjectId, actorID stri
 
 	v := TaskActivity{
 		ID:              bson.NewObjectId(),
-		Action:          TaskActivityDueDateUpdated,
+		Action:          global.TaskActivityDueDateUpdated,
 		Timestamp:       Timestamp(),
 		TaskID:          taskID,
 		ActorID:         actorID,
@@ -550,7 +523,7 @@ func (tm *TaskActivityManager) DueDateRemoved(taskID bson.ObjectId, actorID stri
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TaskActivityDueDateRemoved,
+		Action:    global.TaskActivityDueDateRemoved,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -561,13 +534,12 @@ func (tm *TaskActivityManager) DueDateRemoved(taskID bson.ObjectId, actorID stri
 	return
 }
 
-type TaskAction int
 type TaskActivity struct {
 	ID              bson.ObjectId `bson:"_id" json:"_id"`
 	Timestamp       uint64        `bson:"timestamp" json:"timestamp"`
-	TaskID          bson.ObjectId `bson:"task_id" json:"task_id"`
-	Action          TaskAction    `bson:"action" json:"action"`
-	ActorID         string        `bson:"actor_id" json:"actor_id"`
+	TaskID  bson.ObjectId     `bson:"task_id" json:"task_id"`
+	Action  global.TaskAction `bson:"action" json:"action"`
+	ActorID string            `bson:"actor_id" json:"actor_id"`
 	AssigneeID      string        `bson:"assignee_id,omitempty" json:"assignee_id,omitempty"`
 	WatcherIDs      []string      `bson:"watcher_id,omitempty" json:"watcher_id,omitempty"`
 	EditorIDs       []string      `bson:"editor_id,omitempty" json:"editor_id,omitempty"`
