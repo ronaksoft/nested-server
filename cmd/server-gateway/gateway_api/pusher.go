@@ -259,7 +259,7 @@ func (pm *PushManager) TaskAccepted(task *nested.Task, actorID string) {
 		task.CandidateIDs,
 		task.WatcherIDs,
 	)
-	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TASK_ACTIVITY_STATUS_CHANGED)
+	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TaskActivityStatusChanged)
 }
 func (pm *PushManager) TaskFailed(task *nested.Task, actorID string) {
 	if actorID != task.AssigneeID {
@@ -280,7 +280,7 @@ func (pm *PushManager) TaskFailed(task *nested.Task, actorID string) {
 		task.CandidateIDs,
 		task.WatcherIDs,
 	)
-	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TASK_ACTIVITY_STATUS_CHANGED)
+	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TaskActivityStatusChanged)
 }
 func (pm *PushManager) TaskCompleted(task *nested.Task, actorID string) {
 	if actorID != task.AssigneeID {
@@ -301,7 +301,7 @@ func (pm *PushManager) TaskCompleted(task *nested.Task, actorID string) {
 		task.CandidateIDs,
 		task.WatcherIDs,
 	)
-	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TASK_ACTIVITY_STATUS_CHANGED)
+	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TaskActivityStatusChanged)
 }
 func (pm *PushManager) TaskHold(task *nested.Task, actorID string) {
 	if actorID != task.AssignorID {
@@ -322,7 +322,7 @@ func (pm *PushManager) TaskHold(task *nested.Task, actorID string) {
 		task.CandidateIDs,
 		task.WatcherIDs,
 	)
-	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TASK_ACTIVITY_STATUS_CHANGED)
+	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TaskActivityStatusChanged)
 }
 func (pm *PushManager) TaskInProgress(task *nested.Task, actorID string) {
 	if actorID != task.AssignorID {
@@ -343,7 +343,7 @@ func (pm *PushManager) TaskInProgress(task *nested.Task, actorID string) {
 		task.CandidateIDs,
 		task.WatcherIDs,
 	)
-	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TASK_ACTIVITY_STATUS_CHANGED)
+	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TaskActivityStatusChanged)
 }
 func (pm *PushManager) TaskCommentAdded(task *nested.Task, actorID string, activityID bson.ObjectId, commentText string) {
 	// find mentioned ids and External Notifications
@@ -352,7 +352,7 @@ func (pm *PushManager) TaskCommentAdded(task *nested.Task, actorID string, activ
 	mentionedIDs := nested.MB{}
 	for _, m := range matches {
 		mentionedID := strings.Trim(string(m[1:]), " ") // remove @ from the mentioned id
-		if task.HasAccess(mentionedID, nested.TASK_ACCESS_READ) {
+		if task.HasAccess(mentionedID, nested.TaskAccessRead) {
 			n := pm.worker.Model().Notification.TaskCommentMentioned(mentionedID, actorID, task, activityID)
 			pm.Notification.ExternalPushNotification(n)
 			pm.Notification.InternalNotificationSyncPush([]string{mentionedID}, nested.NotificationTypeTaskMention)
@@ -381,7 +381,7 @@ func (pm *PushManager) TaskCommentAdded(task *nested.Task, actorID string, activ
 		task.CandidateIDs,
 		task.WatcherIDs,
 	)
-	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TASK_ACTIVITY_COMMENT)
+	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TaskActivityComment)
 }
 func (pm *PushManager) TaskAddedToCandidates(task *nested.Task, actorID string, memberIDs []string) {
 	for _, memberID := range memberIDs {
@@ -399,7 +399,7 @@ func (pm *PushManager) TaskAddedToCandidates(task *nested.Task, actorID string, 
 		task.CandidateIDs,
 		task.WatcherIDs,
 	)
-	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TASK_ACTIVITY_CANDIDATE_ADDED)
+	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TaskActivityCandidateAdded)
 
 }
 func (pm *PushManager) TaskAddedToWatchers(task *nested.Task, actorID string, memberIDs []string) {
@@ -418,7 +418,7 @@ func (pm *PushManager) TaskAddedToWatchers(task *nested.Task, actorID string, me
 		task.CandidateIDs,
 		task.WatcherIDs,
 	)
-	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TASK_ACTIVITY_WATCHER_ADDED)
+	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TaskActivityWatcherAdded)
 
 }
 func (pm *PushManager) TaskAddedToEditors(task *nested.Task, actorID string, memberIDs []string) {
@@ -437,7 +437,7 @@ func (pm *PushManager) TaskAddedToEditors(task *nested.Task, actorID string, mem
 		task.CandidateIDs,
 		task.WatcherIDs,
 	)
-	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TASK_ACTIVITY_EDITOR_ADDED)
+	pm.Notification.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, nested.TaskActivityEditorAdded)
 
 }
 func (pm *PushManager) TaskNewActivity(task *nested.Task, action nested.TaskAction) {

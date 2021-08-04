@@ -3,6 +3,8 @@ package nested
 import (
 	"crypto/md5"
 	"encoding/base64"
+	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/log"
 	"time"
 
 	"github.com/globalsign/mgo"
@@ -10,9 +12,9 @@ import (
 )
 
 const (
-	TEST_PHONE_NUMBER       string = "98123456789"
-	TEST_EMAIL              string = "test@nested.me"
-	MAGIC_VERIFICATION_CODE string = "VER20170209justForTe$T####PQRTS"
+	TestPhoneNumber       string = "98123456789"
+	TestEmail             string = "test@nested.me"
+	MagicVerificationCode string = "VER20170209justForTe$T####PQRTS"
 )
 
 type Verification struct {
@@ -38,7 +40,7 @@ func NewVerificationManager() *VerificationManager {
 	return new(VerificationManager)
 }
 
-// Description:
+// CreateByPhone
 // Creates a verification object for 'phone' and return the verification object to caller
 // if verification object is nil then something has been wrong
 func (vm *VerificationManager) CreateByPhone(phone string) *Verification {
@@ -50,7 +52,7 @@ func (vm *VerificationManager) CreateByPhone(phone string) *Verification {
 	v.Phone = phone
 	v.ID = RandomID(32)
 	v.Timestamp = time.Now().Unix()
-	if v.Phone == TEST_PHONE_NUMBER {
+	if v.Phone == TestPhoneNumber {
 		v.ShortCode = "123456"
 		v.LongCode = "TEST_LONG_CODE_KEY"
 	} else {
@@ -63,7 +65,7 @@ func (vm *VerificationManager) CreateByPhone(phone string) *Verification {
 	return v
 }
 
-// Description:
+// CreateByEmail
 // Creates a verification object for 'email' and return the verification object to caller
 // if verification object is nil then something has been wrong
 func (vm *VerificationManager) CreateByEmail(email string) *Verification {
@@ -75,7 +77,7 @@ func (vm *VerificationManager) CreateByEmail(email string) *Verification {
 	v.Email = email
 	v.ID = RandomID(32)
 	v.Timestamp = time.Now().Unix()
-	if v.Email == TEST_EMAIL {
+	if v.Email == TestEmail {
 		v.ShortCode = "123456"
 		v.LongCode = "TEST_LONG_CODE_KEY"
 	} else {
@@ -88,7 +90,7 @@ func (vm *VerificationManager) CreateByEmail(email string) *Verification {
 	return v
 }
 
-// Description:
+// GetByID
 // Returns the Verification object identified by ID, this function does not check any
 // extra parameter. It returns the Verification object even if it was expired or verified ...
 func (vm *VerificationManager) GetByID(verifyID string) *Verification {
@@ -104,7 +106,7 @@ func (vm *VerificationManager) GetByID(verifyID string) *Verification {
 	return v
 }
 
-// Description:
+// Verify
 // Returns true if the code matches verification code otherwise if attempts are exceeded the limit
 // or expire time has been passed the verification object is expired.
 func (vm *VerificationManager) Verify(verifyID, code string) bool {
@@ -151,7 +153,7 @@ func (vm *VerificationManager) Verify(verifyID, code string) bool {
 	return v.Verified
 }
 
-// Description:
+// Verified
 // Returns true if verification identified by verifyID is verified otherwise returns false
 func (vm *VerificationManager) Verified(verifyID string) bool {
 	dbSession := _MongoSession.Clone()

@@ -117,7 +117,7 @@ func (s *AuthService) sendCodeByText(requester *nested.Account, request *nestedG
 		response.Error(nested.ERR_INCOMPLETE, []string{"vid"})
 		return
 	}
-	if verification.Phone == nested.TEST_PHONE_NUMBER {
+	if verification.Phone == nested.TestPhoneNumber {
 		return
 	}
 	if verification.Counters.Sms > 3 {
@@ -163,7 +163,7 @@ func (s *AuthService) recoverPassword(requester *nested.Account, request *nested
 		response.Error(nested.ERR_INVALID, []string{"new_pass"})
 		return
 	}
-	if verification.Phone == nested.TEST_PHONE_NUMBER {
+	if verification.Phone == nested.TestPhoneNumber {
 		response.OkWithData(nested.M{"text": "this is for test purpose"})
 		return
 	}
@@ -196,7 +196,7 @@ func (s *AuthService) recoverUsername(requester *nested.Account, request *nested
 		response.Error(nested.ERR_INCOMPLETE, []string{"vid"})
 		return
 	}
-	if verification.Phone == nested.TEST_PHONE_NUMBER {
+	if verification.Phone == nested.TestPhoneNumber {
 		response.OkWithData(nested.M{
 			"text": "this is for test purpose",
 			"uid":  "_username",
@@ -341,7 +341,7 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 		return
 	}
 
-	if verification.Phone == nested.TEST_PHONE_NUMBER {
+	if verification.Phone == nested.TestPhoneNumber {
 		response.OkWithData(nested.M{"info": "This user does not actually created. You are using test phone"})
 		return
 	}

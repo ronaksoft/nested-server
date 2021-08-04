@@ -40,7 +40,7 @@ func (m *Model) CreateFileToken(uniID nested.UniversalID, issuerID, receiverEmai
 
 	ft := nested.FileToken{
 		ID:       fmt.Sprintf("FT%s", nested.RandomID(128)),
-		Type:     nested.TOKEN_TYPE_FILE,
+		Type:     nested.TokenTypeFile,
 		FileID:   uniID,
 		Issuer:   issuerID,
 		Receiver: receiverEmail,

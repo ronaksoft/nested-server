@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/log"
 
 	"github.com/globalsign/mgo/bson"
 	"github.com/gomodule/redigo/redis"
@@ -30,7 +32,6 @@ type SessionSecurity struct {
 	UserAgent string `json:"ua" bson:"ua"`
 }
 
-// Session Manager and Methods
 type SessionManager struct{}
 
 func NewSessionManager() *SessionManager {
@@ -47,6 +48,7 @@ func (sm *SessionManager) readFromCache(sessionID bson.ObjectId) *Session {
 			log.Warn(err.Error())
 			return nil
 		}
+
 		gobSession := new(bytes.Buffer)
 		if err := gob.NewEncoder(gobSession).Encode(session); err == nil {
 			c.Do("SETEX", keyID, global.CACHE_LIFETIME, gobSession.Bytes())
@@ -172,8 +174,7 @@ func (sm *SessionManager) GetAccount(sk bson.ObjectId) *Account {
 	return nil
 }
 
-// Set
-// set key-values in session identified by SessionKey(sk)
+// Set sets key-values in session identified by SessionKey(sk)
 // if everything was ok it return TRUE otherwise returns FALSE
 func (sm *SessionManager) Set(sk bson.ObjectId, v bson.M) bool {
 	//
@@ -238,7 +239,7 @@ func (sm *SessionManager) Verify(sk bson.ObjectId, ss string) (r bool) {
 /*
    Session
 */
-// Login
+
 func (s *Session) Login() {
 	//
 

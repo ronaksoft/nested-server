@@ -148,7 +148,7 @@ func SyncTaskCounters() {
 	for iter.Next(task) {
 		numberOfComments, _ := _MongoDB.C(global.COLLECTION_TASKS_ACTIVITIES).Find(bson.M{
 			"task_id": task.ID,
-			"action":  TASK_ACTIVITY_COMMENT,
+			"action":  TaskActivityComment,
 		}).Count()
 
 		_MongoDB.C(global.COLLECTION_TASKS).UpdateId(

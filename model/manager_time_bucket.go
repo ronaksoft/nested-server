@@ -2,6 +2,8 @@ package nested
 
 import (
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/log"
 	"time"
 
 	"github.com/globalsign/mgo/bson"
@@ -28,9 +30,6 @@ func (bm *TimeBucketManager) GetBucketID(timestamp uint64) string {
 }
 
 func (bm *TimeBucketManager) GetBucketsBefore(timestamp uint64) []TimeBucket {
-	//
-
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
@@ -46,9 +45,6 @@ func (bm *TimeBucketManager) GetBucketsBefore(timestamp uint64) []TimeBucket {
 }
 
 func (bm *TimeBucketManager) GetByID(bucketID string) *TimeBucket {
-	//
-
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
@@ -62,9 +58,6 @@ func (bm *TimeBucketManager) GetByID(bucketID string) *TimeBucket {
 }
 
 func (bm *TimeBucketManager) AddOverdueTask(timestamp uint64, taskID bson.ObjectId) bool {
-	//
-
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
@@ -81,9 +74,6 @@ func (bm *TimeBucketManager) AddOverdueTask(timestamp uint64, taskID bson.Object
 }
 
 func (bm *TimeBucketManager) RemoveOverdueTask(timestamp uint64, taskID bson.ObjectId) bool {
-	//
-
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
@@ -100,9 +90,6 @@ func (bm *TimeBucketManager) RemoveOverdueTask(timestamp uint64, taskID bson.Obj
 }
 
 func (bm *TimeBucketManager) Remove(bucketID string) bool {
-	//
-
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()

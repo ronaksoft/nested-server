@@ -70,7 +70,7 @@ func (s *FileService) getDownloadToken(requester *nested.Account, request *neste
 
 	task = s.Worker().Argument().GetTask(request, response)
 	if task != nil {
-		if !task.HasAccess(requester.ID, nested.TASK_ACCESS_READ) {
+		if !task.HasAccess(requester.ID, nested.TaskAccessRead) {
 			response.Error(nested.ERR_ACCESS, []string{"task_id"})
 			return
 		}

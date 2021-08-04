@@ -2,6 +2,8 @@ package nested
 
 import (
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/log"
 	"io"
 	"time"
 
@@ -113,7 +115,7 @@ func GenerateFileInfo(filename, uploader string, fileType string, thumbnails Thu
 // Save inserts file into database
 func (fm *StoreManager) Save(r io.Reader, info StoredFileInfo) *StoredFileInfo {
 	dbSession := _MongoSession.Copy()
-	store := dbSession.DB(STORE_NAME).GridFS("fs")
+	store := dbSession.DB(global.STORE_NAME).GridFS("fs")
 	defer dbSession.Close()
 
 	finfo := info
@@ -151,7 +153,7 @@ func (fm *StoreManager) Save(r io.Reader, info StoredFileInfo) *StoredFileInfo {
 // SetThumbnails sets a file's thumbnails map in file info
 func (fm *StoreManager) SetThumbnails(uniID UniversalID, thumbnails Thumbnails) error {
 	dbSession := _MongoSession.Clone()
-	store := dbSession.DB(STORE_NAME).GridFS("fs")
+	store := dbSession.DB(global.STORE_NAME).GridFS("fs")
 	defer dbSession.Close()
 
 	if err := store.Files.UpdateId(uniID, bson.M{"$set": bson.M{"metadata.thumbnails": thumbnails}}); err != nil {
@@ -164,7 +166,7 @@ func (fm *StoreManager) SetThumbnails(uniID UniversalID, thumbnails Thumbnails) 
 // SetMeta sets a file's meta object in file info
 func (fm *StoreManager) SetMeta(uniID UniversalID, meta interface{}) error {
 	dbSession := _MongoSession.Clone()
-	store := dbSession.DB(STORE_NAME).GridFS("fs")
+	store := dbSession.DB(global.STORE_NAME).GridFS("fs")
 	defer dbSession.Close()
 
 	if err := store.Files.UpdateId(uniID, bson.M{"$set": bson.M{"metadata.meta": meta}}); err != nil {
@@ -177,7 +179,7 @@ func (fm *StoreManager) SetMeta(uniID UniversalID, meta interface{}) error {
 // Exists checks if file exists
 func (fm *StoreManager) Exists(uniID UniversalID) bool {
 	dbSession := _MongoSession.Clone()
-	store := dbSession.DB(STORE_NAME).GridFS("fs")
+	store := dbSession.DB(global.STORE_NAME).GridFS("fs")
 	defer dbSession.Close()
 
 	if c, err := store.Files.FindId(uniID).Count(); err != nil || 0 == c {
@@ -197,7 +199,7 @@ func (fm *StoreManager) GetInfo(uniID UniversalID) (*StoredFileInfo, error) {
 	finfo := new(StoredFileInfo)
 
 	dbSession := _MongoSession.Clone()
-	store := dbSession.DB(STORE_NAME).GridFS("fs")
+	store := dbSession.DB(global.STORE_NAME).GridFS("fs")
 	defer dbSession.Close()
 
 	if err := store.Files.FindId(uniID).One(finfo); err != nil {

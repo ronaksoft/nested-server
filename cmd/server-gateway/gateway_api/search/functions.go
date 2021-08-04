@@ -64,7 +64,7 @@ func (s *SearchService) accounts(requester *nested.Account, request *nestedGatew
 	}
 
 	pg := s.Worker().Argument().GetPagination(request)
-	accounts := s.Worker().Model().Search.Accounts(keyword, nested.ACCOUNT_SEARCH_FILTER_USERS_ENABLED, "", pg)
+	accounts := s.Worker().Model().Search.Accounts(keyword, nested.AccountSearchFilterUsersEnabled, "", pg)
 	r := make([]nested.M, 0, len(accounts))
 	for _, a := range accounts {
 		r = append(r, s.Worker().Map().Account(a, false))
@@ -82,7 +82,7 @@ func (s *SearchService) accountsForAdmin(requester *nested.Account, request *nes
 	}
 
 	pg := s.Worker().Argument().GetPagination(request)
-	accounts := s.Worker().Model().Search.Accounts(keyword, nested.ACCOUNT_SEARCH_FILTER_ALL, "", pg)
+	accounts := s.Worker().Model().Search.Accounts(keyword, nested.AccountSearchFilterAll, "", pg)
 	r := make([]nested.M, 0, len(accounts))
 	for _, a := range accounts {
 		r = append(r, s.Worker().Map().Account(a, false))

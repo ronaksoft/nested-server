@@ -694,7 +694,7 @@ func (m *Mapper) Task(requester *nested.Account, task nested.Task, details bool)
 	// Relate To
 	if len(task.RelatedTo.Hex()) > 0 {
 		rTask := m.worker.Model().Task.GetByID(task.RelatedTo)
-		if rTask != nil && rTask.HasAccess(requester.ID, nested.TASK_ACCESS_READ) {
+		if rTask != nil && rTask.HasAccess(requester.ID, nested.TaskAccessRead) {
 			r["related_to"] = nested.M{
 				"_id":   rTask.ID.Hex(),
 				"title": rTask.Title,
@@ -707,7 +707,7 @@ func (m *Mapper) Task(requester *nested.Account, task nested.Task, details bool)
 		rTasks := m.worker.Model().Task.GetTasksByIDs(task.RelatedTasks)
 		var relatedTasks []nested.M
 		for _, t := range rTasks {
-			if t.HasAccess(requester.ID, nested.TASK_ACCESS_READ) {
+			if t.HasAccess(requester.ID, nested.TaskAccessRead) {
 				relatedTasks = append(relatedTasks, nested.M{
 					"_id":   t.ID,
 					"title": t.Title,
@@ -733,56 +733,56 @@ func (m *Mapper) TaskActivity(requester *nested.Account, taskActivity nested.Tas
 	actor := m.worker.Model().Account.GetByID(taskActivity.ActorID, nil)
 	r["actor"] = m.Account(*actor, false)
 	switch taskActivity.Action {
-	case nested.TASK_ACTIVITY_WATCHER_ADDED, nested.TASK_ACTIVITY_WATCHER_REMOVED:
+	case nested.TaskActivityWatcherAdded, nested.TaskActivityWatcherRemoved:
 		watchers := m.worker.Model().Account.GetAccountsByIDs(taskActivity.WatcherIDs)
 		d := make([]nested.M, 0, len(watchers))
 		for _, w := range watchers {
 			d = append(d, m.Account(w, false))
 		}
 		r["watchers"] = d
-	case nested.TASK_ACTIVITY_EDITOR_ADDED, nested.TASK_ACTIVITY_EDITOR_REMOVED:
+	case nested.TaskActivityEditorAdded, nested.TaskActivityEditorRemoved:
 		editors := m.worker.Model().Account.GetAccountsByIDs(taskActivity.EditorIDs)
 		d := make([]nested.M, 0, len(editors))
 		for _, w := range editors {
 			d = append(d, m.Account(w, false))
 		}
 		r["editors"] = d
-	case nested.TASK_ACTIVITY_ATTACHMENT_ADDED, nested.TASK_ACTIVITY_ATTACHMENT_REMOVED:
+	case nested.TaskActivityAttachmentAdded, nested.TaskActivityAttachmentRemoved:
 		attachments := m.worker.Model().File.GetFilesByIDs(taskActivity.AttachmentIDs)
 		d := make([]nested.M, 0, len(attachments))
 		for _, a := range attachments {
 			d = append(d, m.FileInfo(a))
 		}
 		r["attachments"] = d
-	case nested.TASK_ACTIVITY_COMMENT:
+	case nested.TaskActivityComment:
 		r["comment_text"] = taskActivity.CommentText
-	case nested.TASK_ACTIVITY_TITLE_CHANGED:
+	case nested.TaskActivityTitleChanged:
 		r["title"] = taskActivity.Title
-	case nested.TASK_ACTIVITY_DESC_CHANGED:
+	case nested.TaskActivityDescChanged:
 		r["description"] = taskActivity.Desc
-	case nested.TASK_ACTIVITY_CANDIDATE_ADDED, nested.TASK_ACTIVITY_CANDIDATE_REMOVED:
+	case nested.TaskActivityCandidateAdded, nested.TaskActivityCandidateRemoved:
 		candidates := m.worker.Model().Account.GetAccountsByIDs(taskActivity.CandidateIDs)
 		var d []nested.M
 		for _, w := range candidates {
 			d = append(d, m.Account(w, false))
 		}
 		r["candidates"] = d
-	case nested.TASK_ACTIVITY_TODO_ADDED, nested.TASK_ACTIVITY_TODO_REMOVED, nested.TASK_ACTIVITY_TODO_CHANGED,
-		nested.TASK_ACTIVITY_TODO_DONE, nested.TASK_ACTIVITY_TODO_UNDONE:
+	case nested.TaskActivityTodoAdded, nested.TaskActivityTodoRemoved, nested.TaskActivityTodoChanged,
+		nested.TaskActivityTodoDone, nested.TaskActivityTodoUndone:
 		r["todo_text"] = taskActivity.ToDoText
-	case nested.TASK_ACTIVITY_STATUS_CHANGED:
+	case nested.TaskActivityStatusChanged:
 		r["status"] = taskActivity.Status
-	case nested.TASK_ACTIVITY_LABEL_ADDED, nested.TASK_ACTIVITY_LABEL_REMOVED:
+	case nested.TaskActivityLabelAdded, nested.TaskActivityLabelRemoved:
 		labels := m.worker.Model().Label.GetByIDs(taskActivity.LabelIDs)
 		var mapLabels []nested.M
 		for _, label := range labels {
 			mapLabels = append(mapLabels, m.Label(requester, label, false))
 		}
 		r["labels"] = mapLabels
-	case nested.TASK_ACTIVITY_DUE_DATE_UPDATED, nested.TASK_ACTIVITY_DUE_DATE_REMOVED:
+	case nested.TaskActivityDueDateUpdated, nested.TaskActivityDueDateRemoved:
 		r["due_date"] = taskActivity.DueDate
 		r["due_date_has_clock"] = taskActivity.DueDateHasClock
-	case nested.TASK_ACTIVITY_ASSIGNEE_CHANGED:
+	case nested.TaskActivityAssigneeChanged:
 		assignee := m.worker.Model().Account.GetByID(taskActivity.AssigneeID, nil)
 		r["assignee"] = m.Account(*assignee, false)
 	}

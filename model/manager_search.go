@@ -2,23 +2,25 @@ package nested
 
 import (
 	"fmt"
-	"strings"
-
+	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/log"
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"github.com/globalsign/mgo/bson"
+	"strings"
 )
 
 const (
-	PLACE_SEARCH_FILTER_GRANDPLACE       string = "grand_places"
-	PLACE_SEARCH_FILTER_LOCKED_PLACES    string = "locked_places"
-	PLACE_SEARCH_FILTER_UNLOCKED_PLACES  string = "unlocked_places"
-	PLACE_SEARCH_FILTER_PERSONAL         string = "personal_places"
-	PLACE_SEARCH_FILTER_SHARED           string = "shared_places"
-	PLACE_SEARCH_FILTER_ALL              string = "all"
-	ACCOUNT_SEARCH_FILTER_USERS_ENABLED  string = "users_enabled"
-	ACCOUNT_SEARCH_FILTER_USERS_DISABLED string = "users_disabled"
-	ACCOUNT_SEARCH_FILTER_USERS          string = "users"
-	ACCOUNT_SEARCH_FILTER_DEVICES        string = "devices"
-	ACCOUNT_SEARCH_FILTER_ALL            string = "all"
+	PlaceSearchFilterGrandPlace      string = "grand_places"
+	PlaceSearchFilterLockedPlaces    string = "locked_places"
+	PlaceSearchFilterUnlockedPlaces  string = "unlocked_places"
+	PlaceSearchFilterPersonal        string = "personal_places"
+	PlaceSearchFilterShared          string = "shared_places"
+	PlaceSearchFilterAll             string = "all"
+	AccountSearchFilterUsersEnabled  string = "users_enabled"
+	AccountSearchFilterUsersDisabled string = "users_disabled"
+	AccountSearchFilterUsers         string = "users"
+	AccountSearchFilterDevices       string = "devices"
+	AccountSearchFilterAll           string = "all"
 )
 
 type SearchManager struct{}
@@ -28,11 +30,11 @@ func NewSearchManager() *SearchManager {
 }
 
 // 	Places searches through PLACE collection and apply grand_parent_id, keyword and filter on its query
-// 	filter :	PLACE_SEARCH_FILTER_GRANDPLACE
-// 				PLACE_SEARCH_FILTER_LOCKED_PLACES
-// 				PLACE_SEARCH_FILTER_UNLOCKED_PLACES
-// 				PLACE_SEARCH_FILTER_PERSONAL
-// 				PLACE_SEARCH_FILTER_ALL
+// 	filter :	PlaceSearchFilterGrandPlace
+// 				PlaceSearchFilterLockedPlaces
+// 				PlaceSearchFilterUnlockedPlaces
+// 				PlaceSearchFilterPersonal
+// 				PlaceSearchFilterAll
 func (sm *SearchManager) Places(keyword, filter, sort, grandParentID string, pg Pagination) []Place {
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(global.DB_NAME)
@@ -49,20 +51,20 @@ func (sm *SearchManager) Places(keyword, filter, sort, grandParentID string, pg 
 		q["grand_parent_id"] = grandParentID
 	}
 	switch filter {
-	case PLACE_SEARCH_FILTER_GRANDPLACE:
+	case PlaceSearchFilterGrandPlace:
 		q["level"] = 0
 		q["type"] = PlaceTypeShared
-	case PLACE_SEARCH_FILTER_LOCKED_PLACES:
+	case PlaceSearchFilterLockedPlaces:
 		q["level"] = bson.M{"$ne": 0}
 		q["privacy.locked"] = true
-	case PLACE_SEARCH_FILTER_UNLOCKED_PLACES:
+	case PlaceSearchFilterUnlockedPlaces:
 		q["level"] = bson.M{"$ne": 0}
 		q["privacy.locked"] = false
-	case PLACE_SEARCH_FILTER_PERSONAL:
+	case PlaceSearchFilterPersonal:
 		q["type"] = PlaceTypePersonal
-	case PLACE_SEARCH_FILTER_SHARED:
+	case PlaceSearchFilterShared:
 		q["type"] = PlaceTypeShared
-	case PLACE_SEARCH_FILTER_ALL:
+	case PlaceSearchFilterAll:
 	default:
 
 	}
@@ -145,7 +147,7 @@ func (sm *SearchManager) RecipientsForCompose(keyword, accountID string, pg Pagi
 
 	limit := pg.GetLimit()
 	recipients := make([]string, 0, limit)
-	m := M{}
+	m := tools.M{}
 	iter := db.C(global.COLLECTION_ACCOUNTS_RECIPIENTS).Find(bson.M{
 		"account_id": accountID,
 		"recipient":  bson.M{"$regex": fmt.Sprintf("%s", keyword), "$options": "i"},
@@ -202,11 +204,11 @@ func (sm *SearchManager) PlacesForSearch(keyword, accountID string, pg Paginatio
 }
 
 // 	Accounts searches through  ACCOUNTS collection and apply keyword, filter on it query
-// 	filter:			ACCOUNT_SEARCH_FILTER_USERS_ENABLED
-// 					ACCOUNT_SEARCH_FILTER_USERS_DISABLED
-// 					ACCOUNT_SEARCH_FILTER_USERS
-// 					ACCOUNT_SEARCH_FILTER_DEVICES
-// 					ACCOUNT_SEARCH_FILTER_ALL
+// 	filter:			AccountSearchFilterUsersEnabled
+// 					AccountSearchFilterUsersDisabled
+// 					AccountSearchFilterUsers
+// 					AccountSearchFilterDevices
+// 					AccountSearchFilterAll
 func (sm *SearchManager) Accounts(keyword, filter, sort string, pg Pagination) []Account {
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(global.DB_NAME)
@@ -220,17 +222,17 @@ func (sm *SearchManager) Accounts(keyword, filter, sort string, pg Pagination) [
 		},
 	}
 	switch filter {
-	case ACCOUNT_SEARCH_FILTER_USERS_ENABLED:
+	case AccountSearchFilterUsersEnabled:
 		q["acc_type"] = ACCOUNT_TYPE_USER
 		q["disabled"] = false
-	case ACCOUNT_SEARCH_FILTER_USERS_DISABLED:
+	case AccountSearchFilterUsersDisabled:
 		q["acc_type"] = ACCOUNT_TYPE_USER
 		q["disabled"] = true
-	case ACCOUNT_SEARCH_FILTER_USERS:
+	case AccountSearchFilterUsers:
 		q["acc_type"] = ACCOUNT_TYPE_USER
-	case ACCOUNT_SEARCH_FILTER_DEVICES:
+	case AccountSearchFilterDevices:
 		q["acc_type"] = ACCOUNT_TYPE_DEVICE
-	case ACCOUNT_SEARCH_FILTER_ALL:
+	case AccountSearchFilterAll:
 	default:
 
 	}
@@ -665,7 +667,7 @@ func (sm *SearchManager) Tasks(keyword, accountID string, assignorIDs, assigneeI
 	iter := db.C(global.COLLECTION_TASKS).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Iter()
 	defer iter.Close()
 	for iter.Next(task) && len(tasks) < cap(tasks) {
-		if task.HasAccess(accountID, TASK_ACCESS_READ) {
+		if task.HasAccess(accountID, TaskAccessRead) {
 			tasks = append(tasks, *task)
 		}
 	}
@@ -748,11 +750,11 @@ func (sm *SearchManager) GetSearchHistory(accountID, keyword string) []string {
 }
 
 // 	AccountIDs searches through  ACCOUNTS collection and apply keyword, filter on it query
-// 	filter:			ACCOUNT_SEARCH_FILTER_USERS_ENABLED
-// 					ACCOUNT_SEARCH_FILTER_USERS_DISABLED
-// 					ACCOUNT_SEARCH_FILTER_USERS
-// 					ACCOUNT_SEARCH_FILTER_DEVICES
-// 					ACCOUNT_SEARCH_FILTER_ALL
+// 	filter:			AccountSearchFilterUsersEnabled
+// 					AccountSearchFilterUsersDisabled
+// 					AccountSearchFilterUsers
+// 					AccountSearchFilterDevices
+// 					AccountSearchFilterAll
 func (sm *SearchManager) AccountIDs(filter string) []string {
 	//
 
@@ -763,17 +765,17 @@ func (sm *SearchManager) AccountIDs(filter string) []string {
 	q := bson.M{}
 
 	switch filter {
-	case ACCOUNT_SEARCH_FILTER_USERS_ENABLED:
+	case AccountSearchFilterUsersEnabled:
 		q["acc_type"] = ACCOUNT_TYPE_USER
 		q["disabled"] = false
-	case ACCOUNT_SEARCH_FILTER_USERS_DISABLED:
+	case AccountSearchFilterUsersDisabled:
 		q["acc_type"] = ACCOUNT_TYPE_USER
 		q["disabled"] = true
-	case ACCOUNT_SEARCH_FILTER_USERS:
+	case AccountSearchFilterUsers:
 		q["acc_type"] = ACCOUNT_TYPE_USER
-	case ACCOUNT_SEARCH_FILTER_DEVICES:
+	case AccountSearchFilterDevices:
 		q["acc_type"] = ACCOUNT_TYPE_DEVICE
-	case ACCOUNT_SEARCH_FILTER_ALL:
+	case AccountSearchFilterAll:
 	default:
 
 	}

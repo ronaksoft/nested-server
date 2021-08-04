@@ -4,45 +4,47 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/log"
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 
 	"github.com/globalsign/mgo/bson"
 	"github.com/gomodule/redigo/redis"
 )
 
 const (
-	TASK_STATUS_NOT_ASSIGNED TaskStatus = 0x01
-	TASK_STATUS_ASSIGNED     TaskStatus = 0x02
-	TASK_STATUS_CANCELED     TaskStatus = 0x03
-	TASK_STATUS_REJECTED     TaskStatus = 0x04
-	TASK_STATUS_COMPLETED    TaskStatus = 0x05
-	TASK_STATUS_HOLD         TaskStatus = 0x06
-	TASK_STATUS_OVERDUE      TaskStatus = 0x07
-	TASK_STATUS_FAILED       TaskStatus = 0x08
+	TaskStatusNotAssigned TaskStatus = 0x01
+	TaskStatusAssigned    TaskStatus = 0x02
+	TaskStatusCanceled    TaskStatus = 0x03
+	TaskStatusRejected    TaskStatus = 0x04
+	TaskStatusCompleted   TaskStatus = 0x05
+	TaskStatusHold        TaskStatus = 0x06
+	TaskStatusOverdue     TaskStatus = 0x07
+	TaskStatusFailed      TaskStatus = 0x08
 )
 
 const (
-	TASK_ACCESS_PICK_TASK         = 0x0001
-	TASK_ACCESS_ADD_CANDIDATE     = 0x0002
-	TASK_ACCESS_READ              = 0x0003
-	TASK_ACCESS_CHANGE_ASSIGNEE   = 0x0008
-	TASK_ACCESS_CHANGE_PRIORITY   = 0x0020
-	TASK_ACCESS_COMMENT           = 0x0080
-	TASK_ACCESS_ADD_ATTACHMENT    = 0x00F0
-	TASK_ACCESS_REMOVE_ATTACHMENT = 0x0100
-	TASK_ACCESS_ADD_WATCHER       = 0x0200
-	TASK_ACCESS_REMOVE_WATCHER    = 0x0400
-	TASK_ACCESS_DELETE            = 0x0800
-	TASK_ACCESS_ADD_LABEL         = 0x0101
-	TASK_ACCESS_REMOVE_LABEL      = 0x0102
-	TASK_ACCESS_UPDATE            = 0x0103
-	TASK_ACCESS_ADD_EDITOR        = 0x0108
-	TASK_ACCESS_REMOVE_EDITOR     = 0x0109
+	TaskAccessPickTask         = 0x0001
+	TaskAccessAddCandidate     = 0x0002
+	TaskAccessRead             = 0x0003
+	TaskAccessChangeAssignee   = 0x0008
+	TaskAccessChangePriority   = 0x0020
+	TaskAccessComment          = 0x0080
+	TaskAccessAddAttachment    = 0x00F0
+	TaskAccessRemoveAttachment = 0x0100
+	TaskAccessAddWatcher       = 0x0200
+	TaskAccessRemoveWatcher    = 0x0400
+	TaskAccessDelete           = 0x0800
+	TaskAccessAddLabel         = 0x0101
+	TaskAccessRemoveLabel      = 0x0102
+	TaskAccessUpdate           = 0x0103
+	TaskAccessAddEditor        = 0x0108
+	TaskAccessRemoveEditor     = 0x0109
 )
 
 type TaskStatus int
 type TaskAccess map[int]bool
 
-// Task Manager and Methods
 type TaskManager struct{}
 
 func NewTaskManager() *TaskManager {
@@ -145,9 +147,9 @@ func (tm *TaskManager) CreateTask(tcr TaskCreateRequest) *Task {
 	task.DueDateHasClock = tcr.DueDateHasClock
 
 	if len(task.AssigneeID) > 0 {
-		task.Status = TASK_STATUS_ASSIGNED
+		task.Status = TaskStatusAssigned
 	} else {
-		task.Status = TASK_STATUS_NOT_ASSIGNED
+		task.Status = TaskStatusNotAssigned
 	}
 
 	// Create the task object in db
@@ -218,7 +220,6 @@ func (tm *TaskManager) GetTasksByIDs(taskIDs []bson.ObjectId) []Task {
 // GetByAssigneeID returns an array of tasks filtered by Assignee of the task
 func (tm *TaskManager) GetByAssigneeID(accountID string, pg Pagination, filter []TaskStatus) []Task {
 
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
@@ -241,7 +242,6 @@ func (tm *TaskManager) GetByAssigneeID(accountID string, pg Pagination, filter [
 // GetByAssignorID returns an array of tasks filtered by Assignor of the task
 func (tm *TaskManager) GetByAssignorID(accountID string, pg Pagination, filter []TaskStatus) []Task {
 
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
@@ -261,9 +261,8 @@ func (tm *TaskManager) GetByAssignorID(accountID string, pg Pagination, filter [
 	return tasks
 }
 
-// GetByWatcherID returns an array of tasks filtered by Watcher of the task
+// GetByWatcherEditorID returns an array of tasks filtered by Watcher of the task
 func (tm *TaskManager) GetByWatcherEditorID(accountID string, pg Pagination, filter []TaskStatus) []Task {
-
 
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(global.DB_NAME)
@@ -290,7 +289,6 @@ func (tm *TaskManager) GetByWatcherEditorID(accountID string, pg Pagination, fil
 // GetByCandidateID returns an array of tasks filtered by Candidate of the task
 func (tm *TaskManager) GetByCandidateID(accountID string, pg Pagination, filter []TaskStatus) []Task {
 
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
@@ -310,7 +308,7 @@ func (tm *TaskManager) GetByCandidateID(accountID string, pg Pagination, filter 
 	return tasks
 }
 
-// GetByCustomerFilter returns an array of tasks filtered by factors such as
+// GetByCustomFilter returns an array of tasks filtered by factors such as
 // 1. Assignee
 // 2. Assignor
 // 3. Labels
@@ -318,7 +316,6 @@ func (tm *TaskManager) GetByCustomFilter(
 	accountID string, assignorIDs, assigneeIDs, labelIDs []string, labelLogic, keyword string,
 	pg Pagination, filter []TaskStatus, dueDate uint64, createdAt uint64,
 ) []Task {
-
 
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(global.DB_NAME)
@@ -368,7 +365,7 @@ func (tm *TaskManager) GetByCustomFilter(
 	iter := db.C(global.COLLECTION_TASKS).Find(q).Sort("-_id").Skip(pg.GetSkip()).Iter()
 	defer iter.Close()
 	for iter.Next(task) {
-		if task.HasAccess(accountID, TASK_ACCESS_READ) {
+		if task.HasAccess(accountID, TaskAccessRead) {
 			tasks = append(tasks, *task)
 		}
 		if len(tasks) == cap(tasks) {
@@ -382,7 +379,6 @@ func (tm *TaskManager) GetByCustomFilter(
 // GetUpcomingTasks returns an array of tasks assigned to accountID and have their due date set
 func (tm *TaskManager) GetUpcomingTasks(accountID string, pg Pagination) []Task {
 
-
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
@@ -390,7 +386,7 @@ func (tm *TaskManager) GetUpcomingTasks(accountID string, pg Pagination) []Task 
 	tasks := make([]Task, 0, pg.GetLimit())
 	q := bson.M{
 		"assignee": accountID,
-		"status":   TASK_STATUS_ASSIGNED,
+		"status":   TaskStatusAssigned,
 		"_removed": false,
 	}
 	if err := db.C(global.COLLECTION_TASKS).Find(q).Sort("-due_date").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&tasks); err != nil {
@@ -944,12 +940,11 @@ func (t *Task) RemoveCandidates(removerID string, candidateIDs []string) bool {
 	return true
 }
 
-// UpdateMemberIDs
 func (t *Task) UpdateMemberIDs() {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
-	memberIDs := MB{}
+	memberIDs := tools.MB{}
 	memberIDs.AddKeys(t.WatcherIDs, t.EditorIDs, t.CandidateIDs, []string{t.AssigneeID, t.AssignorID})
 	if err := db.C(global.COLLECTION_TASKS).UpdateId(
 		t.ID,
@@ -960,7 +955,6 @@ func (t *Task) UpdateMemberIDs() {
 	return
 }
 
-// UpdateStatus
 func (t *Task) UpdateStatus(accountID string, newStatus TaskStatus) bool {
 	defer _Manager.Task.removeCache(t.ID)
 
@@ -972,7 +966,7 @@ func (t *Task) UpdateStatus(accountID string, newStatus TaskStatus) bool {
 		return false
 	}
 	switch newStatus {
-	case TASK_STATUS_COMPLETED:
+	case TaskStatusCompleted:
 		if err := db.C(global.COLLECTION_TASKS).UpdateId(
 			t.ID,
 			bson.M{"$set": bson.M{
@@ -985,8 +979,8 @@ func (t *Task) UpdateStatus(accountID string, newStatus TaskStatus) bool {
 		}
 		_Manager.Report.CountTaskCompletedPerAccount(t.AssigneeID)
 		_Manager.Report.CountTaskCompleted()
-	case TASK_STATUS_ASSIGNED, TASK_STATUS_CANCELED, TASK_STATUS_FAILED,
-		TASK_STATUS_HOLD, TASK_STATUS_NOT_ASSIGNED, TASK_STATUS_REJECTED, TASK_STATUS_OVERDUE:
+	case TaskStatusAssigned, TaskStatusCanceled, TaskStatusFailed,
+		TaskStatusHold, TaskStatusNotAssigned, TaskStatusRejected, TaskStatusOverdue:
 		if err := db.C(global.COLLECTION_TASKS).UpdateId(
 			t.ID,
 			bson.M{"$set": bson.M{
@@ -1090,9 +1084,9 @@ func (t *Task) Update(accountID string, title, desc string, dueDate uint64, dueD
 			_Manager.TaskActivity.DueDateUpdated(t.ID, accountID, dueDate, dueDateHasClock)
 		}
 		if len(t.AssigneeID) > 0 {
-			t.UpdateStatus(accountID, TASK_STATUS_ASSIGNED)
+			t.UpdateStatus(accountID, TaskStatusAssigned)
 		} else {
-			t.UpdateStatus(accountID, TASK_STATUS_NOT_ASSIGNED)
+			t.UpdateStatus(accountID, TaskStatusNotAssigned)
 		}
 	}
 	return true
@@ -1111,7 +1105,7 @@ func (t *Task) UpdateAssignee(accountID string, candidateIDs []string) bool {
 			bson.M{
 				"$set": bson.M{
 					"assignee": candidateIDs[0],
-					"status":   TASK_STATUS_ASSIGNED,
+					"status":   TaskStatusAssigned,
 				},
 			},
 		); err != nil {
@@ -1120,8 +1114,8 @@ func (t *Task) UpdateAssignee(accountID string, candidateIDs []string) bool {
 		}
 		_Manager.TaskActivity.AssigneeChanged(t.ID, accountID, candidateIDs[0])
 		_Manager.Report.CountTaskAssignedPerAccount(accountID)
-		if t.Status != TASK_STATUS_ASSIGNED {
-			_Manager.TaskActivity.StatusChanged(t.ID, accountID, TASK_STATUS_ASSIGNED)
+		if t.Status != TaskStatusAssigned {
+			_Manager.TaskActivity.StatusChanged(t.ID, accountID, TaskStatusAssigned)
 		}
 	} else {
 		if err := db.C(global.COLLECTION_TASKS).UpdateId(
@@ -1130,7 +1124,7 @@ func (t *Task) UpdateAssignee(accountID string, candidateIDs []string) bool {
 				"$set": bson.M{
 					"assignee":            "",
 					"candidates":          candidateIDs,
-					"status":              TASK_STATUS_NOT_ASSIGNED,
+					"status":              TaskStatusNotAssigned,
 					"counters.candidates": len(candidateIDs),
 				},
 			},
@@ -1139,8 +1133,8 @@ func (t *Task) UpdateAssignee(accountID string, candidateIDs []string) bool {
 			return false
 		}
 		_Manager.TaskActivity.CandidateAdded(t.ID, accountID, candidateIDs)
-		if t.Status != TASK_STATUS_NOT_ASSIGNED {
-			_Manager.TaskActivity.StatusChanged(t.ID, accountID, TASK_STATUS_NOT_ASSIGNED)
+		if t.Status != TaskStatusNotAssigned {
+			_Manager.TaskActivity.StatusChanged(t.ID, accountID, TaskStatusNotAssigned)
 		}
 	}
 	return true
@@ -1191,33 +1185,33 @@ func (t *Task) GetAccess(accountID string) TaskAccess {
 	a := TaskAccess{}
 	switch {
 	case t.IsAssignor(accountID):
-		a[TASK_ACCESS_ADD_CANDIDATE] = true
-		a[TASK_ACCESS_CHANGE_PRIORITY] = true
-		a[TASK_ACCESS_DELETE] = true
+		a[TaskAccessAddCandidate] = true
+		a[TaskAccessChangePriority] = true
+		a[TaskAccessDelete] = true
 		fallthrough
 	case t.IsAssignee(accountID):
-		a[TASK_ACCESS_CHANGE_ASSIGNEE] = true
+		a[TaskAccessChangeAssignee] = true
 		fallthrough
 	case t.IsEditor(accountID):
-		a[TASK_ACCESS_ADD_WATCHER] = true
-		a[TASK_ACCESS_REMOVE_WATCHER] = true
-		a[TASK_ACCESS_ADD_EDITOR] = true
-		a[TASK_ACCESS_REMOVE_EDITOR] = true
-		a[TASK_ACCESS_UPDATE] = true
-		a[TASK_ACCESS_REMOVE_ATTACHMENT] = true
+		a[TaskAccessAddWatcher] = true
+		a[TaskAccessRemoveWatcher] = true
+		a[TaskAccessAddEditor] = true
+		a[TaskAccessRemoveEditor] = true
+		a[TaskAccessUpdate] = true
+		a[TaskAccessRemoveAttachment] = true
 		fallthrough
 	case t.IsWatcher(accountID):
-		a[TASK_ACCESS_ADD_ATTACHMENT] = true
-		a[TASK_ACCESS_COMMENT] = true
-		a[TASK_ACCESS_ADD_LABEL] = true
-		a[TASK_ACCESS_REMOVE_LABEL] = true
-		a[TASK_ACCESS_READ] = true
+		a[TaskAccessAddAttachment] = true
+		a[TaskAccessComment] = true
+		a[TaskAccessAddLabel] = true
+		a[TaskAccessRemoveLabel] = true
+		a[TaskAccessRead] = true
 	case t.IsCandidate(accountID):
-		a[TASK_ACCESS_PICK_TASK] = true
-		a[TASK_ACCESS_ADD_LABEL] = true
-		a[TASK_ACCESS_REMOVE_LABEL] = true
-		a[TASK_ACCESS_READ] = true
-		a[TASK_ACCESS_COMMENT] = true
+		a[TaskAccessPickTask] = true
+		a[TaskAccessAddLabel] = true
+		a[TaskAccessRemoveLabel] = true
+		a[TaskAccessRead] = true
+		a[TaskAccessComment] = true
 	}
 
 	return a
@@ -1301,7 +1295,7 @@ func (t *Task) Accept(accountID string) bool {
 		bson.M{
 			"$set": bson.M{
 				"assignee":    accountID,
-				"status":      TASK_STATUS_ASSIGNED,
+				"status":      TaskStatusAssigned,
 				"last_update": Timestamp(),
 			},
 		},
@@ -1310,7 +1304,7 @@ func (t *Task) Accept(accountID string) bool {
 		return false
 	}
 
-	_Manager.TaskActivity.StatusChanged(t.ID, accountID, TASK_STATUS_ASSIGNED)
+	_Manager.TaskActivity.StatusChanged(t.ID, accountID, TaskStatusAssigned)
 	return true
 
 }
@@ -1346,7 +1340,7 @@ func (t *Task) Reject(accountID, reason string) bool {
 			},
 			bson.M{
 				"$set": bson.M{
-					"status":      TASK_STATUS_REJECTED,
+					"status":      TaskStatusRejected,
 					"last_update": Timestamp(),
 				},
 				"$pull": bson.M{"candidates": accountID},
@@ -1357,7 +1351,7 @@ func (t *Task) Reject(accountID, reason string) bool {
 			return false
 		}
 		_Manager.TaskActivity.CandidateRemoved(t.ID, accountID, []string{accountID})
-		_Manager.TaskActivity.StatusChanged(t.ID, accountID, TASK_STATUS_REJECTED)
+		_Manager.TaskActivity.StatusChanged(t.ID, accountID, TaskStatusRejected)
 	}
 
 	return true
@@ -1379,7 +1373,7 @@ func (t *Task) Resign(accountID, reason string) bool {
 		bson.M{
 			"$set": bson.M{
 				"assignee":    "",
-				"status":      TASK_STATUS_REJECTED,
+				"status":      TaskStatusRejected,
 				"last_update": Timestamp(),
 			},
 		},
@@ -1388,6 +1382,6 @@ func (t *Task) Resign(accountID, reason string) bool {
 		return false
 	}
 
-	_Manager.TaskActivity.StatusChanged(t.ID, accountID, TASK_STATUS_REJECTED)
+	_Manager.TaskActivity.StatusChanged(t.ID, accountID, TaskStatusRejected)
 	return true
 }

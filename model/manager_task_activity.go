@@ -2,35 +2,37 @@ package nested
 
 import (
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/log"
 
 	"github.com/globalsign/mgo/bson"
 )
 
 const (
-	TASK_ACTIVITY_WATCHER_ADDED      TaskAction = 0x0001
-	TASK_ACTIVITY_WATCHER_REMOVED    TaskAction = 0x0002
-	TASK_ACTIVITY_ATTACHMENT_ADDED   TaskAction = 0x0003
-	TASK_ACTIVITY_ATTACHMENT_REMOVED TaskAction = 0x0004
-	TASK_ACTIVITY_COMMENT            TaskAction = 0x0006
-	TASK_ACTIVITY_TITLE_CHANGED      TaskAction = 0x0007
-	TASK_ACTIVITY_DESC_CHANGED       TaskAction = 0x0008
-	TASK_ACTIVITY_CANDIDATE_ADDED    TaskAction = 0x0011
-	TASK_ACTIVITY_CANDIDATE_REMOVED  TaskAction = 0x0012
-	TASK_ACTIVITY_TODO_ADDED         TaskAction = 0x0013
-	TASK_ACTIVITY_TODO_REMOVED       TaskAction = 0x0014
-	TASK_ACTIVITY_TODO_CHANGED       TaskAction = 0x0015
-	TASK_ACTIVITY_TODO_DONE          TaskAction = 0x0016
-	TASK_ACTIVITY_TODO_UNDONE        TaskAction = 0x0017
-	TASK_ACTIVITY_STATUS_CHANGED     TaskAction = 0x0018
-	TASK_ACTIVITY_LABEL_ADDED        TaskAction = 0x0019
-	TASK_ACTIVITY_LABEL_REMOVED      TaskAction = 0x0020
-	TASK_ACTIVITY_DUE_DATE_UPDATED   TaskAction = 0x0021
-	TASK_ACTIVITY_DUE_DATE_REMOVED   TaskAction = 0x0022
-	TASK_ACTIVITY_CREATED            TaskAction = 0x0023
-	TASK_ACTIVITY_ASSIGNEE_CHANGED   TaskAction = 0x0024
-	TASK_ACTIVITY_EDITOR_ADDED       TaskAction = 0x0025
-	TASK_ACTIVITY_EDITOR_REMOVED     TaskAction = 0x0026
-	TASK_ACTIVITY_UPDATED            TaskAction = 0x0100
+	TaskActivityWatcherAdded      TaskAction = 0x0001
+	TaskActivityWatcherRemoved    TaskAction = 0x0002
+	TaskActivityAttachmentAdded   TaskAction = 0x0003
+	TaskActivityAttachmentRemoved TaskAction = 0x0004
+	TaskActivityComment           TaskAction = 0x0006
+	TaskActivityTitleChanged      TaskAction = 0x0007
+	TaskActivityDescChanged       TaskAction = 0x0008
+	TaskActivityCandidateAdded    TaskAction = 0x0011
+	TaskActivityCandidateRemoved  TaskAction = 0x0012
+	TaskActivityTodoAdded         TaskAction = 0x0013
+	TaskActivityTodoRemoved       TaskAction = 0x0014
+	TaskActivityTodoChanged       TaskAction = 0x0015
+	TaskActivityTodoDone          TaskAction = 0x0016
+	TaskActivityTodoUndone        TaskAction = 0x0017
+	TaskActivityStatusChanged     TaskAction = 0x0018
+	TaskActivityLabelAdded        TaskAction = 0x0019
+	TaskActivityLabelRemoved      TaskAction = 0x0020
+	TaskActivityDueDateUpdated    TaskAction = 0x0021
+	TaskActivityDueDateRemoved    TaskAction = 0x0022
+	TaskActivityCreated           TaskAction = 0x0023
+	TaskActivityAssigneeChanged   TaskAction = 0x0024
+	TaskActivityEditorAdded       TaskAction = 0x0025
+	TaskActivityEditorRemoved     TaskAction = 0x0026
+	TaskActivityUpdated           TaskAction = 0x0100
 )
 
 type TaskActivityManager struct{}
@@ -38,6 +40,7 @@ type TaskActivityManager struct{}
 func NewTaskActivityManager() *TaskActivityManager {
 	return new(TaskActivityManager)
 }
+
 func (tm *TaskActivityManager) Remove(activityID bson.ObjectId) bool {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -52,6 +55,7 @@ func (tm *TaskActivityManager) Remove(activityID bson.ObjectId) bool {
 	}
 	return true
 }
+
 func (tm *TaskActivityManager) GetActivityByID(activityID bson.ObjectId) *TaskActivity {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -64,6 +68,7 @@ func (tm *TaskActivityManager) GetActivityByID(activityID bson.ObjectId) *TaskAc
 	}
 	return taskActivity
 }
+
 func (tm *TaskActivityManager) GetActivitiesByIDs(activityIDs []bson.ObjectId) []TaskActivity {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -78,6 +83,7 @@ func (tm *TaskActivityManager) GetActivitiesByIDs(activityIDs []bson.ObjectId) [
 	}
 	return taskActivities
 }
+
 func (tm *TaskActivityManager) GetActivitiesByTaskID(taskID bson.ObjectId, pg Pagination, filter []TaskAction) []TaskActivity {
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(global.DB_NAME)
@@ -113,7 +119,7 @@ func (tm *TaskActivityManager) Created(taskID bson.ObjectId, actorID string) {
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TASK_ACTIVITY_CREATED,
+		Action:    TaskActivityCreated,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -123,6 +129,7 @@ func (tm *TaskActivityManager) Created(taskID bson.ObjectId, actorID string) {
 	}
 	return
 }
+
 func (tm *TaskActivityManager) WatcherAdded(taskID bson.ObjectId, actorID string, watcherIDs []string) {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -130,7 +137,7 @@ func (tm *TaskActivityManager) WatcherAdded(taskID bson.ObjectId, actorID string
 
 	v := TaskActivity{
 		ID:         bson.NewObjectId(),
-		Action:     TASK_ACTIVITY_WATCHER_ADDED,
+		Action:     TaskActivityWatcherAdded,
 		Timestamp:  Timestamp(),
 		TaskID:     taskID,
 		ActorID:    actorID,
@@ -141,6 +148,7 @@ func (tm *TaskActivityManager) WatcherAdded(taskID bson.ObjectId, actorID string
 	}
 	return
 }
+
 func (tm *TaskActivityManager) WatcherRemoved(taskID bson.ObjectId, actorID string, watcherIDs []string) {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -148,7 +156,7 @@ func (tm *TaskActivityManager) WatcherRemoved(taskID bson.ObjectId, actorID stri
 
 	v := TaskActivity{
 		ID:         bson.NewObjectId(),
-		Action:     TASK_ACTIVITY_WATCHER_REMOVED,
+		Action:     TaskActivityWatcherRemoved,
 		Timestamp:  Timestamp(),
 		TaskID:     taskID,
 		ActorID:    actorID,
@@ -159,6 +167,7 @@ func (tm *TaskActivityManager) WatcherRemoved(taskID bson.ObjectId, actorID stri
 	}
 	return
 }
+
 func (tm *TaskActivityManager) EditorAdded(taskID bson.ObjectId, actorID string, editorIDs []string) {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -166,7 +175,7 @@ func (tm *TaskActivityManager) EditorAdded(taskID bson.ObjectId, actorID string,
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TASK_ACTIVITY_EDITOR_ADDED,
+		Action:    TaskActivityEditorAdded,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -177,6 +186,7 @@ func (tm *TaskActivityManager) EditorAdded(taskID bson.ObjectId, actorID string,
 	}
 	return
 }
+
 func (tm *TaskActivityManager) EditorRemoved(taskID bson.ObjectId, actorID string, editorIDs []string) {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -184,7 +194,7 @@ func (tm *TaskActivityManager) EditorRemoved(taskID bson.ObjectId, actorID strin
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TASK_ACTIVITY_EDITOR_REMOVED,
+		Action:    TaskActivityEditorRemoved,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -195,6 +205,7 @@ func (tm *TaskActivityManager) EditorRemoved(taskID bson.ObjectId, actorID strin
 	}
 	return
 }
+
 func (tm *TaskActivityManager) AttachmentAdded(taskID bson.ObjectId, actorID string, attachmentIDs []UniversalID) *TaskActivity {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -202,7 +213,7 @@ func (tm *TaskActivityManager) AttachmentAdded(taskID bson.ObjectId, actorID str
 
 	v := TaskActivity{
 		ID:            bson.NewObjectId(),
-		Action:        TASK_ACTIVITY_ATTACHMENT_ADDED,
+		Action:        TaskActivityAttachmentAdded,
 		Timestamp:     Timestamp(),
 		TaskID:        taskID,
 		ActorID:       actorID,
@@ -214,6 +225,7 @@ func (tm *TaskActivityManager) AttachmentAdded(taskID bson.ObjectId, actorID str
 	}
 	return &v
 }
+
 func (tm *TaskActivityManager) AttachmentRemoved(taskID bson.ObjectId, actorID string, attachmentIDs []UniversalID) {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -221,7 +233,7 @@ func (tm *TaskActivityManager) AttachmentRemoved(taskID bson.ObjectId, actorID s
 
 	v := TaskActivity{
 		ID:            bson.NewObjectId(),
-		Action:        TASK_ACTIVITY_ATTACHMENT_REMOVED,
+		Action:        TaskActivityAttachmentRemoved,
 		Timestamp:     Timestamp(),
 		TaskID:        taskID,
 		ActorID:       actorID,
@@ -232,6 +244,7 @@ func (tm *TaskActivityManager) AttachmentRemoved(taskID bson.ObjectId, actorID s
 	}
 	return
 }
+
 func (tm *TaskActivityManager) TaskTitleChanged(taskID bson.ObjectId, actorID, title string) {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -239,7 +252,7 @@ func (tm *TaskActivityManager) TaskTitleChanged(taskID bson.ObjectId, actorID, t
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TASK_ACTIVITY_TITLE_CHANGED,
+		Action:    TaskActivityTitleChanged,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -250,6 +263,7 @@ func (tm *TaskActivityManager) TaskTitleChanged(taskID bson.ObjectId, actorID, t
 	}
 	return
 }
+
 func (tm *TaskActivityManager) TaskDescriptionChanged(taskID bson.ObjectId, actorID, desc string) {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -257,7 +271,7 @@ func (tm *TaskActivityManager) TaskDescriptionChanged(taskID bson.ObjectId, acto
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TASK_ACTIVITY_DESC_CHANGED,
+		Action:    TaskActivityDescChanged,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -268,6 +282,7 @@ func (tm *TaskActivityManager) TaskDescriptionChanged(taskID bson.ObjectId, acto
 	}
 	return
 }
+
 func (tm *TaskActivityManager) CandidateAdded(taskID bson.ObjectId, actorID string, candidateIDs []string) {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -275,7 +290,7 @@ func (tm *TaskActivityManager) CandidateAdded(taskID bson.ObjectId, actorID stri
 
 	v := TaskActivity{
 		ID:           bson.NewObjectId(),
-		Action:       TASK_ACTIVITY_CANDIDATE_ADDED,
+		Action:       TaskActivityCandidateAdded,
 		Timestamp:    Timestamp(),
 		TaskID:       taskID,
 		ActorID:      actorID,
@@ -286,6 +301,7 @@ func (tm *TaskActivityManager) CandidateAdded(taskID bson.ObjectId, actorID stri
 	}
 	return
 }
+
 func (tm *TaskActivityManager) CandidateRemoved(taskID bson.ObjectId, actorID string, candidateIDs []string) {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -293,7 +309,7 @@ func (tm *TaskActivityManager) CandidateRemoved(taskID bson.ObjectId, actorID st
 
 	v := TaskActivity{
 		ID:           bson.NewObjectId(),
-		Action:       TASK_ACTIVITY_CANDIDATE_REMOVED,
+		Action:       TaskActivityCandidateRemoved,
 		Timestamp:    Timestamp(),
 		TaskID:       taskID,
 		ActorID:      actorID,
@@ -304,6 +320,7 @@ func (tm *TaskActivityManager) CandidateRemoved(taskID bson.ObjectId, actorID st
 	}
 	return
 }
+
 func (tm *TaskActivityManager) StatusChanged(taskID bson.ObjectId, actorID string, newStatus TaskStatus) {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -311,7 +328,7 @@ func (tm *TaskActivityManager) StatusChanged(taskID bson.ObjectId, actorID strin
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TASK_ACTIVITY_STATUS_CHANGED,
+		Action:    TaskActivityStatusChanged,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -322,6 +339,7 @@ func (tm *TaskActivityManager) StatusChanged(taskID bson.ObjectId, actorID strin
 	}
 	return
 }
+
 func (tm *TaskActivityManager) ToDoAdded(taskID bson.ObjectId, actorID, todoText string) {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -329,7 +347,7 @@ func (tm *TaskActivityManager) ToDoAdded(taskID bson.ObjectId, actorID, todoText
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TASK_ACTIVITY_TODO_ADDED,
+		Action:    TaskActivityTodoAdded,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -340,6 +358,7 @@ func (tm *TaskActivityManager) ToDoAdded(taskID bson.ObjectId, actorID, todoText
 	}
 	return
 }
+
 func (tm *TaskActivityManager) ToDoRemoved(taskID bson.ObjectId, actorID, todoText string) {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -347,7 +366,7 @@ func (tm *TaskActivityManager) ToDoRemoved(taskID bson.ObjectId, actorID, todoTe
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TASK_ACTIVITY_TODO_REMOVED,
+		Action:    TaskActivityTodoRemoved,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -358,6 +377,7 @@ func (tm *TaskActivityManager) ToDoRemoved(taskID bson.ObjectId, actorID, todoTe
 	}
 	return
 }
+
 func (tm *TaskActivityManager) ToDoChanged(taskID bson.ObjectId, actorID, todoText string) {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -365,7 +385,7 @@ func (tm *TaskActivityManager) ToDoChanged(taskID bson.ObjectId, actorID, todoTe
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TASK_ACTIVITY_TODO_CHANGED,
+		Action:    TaskActivityTodoChanged,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -376,6 +396,7 @@ func (tm *TaskActivityManager) ToDoChanged(taskID bson.ObjectId, actorID, todoTe
 	}
 	return
 }
+
 func (tm *TaskActivityManager) ToDoDone(taskID bson.ObjectId, actorID, todoText string) {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -383,7 +404,7 @@ func (tm *TaskActivityManager) ToDoDone(taskID bson.ObjectId, actorID, todoText 
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TASK_ACTIVITY_TODO_DONE,
+		Action:    TaskActivityTodoDone,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -394,6 +415,7 @@ func (tm *TaskActivityManager) ToDoDone(taskID bson.ObjectId, actorID, todoText 
 	}
 	return
 }
+
 func (tm *TaskActivityManager) ToDoUndone(taskID bson.ObjectId, actorID, todoText string) {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -401,7 +423,7 @@ func (tm *TaskActivityManager) ToDoUndone(taskID bson.ObjectId, actorID, todoTex
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TASK_ACTIVITY_TODO_UNDONE,
+		Action:    TaskActivityTodoUndone,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -412,6 +434,7 @@ func (tm *TaskActivityManager) ToDoUndone(taskID bson.ObjectId, actorID, todoTex
 	}
 	return
 }
+
 func (tm *TaskActivityManager) AssigneeChanged(taskID bson.ObjectId, actorID, assigneeID string) {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -419,7 +442,7 @@ func (tm *TaskActivityManager) AssigneeChanged(taskID bson.ObjectId, actorID, as
 
 	v := TaskActivity{
 		ID:         bson.NewObjectId(),
-		Action:     TASK_ACTIVITY_ASSIGNEE_CHANGED,
+		Action:     TaskActivityAssigneeChanged,
 		Timestamp:  Timestamp(),
 		TaskID:     taskID,
 		ActorID:    actorID,
@@ -430,6 +453,7 @@ func (tm *TaskActivityManager) AssigneeChanged(taskID bson.ObjectId, actorID, as
 	}
 	return
 }
+
 func (tm *TaskActivityManager) Comment(taskID bson.ObjectId, actorID string, commentText string) *TaskActivity {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -437,7 +461,7 @@ func (tm *TaskActivityManager) Comment(taskID bson.ObjectId, actorID string, com
 
 	v := TaskActivity{
 		ID:          bson.NewObjectId(),
-		Action:      TASK_ACTIVITY_COMMENT,
+		Action:      TaskActivityComment,
 		Timestamp:   Timestamp(),
 		TaskID:      taskID,
 		ActorID:     actorID,
@@ -459,6 +483,7 @@ func (tm *TaskActivityManager) Comment(taskID bson.ObjectId, actorID string, com
 	}
 	return &v
 }
+
 func (tm *TaskActivityManager) LabelAdded(taskID bson.ObjectId, actorID string, labelIDs []string) *TaskActivity {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -466,7 +491,7 @@ func (tm *TaskActivityManager) LabelAdded(taskID bson.ObjectId, actorID string, 
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TASK_ACTIVITY_LABEL_ADDED,
+		Action:    TaskActivityLabelAdded,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -478,6 +503,7 @@ func (tm *TaskActivityManager) LabelAdded(taskID bson.ObjectId, actorID string, 
 	}
 	return &v
 }
+
 func (tm *TaskActivityManager) LabelRemoved(taskID bson.ObjectId, actorID string, labelIDs []string) {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -485,7 +511,7 @@ func (tm *TaskActivityManager) LabelRemoved(taskID bson.ObjectId, actorID string
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TASK_ACTIVITY_LABEL_REMOVED,
+		Action:    TaskActivityLabelRemoved,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,
@@ -496,6 +522,7 @@ func (tm *TaskActivityManager) LabelRemoved(taskID bson.ObjectId, actorID string
 	}
 	return
 }
+
 func (tm *TaskActivityManager) DueDateUpdated(taskID bson.ObjectId, actorID string, dueDate uint64, dueDateHasClock bool) {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -503,7 +530,7 @@ func (tm *TaskActivityManager) DueDateUpdated(taskID bson.ObjectId, actorID stri
 
 	v := TaskActivity{
 		ID:              bson.NewObjectId(),
-		Action:          TASK_ACTIVITY_DUE_DATE_UPDATED,
+		Action:          TaskActivityDueDateUpdated,
 		Timestamp:       Timestamp(),
 		TaskID:          taskID,
 		ActorID:         actorID,
@@ -515,6 +542,7 @@ func (tm *TaskActivityManager) DueDateUpdated(taskID bson.ObjectId, actorID stri
 	}
 	return
 }
+
 func (tm *TaskActivityManager) DueDateRemoved(taskID bson.ObjectId, actorID string) {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -522,7 +550,7 @@ func (tm *TaskActivityManager) DueDateRemoved(taskID bson.ObjectId, actorID stri
 
 	v := TaskActivity{
 		ID:        bson.NewObjectId(),
-		Action:    TASK_ACTIVITY_DUE_DATE_REMOVED,
+		Action:    TaskActivityDueDateRemoved,
 		Timestamp: Timestamp(),
 		TaskID:    taskID,
 		ActorID:   actorID,

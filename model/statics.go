@@ -5,7 +5,11 @@ import (
 	"crypto/cipher"
 	"encoding/base64"
 	"fmt"
-	"log"
+	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/log"
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
+	"github.com/dustin/go-humanize"
+	"github.com/globalsign/mgo/bson"
 	"math/rand"
 	"path/filepath"
 	"regexp"
@@ -13,9 +17,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/dustin/go-humanize"
-	"github.com/globalsign/mgo/bson"
 )
 
 func Timestamp() (ts uint64) {
@@ -121,11 +122,11 @@ func ClampInteger(val, min, max int) int {
 	return val
 }
 
-func SystemInfo() M {
+func SystemInfo() tools.M {
 	m := new(runtime.MemStats)
 	runtime.ReadMemStats(m)
-	return M{
-		"memory": M{
+	return tools.M{
+		"memory": tools.M{
 			"objects_allocated": humanize.Comma(int64(m.Mallocs)),
 			"objects_freed":     humanize.Comma(int64(m.Frees)),
 			"objects_live":      humanize.Comma(int64(m.Mallocs - m.Frees)),

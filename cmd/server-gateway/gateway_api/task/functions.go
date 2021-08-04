@@ -152,11 +152,11 @@ func (s *TaskService) create(requester *nested.Account, request *nestedGateway.R
 		return
 	}
 	switch task.Status {
-	case nested.TASK_STATUS_ASSIGNED:
+	case nested.TaskStatusAssigned:
 		go s.Worker().Pusher().TaskAssigned(task)
 		go s.Worker().Pusher().TaskAddedToWatchers(task, requester.ID, task.WatcherIDs)
 		go s.Worker().Pusher().TaskAddedToEditors(task, requester.ID, task.EditorIDs)
-	case nested.TASK_STATUS_NOT_ASSIGNED:
+	case nested.TaskStatusNotAssigned:
 		go s.Worker().Pusher().TaskAddedToCandidates(task, requester.ID, task.CandidateIDs)
 		go s.Worker().Pusher().TaskAddedToWatchers(task, requester.ID, task.WatcherIDs)
 		go s.Worker().Pusher().TaskAddedToEditors(task, requester.ID, task.EditorIDs)
@@ -184,7 +184,7 @@ func (s *TaskService) addComment(requester *nested.Account, request *nestedGatew
 		response.Error(nested.ERR_INCOMPLETE, []string{"txt"})
 		return
 	}
-	if !task.HasAccess(requester.ID, nested.TASK_ACCESS_COMMENT) {
+	if !task.HasAccess(requester.ID, nested.TaskAccessComment) {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -223,7 +223,7 @@ func (s *TaskService) addAttachment(requester *nested.Account, request *nestedGa
 		response.Error(nested.ERR_INCOMPLETE, []string{"universal_id"})
 		return
 	}
-	if !task.HasAccess(requester.ID, nested.TASK_ACCESS_ADD_ATTACHMENT) {
+	if !task.HasAccess(requester.ID, nested.TaskAccessAddAttachment) {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -252,12 +252,12 @@ func (s *TaskService) addLabel(requester *nested.Account, request *nestedGateway
 		}
 	}
 
-	if !task.HasAccess(requester.ID, nested.TASK_ACCESS_ADD_LABEL) {
+	if !task.HasAccess(requester.ID, nested.TaskAccessAddLabel) {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
 	if task.AddLabels(requester.ID, labelIDs) {
-		go s.Worker().Pusher().TaskNewActivity(task, nested.TASK_ACTIVITY_LABEL_ADDED)
+		go s.Worker().Pusher().TaskNewActivity(task, nested.TaskActivityLabelAdded)
 		response.Ok()
 	} else {
 		response.Error(nested.ERR_UNKNOWN, []string{"internal_error"})
@@ -289,7 +289,7 @@ func (s *TaskService) addTodo(requester *nested.Account, request *nestedGateway.
 			todoWeight = intV
 		}
 	}
-	if !task.HasAccess(requester.ID, nested.TASK_ACCESS_UPDATE) {
+	if !task.HasAccess(requester.ID, nested.TaskAccessUpdate) {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -298,7 +298,7 @@ func (s *TaskService) addTodo(requester *nested.Account, request *nestedGateway.
 		response.Error(nested.ERR_UNKNOWN, []string{"internal_error"})
 		return
 	}
-	go s.Worker().Pusher().TaskNewActivity(task, nested.TASK_ACTIVITY_TODO_ADDED)
+	go s.Worker().Pusher().TaskNewActivity(task, nested.TaskActivityTodoAdded)
 	response.OkWithData(nested.M{
 		"todo_id": taskToDo.ID,
 		"done":    taskToDo.Done,
@@ -323,7 +323,7 @@ func (s *TaskService) addWatcher(requester *nested.Account, request *nestedGatew
 			}
 		}
 	}
-	if !task.HasAccess(requester.ID, nested.TASK_ACCESS_ADD_WATCHER) {
+	if !task.HasAccess(requester.ID, nested.TaskAccessAddWatcher) {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -356,7 +356,7 @@ func (s *TaskService) addEditor(requester *nested.Account, request *nestedGatewa
 			}
 		}
 	}
-	if !task.HasAccess(requester.ID, nested.TASK_ACCESS_ADD_EDITOR) {
+	if !task.HasAccess(requester.ID, nested.TaskAccessAddEditor) {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -388,7 +388,7 @@ func (s *TaskService) updateAssignee(requester *nested.Account, request *nestedG
 		}
 	}
 
-	if !task.HasAccess(requester.ID, nested.TASK_ACCESS_UPDATE) {
+	if !task.HasAccess(requester.ID, nested.TaskAccessUpdate) {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -398,10 +398,10 @@ func (s *TaskService) updateAssignee(requester *nested.Account, request *nestedG
 		response.Ok()
 		if len(accountIDs) == 1 {
 			go s.Worker().Pusher().TaskAssigned(task1)
-			go s.Worker().Pusher().TaskNewActivity(task1, nested.TASK_ACTIVITY_ASSIGNEE_CHANGED)
+			go s.Worker().Pusher().TaskNewActivity(task1, nested.TaskActivityAssigneeChanged)
 		} else {
 			go s.Worker().Pusher().TaskAddedToCandidates(task1, requester.ID, accountIDs)
-			go s.Worker().Pusher().TaskNewActivity(task1, nested.TASK_ACTIVITY_CANDIDATE_ADDED)
+			go s.Worker().Pusher().TaskNewActivity(task1, nested.TaskActivityCandidateAdded)
 		}
 	} else {
 		response.Error(nested.ERR_UNKNOWN, []string{"internal_error"})
@@ -426,7 +426,7 @@ func (s *TaskService) addCandidate(requester *nested.Account, request *nestedGat
 			}
 		}
 	}
-	if !task.HasAccess(requester.ID, nested.TASK_ACCESS_ADD_CANDIDATE) {
+	if !task.HasAccess(requester.ID, nested.TaskAccessAddCandidate) {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -456,9 +456,9 @@ func (s *TaskService) getByFilter(requester *nested.Account, request *nestedGate
 		for _, status := range strings.SplitN(v, ",", 10) {
 			s, _ := strconv.Atoi(status)
 			switch nested.TaskStatus(s) {
-			case nested.TASK_STATUS_COMPLETED, nested.TASK_STATUS_NOT_ASSIGNED, nested.TASK_STATUS_ASSIGNED,
-				nested.TASK_STATUS_REJECTED, nested.TASK_STATUS_HOLD, nested.TASK_STATUS_CANCELED,
-				nested.TASK_STATUS_FAILED, nested.TASK_STATUS_OVERDUE:
+			case nested.TaskStatusCompleted, nested.TaskStatusNotAssigned, nested.TaskStatusAssigned,
+				nested.TaskStatusRejected, nested.TaskStatusHold, nested.TaskStatusCanceled,
+				nested.TaskStatusFailed, nested.TaskStatusOverdue:
 				statusFilter = append(statusFilter, nested.TaskStatus(s))
 			}
 		}
@@ -550,9 +550,9 @@ func (s *TaskService) getByCustomFilter(requester *nested.Account, request *nest
 		for _, status := range strings.SplitN(v, ",", 10) {
 			s, _ := strconv.Atoi(status)
 			switch nested.TaskStatus(s) {
-			case nested.TASK_STATUS_COMPLETED, nested.TASK_STATUS_NOT_ASSIGNED, nested.TASK_STATUS_ASSIGNED,
-				nested.TASK_STATUS_REJECTED, nested.TASK_STATUS_HOLD, nested.TASK_STATUS_CANCELED,
-				nested.TASK_STATUS_FAILED, nested.TASK_STATUS_OVERDUE:
+			case nested.TaskStatusCompleted, nested.TaskStatusNotAssigned, nested.TaskStatusAssigned,
+				nested.TaskStatusRejected, nested.TaskStatusHold, nested.TaskStatusCanceled,
+				nested.TaskStatusFailed, nested.TaskStatusOverdue:
 				statusFilter = append(statusFilter, nested.TaskStatus(s))
 			}
 		}
@@ -607,7 +607,7 @@ func (s *TaskService) getActivities(requester *nested.Account, request *nestedGa
 		activities = s.Worker().Model().TaskActivity.GetActivitiesByTaskID(
 			task.ID,
 			s.Worker().Argument().GetPagination(request),
-			[]nested.TaskAction{nested.TASK_ACTIVITY_COMMENT},
+			[]nested.TaskAction{nested.TaskActivityComment},
 		)
 	} else {
 		activities = s.Worker().Model().TaskActivity.GetActivitiesByTaskID(
@@ -638,7 +638,7 @@ func (s *TaskService) getMany(requester *nested.Account, request *nestedGateway.
 	r := make([]nested.M, 0)
 	tasks := s.Worker().Model().Task.GetTasksByIDs(taskIDs)
 	for _, task := range tasks {
-		if task.HasAccess(requester.ID, nested.TASK_ACCESS_READ) {
+		if task.HasAccess(requester.ID, nested.TaskAccessRead) {
 			r = append(r, s.Worker().Map().Task(requester, task, true))
 		}
 	}
@@ -689,7 +689,7 @@ func (s *TaskService) removeAttachment(requester *nested.Account, request *neste
 			attachmentIDs = append(attachmentIDs, nested.UniversalID(id))
 		}
 	}
-	if !task.HasAccess(requester.ID, nested.TASK_ACCESS_REMOVE_ATTACHMENT) {
+	if !task.HasAccess(requester.ID, nested.TaskAccessRemoveAttachment) {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -708,7 +708,7 @@ func (s *TaskService) remove(requester *nested.Account, request *nestedGateway.R
 		return
 	}
 
-	if !task.HasAccess(requester.ID, nested.TASK_ACCESS_DELETE) {
+	if !task.HasAccess(requester.ID, nested.TaskAccessDelete) {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -741,7 +741,7 @@ func (s *TaskService) removeComment(requester *nested.Account, request *nestedGa
 		return
 	}
 
-	if !task.HasAccess(requester.ID, nested.TASK_ACCESS_UPDATE) {
+	if !task.HasAccess(requester.ID, nested.TaskAccessUpdate) {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -774,13 +774,13 @@ func (s *TaskService) removeLabel(requester *nested.Account, request *nestedGate
 		response.Error(nested.ERR_INCOMPLETE, []string{"label_id"})
 		return
 	}
-	if !task.HasAccess(requester.ID, nested.TASK_ACCESS_REMOVE_LABEL) {
+	if !task.HasAccess(requester.ID, nested.TaskAccessRemoveLabel) {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
 
 	if task.RemoveLabels(requester.ID, labelIDs) {
-		go s.Worker().Pusher().TaskNewActivity(task, nested.TASK_ACTIVITY_LABEL_REMOVED)
+		go s.Worker().Pusher().TaskNewActivity(task, nested.TaskActivityLabelRemoved)
 		response.Ok()
 	} else {
 		response.Error(nested.ERR_UNKNOWN, []string{"internal_error"})
@@ -807,7 +807,7 @@ func (s *TaskService) removeTodo(requester *nested.Account, request *nestedGatew
 		return
 	}
 
-	if !task.HasAccess(requester.ID, nested.TASK_ACCESS_UPDATE) {
+	if !task.HasAccess(requester.ID, nested.TaskAccessUpdate) {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -815,7 +815,7 @@ func (s *TaskService) removeTodo(requester *nested.Account, request *nestedGatew
 	for _, todoID := range todoIDs {
 		task.RemoveToDo(requester.ID, todoID)
 	}
-	go s.Worker().Pusher().TaskNewActivity(task, nested.TASK_ACTIVITY_TODO_REMOVED)
+	go s.Worker().Pusher().TaskNewActivity(task, nested.TaskActivityTodoRemoved)
 	response.Ok()
 }
 
@@ -834,14 +834,14 @@ func (s *TaskService) removeWatcher(requester *nested.Account, request *nestedGa
 		}
 	}
 	if !(len(watcherIDs) == 1 && watcherIDs[0] == requester.ID) {
-		if !task.HasAccess(requester.ID, nested.TASK_ACCESS_REMOVE_WATCHER) {
+		if !task.HasAccess(requester.ID, nested.TaskAccessRemoveWatcher) {
 			response.Error(nested.ERR_ACCESS, []string{})
 			return
 		}
 	}
 
 	if task.RemoveWatchers(requester.ID, watcherIDs) {
-		go s.Worker().Pusher().TaskNewActivity(task, nested.TASK_ACTIVITY_WATCHER_REMOVED)
+		go s.Worker().Pusher().TaskNewActivity(task, nested.TaskActivityWatcherRemoved)
 		response.Ok()
 	} else {
 		response.Error(nested.ERR_UNKNOWN, []string{})
@@ -863,14 +863,14 @@ func (s *TaskService) removeEditor(requester *nested.Account, request *nestedGat
 		}
 	}
 	if !(len(editorIDs) == 1 && editorIDs[0] == requester.ID) {
-		if !task.HasAccess(requester.ID, nested.TASK_ACCESS_REMOVE_EDITOR) {
+		if !task.HasAccess(requester.ID, nested.TaskAccessRemoveEditor) {
 			response.Error(nested.ERR_ACCESS, []string{})
 			return
 		}
 	}
 
 	if task.RemoveEditors(requester.ID, editorIDs) {
-		go s.Worker().Pusher().TaskNewActivity(task, nested.TASK_ACTIVITY_EDITOR_REMOVED)
+		go s.Worker().Pusher().TaskNewActivity(task, nested.TaskActivityEditorRemoved)
 		response.Ok()
 	} else {
 		response.Error(nested.ERR_UNKNOWN, []string{})
@@ -892,14 +892,14 @@ func (s *TaskService) removeCandidate(requester *nested.Account, request *nested
 		}
 	}
 	if !(len(candidateIDs) == 1 && candidateIDs[0] == requester.ID) {
-		if !task.HasAccess(requester.ID, nested.TASK_ACCESS_REMOVE_WATCHER) {
+		if !task.HasAccess(requester.ID, nested.TaskAccessRemoveWatcher) {
 			response.Error(nested.ERR_ACCESS, []string{})
 			return
 		}
 	}
 
 	if task.RemoveCandidates(requester.ID, candidateIDs) {
-		go s.Worker().Pusher().TaskNewActivity(task, nested.TASK_ACTIVITY_CANDIDATE_REMOVED)
+		go s.Worker().Pusher().TaskNewActivity(task, nested.TaskActivityCandidateRemoved)
 		response.Ok()
 	} else {
 		response.Error(nested.ERR_UNKNOWN, []string{})
@@ -931,7 +931,7 @@ func (s *TaskService) respond(requester *nested.Account, request *nestedGateway.
 			response.Error(nested.ERR_ACCESS, []string{"not_candidate"})
 			return
 		}
-		if task.Status == nested.TASK_STATUS_ASSIGNED {
+		if task.Status == nested.TaskStatusAssigned {
 			response.Error(nested.ERR_ACCESS, []string{"already_assigned"})
 			return
 		}
@@ -946,7 +946,7 @@ func (s *TaskService) respond(requester *nested.Account, request *nestedGateway.
 			response.Error(nested.ERR_ACCESS, []string{"not_candidate"})
 			return
 		}
-		if task.Status == nested.TASK_STATUS_ASSIGNED {
+		if task.Status == nested.TaskStatusAssigned {
 			response.Error(nested.ERR_ACCESS, []string{"already_assigned"})
 			return
 		}
@@ -975,7 +975,7 @@ func (s *TaskService) respond(requester *nested.Account, request *nestedGateway.
 
 // @Command: task/set_status
 // @Input:	task_id		string		*
-// @Input:	status		int			*		(TASK_STATUS_COMPLETED | TASK_STATUS_HOLD | TASK_STATUS_CANCELED | TASK_STATUS_FAILED)
+// @Input:	status		int			*		(TaskStatusCompleted | TaskStatusHold | TaskStatusCanceled | TaskStatusFailed)
 // @Deprecated
 func (s *TaskService) setStatus(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	var status nested.TaskStatus
@@ -986,7 +986,7 @@ func (s *TaskService) setStatus(requester *nested.Account, request *nestedGatewa
 	if v, ok := request.Data["status"].(float64); ok {
 		status = nested.TaskStatus(v)
 		switch status {
-		case nested.TASK_STATUS_COMPLETED, nested.TASK_STATUS_HOLD, nested.TASK_STATUS_CANCELED, nested.TASK_STATUS_FAILED:
+		case nested.TaskStatusCompleted, nested.TaskStatusHold, nested.TaskStatusCanceled, nested.TaskStatusFailed:
 		default:
 			response.Error(nested.ERR_INVALID, []string{"status"})
 			return
@@ -995,7 +995,7 @@ func (s *TaskService) setStatus(requester *nested.Account, request *nestedGatewa
 		response.Error(nested.ERR_INCOMPLETE, []string{"status"})
 		return
 	}
-	if !task.HasAccess(requester.ID, nested.TASK_ACCESS_UPDATE) {
+	if !task.HasAccess(requester.ID, nested.TaskAccessUpdate) {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -1019,35 +1019,35 @@ func (s *TaskService) setState(requester *nested.Account, request *nestedGateway
 		return
 	}
 
-	if !task.HasAccess(requester.ID, nested.TASK_ACCESS_UPDATE) {
+	if !task.HasAccess(requester.ID, nested.TaskAccessUpdate) {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
 
 	switch strings.ToLower(state) {
 	case "complete":
-		task.UpdateStatus(requester.ID, nested.TASK_STATUS_COMPLETED)
+		task.UpdateStatus(requester.ID, nested.TaskStatusCompleted)
 		go s.Worker().Pusher().TaskCompleted(task, requester.ID)
-		response.OkWithData(nested.M{"new_status": nested.TASK_STATUS_COMPLETED})
+		response.OkWithData(nested.M{"new_status": nested.TaskStatusCompleted})
 		return
 	case "failed":
-		task.UpdateStatus(requester.ID, nested.TASK_STATUS_FAILED)
+		task.UpdateStatus(requester.ID, nested.TaskStatusFailed)
 		go s.Worker().Pusher().TaskFailed(task, requester.ID)
-		response.OkWithData(nested.M{"new_status": nested.TASK_STATUS_FAILED})
+		response.OkWithData(nested.M{"new_status": nested.TaskStatusFailed})
 		return
 	case "hold":
-		task.UpdateStatus(requester.ID, nested.TASK_STATUS_HOLD)
+		task.UpdateStatus(requester.ID, nested.TaskStatusHold)
 		go s.Worker().Pusher().TaskHold(task, requester.ID)
-		response.OkWithData(nested.M{"new_status": nested.TASK_STATUS_HOLD})
+		response.OkWithData(nested.M{"new_status": nested.TaskStatusHold})
 		return
 	case "in_progress":
-		if task.Status != nested.TASK_STATUS_OVERDUE {
+		if task.Status != nested.TaskStatusOverdue {
 			if len(task.AssigneeID) > 0 {
-				task.UpdateStatus(requester.ID, nested.TASK_STATUS_ASSIGNED)
-				response.OkWithData(nested.M{"new_status": nested.TASK_STATUS_ASSIGNED})
+				task.UpdateStatus(requester.ID, nested.TaskStatusAssigned)
+				response.OkWithData(nested.M{"new_status": nested.TaskStatusAssigned})
 			} else {
-				task.UpdateStatus(requester.ID, nested.TASK_STATUS_NOT_ASSIGNED)
-				response.OkWithData(nested.M{"new_status": nested.TASK_STATUS_NOT_ASSIGNED})
+				task.UpdateStatus(requester.ID, nested.TaskStatusNotAssigned)
+				response.OkWithData(nested.M{"new_status": nested.TaskStatusNotAssigned})
 			}
 			go s.Worker().Pusher().TaskInProgress(task, requester.ID)
 			return
@@ -1078,7 +1078,7 @@ func (s *TaskService) update(requester *nested.Account, request *nestedGateway.R
 	}
 
 	// Check requester has the right permission
-	if !task.HasAccess(requester.ID, nested.TASK_ACCESS_UPDATE) {
+	if !task.HasAccess(requester.ID, nested.TaskAccessUpdate) {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}
@@ -1120,7 +1120,7 @@ func (s *TaskService) update(requester *nested.Account, request *nestedGateway.R
 
 	if task.Update(requester.ID, title, desc, dueDate, dueDateHasClock) {
 		response.Ok()
-		go s.Worker().Pusher().TaskNewActivity(task, nested.TASK_ACTIVITY_UPDATED)
+		go s.Worker().Pusher().TaskNewActivity(task, nested.TaskActivityUpdated)
 	} else {
 		response.Error(nested.ERR_UNKNOWN, []string{"internal_error"})
 	}
@@ -1168,7 +1168,7 @@ func (s *TaskService) updateTodo(requester *nested.Account, request *nestedGatew
 	}
 
 	// Check requester has the right permission
-	if !task.HasAccess(requester.ID, nested.TASK_ACCESS_UPDATE) {
+	if !task.HasAccess(requester.ID, nested.TaskAccessUpdate) {
 		response.Error(nested.ERR_ACCESS, []string{})
 		return
 	}

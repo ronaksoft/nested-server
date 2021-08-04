@@ -7,6 +7,7 @@ import (
 	"git.ronaksoft.com/nested/server/pkg/cache"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
+	"git.ronaksoft.com/nested/server/pkg/pusher"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 	"go.uber.org/zap"
@@ -48,10 +49,11 @@ func init() {
 
 // Manager is the wrapper around all the other managers
 type Manager struct {
+	Device        *pusher.DeviceManager
+	Websocket     *pusher.WebsocketManager
 	Account       *AccountManager
 	App           *AppManager
 	Contact       *ContactManager
-	Device        *DeviceManager
 	File          *FileManager
 	Group         *GroupManager
 	Hook          *HookManager
@@ -73,7 +75,6 @@ type Manager struct {
 	TimeBucket    *TimeBucketManager
 	Token         *TokenManager
 	Verification  *VerificationManager
-	Websocket     *WebsocketManager
 }
 
 func NewManager(instanceID, mongoDSN, redisDSN string, logLevel int) (*Manager, error) {
@@ -122,10 +123,12 @@ func NewManager(instanceID, mongoDSN, redisDSN string, logLevel int) (*Manager, 
 	}
 
 	_Manager = new(Manager)
+	_Manager.Device = pusher.NewDeviceManager(_MongoSession)
+	_Manager.Websocket = pusher.NewWebsocketManager(_Cache)
+
 	_Manager.Account = NewAccountManager()
 	_Manager.App = NewAppManager()
 	_Manager.Contact = NewContactManager()
-	_Manager.Device = NewDeviceManager()
 	_Manager.File = NewFileManager()
 	_Manager.Group = NewGroupManager()
 	_Manager.Hook = NewHookManager()
@@ -147,7 +150,6 @@ func NewManager(instanceID, mongoDSN, redisDSN string, logLevel int) (*Manager, 
 	_Manager.TimeBucket = NewTimeBucketManager()
 	_Manager.Token = NewTokenManager()
 	_Manager.Verification = NewVerificationManager()
-	_Manager.Websocket = NewWebsocketManager()
 
 	// Load the system constants
 	_Manager.System.LoadIntegerConstants()

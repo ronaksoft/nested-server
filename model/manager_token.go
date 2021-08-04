@@ -4,16 +4,16 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	"log"
-	"time"
-
+	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/log"
 	"github.com/globalsign/mgo/bson"
 	"github.com/gomodule/redigo/redis"
+	"time"
 )
 
 const (
-	TOKEN_TYPE_FILE string = "file"
-	TOKEN_TYPE_APP  string = "app"
+	TokenTypeFile string = "file"
+	TokenTypeApp  string = "app"
 )
 
 type FileToken struct {
@@ -46,14 +46,14 @@ func NewTokenManager() *TokenManager {
 
 func (tm *TokenManager) readFromCache(tokenType, tokenID string) interface{} {
 	switch tokenType {
-	case TOKEN_TYPE_APP:
+	case TokenTypeApp:
 		appToken := new(AppToken)
 		c := _Cache.Pool.Get()
 		defer c.Close()
 		keyID := fmt.Sprintf("appToken:gob:%s", tokenID)
 		if gobToken, err := redis.Bytes(c.Do("GET", keyID)); err != nil {
 			if err := _MongoDB.C(global.COLLECTION_PLACES).FindId(tokenID).One(appToken); err != nil {
-				log.Info("Model::TokenManager::readFromCache::Error 1::", err.Error(), tokenID)
+				log.Sugar().Info("Model::TokenManager::readFromCache::Error 1::", err.Error(), tokenID)
 				return nil
 			}
 			gobToken := new(bytes.Buffer)
@@ -82,7 +82,7 @@ func (tm *TokenManager) CreateFileToken(uniID UniversalID, issuerID, receiverEma
 
 	ft := FileToken{
 		ID:       fmt.Sprintf("FT%s", RandomID(128)),
-		Type:     TOKEN_TYPE_FILE,
+		Type:     TokenTypeFile,
 		FileID:   uniID,
 		Issuer:   issuerID,
 		Receiver: receiverEmail,
