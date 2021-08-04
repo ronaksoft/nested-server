@@ -1,12 +1,11 @@
 package nested
 
 import (
-	"log"
-
+	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/log"
 	"github.com/globalsign/mgo/bson"
 )
 
-// Phone Manager and Methods
 type PhoneManager struct {
 	m *Manager
 }
@@ -27,8 +26,7 @@ func NewPhoneManager() *PhoneManager {
 	return new(PhoneManager)
 }
 
-// Description:
-// This function registers the accountID for the phoneNumber
+// RegisterPhoneToAccount This function registers the accountID for the phoneNumber
 func (pm *PhoneManager) RegisterPhoneToAccount(accountID, phoneNumber string) {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -38,12 +36,11 @@ func (pm *PhoneManager) RegisterPhoneToAccount(accountID, phoneNumber string) {
 		phoneNumber,
 		bson.M{"$set": bson.M{"owner_id": accountID}},
 	); err != nil {
-		log.Info("Model::PhoneManager::RegisterPhoneToAccount::Error::1::", err.Error())
+		log.Sugar().Info("Model::PhoneManager::RegisterPhoneToAccount::Error::1::", err.Error())
 	}
 	return
 }
 
-// Description:
 // UnRegisterPhoneToAccount  un-registers the accountID for the phoneNumber, This function must be called when
 // user changes his/her phone number
 func (pm *PhoneManager) UnRegisterPhoneToAccount(accountID, phoneNumber string) {
@@ -60,8 +57,7 @@ func (pm *PhoneManager) UnRegisterPhoneToAccount(accountID, phoneNumber string) 
 	return
 }
 
-// Description:
-// If 'phoneNumber' is in contacts of 'accountID' then add 'accountID' to the list of accounts
+// AddContactToPhone If 'phoneNumber' is in contacts of 'accountID' then add 'accountID' to the list of accounts
 // which attached to 'phoneNumber'
 func (pm *PhoneManager) AddContactToPhone(accountID, phoneNumber string) {
 	dbSession := _MongoSession.Clone()
@@ -72,12 +68,12 @@ func (pm *PhoneManager) AddContactToPhone(accountID, phoneNumber string) {
 		phoneNumber,
 		bson.M{"$addToSet": bson.M{"contacts": accountID}},
 	); err != nil {
-		log.Info("Model::PhoneManager::AddContactToPhone::Error::1::", err.Error())
+		log.Sugar().Info("Model::PhoneManager::AddContactToPhone::Error::1::", err.Error())
 	}
 	return
 }
 
-// Description:
+// RemoveContactFromPhone
 // If 'phoneNumber' is not in contacts of the 'accountID' anymore then remove it from the list
 func (pm *PhoneManager) RemoveContactFromPhone(accountID, phoneNumber string) {
 	dbSession := _MongoSession.Clone()
@@ -88,12 +84,12 @@ func (pm *PhoneManager) RemoveContactFromPhone(accountID, phoneNumber string) {
 		phoneNumber,
 		bson.M{"$pull": bson.M{"contacts": accountID}},
 	); err != nil {
-		log.Info("Model::PhoneManager::RemoveContactFromPhone::Error::1::", err.Error())
+		log.Sugar().Info("Model::PhoneManager::RemoveContactFromPhone::Error::1::", err.Error())
 	}
 	return
 }
 
-// Description:
+// GetContactsByPhoneNumber
 // Returns an array of accountIDs who have this number in their contact list
 func (pm *PhoneManager) GetContactsByPhoneNumber(phoneNumber string) []string {
 	dbSession := _MongoSession.Clone()
@@ -105,7 +101,7 @@ func (pm *PhoneManager) GetContactsByPhoneNumber(phoneNumber string) []string {
 	return c.Contacts
 }
 
-// Description:
+// GetContactsByAccountID
 // Returns an array of account ids who have the number owned by 'accountID'
 func (pm *PhoneManager) GetContactsByAccountID(accountID string) []string {
 	dbSession := _MongoSession.Clone()

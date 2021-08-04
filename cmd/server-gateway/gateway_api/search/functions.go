@@ -221,14 +221,14 @@ func (s *SearchService) labels(requester *nested.Account, request *nestedGateway
 
 	pg := s.Worker().Argument().GetPagination(request)
 	switch filter {
-	case nested.LABEL_FILTER_MY_PRIVATES, nested.LABEL_FILTER_PRIVATES, nested.LABEL_FILTER_PUBLIC,
-		nested.LABEL_FILTER_ALL, nested.LABEL_FILTER_MY_LABELS:
+	case nested.LabelFilterMyPrivates, nested.LabelFilterPrivates, nested.LabelFilterPublic,
+		nested.LabelFilterAll, nested.LabelFilterMyLabels:
 	default:
-		filter = nested.LABEL_FILTER_ALL
+		filter = nested.LabelFilterAll
 	}
 
 	// if user is not a label editor and is not asking for his/her labels then details is not allowed
-	if !requester.Authority.LabelEditor && filter != nested.LABEL_FILTER_MY_PRIVATES {
+	if !requester.Authority.LabelEditor && filter != nested.LabelFilterMyPrivates {
 		details = false
 	}
 
@@ -424,7 +424,7 @@ func (s *SearchService) suggestions(requester *nested.Account, request *nestedGa
 	}
 
 	// Search Labels
-	labels := s.Worker().Model().Search.Labels(requester.ID, keyword, nested.LABEL_FILTER_ALL, pg)
+	labels := s.Worker().Model().Search.Labels(requester.ID, keyword, nested.LabelFilterAll, pg)
 	rLabels := make([]nested.M, 0, len(labels))
 	for _, a := range labels {
 		rLabels = append(rLabels, s.Worker().Map().Label(requester, a, false))

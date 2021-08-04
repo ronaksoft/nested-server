@@ -2,36 +2,38 @@ package nested
 
 import (
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/log"
 	"strings"
 
 	"github.com/globalsign/mgo/bson"
 )
 
 const (
-	LABEL_COLOUR_CODE_A = "A"
-	LABEL_COLOUR_CODE_B = "B"
-	LABEL_COLOUR_CODE_C = "C"
-	LABEL_COLOUR_CODE_D = "D"
-	LABEL_COLOUR_CODE_E = "E"
-	LABEL_COLOUR_CODE_F = "F"
-	LABEL_COLOUR_CODE_G = "G"
+	LabelColourCodeA = "A"
+	LabelColourCodeB = "B"
+	LabelColourCodeC = "C"
+	LabelColourCodeD = "D"
+	LabelColourCodeE = "E"
+	LabelColourCodeF = "F"
+	LabelColourCodeG = "G"
 )
 const (
-	LABEL_FILTER_MY_LABELS   = "my_labels"
-	LABEL_FILTER_MY_PRIVATES = "my_privates"
-	LABEL_FILTER_PRIVATES    = "privates"
-	LABEL_FILTER_PUBLIC      = "public"
-	LABEL_FILTER_ALL         = "all"
+	LabelFilterMyLabels   = "my_labels"
+	LabelFilterMyPrivates = "my_privates"
+	LabelFilterPrivates   = "privates"
+	LabelFilterPublic     = "public"
+	LabelFilterAll        = "all"
 )
 const (
-	LABEL_REQUEST_STATUS_APPROVED = "approved"
-	LABEL_REQUEST_STATUS_REJECTED = "rejected"
-	LABEL_REQUEST_STATUS_FAILED   = "failed"
-	LABEL_REQUEST_STATUS_CANCELED = "canceled"
-	LABEL_REQUEST_STATUS_PENDING  = "pending"
+	LabelRequestStatusApproved = "approved"
+	LabelRequestStatusRejected = "rejected"
+	LabelRequestStatusFailed   = "failed"
+	LabelRequestStatusCanceled = "canceled"
+	LabelRequestStatusPending  = "pending"
 )
 const (
-	PUBLIC_LABELS_ID = "_PUBLIC_LABELS"
+	PublicLabelsID = "_PUBLIC_LABELS"
 )
 
 type LabelManager struct{}
@@ -155,7 +157,7 @@ func (lm *LabelManager) CreatePublic(id, title, code, creatorID string) bool {
 	// be added in this document
 	if _, err := db.C(global.COLLECTION_ACCOUNTS_LABELS).Upsert(
 		bson.M{
-			"_id":    PUBLIC_LABELS_ID,
+			"_id":    PublicLabelsID,
 			"labels": bson.M{"$ne": label.ID},
 		},
 		bson.M{
@@ -184,7 +186,7 @@ func (lm *LabelManager) CreateRequest(requesterID, labelID, title, colourCode st
 		ColourCode:  colourCode,
 		Timestamp:   ts,
 		LastUpdate:  ts,
-		Status:      LABEL_REQUEST_STATUS_PENDING,
+		Status:      LabelRequestStatusPending,
 	}
 	if err := db.C(global.COLLECTION_LABELS_REQUESTS).Insert(labelRequest); err != nil {
 		log.Warn(err.Error())
@@ -275,7 +277,7 @@ func (lm *LabelManager) GetRequestsByAccountID(accountID string, pg Pagination) 
 	labelRequests := make([]LabelRequest, 0, pg.GetLimit())
 	if err := db.C(global.COLLECTION_LABELS_REQUESTS).Find(
 		bson.M{
-			"status":       LABEL_REQUEST_STATUS_PENDING,
+			"status":       LabelRequestStatusPending,
 			"requester_id": accountID,
 		},
 	).Sort("-timestamp").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&labelRequests); err != nil {
@@ -370,11 +372,11 @@ func (lm *LabelManager) RemoveMember(labelID, memberID string) bool {
 // SanitizeLabelCode if input code is not a valid code then it returns the default colour code
 func (lm *LabelManager) SanitizeLabelCode(code string) string {
 	switch code {
-	case LABEL_COLOUR_CODE_A, LABEL_COLOUR_CODE_B, LABEL_COLOUR_CODE_C,
-		LABEL_COLOUR_CODE_D, LABEL_COLOUR_CODE_E, LABEL_COLOUR_CODE_F,
-		LABEL_COLOUR_CODE_G:
+	case LabelColourCodeA, LabelColourCodeB, LabelColourCodeC,
+		LabelColourCodeD, LabelColourCodeE, LabelColourCodeF,
+		LabelColourCodeG:
 	default:
-		code = LABEL_COLOUR_CODE_A
+		code = LabelColourCodeA
 	}
 	return code
 }

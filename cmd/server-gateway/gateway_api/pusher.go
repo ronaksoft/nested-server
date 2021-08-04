@@ -32,7 +32,7 @@ func (pm *PushManager) CloseConnection() {
 func (pm *PushManager) NewSession(actorID, clientID string) {
 	n := pm.worker.Model().Notification.NewSession(actorID, clientID)
 	pm.Notification.ExternalPushNotification(n)
-	pm.Notification.InternalNotificationSyncPush([]string{actorID}, nested.NOTIFICATION_TYPE_NEW_SESSION)
+	pm.Notification.InternalNotificationSyncPush([]string{actorID}, nested.NotificationTypeNewSession)
 }
 
 // Place Related Pushes
@@ -46,7 +46,7 @@ func (pm *PushManager) PlaceJoined(place *nested.Place, actorID, memberID string
 	pm.Notification.InternalPlaceActivitySyncPush(memberIDs, place.ID, nested.PLACE_ACTIVITY_ACTION_MEMBER_JOIN)
 
 	// Send the notification packet over the wire
-	pm.Notification.InternalNotificationSyncPush([]string{memberID}, nested.NOTIFICATION_TYPE_JOINED_PLACE)
+	pm.Notification.InternalNotificationSyncPush([]string{memberID}, nested.NotificationTypeJoinedPlace)
 }
 func (pm *PushManager) PlaceSettingsUpdated(place *nested.Place, actorID string) {
 	for _, creatorID := range place.CreatorIDs {
@@ -54,7 +54,7 @@ func (pm *PushManager) PlaceSettingsUpdated(place *nested.Place, actorID string)
 			n := pm.worker.Model().Notification.PlaceSettingsChanged(creatorID, actorID, place.ID)
 			if n != nil && n.Timestamp != n.LastUpdate {
 				pm.Notification.ExternalPushNotification(n)
-				pm.Notification.InternalNotificationSyncPush([]string{creatorID}, nested.NOTIFICATION_TYPE_PLACE_SETTINGS_CHANGED)
+				pm.Notification.InternalNotificationSyncPush([]string{creatorID}, nested.NotificationTypePlaceSettingsChanged)
 			}
 		}
 	}
@@ -62,12 +62,12 @@ func (pm *PushManager) PlaceSettingsUpdated(place *nested.Place, actorID string)
 func (pm *PushManager) PlaceMemberDemoted(place *nested.Place, actorID, memberID string) {
 	notif := pm.worker.Model().Notification.Demoted(memberID, actorID, place.ID)
 	pm.Notification.ExternalPushNotification(notif)
-	pm.Notification.InternalNotificationSyncPush([]string{memberID}, nested.NOTIFICATION_TYPE_DEMOTED)
+	pm.Notification.InternalNotificationSyncPush([]string{memberID}, nested.NotificationTypeDemoted)
 }
 func (pm *PushManager) PlaceMemberPromoted(place *nested.Place, actorID, memberID string) {
 	notif := pm.worker.Model().Notification.Promoted(memberID, actorID, place.ID)
 	pm.Notification.ExternalPushNotification(notif)
-	pm.Notification.InternalNotificationSyncPush([]string{memberID}, nested.NOTIFICATION_TYPE_PROMOTED)
+	pm.Notification.InternalNotificationSyncPush([]string{memberID}, nested.NotificationTypePromoted)
 }
 
 // Post Related Pushes
@@ -150,7 +150,7 @@ func (pm *PushManager) PostCommentAdded(post *nested.Post, comment *nested.Comme
 		if post.HasAccess(mentionedID) {
 			n := pm.worker.Model().Notification.AddMention(comment.SenderID, mentionedID, post.ID, comment.ID)
 			pm.Notification.ExternalPushNotification(n)
-			pm.Notification.InternalNotificationSyncPush([]string{mentionedID}, nested.NOTIFICATION_TYPE_MENTION)
+			pm.Notification.InternalNotificationSyncPush([]string{mentionedID}, nested.NotificationTypeMention)
 			mentionedIDs[mentionedID] = true
 		}
 	}
@@ -169,7 +169,7 @@ func (pm *PushManager) PostCommentAdded(post *nested.Post, comment *nested.Comme
 			pm.worker.Model().Post.RemoveAccountFromWatcherList(post.ID, accountID)
 		}
 	}
-	pm.Notification.InternalNotificationSyncPush(watcherIDs, nested.NOTIFICATION_TYPE_COMMENT)
+	pm.Notification.InternalNotificationSyncPush(watcherIDs, nested.NotificationTypeComment)
 
 	// Activity Internal Push Notifications
 	for _, placeID := range post.PlaceIDs {
@@ -212,7 +212,7 @@ func (pm *PushManager) LabelRequestApproved(labelRequest *nested.LabelRequest) {
 		labelRequest.ID,
 	)
 	pm.Notification.ExternalPushNotification(notifLabelRequestApproved)
-	pm.Notification.InternalNotificationSyncPush([]string{labelRequest.RequesterID}, nested.NOTIFICATION_TYPE_LABEL_REQUEST_APPROVED)
+	pm.Notification.InternalNotificationSyncPush([]string{labelRequest.RequesterID}, nested.NotificationTypeLabelRequestApproved)
 }
 func (pm *PushManager) LabelRequestRejected(labelRequest *nested.LabelRequest) {
 	notifLabelRequestRejected := pm.worker.Model().Notification.LabelRequestRejected(
@@ -222,7 +222,7 @@ func (pm *PushManager) LabelRequestRejected(labelRequest *nested.LabelRequest) {
 		labelRequest.ID,
 	)
 	pm.Notification.ExternalPushNotification(notifLabelRequestRejected)
-	pm.Notification.InternalNotificationSyncPush([]string{labelRequest.RequesterID}, nested.NOTIFICATION_TYPE_LABEL_REQUEST_REJECTED)
+	pm.Notification.InternalNotificationSyncPush([]string{labelRequest.RequesterID}, nested.NotificationTypeLabelRequestRejected)
 }
 
 // Task Related Pushes
@@ -230,7 +230,7 @@ func (pm *PushManager) TaskAssigned(task *nested.Task) {
 	if task.AssignorID != task.AssigneeID {
 		n1 := pm.worker.Model().Notification.TaskAssigned(task.AssigneeID, task.AssignorID, task)
 		pm.Notification.ExternalPushNotification(n1)
-		pm.Notification.InternalNotificationSyncPush([]string{task.AssigneeID}, nested.NOTIFICATION_TYPE_TASK_ASSIGNED)
+		pm.Notification.InternalNotificationSyncPush([]string{task.AssigneeID}, nested.NotificationTypeTaskAssigned)
 	}
 }
 func (pm *PushManager) TaskOverdue(task *nested.Task) {
@@ -238,19 +238,19 @@ func (pm *PushManager) TaskOverdue(task *nested.Task) {
 	pm.Notification.ExternalPushNotification(n1)
 	n2 := pm.worker.Model().Notification.TaskOverdue(task.AssigneeID, task)
 	pm.Notification.ExternalPushNotification(n2)
-	pm.Notification.InternalNotificationSyncPush([]string{task.AssigneeID, task.AssignorID}, nested.NOTIFICATION_TYPE_TASK_OVER_DUE)
+	pm.Notification.InternalNotificationSyncPush([]string{task.AssigneeID, task.AssignorID}, nested.NotificationTypeTaskOverDue)
 }
 func (pm *PushManager) TaskRejected(task *nested.Task, actorID string) {
 	n1 := pm.worker.Model().Notification.TaskRejected(task.AssignorID, actorID, task)
 	pm.Notification.ExternalPushNotification(n1)
 
 	// send sync-n to the wire
-	pm.Notification.InternalNotificationSyncPush([]string{task.AssignorID}, nested.NOTIFICATION_TYPE_TASK_REJECTED)
+	pm.Notification.InternalNotificationSyncPush([]string{task.AssignorID}, nested.NotificationTypeTaskRejected)
 }
 func (pm *PushManager) TaskAccepted(task *nested.Task, actorID string) {
 	n1 := pm.worker.Model().Notification.TaskAccepted(task.AssignorID, actorID, task)
 	pm.Notification.ExternalPushNotification(n1)
-	pm.Notification.InternalNotificationSyncPush([]string{task.AssignorID}, nested.NOTIFICATION_TYPE_TASK_ACCEPTED)
+	pm.Notification.InternalNotificationSyncPush([]string{task.AssignorID}, nested.NotificationTypeTaskAccepted)
 
 	// send task activity sync over the wire
 	accountIDs := nested.MB{}
@@ -265,12 +265,12 @@ func (pm *PushManager) TaskFailed(task *nested.Task, actorID string) {
 	if actorID != task.AssigneeID {
 		n := pm.worker.Model().Notification.TaskCompleted(task.AssigneeID, actorID, task)
 		pm.Notification.ExternalPushNotification(n)
-		pm.Notification.InternalNotificationSyncPush([]string{task.AssigneeID}, nested.NOTIFICATION_TYPE_TASK_FAILED)
+		pm.Notification.InternalNotificationSyncPush([]string{task.AssigneeID}, nested.NotificationTypeTaskFailed)
 	}
 	if actorID != task.AssignorID {
 		n := pm.worker.Model().Notification.TaskCompleted(task.AssignorID, actorID, task)
 		pm.Notification.ExternalPushNotification(n)
-		pm.Notification.InternalNotificationSyncPush([]string{task.AssignorID}, nested.NOTIFICATION_TYPE_TASK_FAILED)
+		pm.Notification.InternalNotificationSyncPush([]string{task.AssignorID}, nested.NotificationTypeTaskFailed)
 	}
 
 	// send task activity sync over the wire
@@ -286,12 +286,12 @@ func (pm *PushManager) TaskCompleted(task *nested.Task, actorID string) {
 	if actorID != task.AssigneeID {
 		n := pm.worker.Model().Notification.TaskCompleted(task.AssigneeID, actorID, task)
 		pm.Notification.ExternalPushNotification(n)
-		pm.Notification.InternalNotificationSyncPush([]string{task.AssigneeID}, nested.NOTIFICATION_TYPE_TASK_COMPLETED)
+		pm.Notification.InternalNotificationSyncPush([]string{task.AssigneeID}, nested.NotificationTypeTaskCompleted)
 	}
 	if actorID != task.AssignorID {
 		n := pm.worker.Model().Notification.TaskCompleted(task.AssignorID, actorID, task)
 		pm.Notification.ExternalPushNotification(n)
-		pm.Notification.InternalNotificationSyncPush([]string{task.AssignorID}, nested.NOTIFICATION_TYPE_TASK_COMPLETED)
+		pm.Notification.InternalNotificationSyncPush([]string{task.AssignorID}, nested.NotificationTypeTaskCompleted)
 	}
 
 	// send task activity sync over the wire
@@ -307,12 +307,12 @@ func (pm *PushManager) TaskHold(task *nested.Task, actorID string) {
 	if actorID != task.AssignorID {
 		n := pm.worker.Model().Notification.TaskHold(task.AssignorID, actorID, task)
 		pm.Notification.ExternalPushNotification(n)
-		pm.Notification.InternalNotificationSyncPush([]string{task.AssignorID}, nested.NOTIFICATION_TYPE_TASK_HOLD)
+		pm.Notification.InternalNotificationSyncPush([]string{task.AssignorID}, nested.NotificationTypeTaskHold)
 	}
 	if actorID != task.AssigneeID {
 		n := pm.worker.Model().Notification.TaskHold(task.AssigneeID, actorID, task)
 		pm.Notification.ExternalPushNotification(n)
-		pm.Notification.InternalNotificationSyncPush([]string{task.AssigneeID}, nested.NOTIFICATION_TYPE_TASK_HOLD)
+		pm.Notification.InternalNotificationSyncPush([]string{task.AssigneeID}, nested.NotificationTypeTaskHold)
 	}
 
 	// send task activity sync over the wire
@@ -328,12 +328,12 @@ func (pm *PushManager) TaskInProgress(task *nested.Task, actorID string) {
 	if actorID != task.AssignorID {
 		n := pm.worker.Model().Notification.TaskInProgress(task.AssignorID, actorID, task)
 		pm.Notification.ExternalPushNotification(n)
-		pm.Notification.InternalNotificationSyncPush([]string{task.AssignorID}, nested.NOTIFICATION_TYPE_TASK_IN_PROGRESS)
+		pm.Notification.InternalNotificationSyncPush([]string{task.AssignorID}, nested.NotificationTypeTaskInProgress)
 	}
 	if actorID != task.AssigneeID {
 		n := pm.worker.Model().Notification.TaskInProgress(task.AssigneeID, actorID, task)
 		pm.Notification.ExternalPushNotification(n)
-		pm.Notification.InternalNotificationSyncPush([]string{task.AssigneeID}, nested.NOTIFICATION_TYPE_TASK_IN_PROGRESS)
+		pm.Notification.InternalNotificationSyncPush([]string{task.AssigneeID}, nested.NotificationTypeTaskInProgress)
 	}
 
 	// send task activity sync over the wire
@@ -355,7 +355,7 @@ func (pm *PushManager) TaskCommentAdded(task *nested.Task, actorID string, activ
 		if task.HasAccess(mentionedID, nested.TASK_ACCESS_READ) {
 			n := pm.worker.Model().Notification.TaskCommentMentioned(mentionedID, actorID, task, activityID)
 			pm.Notification.ExternalPushNotification(n)
-			pm.Notification.InternalNotificationSyncPush([]string{mentionedID}, nested.NOTIFICATION_TYPE_TASK_MENTION)
+			pm.Notification.InternalNotificationSyncPush([]string{mentionedID}, nested.NotificationTypeTaskMention)
 			mentionedIDs[mentionedID] = true
 		}
 	}
@@ -363,14 +363,14 @@ func (pm *PushManager) TaskCommentAdded(task *nested.Task, actorID string, activ
 		if _, ok := mentionedIDs[task.AssigneeID]; !ok {
 			n := pm.worker.Model().Notification.TaskComment(task.AssigneeID, actorID, task, activityID)
 			pm.Notification.ExternalPushNotification(n)
-			pm.Notification.InternalNotificationSyncPush([]string{task.AssigneeID}, nested.NOTIFICATION_TYPE_TASK_COMMENT)
+			pm.Notification.InternalNotificationSyncPush([]string{task.AssigneeID}, nested.NotificationTypeTaskComment)
 		}
 	}
 	if actorID != task.AssignorID {
 		if _, ok := mentionedIDs[task.AssignorID]; !ok {
 			n := pm.worker.Model().Notification.TaskComment(task.AssignorID, actorID, task, activityID)
 			pm.Notification.ExternalPushNotification(n)
-			pm.Notification.InternalNotificationSyncPush([]string{task.AssignorID}, nested.NOTIFICATION_TYPE_TASK_COMMENT)
+			pm.Notification.InternalNotificationSyncPush([]string{task.AssignorID}, nested.NotificationTypeTaskComment)
 		}
 	}
 
@@ -390,7 +390,7 @@ func (pm *PushManager) TaskAddedToCandidates(task *nested.Task, actorID string, 
 			pm.Notification.ExternalPushNotification(n1)
 		}
 	}
-	pm.Notification.InternalNotificationSyncPush(memberIDs, nested.NOTIFICATION_TYPE_TASK_ADD_TO_CANDIDATES)
+	pm.Notification.InternalNotificationSyncPush(memberIDs, nested.NotificationTypeTaskAddToCandidates)
 
 	// send task activity sync over the wire
 	accountIDs := nested.MB{}
@@ -409,7 +409,7 @@ func (pm *PushManager) TaskAddedToWatchers(task *nested.Task, actorID string, me
 			pm.Notification.ExternalPushNotification(n1)
 		}
 	}
-	pm.Notification.InternalNotificationSyncPush(memberIDs, nested.NOTIFICATION_TYPE_TASK_ADD_TO_WATCHERS)
+	pm.Notification.InternalNotificationSyncPush(memberIDs, nested.NotificationTypeTaskAddToWatchers)
 
 	// send task activity sync over the wire
 	accountIDs := nested.MB{}
@@ -428,7 +428,7 @@ func (pm *PushManager) TaskAddedToEditors(task *nested.Task, actorID string, mem
 			pm.Notification.ExternalPushNotification(n1)
 		}
 	}
-	pm.Notification.InternalNotificationSyncPush(memberIDs, nested.NOTIFICATION_TYPE_TASK_ADD_TO_EDITORS)
+	pm.Notification.InternalNotificationSyncPush(memberIDs, nested.NotificationTypeTaskAddToEditors)
 
 	// send task activity sync over the wire
 	accountIDs := nested.MB{}

@@ -206,7 +206,7 @@ func (m *Mapper) Notification(requester *nested.Account, n nested.Notification) 
 		}
 	}
 	switch n.Type {
-	case nested.NOTIFICATION_TYPE_MENTION:
+	case nested.NotificationTypeMention:
 		comment := m.worker.Model().Post.GetCommentByID(n.CommentID)
 		r["post_id"] = n.PostID.Hex()
 		if comment != nil {
@@ -217,7 +217,7 @@ func (m *Mapper) Notification(requester *nested.Account, n nested.Notification) 
 		if comment != nil {
 			r["comment_text"] = comment.Body
 		}
-	case nested.NOTIFICATION_TYPE_COMMENT:
+	case nested.NotificationTypeComment:
 		comment := m.worker.Model().Post.GetCommentByID(n.CommentID)
 		otherCommenters := make([]nested.M, 0, len(n.Data.Others))
 		r["post_id"] = n.PostID.Hex()
@@ -233,7 +233,7 @@ func (m *Mapper) Notification(requester *nested.Account, n nested.Notification) 
 		if comment != nil {
 			r["comment_text"] = comment.Body
 		}
-	case nested.NOTIFICATION_TYPE_JOINED_PLACE:
+	case nested.NotificationTypeJoinedPlace:
 		p := m.worker.Model().Place.GetByID(n.PlaceID, nested.M{"name": 1, "picture": 1})
 		if p != nil {
 			r["place"] = m.worker.Map().Place(requester, *p, p.GetAccess(requester.ID))
@@ -243,7 +243,7 @@ func (m *Mapper) Notification(requester *nested.Account, n nested.Notification) 
 			r["place_name"] = p.Name
 			r["place_picture"] = p.Picture
 		}
-	case nested.NOTIFICATION_TYPE_DEMOTED, nested.NOTIFICATION_TYPE_PROMOTED, nested.NOTIFICATION_TYPE_PLACE_SETTINGS_CHANGED:
+	case nested.NotificationTypeDemoted, nested.NotificationTypePromoted, nested.NotificationTypePlaceSettingsChanged:
 		p := m.worker.Model().Place.GetByID(n.PlaceID, nil)
 		if p != nil {
 			r["place"] = m.worker.Map().Place(requester, *p, p.GetAccess(requester.ID))
@@ -253,25 +253,25 @@ func (m *Mapper) Notification(requester *nested.Account, n nested.Notification) 
 			r["place_name"] = p.Name
 			r["place_picture"] = p.Picture
 		}
-	case nested.NOTIFICATION_TYPE_LABEL_REQUEST_APPROVED, nested.NOTIFICATION_TYPE_LABEL_REQUEST_REJECTED:
+	case nested.NotificationTypeLabelRequestApproved, nested.NotificationTypeLabelRequestRejected:
 		label := m.worker.Model().Label.GetByID(n.LabelID)
 		if label != nil {
 			r["label"] = m.worker.Map().Label(requester, *label, false)
 		}
-	case nested.NOTIFICATION_TYPE_NEW_SESSION:
+	case nested.NotificationTypeNewSession:
 		r["client_id"] = n.ClientID
-	case nested.NOTIFICATION_TYPE_TASK_REJECTED, nested.NOTIFICATION_TYPE_TASK_ACCEPTED,
-		nested.NOTIFICATION_TYPE_TASK_COMPLETED, nested.NOTIFICATION_TYPE_TASK_ADD_TO_CANDIDATES,
-		nested.NOTIFICATION_TYPE_TASK_ADD_TO_WATCHERS, nested.NOTIFICATION_TYPE_TASK_UPDATED,
-		nested.NOTIFICATION_TYPE_TASK_OVER_DUE, nested.NOTIFICATION_TYPE_TASK_ASSIGNEE_CHANGED,
-		nested.NOTIFICATION_TYPE_TASK_ADD_TO_EDITORS, nested.NOTIFICATION_TYPE_TASK_DUE_TIME_UPDATED,
-		nested.NOTIFICATION_TYPE_TASK_ASSIGNED:
+	case nested.NotificationTypeTaskRejected, nested.NotificationTypeTaskAccepted,
+		nested.NotificationTypeTaskCompleted, nested.NotificationTypeTaskAddToCandidates,
+		nested.NotificationTypeTaskAddToWatchers, nested.NotificationTypeTaskUpdated,
+		nested.NotificationTypeTaskOverDue, nested.NotificationTypeTaskAssigneeChanged,
+		nested.NotificationTypeTaskAddToEditors, nested.NotificationTypeTaskDueTimeUpdated,
+		nested.NotificationTypeTaskAssigned:
 		r["task_id"] = n.TaskID.Hex()
 
 		// HACK FOR ANDROID :(
 		n.Data.Others = []string{"nested"}
 		r["data"] = n.Data
-	case nested.NOTIFICATION_TYPE_TASK_COMMENT, nested.NOTIFICATION_TYPE_TASK_MENTION:
+	case nested.NotificationTypeTaskComment, nested.NotificationTypeTaskMention:
 		comment := m.worker.model.TaskActivity.GetActivityByID(n.Data.ActivityID)
 		r["task_id"] = n.TaskID.Hex()
 		r["data"] = n.Data

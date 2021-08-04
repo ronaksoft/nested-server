@@ -488,19 +488,19 @@ func (sm *SearchManager) Labels(accountID, keyword, filter string, pg Pagination
 		q["title"] = bson.M{"$regex": fmt.Sprintf("%s", keyword), "$options": "i"}
 	}
 	switch filter {
-	case LABEL_FILTER_MY_LABELS:
+	case LabelFilterMyLabels:
 		q["$or"] = []bson.M{
 			{"$and": []bson.M{{"members": accountID}, {"public": false}}},
 			{"public": true},
 		}
-	case LABEL_FILTER_MY_PRIVATES:
+	case LabelFilterMyPrivates:
 		q["members"] = accountID
 		q["public"] = false
-	case LABEL_FILTER_PRIVATES:
+	case LabelFilterPrivates:
 		q["public"] = false
-	case LABEL_FILTER_PUBLIC:
+	case LabelFilterPublic:
 		q["public"] = true
-	case LABEL_FILTER_ALL:
+	case LabelFilterAll:
 		fallthrough
 	default:
 	}

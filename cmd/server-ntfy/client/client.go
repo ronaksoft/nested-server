@@ -17,33 +17,33 @@ var (
 
 func init() {
 	_NotificationTitles = make(map[int]string)
-	_NotificationTitles[nested.NOTIFICATION_TYPE_MENTION] = "Mention in Post"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_COMMENT] = "Comment on Post"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_JOINED_PLACE] = "Join Place"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_PROMOTED] = "Promoted"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_DEMOTED] = "Demoted"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_PLACE_SETTINGS_CHANGED] = "Place Settings Updated"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_NEW_SESSION] = "New Session"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_LABEL_REQUEST_APPROVED] = "Request Approved"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_LABEL_REQUEST_REJECTED] = "Request Rejected"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_LABEL_REQUEST_CREATED] = "New Request"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_LABEL_JOINED] = "Access To Label"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_TASK_MENTION] = "Mention in Task"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_TASK_COMMENT] = "Comment on Task"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_TASK_ASSIGNED] = "Task Assigned"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_TASK_ASSIGNEE_CHANGED] = "Task Assignee Changed"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_TASK_ADD_TO_CANDIDATES] = "Added To Task's Candidates"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_TASK_ADD_TO_WATCHERS] = "Added To Task's Watchers"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_TASK_DUE_TIME_UPDATED] = "Task Deadline Updated"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_TASK_OVER_DUE] = "Task is Overdue"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_TASK_UPDATED] = "Task Updated"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_TASK_REJECTED] = "Task Rejected"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_TASK_ACCEPTED] = "Task Accepted"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_TASK_COMPLETED] = "Task Completed"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_TASK_HOLD] = "Task was Hold"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_TASK_IN_PROGRESS] = "Task is in Progress"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_TASK_FAILED] = "Task Failed"
-	_NotificationTitles[nested.NOTIFICATION_TYPE_TASK_ADD_TO_EDITORS] = "Added to Task's Editors"
+	_NotificationTitles[nested.NotificationTypeMention] = "Mention in Post"
+	_NotificationTitles[nested.NotificationTypeComment] = "Comment on Post"
+	_NotificationTitles[nested.NotificationTypeJoinedPlace] = "Join Place"
+	_NotificationTitles[nested.NotificationTypePromoted] = "Promoted"
+	_NotificationTitles[nested.NotificationTypeDemoted] = "Demoted"
+	_NotificationTitles[nested.NotificationTypePlaceSettingsChanged] = "Place Settings Updated"
+	_NotificationTitles[nested.NotificationTypeNewSession] = "New Session"
+	_NotificationTitles[nested.NotificationTypeLabelRequestApproved] = "Request Approved"
+	_NotificationTitles[nested.NotificationTypeLabelRequestRejected] = "Request Rejected"
+	_NotificationTitles[nested.NotificationTypeLabelRequestCreated] = "New Request"
+	_NotificationTitles[nested.NotificationTypeLabelJoined] = "Access To Label"
+	_NotificationTitles[nested.NotificationTypeTaskMention] = "Mention in Task"
+	_NotificationTitles[nested.NotificationTypeTaskComment] = "Comment on Task"
+	_NotificationTitles[nested.NotificationTypeTaskAssigned] = "Task Assigned"
+	_NotificationTitles[nested.NotificationTypeTaskAssigneeChanged] = "Task Assignee Changed"
+	_NotificationTitles[nested.NotificationTypeTaskAddToCandidates] = "Added To Task's Candidates"
+	_NotificationTitles[nested.NotificationTypeTaskAddToWatchers] = "Added To Task's Watchers"
+	_NotificationTitles[nested.NotificationTypeTaskDueTimeUpdated] = "Task Deadline Updated"
+	_NotificationTitles[nested.NotificationTypeTaskOverDue] = "Task is Overdue"
+	_NotificationTitles[nested.NotificationTypeTaskUpdated] = "Task Updated"
+	_NotificationTitles[nested.NotificationTypeTaskRejected] = "Task Rejected"
+	_NotificationTitles[nested.NotificationTypeTaskAccepted] = "Task Accepted"
+	_NotificationTitles[nested.NotificationTypeTaskCompleted] = "Task Completed"
+	_NotificationTitles[nested.NotificationTypeTaskHold] = "Task was Hold"
+	_NotificationTitles[nested.NotificationTypeTaskInProgress] = "Task is in Progress"
+	_NotificationTitles[nested.NotificationTypeTaskFailed] = "Task Failed"
+	_NotificationTitles[nested.NotificationTypeTaskAddToEditors] = "Added to Task's Editors"
 }
 
 // WebsocketPush
@@ -341,7 +341,7 @@ func (c *Client) ExternalPushNotification(n *nested.Notification) {
 		"notification_id": n.ID,
 	}
 	switch n.Type {
-	case nested.NOTIFICATION_TYPE_MENTION:
+	case nested.NotificationTypeMention:
 		comment := c.model.Post.GetCommentByID(n.CommentID)
 		if comment == nil {
 			log.Println("ExternalPushNotification::Error::Comment_Not_Exists")
@@ -353,7 +353,7 @@ func (c *Client) ExternalPushNotification(n *nested.Notification) {
 		pushData["comment_id"] = n.CommentID.Hex()
 		pushData["msg"] = txt
 		pushData["sound"] = "nc.aiff"
-	case nested.NOTIFICATION_TYPE_COMMENT:
+	case nested.NotificationTypeComment:
 		comment := c.model.Post.GetCommentByID(n.CommentID)
 		if comment == nil {
 			log.Println("ExternalPushNotification::Error::Comment_Not_Exists")
@@ -365,7 +365,7 @@ func (c *Client) ExternalPushNotification(n *nested.Notification) {
 		pushData["comment_id"] = n.CommentID.Hex()
 		pushData["msg"] = txt
 		pushData["sound"] = "nc.aiff"
-	case nested.NOTIFICATION_TYPE_JOINED_PLACE:
+	case nested.NotificationTypeJoinedPlace:
 		place := c.model.Place.GetByID(n.PlaceID, nested.M{"name": 1})
 		if place == nil {
 			log.Println("ExternalPushNotification::Error::Place_Not_Exists")
@@ -376,7 +376,7 @@ func (c *Client) ExternalPushNotification(n *nested.Notification) {
 		pushData["place_id"] = n.PlaceID
 		pushData["msg"] = txt
 		pushData["sound"] = "nc.aiff"
-	case nested.NOTIFICATION_TYPE_PROMOTED:
+	case nested.NotificationTypePromoted:
 		place := c.model.Place.GetByID(n.PlaceID, nested.M{"name": 1})
 		if place == nil {
 			log.Println("ExternalPushNotification::Error::Place_Not_Exists")
@@ -387,7 +387,7 @@ func (c *Client) ExternalPushNotification(n *nested.Notification) {
 		pushData["place_id"] = n.PlaceID
 		pushData["msg"] = txt
 		pushData["sound"] = "nc.aiff"
-	case nested.NOTIFICATION_TYPE_DEMOTED:
+	case nested.NotificationTypeDemoted:
 		place := c.model.Place.GetByID(n.PlaceID, nested.M{"name": 1})
 		if place == nil {
 			log.Println("ExternalPushNotification::Error::Place_Not_Exists")
@@ -398,7 +398,7 @@ func (c *Client) ExternalPushNotification(n *nested.Notification) {
 		pushData["place_id"] = n.PlaceID
 		pushData["msg"] = txt
 		pushData["sound"] = "nc.aiff"
-	case nested.NOTIFICATION_TYPE_PLACE_SETTINGS_CHANGED:
+	case nested.NotificationTypePlaceSettingsChanged:
 		place := c.model.Place.GetByID(n.PlaceID, nested.M{"name": 1})
 		if place == nil {
 			log.Println("ExternalPushNotification::Error::Place_Not_Exists")
@@ -409,49 +409,49 @@ func (c *Client) ExternalPushNotification(n *nested.Notification) {
 		pushData["place_id"] = n.PlaceID
 		pushData["msg"] = txt
 		pushData["sound"] = "nc.aiff"
-	case nested.NOTIFICATION_TYPE_NEW_SESSION:
+	case nested.NotificationTypeNewSession:
 		txt := fmt.Sprintf("You are logged in from device: %s", n.ClientID)
 		pushData["msg"] = txt
 		pushData["sound"] = "nc.aiff"
-	case nested.NOTIFICATION_TYPE_LABEL_REQUEST_APPROVED:
+	case nested.NotificationTypeLabelRequestApproved:
 		label := c.model.Label.GetByID(n.LabelID)
 		if label != nil {
 			txt := fmt.Sprintf("Your request for label (%s) was approved.", label.Title)
 			pushData["msg"] = txt
 			pushData["sound"] = "nc.aiff"
 		}
-	case nested.NOTIFICATION_TYPE_LABEL_REQUEST_REJECTED:
+	case nested.NotificationTypeLabelRequestRejected:
 		label := c.model.Label.GetByID(n.LabelID)
 		if label != nil {
 			txt := fmt.Sprintf("Your request for label (%s) was rejected.", label.Title)
 			pushData["msg"] = txt
 			pushData["sound"] = "nc.aiff"
 		}
-	case nested.NOTIFICATION_TYPE_LABEL_REQUEST_CREATED:
+	case nested.NotificationTypeLabelRequestCreated:
 		txt := fmt.Sprintf("New label request from %s %s", actor.FirstName, actor.LastName)
 		pushData["msg"] = txt
 		pushData["sound"] = "nc.aiff"
-	case nested.NOTIFICATION_TYPE_TASK_ADD_TO_WATCHERS:
+	case nested.NotificationTypeTaskAddToWatchers:
 		txt := fmt.Sprintf("%s %s added you to the watchers of task: %s", actor.FirstName, actor.LastName, n.Data.TaskTitle)
 		pushData["msg"] = txt
 		pushData["sound"] = "nc.aiff"
-	case nested.NOTIFICATION_TYPE_TASK_ADD_TO_CANDIDATES:
+	case nested.NotificationTypeTaskAddToCandidates:
 		txt := fmt.Sprintf("%s %s added you to the candidates of task: %s", actor.FirstName, actor.LastName, n.Data.TaskTitle)
 		pushData["msg"] = txt
 		pushData["sound"] = "nc.aiff"
-	case nested.NOTIFICATION_TYPE_TASK_COMPLETED:
+	case nested.NotificationTypeTaskCompleted:
 		txt := fmt.Sprintf("%s %s completed task: %s", actor.FirstName, actor.LastName, n.Data.TaskTitle)
 		pushData["msg"] = txt
 		pushData["sound"] = "nc.aiff"
-	case nested.NOTIFICATION_TYPE_TASK_ACCEPTED:
+	case nested.NotificationTypeTaskAccepted:
 		txt := fmt.Sprintf("%s %s accepted your task: %s", actor.FirstName, actor.LastName, n.Data.TaskTitle)
 		pushData["msg"] = txt
 		pushData["sound"] = "nc.aiff"
-	case nested.NOTIFICATION_TYPE_TASK_REJECTED:
+	case nested.NotificationTypeTaskRejected:
 		txt := fmt.Sprintf("%s %s rejected your task: %s", actor.FirstName, actor.LastName, n.Data.TaskTitle)
 		pushData["msg"] = txt
 		pushData["sound"] = "nc.aiff"
-	case nested.NOTIFICATION_TYPE_TASK_MENTION:
+	case nested.NotificationTypeTaskMention:
 		task := c.model.Task.GetByID(n.TaskID)
 		if task != nil {
 			txt := fmt.Sprintf("%s %s mentioned you in task: %s", actor.FirstName, actor.LastName, task.Title)

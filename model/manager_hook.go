@@ -3,16 +3,18 @@ package nested
 import (
 	"bytes"
 	"encoding/json"
+	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/log"
 	"net/http"
 
 	"github.com/globalsign/mgo/bson"
 )
 
 const (
-	HOOK_EVENT_TYPE_PLACE_NEW_POST         = 0x101
-	HOOK_EVENT_TYPE_PLACE_NEW_POST_COMMENT = 0x102
-	HOOK_EVENT_TYPE_PLACE_NEW_MEMBER       = 0x103
-	HOOK_EVENT_TYPE_ACCOUNT_TASK_ASSIGNED  = 0x201
+	HookEventTypePlaceNewPost        = 0x101
+	HookEventTypePlaceNewPostComment      = 0x102
+	HookEventTypePlaceNewMember      = 0x103
+	HookEventTypeAccountTaskAssigned = 0x201
 )
 
 type HookEventType int
@@ -32,7 +34,7 @@ type NewPostEvent struct {
 }
 
 func (e NewPostEvent) GetType() HookEventType {
-	return HOOK_EVENT_TYPE_PLACE_NEW_POST
+	return HookEventTypePlaceNewPost
 }
 func (e NewPostEvent) IncreaseTries() {
 	e.retries++
@@ -50,7 +52,7 @@ type NewPostCommentEvent struct {
 }
 
 func (e NewPostCommentEvent) GetType() HookEventType {
-	return HOOK_EVENT_TYPE_PLACE_NEW_POST_COMMENT
+	return HookEventTypePlaceNewPostComment
 }
 func (e NewPostCommentEvent) IncreaseTries() {
 	e.retries++
@@ -69,7 +71,7 @@ type NewMemberEvent struct {
 }
 
 func (e NewMemberEvent) GetType() HookEventType {
-	return HOOK_EVENT_TYPE_PLACE_NEW_MEMBER
+	return HookEventTypePlaceNewMember
 }
 func (e NewMemberEvent) IncreaseTries() {
 	e.retries++
@@ -88,7 +90,7 @@ type AccountTaskAssignedEvent struct {
 }
 
 func (e AccountTaskAssignedEvent) GetType() HookEventType {
-	return HOOK_EVENT_TYPE_ACCOUNT_TASK_ASSIGNED
+	return HookEventTypeAccountTaskAssigned
 }
 func (e AccountTaskAssignedEvent) IncreaseTries() {
 	e.retries++
@@ -121,10 +123,10 @@ func NewHookManager() *HookManager {
 
 // AddHook registers a new hook in database.
 // HookType can be:
-//      HOOK_EVENT_TYPE_PLACE_NEW_POST         = 0x101
-//      HOOK_EVENT_TYPE_PLACE_NEW_POST_COMMENT = 0x102
-//      HOOK_EVENT_TYPE_PLACE_NEW_MEMBER       = 0x103
-//      HOOK_EVENT_TYPE_ACCOUNT_TASK_ASSIGNED  = 0x201
+//      HookEventTypePlaceNewPost         = 0x101
+//      HookEventTypePlaceNewPostComment = 0x102
+//      HookEventTypePlaceNewMember       = 0x103
+//      HookEventTypeAccountTaskAssigned  = 0x201
 // AnchorID:
 //      1. place_id
 //      2. account_id
@@ -195,13 +197,13 @@ func (m *HookManager) hHook(e HookEvent) {
 	var hookType HookEventType
 	switch x := e.(type) {
 	case NewPostEvent:
-		hookType = HOOK_EVENT_TYPE_PLACE_NEW_POST
+		hookType = HookEventTypePlaceNewPost
 		anchorID = x.PlaceID
 	case NewPostCommentEvent:
-		hookType = HOOK_EVENT_TYPE_PLACE_NEW_POST_COMMENT
+		hookType = HookEventTypePlaceNewPostComment
 		anchorID = x.PlaceID
 	case NewMemberEvent:
-		hookType = HOOK_EVENT_TYPE_PLACE_NEW_MEMBER
+		hookType = HookEventTypePlaceNewMember
 		anchorID = x.PlaceID
 	default:
 		return

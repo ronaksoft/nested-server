@@ -2,6 +2,8 @@ package nested
 
 import (
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/log"
 	"strconv"
 	"strings"
 
@@ -10,41 +12,47 @@ import (
 )
 
 const (
-	//  NESTED POST NOTIFICATIONS
-	NOTIFICATION_TYPE_MENTION                = 0x001
-	NOTIFICATION_TYPE_COMMENT                = 0x002
-	NOTIFICATION_TYPE_JOINED_PLACE           = 0x005
-	NOTIFICATION_TYPE_PROMOTED               = 0x006
-	NOTIFICATION_TYPE_DEMOTED                = 0x007
-	NOTIFICATION_TYPE_PLACE_SETTINGS_CHANGED = 0x008
-	NOTIFICATION_TYPE_NEW_SESSION            = 0x009
-	NOTIFICATION_TYPE_LABEL_REQUEST_APPROVED = 0x011
-	NOTIFICATION_TYPE_LABEL_REQUEST_REJECTED = 0x012
-	NOTIFICATION_TYPE_LABEL_REQUEST_CREATED  = 0x013
-	NOTIFICATION_TYPE_LABEL_JOINED           = 0x014
+	/*
+		NESTED POST NOTIFICATIONS
+	*/
 
-	// NESTED TASK NOTIFICATIONS
-	NOTIFICATION_TYPE_TASK_MENTION           = 0x101
-	NOTIFICATION_TYPE_TASK_COMMENT           = 0x102
-	NOTIFICATION_TYPE_TASK_ASSIGNED          = 0x103
-	NOTIFICATION_TYPE_TASK_ASSIGNEE_CHANGED  = 0x104
-	NOTIFICATION_TYPE_TASK_ADD_TO_CANDIDATES = 0x105
-	NOTIFICATION_TYPE_TASK_ADD_TO_WATCHERS   = 0x106
-	NOTIFICATION_TYPE_TASK_DUE_TIME_UPDATED  = 0x107
-	NOTIFICATION_TYPE_TASK_OVER_DUE          = 0x108
-	NOTIFICATION_TYPE_TASK_UPDATED           = 0x110
-	NOTIFICATION_TYPE_TASK_REJECTED          = 0x111
-	NOTIFICATION_TYPE_TASK_ACCEPTED          = 0x112
-	NOTIFICATION_TYPE_TASK_COMPLETED         = 0x113
-	NOTIFICATION_TYPE_TASK_HOLD              = 0x114
-	NOTIFICATION_TYPE_TASK_IN_PROGRESS       = 0x115
-	NOTIFICATION_TYPE_TASK_FAILED            = 0x116
-	NOTIFICATION_TYPE_TASK_ADD_TO_EDITORS    = 0x117
+	NotificationTypeMention              = 0x001
+	NotificationTypeComment              = 0x002
+	NotificationTypeJoinedPlace          = 0x005
+	NotificationTypePromoted             = 0x006
+	NotificationTypeDemoted              = 0x007
+	NotificationTypePlaceSettingsChanged = 0x008
+	NotificationTypeNewSession           = 0x009
+	NotificationTypeLabelRequestApproved = 0x011
+	NotificationTypeLabelRequestRejected = 0x012
+	NotificationTypeLabelRequestCreated  = 0x013
+	NotificationTypeLabelJoined          = 0x014
+
+	/*
+		NESTED TASK NOTIFICATIONS
+	 */
+
+	NotificationTypeTaskMention         = 0x101
+	NotificationTypeTaskComment         = 0x102
+	NotificationTypeTaskAssigned        = 0x103
+	NotificationTypeTaskAssigneeChanged = 0x104
+	NotificationTypeTaskAddToCandidates = 0x105
+	NotificationTypeTaskAddToWatchers   = 0x106
+	NotificationTypeTaskDueTimeUpdated  = 0x107
+	NotificationTypeTaskOverDue         = 0x108
+	NotificationTypeTaskUpdated         = 0x110
+	NotificationTypeTaskRejected        = 0x111
+	NotificationTypeTaskAccepted        = 0x112
+	NotificationTypeTaskCompleted       = 0x113
+	NotificationTypeTaskHold            = 0x114
+	NotificationTypeTaskInProgress      = 0x115
+	NotificationTypeTaskFailed          = 0x116
+	NotificationTypeTaskAddToEditors    = 0x117
 )
 
 const (
-	NOTIFICATION_SUBJECT_POST = 0x01
-	NOTIFICATION_SUBJECT_TASK = 0x02
+	NotificationSubjectPost = 0x01
+	NotificationSubjectTask = 0x02
 )
 
 type Notification struct {
@@ -106,9 +114,6 @@ func (n *Notification) incrementCounter() {
 func (nm *NotificationManager) GetByAccountID(
 	accountID string, pg Pagination, only_unread bool, subject string,
 ) []Notification {
-	//
-
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
@@ -122,9 +127,9 @@ func (nm *NotificationManager) GetByAccountID(
 	}
 	switch subject {
 	case "task":
-		query["subject"] = NOTIFICATION_SUBJECT_TASK
+		query["subject"] = NotificationSubjectTask
 	case "post":
-		query["subject"] = NOTIFICATION_SUBJECT_POST
+		query["subject"] = NotificationSubjectPost
 	default:
 
 	}
@@ -146,7 +151,6 @@ func (nm *NotificationManager) GetByAccountID(
 func (nm *NotificationManager) GetByID(notificationID string) (n *Notification) {
 	//
 
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
@@ -159,7 +163,6 @@ func (nm *NotificationManager) GetByID(notificationID string) (n *Notification) 
 // MarkAsRead set the notificationID as read, if notificationID = 'all' then mark all the unread notifications as read
 func (nm *NotificationManager) MarkAsRead(notificationID, accountID string) {
 	//
-
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -199,10 +202,9 @@ func (nm *NotificationManager) MarkAsRead(notificationID, accountID string) {
 	}
 }
 
-//MarkAsReadByPostID set all notifications related to postID as read. Useful when clients read comments
+// MarkAsReadByPostID set all notifications related to postID as read. Useful when clients read comments
 func (nm *NotificationManager) MarkAsReadByPostID(postID bson.ObjectId, accountID string) []string {
 	//
-
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
@@ -243,7 +245,6 @@ func (nm *NotificationManager) MarkAsReadByPostID(postID bson.ObjectId, accountI
 func (nm *NotificationManager) Remove(notificationID string) bool {
 	//
 
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
@@ -262,15 +263,14 @@ func (nm *NotificationManager) Remove(notificationID string) bool {
 func (nm *NotificationManager) AddMention(senderID, mentionedID string, postID, commentID bson.ObjectId) *Notification {
 	//
 
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("MNT" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_MENTION
-	n.Subject = NOTIFICATION_SUBJECT_POST
+	n.Type = NotificationTypeMention
+	n.Subject = NotificationSubjectPost
 	n.PostID = postID
 	n.CommentID = commentID
 	n.AccountID = mentionedID
@@ -291,15 +291,14 @@ func (nm *NotificationManager) AddMention(senderID, mentionedID string, postID, 
 func (nm *NotificationManager) JoinedPlace(adderID, addedID, placeID string) *Notification {
 	//
 
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("JOI" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_JOINED_PLACE
-	n.Subject = NOTIFICATION_SUBJECT_POST
+	n.Type = NotificationTypeJoinedPlace
+	n.Subject = NotificationSubjectPost
 	n.AccountID = addedID
 	n.ActorID = adderID
 	n.PlaceID = placeID
@@ -319,15 +318,14 @@ func (nm *NotificationManager) JoinedPlace(adderID, addedID, placeID string) *No
 func (nm *NotificationManager) Comment(accountID, commenterID string, postID, commentID bson.ObjectId) *Notification {
 	//
 
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("COM" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_COMMENT
-	n.Subject = NOTIFICATION_SUBJECT_POST
+	n.Type = NotificationTypeComment
+	n.Subject = NotificationSubjectPost
 	n.PostID = postID
 	n.CommentID = commentID
 	n.AccountID = accountID
@@ -374,15 +372,14 @@ func (nm *NotificationManager) Comment(accountID, commenterID string, postID, co
 func (nm *NotificationManager) Promoted(promotedID, promoterID, placeID string) *Notification {
 	//
 
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("PRO" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_PROMOTED
-	n.Subject = NOTIFICATION_SUBJECT_POST
+	n.Type = NotificationTypePromoted
+	n.Subject = NotificationSubjectPost
 	n.AccountID = promotedID
 	n.ActorID = promoterID
 	n.PlaceID = placeID
@@ -402,15 +399,14 @@ func (nm *NotificationManager) Promoted(promotedID, promoterID, placeID string) 
 func (nm *NotificationManager) Demoted(demotedID, demoterID, placeID string) *Notification {
 	//
 
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("DEM" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_DEMOTED
-	n.Subject = NOTIFICATION_SUBJECT_POST
+	n.Type = NotificationTypeDemoted
+	n.Subject = NotificationSubjectPost
 	n.AccountID = demotedID
 	n.ActorID = demoterID
 	n.PlaceID = placeID
@@ -430,15 +426,14 @@ func (nm *NotificationManager) Demoted(demotedID, demoterID, placeID string) *No
 func (nm *NotificationManager) PlaceSettingsChanged(accountID, changerID, placeID string) *Notification {
 	//
 
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("SET" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_PLACE_SETTINGS_CHANGED
-	n.Subject = NOTIFICATION_SUBJECT_POST
+	n.Type = NotificationTypePlaceSettingsChanged
+	n.Subject = NotificationSubjectPost
 	n.AccountID = accountID
 	n.ActorID = changerID
 	n.PlaceID = placeID
@@ -474,15 +469,14 @@ func (nm *NotificationManager) PlaceSettingsChanged(accountID, changerID, placeI
 func (nm *NotificationManager) NewSession(accountID, clientID string) *Notification {
 	//
 
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("SES" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_NEW_SESSION
-	n.Subject = NOTIFICATION_SUBJECT_POST
+	n.Type = NotificationTypeNewSession
+	n.Subject = NotificationSubjectPost
 	n.ActorID = "nested"
 	n.AccountID = accountID
 	n.ClientID = clientID
@@ -504,15 +498,14 @@ func (nm *NotificationManager) LabelRequestApproved(
 ) *Notification {
 	//
 
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("LRR" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_LABEL_REQUEST_APPROVED
-	n.Subject = NOTIFICATION_SUBJECT_POST
+	n.Type = NotificationTypeLabelRequestApproved
+	n.Subject = NotificationSubjectPost
 	n.AccountID = accountID
 	n.ActorID = deciderID
 	n.LabelID = labelID
@@ -536,15 +529,14 @@ func (nm *NotificationManager) LabelRequestRejected(
 ) *Notification {
 	//
 
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("LRR" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_LABEL_REQUEST_REJECTED
-	n.Subject = NOTIFICATION_SUBJECT_POST
+	n.Type = NotificationTypeLabelRequestRejected
+	n.Subject = NotificationSubjectPost
 	n.AccountID = accountID
 	n.ActorID = deciderID
 	n.LabelID = labelID
@@ -566,15 +558,14 @@ func (nm *NotificationManager) LabelRequestRejected(
 func (nm *NotificationManager) LabelRequest(accountID, requesterID string) *Notification {
 	//
 
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("LRC" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_LABEL_REQUEST_CREATED
-	n.Subject = NOTIFICATION_SUBJECT_POST
+	n.Type = NotificationTypeLabelRequestCreated
+	n.Subject = NotificationSubjectPost
 	n.AccountID = accountID
 	n.ActorID = requesterID
 	n.Timestamp = Timestamp()
@@ -615,15 +606,14 @@ func (nm *NotificationManager) LabelRequest(accountID, requesterID string) *Noti
 func (nm *NotificationManager) LabelJoined(accountID, labelID, adderID string) *Notification {
 	//
 
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("LJOI" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_LABEL_JOINED
-	n.Subject = NOTIFICATION_SUBJECT_POST
+	n.Type = NotificationTypeLabelJoined
+	n.Subject = NotificationSubjectPost
 	n.AccountID = accountID
 	n.ActorID = adderID
 	n.LabelID = labelID
@@ -644,15 +634,14 @@ func (nm *NotificationManager) LabelJoined(accountID, labelID, adderID string) *
 func (nm *NotificationManager) TaskAssigned(accountID, assignorID string, task *Task) *Notification {
 	//
 
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DB_NAME)
 	defer dbSession.Close()
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("TAS" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_TASK_ASSIGNED
-	n.Subject = NOTIFICATION_SUBJECT_TASK
+	n.Type = NotificationTypeTaskAssigned
+	n.Subject = NotificationSubjectTask
 	n.AccountID = accountID
 	n.ActorID = assignorID
 	n.TaskID = task.ID
@@ -681,8 +670,8 @@ func (nm *NotificationManager) TaskWatcherAdded(accountID, adderID string, task 
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("TAW" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_TASK_ADD_TO_WATCHERS
-	n.Subject = NOTIFICATION_SUBJECT_TASK
+	n.Type = NotificationTypeTaskAddToWatchers
+	n.Subject = NotificationSubjectTask
 	n.AccountID = accountID
 	n.ActorID = adderID
 	n.TaskID = task.ID
@@ -710,8 +699,8 @@ func (nm *NotificationManager) TaskEditorAdded(accountID, adderID string, task *
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("TAE" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_TASK_ADD_TO_EDITORS
-	n.Subject = NOTIFICATION_SUBJECT_TASK
+	n.Type = NotificationTypeTaskAddToEditors
+	n.Subject = NotificationSubjectTask
 	n.AccountID = accountID
 	n.ActorID = adderID
 	n.TaskID = task.ID
@@ -739,8 +728,8 @@ func (nm *NotificationManager) TaskCandidateAdded(accountID, adderID string, tas
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("TAS" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_TASK_ADD_TO_CANDIDATES
-	n.Subject = NOTIFICATION_SUBJECT_TASK
+	n.Type = NotificationTypeTaskAddToCandidates
+	n.Subject = NotificationSubjectTask
 	n.AccountID = accountID
 	n.ActorID = adderID
 	n.TaskID = task.ID
@@ -769,8 +758,8 @@ func (nm *NotificationManager) TaskAssigneeChanged(accountID, newAssigneeID, act
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("TAS" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_TASK_ASSIGNEE_CHANGED
-	n.Subject = NOTIFICATION_SUBJECT_TASK
+	n.Type = NotificationTypeTaskAssigneeChanged
+	n.Subject = NotificationSubjectTask
 	n.AccountID = accountID
 	n.ActorID = actorID
 	n.TaskID = task.ID
@@ -799,8 +788,8 @@ func (nm *NotificationManager) TaskUpdated(
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("TAS" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_TASK_UPDATED
-	n.Subject = NOTIFICATION_SUBJECT_TASK
+	n.Type = NotificationTypeTaskUpdated
+	n.Subject = NotificationSubjectTask
 	n.AccountID = accountID
 	n.ActorID = changerID
 	n.TaskID = task.ID
@@ -828,8 +817,8 @@ func (nm *NotificationManager) TaskOverdue(accountID string, task *Task) *Notifi
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("TAS" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_TASK_OVER_DUE
-	n.Subject = NOTIFICATION_SUBJECT_TASK
+	n.Type = NotificationTypeTaskOverDue
+	n.Subject = NotificationSubjectTask
 	n.ActorID = "nested"
 	n.AccountID = accountID
 	n.TaskID = task.ID
@@ -858,8 +847,8 @@ func (nm *NotificationManager) TaskDueTimeUpdated(accountID string, task *Task) 
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("TAS" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_TASK_DUE_TIME_UPDATED
-	n.Subject = NOTIFICATION_SUBJECT_TASK
+	n.Type = NotificationTypeTaskDueTimeUpdated
+	n.Subject = NotificationSubjectTask
 	n.ActorID = "nested"
 	n.AccountID = accountID
 	n.TaskID = task.ID
@@ -888,8 +877,8 @@ func (nm *NotificationManager) TaskRejected(accountID, actorID string, task *Tas
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("TAS" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_TASK_REJECTED
-	n.Subject = NOTIFICATION_SUBJECT_TASK
+	n.Type = NotificationTypeTaskRejected
+	n.Subject = NotificationSubjectTask
 	n.AccountID = accountID
 	n.TaskID = task.ID
 	n.ActorID = actorID
@@ -918,8 +907,8 @@ func (nm *NotificationManager) TaskAccepted(accountID, actorID string, task *Tas
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("TAS" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_TASK_ACCEPTED
-	n.Subject = NOTIFICATION_SUBJECT_TASK
+	n.Type = NotificationTypeTaskAccepted
+	n.Subject = NotificationSubjectTask
 	n.AccountID = accountID
 	n.TaskID = task.ID
 	n.ActorID = actorID
@@ -948,8 +937,8 @@ func (nm *NotificationManager) TaskCompleted(accountID, actorID string, task *Ta
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("TAS" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_TASK_COMPLETED
-	n.Subject = NOTIFICATION_SUBJECT_TASK
+	n.Type = NotificationTypeTaskCompleted
+	n.Subject = NotificationSubjectTask
 	n.AccountID = accountID
 	n.TaskID = task.ID
 	n.ActorID = actorID
@@ -978,8 +967,8 @@ func (nm *NotificationManager) TaskHold(accountID, actorID string, task *Task) *
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("TAS" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_TASK_HOLD
-	n.Subject = NOTIFICATION_SUBJECT_TASK
+	n.Type = NotificationTypeTaskHold
+	n.Subject = NotificationSubjectTask
 	n.AccountID = accountID
 	n.TaskID = task.ID
 	n.ActorID = actorID
@@ -1008,8 +997,8 @@ func (nm *NotificationManager) TaskInProgress(accountID, actorID string, task *T
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("TAS" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_TASK_IN_PROGRESS
-	n.Subject = NOTIFICATION_SUBJECT_TASK
+	n.Type = NotificationTypeTaskInProgress
+	n.Subject = NotificationSubjectTask
 	n.AccountID = accountID
 	n.TaskID = task.ID
 	n.ActorID = actorID
@@ -1038,8 +1027,8 @@ func (nm *NotificationManager) TaskFailed(accountID, actorID string, task *Task)
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("TAS" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_TASK_FAILED
-	n.Subject = NOTIFICATION_SUBJECT_TASK
+	n.Type = NotificationTypeTaskFailed
+	n.Subject = NotificationSubjectTask
 	n.AccountID = accountID
 	n.TaskID = task.ID
 	n.ActorID = actorID
@@ -1070,8 +1059,8 @@ func (nm *NotificationManager) TaskCommentMentioned(
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("MNT" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_TASK_MENTION
-	n.Subject = NOTIFICATION_SUBJECT_TASK
+	n.Type = NotificationTypeTaskMention
+	n.Subject = NotificationSubjectTask
 	n.TaskID = task.ID
 	n.AccountID = mentionedID
 	n.ActorID = actorID
@@ -1100,8 +1089,8 @@ func (nm *NotificationManager) TaskComment(accountID, actorID string, task *Task
 
 	n := new(Notification)
 	n.ID = strings.ToUpper("COM" + strconv.Itoa(int(Timestamp())) + RandomID(32))
-	n.Type = NOTIFICATION_TYPE_TASK_COMMENT
-	n.Subject = NOTIFICATION_SUBJECT_TASK
+	n.Type = NotificationTypeTaskComment
+	n.Subject = NotificationSubjectTask
 	n.TaskID = task.ID
 	n.AccountID = accountID
 	n.ActorID = actorID

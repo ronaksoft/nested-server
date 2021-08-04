@@ -2,13 +2,15 @@ package nested
 
 import (
 	"encoding/json"
+	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/log"
 	"time"
 
 	"github.com/globalsign/mgo/bson"
 )
 
 const (
-	LICENSE_ENCRYPT_KEY = "ERVx43f9304gu30gjjsofp0-4lf0de%^"
+	LicenseEncryptKey = "ERVx43f9304gu30gjjsofp0-4lf0de%^"
 )
 
 type License struct {
@@ -42,7 +44,7 @@ func (m *LicenseManager) Load() bool {
 	if len(licenseKey) == 0 {
 		return false
 	}
-	jsonLicense := Decrypt(LICENSE_ENCRYPT_KEY, licenseKey)
+	jsonLicense := Decrypt(LicenseEncryptKey, licenseKey)
 	if err := json.Unmarshal([]byte(jsonLicense), m.license); err != nil {
 		log.Warn(err.Error())
 		return false

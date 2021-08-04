@@ -93,13 +93,13 @@ func JobOverdueTasks(b *BackgroundJob) {
 			if len(task.AssigneeID) > 0 {
 				n1 := b.Model().Notification.TaskOverdue(task.AssignorID, &overdueTasks[i])
 				ntfyClient.ExternalPushNotification(n1)
-				ntfyClient.InternalNotificationSyncPush([]string{task.AssigneeID}, nested.NOTIFICATION_TYPE_TASK_OVER_DUE)
+				ntfyClient.InternalNotificationSyncPush([]string{task.AssigneeID}, nested.NotificationTypeTaskOverDue)
 			}
 			// Notify Assignee of the task
 			if len(task.AssignorID) > 0 && task.AssignorID != task.AssigneeID {
 				n2 := b.Model().Notification.TaskOverdue(task.AssigneeID, &overdueTasks[i])
 				ntfyClient.ExternalPushNotification(n2)
-				ntfyClient.InternalNotificationSyncPush([]string{task.AssignorID}, nested.NOTIFICATION_TYPE_TASK_OVER_DUE)
+				ntfyClient.InternalNotificationSyncPush([]string{task.AssignorID}, nested.NotificationTypeTaskOverDue)
 			}
 
 		}

@@ -70,7 +70,7 @@ var LicenseGenerateCmd = &cobra.Command{
 		fmt.Println("========================================")
 
 		b, _ := json.Marshal(license)
-		licenseFile := nested.Encrypt(nested.LICENSE_ENCRYPT_KEY, string(b))
+		licenseFile := nested.Encrypt(nested.LicenseEncryptKey, string(b))
 		fmt.Println("License Key: (Copy & paste the generated code below)")
 		fmt.Println(licenseFile)
 	},
