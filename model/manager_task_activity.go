@@ -535,23 +535,23 @@ func (tm *TaskActivityManager) DueDateRemoved(taskID bson.ObjectId, actorID stri
 }
 
 type TaskActivity struct {
-	ID              bson.ObjectId `bson:"_id" json:"_id"`
-	Timestamp       uint64        `bson:"timestamp" json:"timestamp"`
-	TaskID  bson.ObjectId     `bson:"task_id" json:"task_id"`
-	Action  global.TaskAction `bson:"action" json:"action"`
-	ActorID string            `bson:"actor_id" json:"actor_id"`
-	AssigneeID      string        `bson:"assignee_id,omitempty" json:"assignee_id,omitempty"`
-	WatcherIDs      []string      `bson:"watcher_id,omitempty" json:"watcher_id,omitempty"`
-	EditorIDs       []string      `bson:"editor_id,omitempty" json:"editor_id,omitempty"`
-	CandidateIDs    []string      `bson:"candidate_id,omitempty" json:"candidate_id,omitempty"`
-	AttachmentIDs   []UniversalID `bson:"attachment_id,omitempty" json:"attachment_id"`
-	LabelIDs        []string      `bson:"label_id,omitempty" json:"label_id"`
-	ToDoText        string        `bson:"todo_text,omitempty" json:"todo_text,omitempty"`
-	Title           string        `bson:"title,omitempty" json:"title,omitempty"`
-	Desc            string        `bson:"description,omitempty" json:"description,omitempty"`
-	Status          TaskStatus    `bson:"status,omitempty" json:"status,omitempty"`
-	CommentText     string        `bson:"comment,omitempty" json:"comment,omitempty"`
-	DueDate         uint64        `bson:"due_date,omitempty" json:"due_date,omitempty"`
-	DueDateHasClock bool          `bson:"due_date_has_clock,omitempty" json:"due_date_has_clock,omitempty"`
-	Removed         bool          `bson:"_removed" json:"-"`
+	ID              bson.ObjectId     `bson:"_id" json:"_id"`
+	Timestamp       uint64            `bson:"timestamp" json:"timestamp"`
+	TaskID          bson.ObjectId     `bson:"task_id" json:"task_id"`
+	Action          global.TaskAction `bson:"action" json:"action"`
+	ActorID         string            `bson:"actor_id" json:"actor_id"`
+	AssigneeID      string            `bson:"assignee_id,omitempty" json:"assignee_id,omitempty"`
+	WatcherIDs      []string          `bson:"watcher_id,omitempty" json:"watcher_id,omitempty"`
+	EditorIDs       []string          `bson:"editor_id,omitempty" json:"editor_id,omitempty"`
+	CandidateIDs    []string          `bson:"candidate_id,omitempty" json:"candidate_id,omitempty"`
+	AttachmentIDs   []UniversalID     `bson:"attachment_id,omitempty" json:"attachment_id"`
+	LabelIDs        []string          `bson:"label_id,omitempty" json:"label_id"`
+	ToDoText        string            `bson:"todo_text,omitempty" json:"todo_text,omitempty"`
+	Title           string            `bson:"title,omitempty" json:"title,omitempty"`
+	Desc            string            `bson:"description,omitempty" json:"description,omitempty"`
+	Status          TaskStatus        `bson:"status,omitempty" json:"status,omitempty"`
+	CommentText     string            `bson:"comment,omitempty" json:"comment,omitempty"`
+	DueDate         uint64            `bson:"due_date,omitempty" json:"due_date,omitempty"`
+	DueDateHasClock bool              `bson:"due_date_has_clock,omitempty" json:"due_date_has_clock,omitempty"`
+	Removed         bool              `bson:"_removed" json:"-"`
 }

@@ -30,7 +30,7 @@ const (
 
 	/*
 		NESTED TASK NOTIFICATIONS
-	 */
+	*/
 
 	NotificationTypeTaskMention         = 0x101
 	NotificationTypeTaskComment         = 0x102

@@ -18,7 +18,6 @@ import (
    Copyright Ronak Software Group 2020
 */
 
-
 type Websocket struct {
 	WebsocketID string
 	BundleID    string

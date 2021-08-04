@@ -14,6 +14,7 @@ import (
 */
 
 var _Manager *nested.Manager
+
 func init() {
 	var err error
 	_Manager, err = nested.NewManager("TestServer", "mongodb://localhost:27001/nested", "localhost:6379", -1)

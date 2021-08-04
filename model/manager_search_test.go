@@ -41,7 +41,7 @@ func TestSearchManager_Posts(t *testing.T) {
 				SystemData: nested.PostSystemData{
 					NoComment: true,
 				},
-				Body: "Something",
+				Body:    "Something",
 				Subject: "Some Subject",
 			})
 			c.So(post.Body, ShouldEqual, "Something")

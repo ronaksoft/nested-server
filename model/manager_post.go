@@ -1584,7 +1584,7 @@ func (p *Post) Update(postSubject, postBody string) bool {
 				"subject":  postSubject,
 				"preview":  postPreview,
 				"ellipsis": ellipsis,
-				"content": postContent,
+				"content":  postContent,
 			},
 		},
 	); err != nil {

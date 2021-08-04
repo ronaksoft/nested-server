@@ -72,7 +72,7 @@ func main() {
 			envs[parts[0]] = parts[1]
 		}
 		session, _ := initMongo(envs["NST_MONGO_DSN"])
-		domains := strings.Split(envs["NST_DOMAINS"], "," )
+		domains := strings.Split(envs["NST_DOMAINS"], ",")
 		for _, d := range domains {
 			instanceInfo[d] = info{
 				InstanceID:   envs["NST_INSTANCE_ID"],
@@ -285,7 +285,7 @@ func watchdog(t time.Time) {
 				parts := strings.Split(item, "=")
 				envs[parts[0]] = parts[1]
 			}
-			definedDomains := strings.Split(envs["NST_DOMAINS"], "," )
+			definedDomains := strings.Split(envs["NST_DOMAINS"], ",")
 			domains = append(domains, definedDomains...)
 			for _, d := range definedDomains {
 				if _, ok := instanceInfo[d]; ok {

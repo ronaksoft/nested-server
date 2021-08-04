@@ -9,14 +9,12 @@ package tools
    Copyright Ronak Software Group 2018
 */
 
-
 type (
 	M  map[string]interface{}
 	MS map[string]string
 	MI map[string]int64
 	MB map[string]bool
 )
-
 
 func (m M) KeysToArray() []string {
 	arr := make([]string, 0, len(m))

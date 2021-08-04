@@ -10,6 +10,7 @@ package global
 */
 
 type PostAction int
+
 const (
 	PostActivityActionCommentAdd    PostAction = 0x002
 	PostActivityActionCommentRemove PostAction = 0x003
@@ -21,6 +22,7 @@ const (
 )
 
 type TaskAction int
+
 const (
 	TaskActivityWatcherAdded      TaskAction = 0x0001
 	TaskActivityWatcherRemoved    TaskAction = 0x0002
@@ -47,5 +49,3 @@ const (
 	TaskActivityEditorRemoved     TaskAction = 0x0026
 	TaskActivityUpdated           TaskAction = 0x0100
 )
-
-

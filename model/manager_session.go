@@ -85,7 +85,6 @@ func (sm *SessionManager) updateCache(sessionID bson.ObjectId) bool {
 func (sm *SessionManager) Create(in MS) (bson.ObjectId, error) {
 	//
 
-
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
@@ -135,7 +134,6 @@ func (sm *SessionManager) Expire(sk bson.ObjectId) {
 func (sm *SessionManager) GetByID(sessionID bson.ObjectId) (s *Session) {
 	//
 
-
 	return _Manager.Session.readFromCache(sessionID)
 }
 
@@ -143,7 +141,6 @@ func (sm *SessionManager) GetByID(sessionID bson.ObjectId) (s *Session) {
 // returns an array of active sessions of accountID
 func (sm *SessionManager) GetByUser(accountID string, pg Pagination) []Session {
 	//
-
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DbName)
@@ -164,7 +161,6 @@ func (sm *SessionManager) GetByUser(accountID string, pg Pagination) []Session {
 // returns Account for the session identified by SessionKey and SessionSecret
 func (sm *SessionManager) GetAccount(sk bson.ObjectId) *Account {
 	//
-
 
 	session := _Manager.Session.GetByID(sk)
 	if session.AccountID != "" {
@@ -227,7 +223,6 @@ func (sm *SessionManager) UpdateLastAccess(sk bson.ObjectId) bool {
 func (sm *SessionManager) Verify(sk bson.ObjectId, ss string) (r bool) {
 	//
 
-
 	if session := _Manager.Session.GetByID(sk); session == nil {
 		return false
 	} else if session.Expired || session.SessionSecret != ss {
@@ -243,7 +238,6 @@ func (sm *SessionManager) Verify(sk bson.ObjectId, ss string) (r bool) {
 func (s *Session) Login() {
 	//
 
-
 	v := bson.M{
 		"uid":   s.AccountID,
 		"_did":  s.DeviceID,
@@ -258,7 +252,6 @@ func (s *Session) Login() {
 // CloseOtherActives deletes all other actives sessions of the user
 func (s *Session) CloseOtherActives() {
 	//
-
 
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DbName)

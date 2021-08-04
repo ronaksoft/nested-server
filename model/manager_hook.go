@@ -12,7 +12,7 @@ import (
 
 const (
 	HookEventTypePlaceNewPost        = 0x101
-	HookEventTypePlaceNewPostComment      = 0x102
+	HookEventTypePlaceNewPostComment = 0x102
 	HookEventTypePlaceNewMember      = 0x103
 	HookEventTypeAccountTaskAssigned = 0x201
 )

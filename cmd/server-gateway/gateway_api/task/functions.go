@@ -1073,7 +1073,7 @@ func (s *TaskService) update(requester *nested.Account, request *nestedGateway.R
 	var title, desc string
 	var dueDate uint64
 	var dueDateHasClock bool
-	
+
 	task := s.Worker().Argument().GetTask(request, response)
 	if task == nil {
 		return

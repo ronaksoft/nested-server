@@ -13,7 +13,6 @@ import (
    Copyright Ronak Software Group 2020
 */
 
-
 type Notification struct {
 	ID             string           `json:"_id" bson:"_id"`
 	Type           int              `json:"type" bson:"type"`

@@ -7,11 +7,11 @@ import (
 
 // Response is the json wrapper around the server's response
 type Response struct {
-	Format    string   `json:"-" bson:"-"`
-	Type      string   `json:"type,omitempty" bson:"type,omitempty"`
-	RequestID string   `json:"_reqid" bson:"_reqid"`
-	Status    string   `json:"status" bson:"status"`
-	Late      bool     `json:"late" bson:"late"`
+	Format    string  `json:"-" bson:"-"`
+	Type      string  `json:"type,omitempty" bson:"type,omitempty"`
+	RequestID string  `json:"_reqid" bson:"_reqid"`
+	Status    string  `json:"status" bson:"status"`
+	Late      bool    `json:"late" bson:"late"`
 	Data      tools.M `json:"data" bson:"data"`
 }
 

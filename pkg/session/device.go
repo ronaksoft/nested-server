@@ -17,7 +17,6 @@ import (
    Copyright Ronak Software Group 2020
 */
 
-
 type Device struct {
 	ID           string `bson:"_id"`
 	Token        string `bson:"_dt"`

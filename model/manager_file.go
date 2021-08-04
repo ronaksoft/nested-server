@@ -39,12 +39,12 @@ const (
 
 // Upload Type
 const (
-	UploadTypeFile    = "FILE"
-	UploadTypeImage   = "IMAGE"
-	UploadTypeVideo = "VIDEO"
-	UploadTypeVoice   = "VOICE"
-	UploadTypeGif             = "GIF"
-	UploadTypeAudio             = "AUDIO"
+	UploadTypeFile           = "FILE"
+	UploadTypeImage          = "IMAGE"
+	UploadTypeVideo          = "VIDEO"
+	UploadTypeVoice          = "VOICE"
+	UploadTypeGif            = "GIF"
+	UploadTypeAudio          = "AUDIO"
 	UploadTypePlacePicture   = "PLACE_PIC"
 	UploadTypeProfilePicture = "PROFILE_PIC"
 )
