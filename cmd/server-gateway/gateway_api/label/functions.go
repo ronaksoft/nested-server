@@ -1,6 +1,8 @@
 package nestedServiceLabel
 
 import (
+	"git.ronaksoft.com/nested/server/pkg/global"
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"strings"
 
 	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
@@ -23,12 +25,12 @@ func (s *LabelService) AddMemberToLabel(requester *nested.Account, request *nest
 
 	// If user is not LabelEditor then he/she cannot add member to the label
 	if !requester.Authority.LabelEditor {
-		response.Error(nested.ERR_ACCESS, []string{"not_label_editor"})
+		response.Error(global.ERR_ACCESS, []string{"not_label_editor"})
 		return
 	}
 
-	if label.Counters.Members+len(accountIDs) > nested.DEFAULT_LABEL_MAX_MEMBERS {
-		response.Error(nested.ERR_LIMIT, []string{"number_of_members"})
+	if label.Counters.Members+len(accountIDs) > global.DEFAULT_LABEL_MAX_MEMBERS {
+		response.Error(global.ERR_LIMIT, []string{"number_of_members"})
 		return
 	}
 
@@ -41,10 +43,10 @@ func (s *LabelService) AddMemberToLabel(requester *nested.Account, request *nest
 		}
 	}
 	if !_Model.Label.AddMembers(label.ID, availableAccountIDs) {
-		response.Error(nested.ERR_UNKNOWN, []string{""})
+		response.Error(global.ERR_UNKNOWN, []string{""})
 		return
 	}
-	response.OkWithData(nested.M{"not_available_accounts": notAvailableAccountIDs})
+	response.OkWithData(tools.M{"not_available_accounts": notAvailableAccountIDs})
 	// TODO:: Notification to users ?!!
 }
 
@@ -58,14 +60,14 @@ func (s *LabelService) CreateLabel(requester *nested.Account, request *nestedGat
 	if v, ok := request.Data["title"].(string); ok {
 		title = strings.TrimSpace(v)
 		if len(title) == 0 {
-			response.Error(nested.ERR_INVALID, []string{"title_length_too_small"})
+			response.Error(global.ERR_INVALID, []string{"title_length_too_small"})
 			return
-		} else if len(title) > nested.DEFAULT_MAX_LABEL_TITLE {
-			response.Error(nested.ERR_INVALID, []string{"title_length_too_large"})
+		} else if len(title) > global.DEFAULT_MAX_LABEL_TITLE {
+			response.Error(global.ERR_INVALID, []string{"title_length_too_large"})
 			return
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"title"})
+		response.Error(global.ERR_INCOMPLETE, []string{"title"})
 		return
 	}
 	if v, ok := request.Data["code"].(string); ok {
@@ -79,26 +81,26 @@ func (s *LabelService) CreateLabel(requester *nested.Account, request *nestedGat
 
 	// If user is not LabelEditor then he/she cannot add member to the label
 	if !requester.Authority.LabelEditor {
-		response.Error(nested.ERR_ACCESS, []string{"not_label_editor"})
+		response.Error(global.ERR_ACCESS, []string{"not_label_editor"})
 		return
 	}
 
 	if _Model.Label.TitleExists(title) {
-		response.Error(nested.ERR_DUPLICATE, []string{"title"})
+		response.Error(global.ERR_DUPLICATE, []string{"title"})
 		return
 	}
 	if isPublic {
 		if !_Model.Label.CreatePublic(labelID, title, labelCode, requester.ID) {
-			response.Error(nested.ERR_UNKNOWN, []string{})
+			response.Error(global.ERR_UNKNOWN, []string{})
 			return
 		}
 	} else {
 		if !_Model.Label.CreatePrivate(labelID, title, labelCode, requester.ID) {
-			response.Error(nested.ERR_UNKNOWN, []string{""})
+			response.Error(global.ERR_UNKNOWN, []string{""})
 			return
 		}
 	}
-	response.OkWithData(nested.M{"label_id": labelID})
+	response.OkWithData(tools.M{"label_id": labelID})
 	return
 }
 
@@ -112,11 +114,11 @@ func (s *LabelService) CreateLabelRequest(requester *nested.Account, request *ne
 	if v, ok := request.Data["title"].(string); ok {
 		v = strings.TrimSpace(v)
 		//if v == "" {
-		//	response.Error(nested.ERR_INVALID, []string{"title"})
+		//	response.Error(global.ERR_INVALID, []string{"title"})
 		//	return
 		//}
-		if len(v) > nested.DEFAULT_MAX_LABEL_TITLE {
-			response.Error(nested.ERR_INVALID, []string{"title_too_long"})
+		if len(v) > global.DEFAULT_MAX_LABEL_TITLE {
+			response.Error(global.ERR_INVALID, []string{"title_too_long"})
 			return
 		}
 		labelTitle = v
@@ -126,13 +128,13 @@ func (s *LabelService) CreateLabelRequest(requester *nested.Account, request *ne
 	}
 
 	if requester.Authority.LabelEditor {
-		response.Error(nested.ERR_ACCESS, []string{"label_editor"})
+		response.Error(global.ERR_ACCESS, []string{"label_editor"})
 		return
 	}
 	if labelID, ok := request.Data["label_id"].(string); ok {
 		label = s.Worker().Model().Label.GetByID(labelID)
 		if label == nil {
-			response.Error(nested.ERR_INVALID, []string{"label_id"})
+			response.Error(global.ERR_INVALID, []string{"label_id"})
 			return
 		}
 	}
@@ -156,15 +158,15 @@ func (s *LabelService) GetLabelMembers(requester *nested.Account, request *neste
 
 	// If user is not LabelEditor then he/she cannot add member to the label
 	if !requester.Authority.LabelEditor {
-		response.Error(nested.ERR_ACCESS, []string{"not_label_editor"})
+		response.Error(global.ERR_ACCESS, []string{"not_label_editor"})
 		return
 	}
 	labelMembers := _Model.Account.GetAccountsByIDs(label.Members)
-	var r []nested.M
+	var r []tools.M
 	for _, member := range labelMembers {
 		r = append(r, s.Worker().Map().Account(member, false))
 	}
-	response.OkWithData(nested.M{"members": r})
+	response.OkWithData(tools.M{"members": r})
 }
 
 // @Command:	label/get_many
@@ -175,14 +177,14 @@ func (s *LabelService) GetManyLabels(requester *nested.Account, request *nestedG
 		labelIDs := strings.Split(v, ",")
 		labels = _Model.Label.GetByIDs(labelIDs)
 		if len(labels) == 0 {
-			response.OkWithData(nested.M{"labels": []nested.M{}})
+			response.OkWithData(tools.M{"labels": []tools.M{}})
 			return
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"label_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"label_id"})
 		return
 	}
-	r := make([]nested.M, 0, len(labels))
+	r := make([]tools.M, 0, len(labels))
 	for _, label := range labels {
 		details := false
 		if label.IsMember(requester.ID) {
@@ -190,7 +192,7 @@ func (s *LabelService) GetManyLabels(requester *nested.Account, request *nestedG
 		}
 		r = append(r, s.Worker().Map().Label(requester, label, details))
 	}
-	response.OkWithData(nested.M{"labels": r})
+	response.OkWithData(tools.M{"labels": r})
 }
 
 // @Command:	label/get_requests
@@ -202,11 +204,11 @@ func (s *LabelService) ListLabelRequests(requester *nested.Account, request *nes
 	} else {
 		labelRequests = _Model.Label.GetRequestsByAccountID(requester.ID, s.Worker().Argument().GetPagination(request))
 	}
-	r := make([]nested.M, 0)
+	r := make([]tools.M, 0)
 	for _, labelRequest := range labelRequests {
 		r = append(r, s.Worker().Map().LabelRequest(labelRequest))
 	}
-	response.OkWithData(nested.M{"label_requests": r})
+	response.OkWithData(tools.M{"label_requests": r})
 }
 
 // @Command:	label/remove_request
@@ -220,7 +222,7 @@ func (s *LabelService) RemoveLabelRequest(requester *nested.Account, request *ne
 		if _Model.Label.UpdateRequestStatus(requester.ID, labelRequest.ID, nested.LabelRequestStatusCanceled) {
 			response.Ok()
 		} else {
-			response.Error(nested.ERR_UNKNOWN, []string{})
+			response.Error(global.ERR_UNKNOWN, []string{})
 		}
 	}
 }
@@ -235,14 +237,14 @@ func (s *LabelService) RemoveLabel(requester *nested.Account, request *nestedGat
 
 	// If user is not LabelEditor then he/she cannot add member to the label
 	if !requester.Authority.LabelEditor {
-		response.Error(nested.ERR_ACCESS, []string{"not_label_editor"})
+		response.Error(global.ERR_ACCESS, []string{"not_label_editor"})
 		return
 	}
 
 	if _Model.Label.Remove(label.ID) {
 		response.Ok()
 	} else {
-		response.Error(nested.ERR_UNKNOWN, []string{""})
+		response.Error(global.ERR_UNKNOWN, []string{""})
 	}
 }
 
@@ -261,14 +263,14 @@ func (s *LabelService) RemoveMemberFromLabel(requester *nested.Account, request 
 
 	// If user is not LabelEditor then he/she cannot add member to the label
 	if !requester.Authority.LabelEditor {
-		response.Error(nested.ERR_ACCESS, []string{"not_label_editor"})
+		response.Error(global.ERR_ACCESS, []string{"not_label_editor"})
 		return
 	}
 
 	if _Model.Label.RemoveMember(label.ID, account.ID) {
 		response.Ok()
 	} else {
-		response.Error(nested.ERR_UNKNOWN, []string{""})
+		response.Error(global.ERR_UNKNOWN, []string{""})
 	}
 
 }
@@ -284,13 +286,13 @@ func (s *LabelService) UpdateLabel(requester *nested.Account, request *nestedGat
 		return
 	}
 	if v, ok := request.Data["title"].(string); ok {
-		if len(v) > nested.DEFAULT_MAX_LABEL_TITLE {
-			response.Error(nested.ERR_INVALID, []string{"title_too_long"})
+		if len(v) > global.DEFAULT_MAX_LABEL_TITLE {
+			response.Error(global.ERR_INVALID, []string{"title_too_long"})
 			return
 		}
 		labelTitle = v
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"title"})
+		response.Error(global.ERR_INCOMPLETE, []string{"title"})
 		return
 	}
 	if v, ok := request.Data["code"].(string); ok {
@@ -300,14 +302,14 @@ func (s *LabelService) UpdateLabel(requester *nested.Account, request *nestedGat
 
 	// If user is not LabelEditor then he/she cannot add member to the label
 	if !requester.Authority.LabelEditor {
-		response.Error(nested.ERR_ACCESS, []string{"not_label_editor"})
+		response.Error(global.ERR_ACCESS, []string{"not_label_editor"})
 		return
 	}
 
 	if _Model.Label.Update(label.ID, labelCode, labelTitle) {
 		response.Ok()
 	} else {
-		response.Error(nested.ERR_UNKNOWN, []string{})
+		response.Error(global.ERR_UNKNOWN, []string{})
 	}
 }
 
@@ -320,7 +322,7 @@ func (s *LabelService) UpdateLabelRequest(requester *nested.Account, request *ne
 	if v, ok := request.Data["status"].(string); ok {
 		status = v
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"status"})
+		response.Error(global.ERR_INCOMPLETE, []string{"status"})
 		return
 	}
 	if labelRequest = s.Worker().Argument().GetLabelRequest(request, response); labelRequest == nil {
@@ -329,7 +331,7 @@ func (s *LabelService) UpdateLabelRequest(requester *nested.Account, request *ne
 	labelRequest.ResponderID = requester.ID
 	// If user is not LabelEditor then he/she cannot add member to the label
 	if !requester.Authority.LabelEditor {
-		response.Error(nested.ERR_ACCESS, []string{"not_label_editor"})
+		response.Error(global.ERR_ACCESS, []string{"not_label_editor"})
 		return
 	}
 
@@ -343,7 +345,7 @@ func (s *LabelService) UpdateLabelRequest(requester *nested.Account, request *ne
 		if len(labelRequest.LabelID) > 0 {
 			if label := _Model.Label.GetByID(labelRequest.LabelID); label == nil {
 				_Model.Label.UpdateRequestStatus(requester.ID, labelRequest.ID, nested.LabelRequestStatusFailed)
-				response.Error(nested.ERR_UNAVAILABLE, []string{"label_not_exists"})
+				response.Error(global.ERR_UNAVAILABLE, []string{"label_not_exists"})
 				return
 			}
 			if len(labelRequest.Title) > 0 {
@@ -371,7 +373,7 @@ func (s *LabelService) UpdateLabelRequest(requester *nested.Account, request *ne
 				// handle push messages (notification)
 				go s.Worker().Pusher().LabelRequestApproved(labelRequest)
 
-				response.OkWithData(nested.M{"label_id": labelID})
+				response.OkWithData(tools.M{"label_id": labelID})
 				return
 			} else {
 				_Model.Label.UpdateRequestStatus(requester.ID, labelRequest.ID, nested.LabelRequestStatusFailed)

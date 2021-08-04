@@ -3,6 +3,8 @@ package nestedServiceReport
 import (
 	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/pkg/global"
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 )
 
 // @Command: report/get_ts_single_val
@@ -25,16 +27,16 @@ func (s *ReportService) ReportTimeSeriesSingleValue(requester *nested.Account, r
 		case nested.ReportResolutionHour, nested.ReportResolutionDay, nested.ReportResolutionMonth:
 			res = v
 		default:
-			response.Error(nested.ERR_INVALID, []string{"res"})
+			response.Error(global.ERR_INVALID, []string{"res"})
 			return
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"res"})
+		response.Error(global.ERR_INCOMPLETE, []string{"res"})
 		return
 	}
 	if v, ok := request.Data["key"].(string); ok {
 		key = v
 	}
 	result := _Model.Report.GetTimeSeriesSingleValue(from, to, key, res)
-	response.OkWithData(nested.M{"result": result})
+	response.OkWithData(tools.M{"result": result})
 }

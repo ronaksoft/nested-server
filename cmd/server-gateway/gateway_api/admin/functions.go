@@ -5,6 +5,8 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/global"
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"html/template"
 	"log"
 	"regexp"
@@ -26,31 +28,31 @@ func (s *AdminService) setMessageTemplate(requester *nested.Account, request *ne
 	if v, ok := request.Data["msg_id"].(string); ok && len(v) > 0 {
 		msgID = v
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"msg_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"msg_id"})
 		return
 	}
 	if v, ok := request.Data["msg_body"].(string); ok && len(v) > 0 {
 		msgBody = v
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"msg_body"})
+		response.Error(global.ERR_INCOMPLETE, []string{"msg_body"})
 		return
 	}
 	if v, ok := request.Data["msg_subject"].(string); ok && len(v) > 0 {
 		msgSubject = v
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"msg_subject"})
+		response.Error(global.ERR_INCOMPLETE, []string{"msg_subject"})
 		return
 	}
 	if s.Worker().Model().System.SetMessageTemplate(msgID, msgSubject, msgBody) {
 		response.Ok()
 	} else {
-		response.Error(nested.ERR_UNKNOWN, []string{})
+		response.Error(global.ERR_UNKNOWN, []string{})
 	}
 }
 
 // @Command: admin/get_message_templates
 func (s *AdminService) getMessageTemplates(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
-	response.OkWithData(nested.M{
+	response.OkWithData(tools.M{
 		"message_templates": s.Worker().Model().System.GetMessageTemplates(),
 	})
 }
@@ -62,7 +64,7 @@ func (s *AdminService) removeMessageTemplates(requester *nested.Account, request
 	if v, ok := request.Data["msg_id"].(string); ok && len(v) > 0 {
 		msgID = v
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"msg_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"msg_id"})
 		return
 	}
 	s.Worker().Model().System.RemoveMessageTemplate(msgID)
@@ -78,7 +80,7 @@ func (s *AdminService) checkSystemHealth(requester *nested.Account, request *nes
 	}
 	HEALTH_CHECK_IS_RUNNING := s.Worker().Server().GetFlags().HealthCheckRunning
 	if checkState {
-		response.OkWithData(nested.M{"running_health_check": HEALTH_CHECK_IS_RUNNING})
+		response.OkWithData(tools.M{"running_health_check": HEALTH_CHECK_IS_RUNNING})
 		return
 	}
 
@@ -90,7 +92,7 @@ func (s *AdminService) checkSystemHealth(requester *nested.Account, request *nes
 		}()
 		response.Ok()
 	} else {
-		response.Error(nested.ERR_ACCESS, []string{"already_running"})
+		response.Error(global.ERR_ACCESS, []string{"already_running"})
 	}
 	return
 }
@@ -107,23 +109,23 @@ func (s *AdminService) createPost(requester *nested.Account, request *nestedGate
 	var subject, body, content_type, iframeUrl string
 	var labels []nested.Label
 	if v, ok := request.Data["targets"].(string); ok {
-		targets = strings.SplitN(v, ",", nested.DEFAULT_POST_MAX_TARGETS)
+		targets = strings.SplitN(v, ",", global.DEFAULT_POST_MAX_TARGETS)
 		if len(targets) == 0 {
-			response.Error(nested.ERR_INVALID, []string{"targets"})
+			response.Error(global.ERR_INVALID, []string{"targets"})
 			return
 		}
 	} else {
-		response.Error(nested.ERR_INVALID, []string{"targets"})
+		response.Error(global.ERR_INVALID, []string{"targets"})
 		return
 	}
 	if v, ok := request.Data["label_id"].(string); ok {
-		labelIDs := strings.SplitN(v, ",", nested.DEFAULT_POST_MAX_LABELS)
+		labelIDs := strings.SplitN(v, ",", global.DEFAULT_POST_MAX_LABELS)
 		labels = s.Worker().Model().Label.GetByIDs(labelIDs)
 	} else {
 		labels = []nested.Label{}
 	}
 	if v, ok := request.Data["attaches"].(string); ok && v != "" {
-		attachments = strings.SplitN(v, ",", nested.DEFAULT_POST_MAX_ATTACHMENTS)
+		attachments = strings.SplitN(v, ",", global.DEFAULT_POST_MAX_ATTACHMENTS)
 	} else {
 		attachments = []string{}
 	}
@@ -148,7 +150,7 @@ func (s *AdminService) createPost(requester *nested.Account, request *nestedGate
 	}
 
 	if "" == strings.Trim(subject, " ") && "" == strings.Trim(body, " ") && len(attachments) == 0 {
-		response.Error(nested.ERR_INCOMPLETE, []string{"subject", "body"})
+		response.Error(global.ERR_INCOMPLETE, []string{"subject", "body"})
 		return
 	}
 	// Separate places and emails
@@ -172,7 +174,7 @@ func (s *AdminService) createPost(requester *nested.Account, request *nestedGate
 			mPlaces[v] = true
 		}
 	}
-	notValidPlaces := make([]string, 0, nested.DEFAULT_POST_MAX_TARGETS)
+	notValidPlaces := make([]string, 0, global.DEFAULT_POST_MAX_TARGETS)
 	for k := range mPlaces {
 		place := s.Worker().Model().Place.GetByID(k, nil)
 		if place == nil {
@@ -183,7 +185,7 @@ func (s *AdminService) createPost(requester *nested.Account, request *nestedGate
 	}
 
 	if len(mPlaces) == 0 && len(mEmails) == 0 {
-		response.Error(nested.ERR_INVALID, []string{"targets"})
+		response.Error(global.ERR_INVALID, []string{"targets"})
 		return
 	}
 
@@ -219,7 +221,7 @@ func (s *AdminService) createPost(requester *nested.Account, request *nestedGate
 	}
 
 	// Make attachments unique and add them to PostCreateRequest
-	mapAttachments := nested.MB{}
+	mapAttachments := tools.MB{}
 	for _, attachID := range attachments {
 		mapAttachments[attachID] = true
 	}
@@ -241,7 +243,7 @@ func (s *AdminService) createPost(requester *nested.Account, request *nestedGate
 
 	post := s.Worker().Model().Post.AddPost(pcr)
 	if post == nil {
-		response.Error(nested.ERR_UNKNOWN, []string{})
+		response.Error(global.ERR_UNKNOWN, []string{})
 		return
 	}
 
@@ -265,7 +267,7 @@ func (s *AdminService) createPost(requester *nested.Account, request *nestedGate
 		s.Worker().Mailer().SendRequest(mailReq)
 	}
 
-	response.OkWithData(nested.M{
+	response.OkWithData(tools.M{
 		"post_id":        post.ID,
 		"invalid_places": notValidPlaces,
 	})
@@ -289,7 +291,7 @@ func (s *AdminService) addComment(requester *nested.Account, request *nestedGate
 
 	// if post does not allow commenting return error
 	if post.SystemData.NoComment {
-		response.Error(nested.ERR_ACCESS, []string{"no_comment"})
+		response.Error(global.ERR_ACCESS, []string{"no_comment"})
 		return
 	}
 
@@ -297,14 +299,14 @@ func (s *AdminService) addComment(requester *nested.Account, request *nestedGate
 		attachmentID = nested.UniversalID(v)
 		attachment := s.Worker().Model().File.GetByID(attachmentID, nil)
 		if attachment == nil {
-			response.Error(nested.ERR_INVALID, []string{"attachment_id"})
+			response.Error(global.ERR_INVALID, []string{"attachment_id"})
 			return
 		}
 		txt = "[VOICE COMMENT]"
 	} else {
 		// comment with empty text is not allowed
 		if txt == "" {
-			response.Error(nested.ERR_INVALID, []string{"txt"})
+			response.Error(global.ERR_INVALID, []string{"txt"})
 			return
 		}
 	}
@@ -312,7 +314,7 @@ func (s *AdminService) addComment(requester *nested.Account, request *nestedGate
 	// create the comment object
 	c := s.Worker().Model().Post.AddComment(post.ID, requester.ID, txt, attachmentID)
 	if c == nil {
-		response.Error(nested.ERR_UNKNOWN, []string{"internal_error"})
+		response.Error(global.ERR_UNKNOWN, []string{"internal_error"})
 	}
 
 	// mark post as read
@@ -321,7 +323,7 @@ func (s *AdminService) addComment(requester *nested.Account, request *nestedGate
 	// handle push messages (notification and activity)
 	go s.Worker().Pusher().PostCommentAdded(post, c)
 
-	response.OkWithData(nested.M{"comment_id": c.ID})
+	response.OkWithData(tools.M{"comment_id": c.ID})
 }
 
 // @Command: admin/promote
@@ -331,11 +333,11 @@ func (s *AdminService) promoteAccount(requester *nested.Account, request *nested
 	if v, ok := request.Data["account_id"].(string); ok {
 		accountID = v
 		if account := s.Worker().Model().Account.GetByID(accountID, nil); account == nil {
-			response.Error(nested.ERR_INVALID, []string{"account_id"})
+			response.Error(global.ERR_INVALID, []string{"account_id"})
 			return
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"account_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"account_id"})
 		return
 	}
 	s.Worker().Model().Account.SetAdmin(accountID, true)
@@ -349,11 +351,11 @@ func (s *AdminService) demoteAccount(requester *nested.Account, request *nestedG
 	if v, ok := request.Data["account_id"].(string); ok {
 		accountID = v
 		if account := s.Worker().Model().Account.GetByID(accountID, nil); account == nil {
-			response.Error(nested.ERR_INVALID, []string{"account_id"})
+			response.Error(global.ERR_INVALID, []string{"account_id"})
 			return
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"account_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"account_id"})
 		return
 	}
 	s.Worker().Model().Account.SetAdmin(accountID, false)
@@ -373,33 +375,33 @@ func (s *AdminService) createGrandPlace(requester *nested.Account, request *nest
 	pcr := nested.PlaceCreateRequest{}
 	if v, ok := request.Data["place_id"].(string); ok {
 		pcr.ID = strings.ToLower(v)
-		if pcr.ID == "" || len(pcr.ID) > nested.DEFAULT_MAX_PLACE_ID {
-			response.Error(nested.ERR_INVALID, []string{"place_id"})
+		if pcr.ID == "" || len(pcr.ID) > global.DEFAULT_MAX_PLACE_ID {
+			response.Error(global.ERR_INVALID, []string{"place_id"})
 			return
 		}
-		if matched, err := regexp.MatchString(nested.DEFAULT_REGEX_GRANDPLACE_ID, pcr.ID); err != nil {
-			response.Error(nested.ERR_UNKNOWN, []string{err.Error()})
+		if matched, err := regexp.MatchString(global.DEFAULT_REGEX_GRANDPLACE_ID, pcr.ID); err != nil {
+			response.Error(global.ERR_UNKNOWN, []string{err.Error()})
 			return
 		} else if !matched {
-			response.Error(nested.ERR_INVALID, []string{"place_id"})
+			response.Error(global.ERR_INVALID, []string{"place_id"})
 			return
 		}
 		if !s.Worker().Model().Place.Available(pcr.ID) {
-			response.Error(nested.ERR_DUPLICATE, []string{"place_id"})
+			response.Error(global.ERR_DUPLICATE, []string{"place_id"})
 			return
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"place_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"place_id"})
 		return
 	}
 	if v, ok := request.Data["place_name"].(string); ok {
 		pcr.Name = v
-		if pcr.Name == "" || len(pcr.Name) > nested.DEFAULT_MAX_PLACE_NAME {
-			response.Error(nested.ERR_INVALID, []string{"place_name"})
+		if pcr.Name == "" || len(pcr.Name) > global.DEFAULT_MAX_PLACE_NAME {
+			response.Error(global.ERR_INVALID, []string{"place_name"})
 			return
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"place_name"})
+		response.Error(global.ERR_INCOMPLETE, []string{"place_name"})
 		return
 	}
 	if v, ok := request.Data["place_description"].(string); ok {
@@ -460,11 +462,11 @@ func (s *AdminService) createGrandPlace(requester *nested.Account, request *nest
 	pcr.AccountID = requester.ID
 	place := s.Worker().Model().Place.CreateGrandPlace(pcr)
 	if place == nil {
-		response.Error(nested.ERR_UNKNOWN, []string{"cannot_create_place"})
+		response.Error(global.ERR_UNKNOWN, []string{"cannot_create_place"})
 		return
 	}
 
-	response.OkWithData(nested.M{
+	response.OkWithData(tools.M{
 		"_id":             place.ID,
 		"name":            place.Name,
 		"description":     place.Description,
@@ -492,38 +494,38 @@ func (s *AdminService) createPlace(requester *nested.Account, request *nestedGat
 
 	if v, ok := request.Data["place_id"].(string); ok {
 		pcr.ID = strings.ToLower(v)
-		if pcr.ID == "" || len(pcr.ID) > nested.DEFAULT_MAX_PLACE_ID {
-			response.Error(nested.ERR_INVALID, []string{"place_id"})
+		if pcr.ID == "" || len(pcr.ID) > global.DEFAULT_MAX_PLACE_ID {
+			response.Error(global.ERR_INVALID, []string{"place_id"})
 			return
 		}
 		// check if place is a subplace
 		if pos := strings.LastIndex(pcr.ID, "."); pos == -1 {
-			response.Error(nested.ERR_INVALID, []string{"place_id"})
+			response.Error(global.ERR_INVALID, []string{"place_id"})
 			return
 		} else {
 			localPlaceID := string(pcr.ID[pos+1:])
 			// check if place id is a valid place id
-			if matched, err := regexp.MatchString(nested.DEFAULT_REGEX_PLACE_ID, localPlaceID); err != nil {
+			if matched, err := regexp.MatchString(global.DEFAULT_REGEX_PLACE_ID, localPlaceID); err != nil {
 				log.Println(err.Error())
-				response.Error(nested.ERR_UNKNOWN, []string{})
+				response.Error(global.ERR_UNKNOWN, []string{})
 				return
 			} else if !matched {
-				response.Error(nested.ERR_INVALID, []string{"place_id"})
+				response.Error(global.ERR_INVALID, []string{"place_id"})
 				return
 			}
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"place_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"place_id"})
 		return
 	}
 	if v, ok := request.Data["place_name"].(string); ok {
 		pcr.Name = v
-		if pcr.Name == "" || len(pcr.Name) > nested.DEFAULT_MAX_PLACE_NAME {
-			response.Error(nested.ERR_INVALID, []string{"place_name"})
+		if pcr.Name == "" || len(pcr.Name) > global.DEFAULT_MAX_PLACE_NAME {
+			response.Error(global.ERR_INVALID, []string{"place_name"})
 			return
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"place_name"})
+		response.Error(global.ERR_INCOMPLETE, []string{"place_name"})
 		return
 	}
 	if v, ok := request.Data["place_description"].(string); ok {
@@ -583,15 +585,15 @@ func (s *AdminService) createPlace(requester *nested.Account, request *nestedGat
 	// check parent's limitations and access permissions
 	parent := s.Worker().Model().Place.GetByID(s.Worker().Model().Place.GetParentID(pcr.ID), nil)
 	if parent == nil {
-		response.Error(nested.ERR_INVALID, []string{"place_id"})
+		response.Error(global.ERR_INVALID, []string{"place_id"})
 		return
 	}
-	if parent.Level >= nested.DEFAULT_PLACE_MAX_LEVEL {
-		response.Error(nested.ERR_LIMIT, []string{"level"})
+	if parent.Level >= global.DEFAULT_PLACE_MAX_LEVEL {
+		response.Error(global.ERR_LIMIT, []string{"level"})
 		return
 	}
 	if parent.HasChildLimit() {
-		response.Error(nested.ERR_LIMIT, []string{"place"})
+		response.Error(global.ERR_LIMIT, []string{"place"})
 		return
 	}
 
@@ -603,18 +605,18 @@ func (s *AdminService) createPlace(requester *nested.Account, request *nestedGat
 		pcr.AccountID = grandPlace.MainCreatorID
 		place = s.Worker().Model().Place.CreatePersonalPlace(pcr)
 		if place == nil {
-			response.Error(nested.ERR_UNKNOWN, []string{})
+			response.Error(global.ERR_UNKNOWN, []string{})
 			return
 		}
 	} else {
 		place = s.Worker().Model().Place.CreateLockedPlace(pcr)
 		if place == nil {
-			response.Error(nested.ERR_UNKNOWN, []string{})
+			response.Error(global.ERR_UNKNOWN, []string{})
 			return
 		}
 	}
 
-	response.OkWithData(nested.M{
+	response.OkWithData(tools.M{
 		"_id":             place.ID,
 		"name":            place.Name,
 		"description":     place.Description,
@@ -643,14 +645,14 @@ func (s *AdminService) createPlace(requester *nested.Account, request *nestedGat
 // @Input:	policy.add_place			string	+	(creators | everyone)
 func (s *AdminService) updatePlace(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	var place *nested.Place
-	placeUpdate := nested.M{}
+	placeUpdate := tools.M{}
 	placeLimitsUpdate := nested.MI{}
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
 		return
 	}
 
 	if placeName, ok := request.Data["place_name"].(string); ok {
-		if len(placeName) > 0 && len(placeName) < nested.DEFAULT_MAX_PLACE_NAME {
+		if len(placeName) > 0 && len(placeName) < global.DEFAULT_MAX_PLACE_NAME {
 			placeUpdate["name"] = placeName
 			place.Name = placeName
 		}
@@ -687,7 +689,7 @@ func (s *AdminService) updatePlace(requester *nested.Account, request *nestedGat
 					placeUpdate["privacy.receptive"] = v
 					s.Worker().Model().Search.RemovePlaceFromSearchIndex(place.ID)
 				default:
-					response.Error(nested.ERR_INVALID, []string{"privacy.receptive"})
+					response.Error(global.ERR_INVALID, []string{"privacy.receptive"})
 					return
 				}
 			} else {
@@ -699,7 +701,7 @@ func (s *AdminService) updatePlace(requester *nested.Account, request *nestedGat
 					placeUpdate["privacy.search"] = false
 					s.Worker().Model().Search.RemovePlaceFromSearchIndex(place.ID)
 				default:
-					response.Error(nested.ERR_INVALID, []string{"privacy.receptive"})
+					response.Error(global.ERR_INVALID, []string{"privacy.receptive"})
 					return
 				}
 			}
@@ -744,13 +746,13 @@ func (s *AdminService) updatePlace(requester *nested.Account, request *nestedGat
 	}
 	if len(placeUpdate) > 0 {
 		if !s.Worker().Model().Place.Update(place.ID, placeUpdate) {
-			response.Error(nested.ERR_UNKNOWN, []string{"place_update_error"})
+			response.Error(global.ERR_UNKNOWN, []string{"place_update_error"})
 			return
 		}
 	}
 	if len(placeLimitsUpdate) > 0 {
 		if !s.Worker().Model().Place.UpdateLimits(place.ID, placeLimitsUpdate) {
-			response.Error(nested.ERR_UNKNOWN, []string{"place_limit_update_error"})
+			response.Error(global.ERR_UNKNOWN, []string{"place_limit_update_error"})
 			return
 		}
 	}
@@ -793,7 +795,7 @@ func (s *AdminService) listPlaces(requester *nested.Account, request *nestedGate
 		}
 	}
 	places := s.Worker().Model().Search.Places(keyword, filter, sort, grandParentID, s.Worker().Argument().GetPagination(request))
-	response.OkWithData(nested.M{"places": places})
+	response.OkWithData(tools.M{"places": places})
 	return
 }
 
@@ -806,14 +808,14 @@ func (s *AdminService) removePlace(requester *nested.Account, request *nestedGat
 	}
 
 	if place.Counter.Children > 0 {
-		response.Error(nested.ERR_ACCESS, []string{"remove_children_first"})
+		response.Error(global.ERR_ACCESS, []string{"remove_children_first"})
 		return
 	}
 
 	if s.Worker().Model().Place.Remove(place.ID, requester.ID) {
 		response.Ok()
 	} else {
-		response.Error(nested.ERR_UNKNOWN, []string{})
+		response.Error(global.ERR_UNKNOWN, []string{})
 		return
 	}
 
@@ -831,11 +833,11 @@ func (s *AdminService) addPlaceMember(requester *nested.Account, request *nested
 	if placeID, ok := request.Data["place_id"].(string); ok {
 		place = s.Worker().Model().Place.GetByID(placeID, nil)
 		if place == nil {
-			response.Error(nested.ERR_INVALID, []string{"place_id"})
+			response.Error(global.ERR_INVALID, []string{"place_id"})
 			return
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"place_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"place_id"})
 		return
 	}
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
@@ -843,15 +845,15 @@ func (s *AdminService) addPlaceMember(requester *nested.Account, request *nested
 	}
 
 	if v, ok := request.Data["account_id"].(string); ok {
-		accountIDs = strings.SplitN(v, ",", nested.DEFAULT_MAX_RESULT_LIMIT)
+		accountIDs = strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"account_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"account_id"})
 		return
 	}
 
 	// no one can join personal places
 	if place.IsPersonal() {
-		response.Error(nested.ERR_ACCESS, []string{"personal_place"})
+		response.Error(global.ERR_ACCESS, []string{"personal_place"})
 		return
 	}
 
@@ -887,7 +889,7 @@ func (s *AdminService) addPlaceMember(requester *nested.Account, request *nested
 		s.Worker().Model().Account.AddPlaceToBookmarks(accountID, place.ID)
 	}
 
-	response.OkWithData(nested.M{
+	response.OkWithData(tools.M{
 		"ignored_account_ids": ignoredAccountIDs,
 	})
 }
@@ -905,11 +907,11 @@ func (s *AdminService) promotePlaceMember(requester *nested.Account, request *ne
 		accountID = v
 	}
 	if !place.IsKeyholder(accountID) {
-		response.Error(nested.ERR_INVALID, []string{"account_id"})
+		response.Error(global.ERR_INVALID, []string{"account_id"})
 		return
 	}
 	if place.HasCreatorLimit() {
-		response.Error(nested.ERR_LIMIT, []string{"creators"})
+		response.Error(global.ERR_LIMIT, []string{"creators"})
 		return
 	}
 
@@ -934,12 +936,12 @@ func (s *AdminService) demotePlaceMember(requester *nested.Account, request *nes
 	if v, ok := request.Data["account_id"].(string); ok {
 		accountID = v
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"account_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"account_id"})
 		return
 	}
 
 	if !place.IsCreator(accountID) {
-		response.Error(nested.ERR_INVALID, []string{"account_id"})
+		response.Error(global.ERR_INVALID, []string{"account_id"})
 		return
 	}
 
@@ -988,7 +990,7 @@ func (s *AdminService) removePlaceMember(requester *nested.Account, request *nes
 	case place.IsKeyholder(accountID):
 		s.Worker().Model().Place.RemoveKeyHolder(place.ID, accountID, requester.ID)
 	default:
-		response.Error(nested.ERR_INVALID, []string{"account_id"})
+		response.Error(global.ERR_INVALID, []string{"account_id"})
 	}
 
 	response.Ok()
@@ -1004,9 +1006,9 @@ func (s *AdminService) listPlaceMembers(requester *nested.Account, request *nest
 	}
 	creatorIDs := place.CreatorIDs
 	keyholderIDs := place.KeyholderIDs
-	r := make([]nested.M, 0, len(creatorIDs)+len(keyholderIDs))
+	r := make([]tools.M, 0, len(creatorIDs)+len(keyholderIDs))
 	iStart := 0
-	iLength := nested.DEFAULT_MAX_RESULT_LIMIT
+	iLength := global.DEFAULT_MAX_RESULT_LIMIT
 	iEnd := iStart + iLength
 	if iEnd > len(creatorIDs) {
 		iEnd = len(creatorIDs)
@@ -1026,7 +1028,7 @@ func (s *AdminService) listPlaceMembers(requester *nested.Account, request *nest
 	}
 
 	iStart = 0
-	iLength = nested.DEFAULT_MAX_RESULT_LIMIT
+	iLength = global.DEFAULT_MAX_RESULT_LIMIT
 	iEnd = iStart + iLength
 	if iEnd > len(keyholderIDs) {
 		iEnd = len(keyholderIDs)
@@ -1045,7 +1047,7 @@ func (s *AdminService) listPlaceMembers(requester *nested.Account, request *nest
 		}
 	}
 
-	response.OkWithData(nested.M{"accounts": r})
+	response.OkWithData(tools.M{"accounts": r})
 
 }
 
@@ -1061,7 +1063,7 @@ func (s *AdminService) setPlaceProfilePicture(requester *nested.Account, request
 	if v, ok := request.Data["universal_id"].(string); ok {
 		fileInfo := s.Worker().Model().File.GetByID(nested.UniversalID(v), nil)
 		if fileInfo == nil {
-			response.Error(nested.ERR_UNAVAILABLE, []string{"universal_id"})
+			response.Error(global.ERR_UNAVAILABLE, []string{"universal_id"})
 			return
 		}
 		pic = fileInfo.Thumbnails
@@ -1090,8 +1092,8 @@ func (s *AdminService) createAccount(requester *nested.Account, request *nestedG
 	// Check License Limit
 	counters := s.Worker().Model().System.GetCounters()
 	maxActiveUsers := s.Worker().Model().License.Get().MaxActiveUsers
-	if maxActiveUsers != 0 && counters[nested.SYSTEM_COUNTERS_ENABLED_ACCOUNTS] >= maxActiveUsers {
-		response.Error(nested.ERR_LIMIT, []string{"license_users_limit"})
+	if maxActiveUsers != 0 && counters[global.SYSTEM_COUNTERS_ENABLED_ACCOUNTS] >= maxActiveUsers {
+		response.Error(global.ERR_LIMIT, []string{"license_users_limit"})
 		return
 	}
 
@@ -1125,8 +1127,8 @@ func (s *AdminService) createAccount(requester *nested.Account, request *nestedG
 	}
 	if v, ok := request.Data["email"].(string); ok {
 		email = strings.Trim(v, " ")
-		if b, err := regexp.MatchString(nested.DEFAULT_REGEX_EMAIL, email); err != nil || !b {
-			response.Error(nested.ERR_INVALID, []string{"email"})
+		if b, err := regexp.MatchString(global.DEFAULT_REGEX_EMAIL, email); err != nil || !b {
+			response.Error(global.ERR_INVALID, []string{"email"})
 			return
 		}
 
@@ -1140,41 +1142,41 @@ func (s *AdminService) createAccount(requester *nested.Account, request *nestedG
 	}
 
 	// check if username match the regular expression
-	if matched, err := regexp.MatchString(nested.DEFAULT_REGEX_ACCOUNT_ID, uid); err != nil {
-		response.Error(nested.ERR_UNKNOWN, []string{err.Error()})
+	if matched, err := regexp.MatchString(global.DEFAULT_REGEX_ACCOUNT_ID, uid); err != nil {
+		response.Error(global.ERR_UNKNOWN, []string{err.Error()})
 		return
 	} else if !matched {
-		response.Error(nested.ERR_INVALID, []string{"uid"})
+		response.Error(global.ERR_INVALID, []string{"uid"})
 		return
 	}
 
 	// check if username is not taken already
 	if s.Worker().Model().Account.Exists(uid) || s.Worker().Model().Place.Exists(uid) {
-		response.Error(nested.ERR_DUPLICATE, []string{"uid"})
+		response.Error(global.ERR_DUPLICATE, []string{"uid"})
 		return
 	}
 
 	// check if phone is not taken already
 	systemConstants := s.Worker().Model().System.GetStringConstants()
-	if phone != systemConstants[nested.SYSTEM_CONSTANTS_MAGIC_NUMBER] && s.Worker().Model().Account.PhoneExists(phone) {
-		response.Error(nested.ERR_DUPLICATE, []string{"phone"})
+	if phone != systemConstants[global.SYSTEM_CONSTANTS_MAGIC_NUMBER] && s.Worker().Model().Account.PhoneExists(phone) {
+		response.Error(global.ERR_DUPLICATE, []string{"phone"})
 		return
 	}
 
 	// check if email is not taken already
 	if email != "" && s.Worker().Model().Account.EmailExists(email) {
-		response.Error(nested.ERR_DUPLICATE, []string{"email"})
+		response.Error(global.ERR_DUPLICATE, []string{"email"})
 		return
 	}
 
 	// check that fname and lname cannot both be empty text
 	if fname == "" && lname == "" {
-		response.Error(nested.ERR_INVALID, []string{"fname", "lname"})
+		response.Error(global.ERR_INVALID, []string{"fname", "lname"})
 		return
 	}
 
 	if !s.Worker().Model().Account.CreateUser(uid, pass, phone, country, fname, lname, email, dob, gender) {
-		response.Error(nested.ERR_UNKNOWN, []string{""})
+		response.Error(global.ERR_UNKNOWN, []string{""})
 		return
 	}
 
@@ -1282,7 +1284,7 @@ func (s *AdminService) createAccount(requester *nested.Account, request *nestedG
 			}
 		}()
 
-		response.OkWithData(nested.M{
+		response.OkWithData(tools.M{
 			"token": loginToken,
 		})
 	} else {
@@ -1338,11 +1340,11 @@ func (s *AdminService) listAccounts(requester *nested.Account, request *nestedGa
 		}
 	}
 	accounts := s.Worker().Model().Search.Accounts(keyword, filter, sort, s.Worker().Argument().GetPagination(request))
-	r := make([]nested.M, 0, len(accounts))
+	r := make([]tools.M, 0, len(accounts))
 	for _, account := range accounts {
 		r = append(r, s.Worker().Map().Account(account, true))
 	}
-	response.OkWithData(nested.M{"accounts": r})
+	response.OkWithData(tools.M{"accounts": r})
 	return
 }
 
@@ -1353,11 +1355,11 @@ func (s *AdminService) disableAccount(requester *nested.Account, request *nested
 	if accountID, ok := request.Data["account_id"].(string); ok {
 		account = s.Worker().Model().Account.GetByID(accountID, nil)
 		if account == nil {
-			response.Error(nested.ERR_INVALID, []string{"account_id"})
+			response.Error(global.ERR_INVALID, []string{"account_id"})
 			return
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"account_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"account_id"})
 		return
 	}
 	s.Worker().Model().Account.Disable(account.ID)
@@ -1373,19 +1375,19 @@ func (s *AdminService) enableAccount(requester *nested.Account, request *nestedG
 	// Check License Limit
 	counters := s.Worker().Model().System.GetCounters()
 	maxActiveUsers := s.Worker().Model().License.Get().MaxActiveUsers
-	if maxActiveUsers != 0 && counters[nested.SYSTEM_COUNTERS_ENABLED_ACCOUNTS] >= maxActiveUsers {
-		response.Error(nested.ERR_LIMIT, []string{"license_users_limit"})
+	if maxActiveUsers != 0 && counters[global.SYSTEM_COUNTERS_ENABLED_ACCOUNTS] >= maxActiveUsers {
+		response.Error(global.ERR_LIMIT, []string{"license_users_limit"})
 		return
 	}
 
 	if accountID, ok := request.Data["account_id"].(string); ok {
 		account = s.Worker().Model().Account.GetByID(accountID, nil)
 		if account == nil {
-			response.Error(nested.ERR_INVALID, []string{"account_id"})
+			response.Error(global.ERR_INVALID, []string{"account_id"})
 			return
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"account_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"account_id"})
 		return
 	}
 	s.Worker().Model().Account.Enable(account.ID)
@@ -1402,24 +1404,24 @@ func (s *AdminService) setAccountPassword(requester *nested.Account, request *ne
 	if accountID, ok := request.Data["account_id"].(string); ok {
 		account = s.Worker().Model().Account.GetByID(accountID, nil)
 		if account == nil {
-			response.Error(nested.ERR_INVALID, []string{"account_id"})
+			response.Error(global.ERR_INVALID, []string{"account_id"})
 			return
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"account_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"account_id"})
 		return
 	}
 
 	if str, ok := request.Data["new_pass"].(string); ok {
 		newPass = str
 	} else {
-		response.Error(nested.ERR_INVALID, []string{"new_pass"})
+		response.Error(global.ERR_INVALID, []string{"new_pass"})
 	}
 
 	if s.Worker().Model().Account.SetPassword(account.ID, newPass) {
 		response.Ok()
 	} else {
-		response.Error(nested.ERR_UNKNOWN, []string{})
+		response.Error(global.ERR_UNKNOWN, []string{})
 	}
 }
 
@@ -1430,18 +1432,18 @@ func (s *AdminService) listPlacesOfAccount(requester *nested.Account, request *n
 	if accountID, ok := request.Data["account_id"].(string); ok {
 		account = s.Worker().Model().Account.GetByID(accountID, nil)
 		if account == nil {
-			response.Error(nested.ERR_INVALID, []string{"account_id"})
+			response.Error(global.ERR_INVALID, []string{"account_id"})
 			return
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"account_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"account_id"})
 		return
 	}
 
 	placeIDs := account.AccessPlaceIDs
-	r := make([]nested.M, 0, len(placeIDs))
+	r := make([]tools.M, 0, len(placeIDs))
 	iStart := 0
-	iLength := nested.DEFAULT_MAX_RESULT_LIMIT
+	iLength := global.DEFAULT_MAX_RESULT_LIMIT
 	iEnd := iStart + iLength
 	if iEnd > len(placeIDs) {
 		iEnd = len(placeIDs)
@@ -1459,7 +1461,7 @@ func (s *AdminService) listPlacesOfAccount(requester *nested.Account, request *n
 			iEnd = len(placeIDs)
 		}
 	}
-	response.OkWithData(nested.M{"places": r})
+	response.OkWithData(tools.M{"places": r})
 }
 
 // @Command:	admin/account_update
@@ -1480,29 +1482,29 @@ func (s *AdminService) updateAccount(requester *nested.Account, request *nestedG
 	var account *nested.Account
 	accountUpdateRequest := nested.AccountUpdateRequest{}
 	accountLimitsUpdateRequest := nested.MI{}
-	placeUpdateRequest := nested.M{}
+	placeUpdateRequest := tools.M{}
 
 	if accountID, ok := request.Data["account_id"].(string); ok {
 		account = s.Worker().Model().Account.GetByID(accountID, nil)
 		if account == nil {
-			response.Error(nested.ERR_INVALID, []string{"account_id"})
+			response.Error(global.ERR_INVALID, []string{"account_id"})
 			return
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"account_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"account_id"})
 		return
 	}
 
 	if fname, ok := request.Data["fname"].(string); ok && fname != "" {
 		accountUpdateRequest.FirstName = fname
-		if len(fname) > nested.DEFAULT_MAX_ACCOUNT_NAME {
-			accountUpdateRequest.FirstName = fname[:nested.DEFAULT_MAX_ACCOUNT_NAME]
+		if len(fname) > global.DEFAULT_MAX_ACCOUNT_NAME {
+			accountUpdateRequest.FirstName = fname[:global.DEFAULT_MAX_ACCOUNT_NAME]
 		}
 	}
 	if lname, ok := request.Data["lname"].(string); ok && lname != "" {
 		accountUpdateRequest.LastName = lname
-		if len(lname) > nested.DEFAULT_MAX_ACCOUNT_NAME {
-			accountUpdateRequest.LastName = lname[:nested.DEFAULT_MAX_ACCOUNT_NAME]
+		if len(lname) > global.DEFAULT_MAX_ACCOUNT_NAME {
+			accountUpdateRequest.LastName = lname[:global.DEFAULT_MAX_ACCOUNT_NAME]
 		}
 	}
 	if gender, ok := request.Data["gender"].(string); ok && gender != "" {
@@ -1525,7 +1527,7 @@ func (s *AdminService) updateAccount(requester *nested.Account, request *nestedG
 	}
 	if email, ok := request.Data["email"].(string); ok {
 		email = strings.Trim(email, " ")
-		if b, err := regexp.MatchString(nested.DEFAULT_REGEX_EMAIL, email); err == nil && b {
+		if b, err := regexp.MatchString(global.DEFAULT_REGEX_EMAIL, email); err == nil && b {
 			accountUpdateRequest.Email = email
 		}
 	}
@@ -1573,7 +1575,7 @@ func (s *AdminService) updateAccount(requester *nested.Account, request *nestedG
 		s.Worker().Model().Search.AddPlaceToSearchIndex(account.ID, fmt.Sprintf("%s %s", account.FirstName, account.LastName), account.Picture)
 	}
 
-	response.OkWithData(nested.M{
+	response.OkWithData(tools.M{
 		"applied_limit_updates": accountLimitsUpdateRequest,
 		"applied_updates":       accountUpdateRequest,
 	})
@@ -1589,18 +1591,18 @@ func (s *AdminService) setAccountProfilePicture(requester *nested.Account, reque
 	if accountID, ok := request.Data["account_id"].(string); ok {
 		account = s.Worker().Model().Account.GetByID(accountID, nil)
 		if account == nil {
-			response.Error(nested.ERR_INVALID, []string{"account_id"})
+			response.Error(global.ERR_INVALID, []string{"account_id"})
 			return
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"account_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"account_id"})
 		return
 	}
 
 	if v, ok := request.Data["universal_id"].(string); ok {
 		uni_id = nested.UniversalID(v)
 		if !s.Worker().Model().File.Exists(uni_id) {
-			response.Error(nested.ERR_UNAVAILABLE, []string{"universal_id"})
+			response.Error(global.ERR_UNAVAILABLE, []string{"universal_id"})
 			return
 		}
 	}
@@ -1617,11 +1619,11 @@ func (s *AdminService) removeAccountProfilePicture(requester *nested.Account, re
 	if accountID, ok := request.Data["account_id"].(string); ok {
 		account = s.Worker().Model().Account.GetByID(accountID, nil)
 		if account == nil {
-			response.Error(nested.ERR_INVALID, []string{"account_id"})
+			response.Error(global.ERR_INVALID, []string{"account_id"})
 			return
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"account_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"account_id"})
 		return
 	}
 
@@ -1673,13 +1675,13 @@ func (s *AdminService) createPostForAllAccounts(requester *nested.Account, reque
 		filter = v
 	}
 	if v, ok := request.Data["label_id"].(string); ok {
-		labelIDs := strings.SplitN(v, ",", nested.DEFAULT_POST_MAX_LABELS)
+		labelIDs := strings.SplitN(v, ",", global.DEFAULT_POST_MAX_LABELS)
 		labels = s.Worker().Model().Label.GetByIDs(labelIDs)
 	} else {
 		labels = []nested.Label{}
 	}
 	if v, ok := request.Data["attaches"].(string); ok && v != "" {
-		attachments = strings.SplitN(v, ",", nested.DEFAULT_POST_MAX_ATTACHMENTS)
+		attachments = strings.SplitN(v, ",", global.DEFAULT_POST_MAX_ATTACHMENTS)
 	} else {
 		attachments = []string{}
 	}
@@ -1704,13 +1706,13 @@ func (s *AdminService) createPostForAllAccounts(requester *nested.Account, reque
 	}
 
 	if "" == strings.Trim(subject, " ") && "" == strings.Trim(body, " ") && len(attachments) == 0 {
-		response.Error(nested.ERR_INCOMPLETE, []string{"subject", "body"})
+		response.Error(global.ERR_INCOMPLETE, []string{"subject", "body"})
 		return
 	}
 	targets = s.Worker().Model().Search.AccountIDs(filter)
 
 	if len(targets) == 0 {
-		response.Error(nested.ERR_INVALID, []string{"targets"})
+		response.Error(global.ERR_INVALID, []string{"targets"})
 		return
 	}
 
@@ -1736,7 +1738,7 @@ func (s *AdminService) createPostForAllAccounts(requester *nested.Account, reque
 	}
 
 	// Make attachments unique and add them to PostCreateRequest
-	mapAttachments := nested.MB{}
+	mapAttachments := tools.MB{}
 	for _, attachID := range attachments {
 		mapAttachments[attachID] = true
 	}
@@ -1758,7 +1760,7 @@ func (s *AdminService) createPostForAllAccounts(requester *nested.Account, reque
 
 	post := s.Worker().Model().Post.AddPost(pcr)
 	if post == nil {
-		response.Error(nested.ERR_UNKNOWN, []string{})
+		response.Error(global.ERR_UNKNOWN, []string{})
 		return
 	}
 
@@ -1770,7 +1772,7 @@ func (s *AdminService) createPostForAllAccounts(requester *nested.Account, reque
 
 	s.Worker().Pusher().PostAdded(post)
 
-	response.OkWithData(nested.M{
+	response.OkWithData(tools.M{
 		"post_id": post.ID,
 	})
 }
@@ -1786,7 +1788,7 @@ func (s *AdminService) addDefaultPlaces(requester *nested.Account, request *nest
 			if place := s.Worker().Model().Place.GetByID(id, nil); place != nil {
 				// no one can join personal places
 				if place.IsPersonal() {
-					response.Error(nested.ERR_ACCESS, []string{"personal_place"})
+					response.Error(global.ERR_ACCESS, []string{"personal_place"})
 					return
 				}
 				exist := false
@@ -1802,29 +1804,29 @@ func (s *AdminService) addDefaultPlaces(requester *nested.Account, request *nest
 			}
 		}
 	} else {
-		response.Error(nested.ERR_INVALID, []string{"place_ids"})
+		response.Error(global.ERR_INVALID, []string{"place_ids"})
 		return
 	}
 	if len(places) < 1 {
-		response.Error(nested.ERR_INVALID, []string{"place_ids"})
+		response.Error(global.ERR_INVALID, []string{"place_ids"})
 		return
 	}
 	if success := s.Worker().Model().Place.AddDefaultPlaces(places); !success {
-		response.Error(nested.ERR_UNKNOWN, []string{""})
+		response.Error(global.ERR_UNKNOWN, []string{""})
 		return
 	}
-	response.OkWithData(nested.M{})
+	response.OkWithData(tools.M{})
 }
 
 // @Command:	admin/default_places_get
 func (s *AdminService) getDefaultPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	pg := s.Worker().Argument().GetPagination(request)
 	if placeIDs, total := s.Worker().Model().Place.GetDefaultPlacesWithPagination(pg); placeIDs == nil {
-		response.Error(nested.ERR_UNKNOWN, []string{""})
+		response.Error(global.ERR_UNKNOWN, []string{""})
 		return
 	} else {
 		places := s.Worker().Model().Place.GetPlacesByIDs(placeIDs)
-		response.OkWithData(nested.M{"places": places, "total": total})
+		response.OkWithData(tools.M{"places": places, "total": total})
 	}
 }
 
@@ -1840,11 +1842,11 @@ func (s *AdminService) removeDefaultPlaces(requester *nested.Account, request *n
 			}
 		}
 	} else {
-		response.Error(nested.ERR_INVALID, []string{"places"})
+		response.Error(global.ERR_INVALID, []string{"places"})
 		return
 	}
 	if success := s.Worker().Model().Place.RemoveDefaultPlaces(placeIDs); !success {
-		response.Error(nested.ERR_UNKNOWN, []string{""})
+		response.Error(global.ERR_UNKNOWN, []string{""})
 		return
 	} else {
 		response.Ok()
@@ -1863,11 +1865,11 @@ func (s *AdminService) defaultPlacesSetUsers(requester *nested.Account, request 
 			}
 		}
 	} else {
-		response.Error(nested.ERR_INVALID, []string{"account_ids"})
+		response.Error(global.ERR_INVALID, []string{"account_ids"})
 		return
 	}
 	if placeIDs := s.Worker().Model().Place.GetDefaultPlaces(); len(placeIDs) < 1 {
-		response.Error(nested.ERR_INVALID, []string{"place_ids"})
+		response.Error(global.ERR_INVALID, []string{"place_ids"})
 		return
 	} else {
 		log.Println("defaultPlacesSetUsers::placeIDs ", placeIDs)

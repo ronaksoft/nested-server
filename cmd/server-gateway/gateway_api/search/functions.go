@@ -1,6 +1,8 @@
 package nestedServiceSearch
 
 import (
+	"git.ronaksoft.com/nested/server/pkg/global"
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"strings"
 
 	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
@@ -18,16 +20,16 @@ func (s *SearchService) placesForCompose(requester *nested.Account, request *nes
 	pg := s.Worker().Argument().GetPagination(request)
 	places := s.Worker().Model().Search.PlacesForCompose(keyword, requester.ID, pg)
 
-	r := make([]nested.M, 0, len(places))
+	r := make([]tools.M, 0, len(places))
 	for _, p := range places {
-		r = append(r, nested.M{
+		r = append(r, tools.M{
 			"_id":     p.ID,
 			"name":    p.Name,
 			"picture": p.Picture,
 		})
 	}
 	recipients := s.Worker().Model().Search.RecipientsForCompose(keyword, requester.ID, pg)
-	response.OkWithData(nested.M{
+	response.OkWithData(tools.M{
 		"places":     r,
 		"recipients": recipients,
 	})
@@ -43,15 +45,15 @@ func (s *SearchService) placesForSearch(requester *nested.Account, request *nest
 	}
 	pg := s.Worker().Argument().GetPagination(request)
 	places := s.Worker().Model().Search.PlacesForSearch(keyword, requester.ID, pg)
-	r := make([]nested.M, 0, len(places))
+	r := make([]tools.M, 0, len(places))
 	for _, p := range places {
-		r = append(r, nested.M{
+		r = append(r, tools.M{
 			"_id":     p.ID,
 			"name":    p.Name,
 			"picture": p.Picture,
 		})
 	}
-	response.OkWithData(nested.M{"places": r})
+	response.OkWithData(tools.M{"places": r})
 }
 
 // @Command:	search/accounts
@@ -65,11 +67,11 @@ func (s *SearchService) accounts(requester *nested.Account, request *nestedGatew
 
 	pg := s.Worker().Argument().GetPagination(request)
 	accounts := s.Worker().Model().Search.Accounts(keyword, nested.AccountSearchFilterUsersEnabled, "", pg)
-	r := make([]nested.M, 0, len(accounts))
+	r := make([]tools.M, 0, len(accounts))
 	for _, a := range accounts {
 		r = append(r, s.Worker().Map().Account(a, false))
 	}
-	response.OkWithData(nested.M{"accounts": r})
+	response.OkWithData(tools.M{"accounts": r})
 }
 
 // @Command:	search/accounts_for_admin
@@ -83,11 +85,11 @@ func (s *SearchService) accountsForAdmin(requester *nested.Account, request *nes
 
 	pg := s.Worker().Argument().GetPagination(request)
 	accounts := s.Worker().Model().Search.Accounts(keyword, nested.AccountSearchFilterAll, "", pg)
-	r := make([]nested.M, 0, len(accounts))
+	r := make([]tools.M, 0, len(accounts))
 	for _, a := range accounts {
 		r = append(r, s.Worker().Map().Account(a, false))
 	}
-	response.OkWithData(nested.M{"accounts": r})
+	response.OkWithData(tools.M{"accounts": r})
 }
 
 // @Command:	search/accounts_for_invite
@@ -110,11 +112,11 @@ func (s *SearchService) accountsForInvite(requester *nested.Account, request *ne
 		accounts = s.Worker().Model().Search.AccountsForAddToGrandPlace(requester.ID, place.ID, keyword, pg)
 	}
 
-	r := make([]nested.M, 0, len(accounts))
+	r := make([]tools.M, 0, len(accounts))
 	for _, a := range accounts {
 		r = append(r, s.Worker().Map().Account(a, false))
 	}
-	response.OkWithData(nested.M{"accounts": r})
+	response.OkWithData(tools.M{"accounts": r})
 }
 
 // @Command:	search/accounts_for_add
@@ -132,11 +134,11 @@ func (s *SearchService) accountsForAdd(requester *nested.Account, request *neste
 	}
 	pg := s.Worker().Argument().GetPagination(request)
 	accounts := s.Worker().Model().Search.AccountsForAddToPlace(requester.ID, placeID, keywords, pg)
-	r := make([]nested.M, 0, len(accounts))
+	r := make([]tools.M, 0, len(accounts))
 	for _, a := range accounts {
 		r = append(r, s.Worker().Map().Account(a, false))
 	}
-	response.OkWithData(nested.M{"accounts": r})
+	response.OkWithData(tools.M{"accounts": r})
 }
 
 // @Command:	search/accounts_for_mention
@@ -154,11 +156,11 @@ func (s *SearchService) accountsForMention(requester *nested.Account, request *n
 	pg := s.Worker().Argument().GetPagination(request)
 	accounts := s.Worker().Model().Search.AccountsForPostMention(post.PlaceIDs, keywords, pg)
 
-	r := make([]nested.M, 0, len(accounts))
+	r := make([]tools.M, 0, len(accounts))
 	for _, a := range accounts {
 		r = append(r, s.Worker().Map().Account(a, false))
 	}
-	response.OkWithData(nested.M{"accounts": r})
+	response.OkWithData(tools.M{"accounts": r})
 
 }
 
@@ -176,11 +178,11 @@ func (s *SearchService) accountsForTaskMention(requester *nested.Account, reques
 	}
 	accounts := s.Worker().Model().Search.AccountsForTaskMention(task, keyword)
 
-	r := make([]nested.M, 0, len(accounts))
+	r := make([]tools.M, 0, len(accounts))
 	for _, a := range accounts {
 		r = append(r, s.Worker().Map().Account(a, false))
 	}
-	response.OkWithData(nested.M{"accounts": r})
+	response.OkWithData(tools.M{"accounts": r})
 }
 
 // @Command:	search/accounts_for_search
@@ -194,11 +196,11 @@ func (s *SearchService) accountsForSearch(requester *nested.Account, request *ne
 
 	pg := s.Worker().Argument().GetPagination(request)
 	accounts := s.Worker().Model().Search.AccountsForSearch(requester.ID, keyword, pg)
-	r := make([]nested.M, 0, len(accounts))
+	r := make([]tools.M, 0, len(accounts))
 	for _, a := range accounts {
 		r = append(r, s.Worker().Map().Account(a, false))
 	}
-	response.OkWithData(nested.M{"accounts": r})
+	response.OkWithData(tools.M{"accounts": r})
 
 }
 
@@ -233,11 +235,11 @@ func (s *SearchService) labels(requester *nested.Account, request *nestedGateway
 	}
 
 	labels := s.Worker().Model().Search.Labels(requester.ID, keyword, filter, pg)
-	r := make([]nested.M, 0, pg.GetLimit())
+	r := make([]tools.M, 0, pg.GetLimit())
 	for _, label := range labels {
 		r = append(r, s.Worker().Map().Label(requester, label, details))
 	}
-	response.OkWithData(nested.M{
+	response.OkWithData(tools.M{
 		"skip":   pg.GetSkip(),
 		"limit":  pg.GetLimit(),
 		"labels": r,
@@ -259,16 +261,16 @@ func (s *SearchService) posts(requester *nested.Account, request *nestedGateway.
 	labelIDs := make([]string, 0, 10)
 	placeIDs := make([]string, 0, 10)
 	if v, ok := request.Data["place_id"].(string); ok && len(v) > 0 {
-		placeIDs = strings.SplitN(v, ",", nested.DEFAULT_MAX_RESULT_LIMIT)
+		placeIDs = strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
 	}
 	if v, ok := request.Data["sender_id"].(string); ok && len(v) > 0 {
-		senderIDs = strings.SplitN(v, ",", nested.DEFAULT_MAX_RESULT_LIMIT)
+		senderIDs = strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
 	}
 	if v, ok := request.Data["label_id"].(string); ok && len(v) > 0 {
-		labelIDs = strings.SplitN(v, ",", nested.DEFAULT_MAX_RESULT_LIMIT)
+		labelIDs = strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
 	}
 	if v, ok := request.Data["label_title"].(string); ok && len(v) > 0 {
-		labelTitles := strings.SplitN(v, ",", nested.DEFAULT_MAX_RESULT_LIMIT)
+		labelTitles := strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
 		labels := s.Worker().Model().Label.GetByTitles(labelTitles)
 		for _, label := range labels {
 			labelIDs = append(labelIDs, label.ID)
@@ -285,12 +287,12 @@ func (s *SearchService) posts(requester *nested.Account, request *nestedGateway.
 	}
 	pg := s.Worker().Argument().GetPagination(request)
 	posts := s.Worker().Model().Search.Posts(keyword, requester.ID, placeIDs, senderIDs, labelIDs, hasAttachment, pg)
-	r := make([]nested.M, 0, len(posts))
+	r := make([]tools.M, 0, len(posts))
 	for _, post := range posts {
 		r = append(r, s.Worker().Map().Post(requester, post, true))
 	}
 	s.Worker().Model().Search.AddSearchHistory(requester.ID, keyword)
-	response.OkWithData(nested.M{
+	response.OkWithData(tools.M{
 		"skip":    pg.GetSkip(),
 		"limit":   pg.GetLimit(),
 		"history": s.Worker().Model().Search.GetSearchHistory(requester.ID, keyword),
@@ -312,16 +314,16 @@ func (s *SearchService) tasks(requester *nested.Account, request *nestedGateway.
 	assigneeIDs := make([]string, 0, 10)
 	labelIDs := make([]string, 0, 10)
 	if v, ok := request.Data["assigner_id"].(string); ok && len(v) > 0 {
-		assignorIDs = strings.SplitN(v, ",", nested.DEFAULT_MAX_RESULT_LIMIT)
+		assignorIDs = strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
 	}
 	if v, ok := request.Data["assignee_id"].(string); ok && len(v) > 0 {
-		assigneeIDs = strings.SplitN(v, ",", nested.DEFAULT_MAX_RESULT_LIMIT)
+		assigneeIDs = strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
 	}
 	if v, ok := request.Data["label_id"].(string); ok && len(v) > 0 {
-		labelIDs = strings.SplitN(v, ",", nested.DEFAULT_MAX_RESULT_LIMIT)
+		labelIDs = strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
 	}
 	if v, ok := request.Data["label_title"].(string); ok && len(v) > 0 {
-		labelTitles := strings.SplitN(v, ",", nested.DEFAULT_MAX_RESULT_LIMIT)
+		labelTitles := strings.SplitN(v, ",", global.DEFAULT_MAX_RESULT_LIMIT)
 		labels := s.Worker().Model().Label.GetByTitles(labelTitles)
 		for _, label := range labels {
 			labelIDs = append(labelIDs, label.ID)
@@ -336,12 +338,12 @@ func (s *SearchService) tasks(requester *nested.Account, request *nestedGateway.
 	pg := s.Worker().Argument().GetPagination(request)
 	tasks := s.Worker().Model().Search.Tasks(keyword, requester.ID, assignorIDs, assigneeIDs, labelIDs, hasAttachment, pg)
 
-	r := make([]nested.M, 0, len(tasks))
+	r := make([]tools.M, 0, len(tasks))
 	for _, task := range tasks {
 		r = append(r, s.Worker().Map().Task(requester, task, true))
 	}
 	s.Worker().Model().Search.AddSearchHistory(requester.ID, keyword)
-	response.OkWithData(nested.M{
+	response.OkWithData(tools.M{
 		"skip":    pg.GetSkip(),
 		"limit":   pg.GetLimit(),
 		"history": s.Worker().Model().Search.GetSearchHistory(requester.ID, keyword),
@@ -357,11 +359,11 @@ func (s *SearchService) apps(requester *nested.Account, request *nestedGateway.R
 		keyword = v
 	}
 	apps := s.Worker().Model().Search.Apps(keyword, s.Worker().Argument().GetPagination(request))
-	r := make([]nested.M, 0, len(apps))
+	r := make([]tools.M, 0, len(apps))
 	for _, app := range apps {
 		r = append(r, s.Worker().Map().App(app))
 	}
-	response.OkWithData(nested.M{"apps": r})
+	response.OkWithData(tools.M{"apps": r})
 }
 
 // @Command:	search/posts_conversation
@@ -373,7 +375,7 @@ func (s *SearchService) conversation(requester *nested.Account, request *nestedG
 	if v, ok := request.Data["account_id"].(string); ok {
 		accountID = v
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"account_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"account_id"})
 		return
 	}
 	if v, ok := request.Data["keywords"].(string); ok {
@@ -384,11 +386,11 @@ func (s *SearchService) conversation(requester *nested.Account, request *nestedG
 	}
 	pg := s.Worker().Argument().GetPagination(request)
 	posts := s.Worker().Model().Search.PostsConversations(requester.ID, accountID, keywords, pg)
-	r := make([]nested.M, 0, len(posts))
+	r := make([]tools.M, 0, len(posts))
 	for _, post := range posts {
 		r = append(r, s.Worker().Map().Post(requester, post, true))
 	}
-	response.OkWithData(nested.M{
+	response.OkWithData(tools.M{
 		"skip":  pg.GetSkip(),
 		"limit": pg.GetLimit(),
 		"posts": r,
@@ -407,9 +409,9 @@ func (s *SearchService) suggestions(requester *nested.Account, request *nestedGa
 
 	// Search Places
 	places := s.Worker().Model().Search.PlacesForSearch(keyword, requester.ID, pg)
-	rPlaces := make([]nested.M, 0, len(places))
+	rPlaces := make([]tools.M, 0, len(places))
 	for _, p := range places {
-		rPlaces = append(rPlaces, nested.M{
+		rPlaces = append(rPlaces, tools.M{
 			"_id":     p.ID,
 			"name":    p.Name,
 			"picture": p.Picture,
@@ -418,19 +420,19 @@ func (s *SearchService) suggestions(requester *nested.Account, request *nestedGa
 
 	// Search Accounts
 	accounts := s.Worker().Model().Search.AccountsForSearch(requester.ID, keyword, pg)
-	rAccounts := make([]nested.M, 0, len(accounts))
+	rAccounts := make([]tools.M, 0, len(accounts))
 	for _, a := range accounts {
 		rAccounts = append(rAccounts, s.Worker().Map().Account(a, false))
 	}
 
 	// Search Labels
 	labels := s.Worker().Model().Search.Labels(requester.ID, keyword, nested.LabelFilterAll, pg)
-	rLabels := make([]nested.M, 0, len(labels))
+	rLabels := make([]tools.M, 0, len(labels))
 	for _, a := range labels {
 		rLabels = append(rLabels, s.Worker().Map().Label(requester, a, false))
 	}
 
-	response.OkWithData(nested.M{
+	response.OkWithData(tools.M{
 		"places":   rPlaces,
 		"accounts": rAccounts,
 		"labels":   rLabels,

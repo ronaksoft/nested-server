@@ -2,6 +2,8 @@ package nestedServiceSystem
 
 import (
 	"encoding/json"
+	"git.ronaksoft.com/nested/server/pkg/global"
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"runtime"
 	"strings"
 
@@ -12,7 +14,7 @@ import (
 // @Command: system/get_counters
 func (s *SystemService) getSystemCounters(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	counters := s.Worker().Model().System.GetCounters()
-	r := nested.M{}
+	r := tools.M{}
 	for key, val := range counters {
 		r[key] = val
 	}
@@ -21,7 +23,7 @@ func (s *SystemService) getSystemCounters(requester *nested.Account, request *ne
 
 // @Command: system/get_int_constants
 func (s *SystemService) getSystemIntegerConstants(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
-	m := nested.M{}
+	m := tools.M{}
 	for k, v := range s.Worker().Model().System.GetIntegerConstants() {
 		m[k] = v
 	}
@@ -30,7 +32,7 @@ func (s *SystemService) getSystemIntegerConstants(requester *nested.Account, req
 
 // @Command: system/get_string_constants
 func (s *SystemService) getSystemStringConstants(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
-	m := nested.M{}
+	m := tools.M{}
 	for k, v := range s.Worker().Model().System.GetStringConstants() {
 		m[k] = v
 	}
@@ -50,8 +52,8 @@ func (s *SystemService) getSystemStringConstants(requester *nested.Account, requ
 // @Input:  place_max_keyholders				int		+
 // @Input:  register_mode					    int		+	(1: everyone, 2: admin_only)
 func (s *SystemService) setSystemIntegerConstants(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
-	if len(request.Data) > nested.DEFAULT_MAX_RESULT_LIMIT {
-		response.Error(nested.ERR_LIMIT, []string{"too many parameters"})
+	if len(request.Data) > global.DEFAULT_MAX_RESULT_LIMIT {
+		response.Error(global.ERR_LIMIT, []string{"too many parameters"})
 		return
 	}
 	s.Worker().Model().System.SetIntegerConstants(request.Data)
@@ -66,8 +68,8 @@ func (s *SystemService) setSystemIntegerConstants(requester *nested.Account, req
 // @Input:  magic_number                string     +
 // @Input:  license_key                 string      +
 func (s *SystemService) setSystemStringConstants(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
-	if len(request.Data) > nested.DEFAULT_MAX_RESULT_LIMIT {
-		response.Error(nested.ERR_LIMIT, []string{"too many parameters"})
+	if len(request.Data) > global.DEFAULT_MAX_RESULT_LIMIT {
+		response.Error(global.ERR_LIMIT, []string{"too many parameters"})
 		return
 	}
 	if v, ok := request.Data["magic_number"].(string); ok {
@@ -94,19 +96,19 @@ func (s *SystemService) disableMonitor(requester *nested.Account, request *neste
 
 // @Command: system/stats
 func (s *SystemService) getSystemStats(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
-	M := nested.M{
-		nested.SYS_INFO_USERAPI: nested.M{},
-		nested.SYS_INFO_GATEWAY: nested.M{},
-		nested.SYS_INFO_MSGAPI:  nested.M{},
-		nested.SYS_INFO_STORAGE: nested.M{},
-		nested.SYS_INFO_ROUTER:  nested.M{},
+	M := tools.M{
+		nested.SYS_INFO_USERAPI: tools.M{},
+		nested.SYS_INFO_GATEWAY: tools.M{},
+		nested.SYS_INFO_MSGAPI:  tools.M{},
+		nested.SYS_INFO_STORAGE: tools.M{},
+		nested.SYS_INFO_ROUTER:  tools.M{},
 	}
 
 	for key := range M {
 		sysInfo := s.Worker().Model().System.GetSystemInfo(key)
-		subMap := nested.M{}
+		subMap := tools.M{}
 		for subKey, subVal := range sysInfo {
-			m := nested.M{}
+			m := tools.M{}
 			json.Unmarshal([]byte(subVal), &m)
 			subMap[subKey] = m
 		}
@@ -121,14 +123,14 @@ func (s *SystemService) getSystemStats(requester *nested.Account, request *neste
 func (s *SystemService) monitorActivity(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	if v, ok := request.Data["mon_access_token"].(string); ok {
 		if v != s.Worker().Config().GetString("MONITOR_ACCESS_TOKEN") {
-			response.Error(nested.ERR_INVALID, []string{"mon_access_token"})
+			response.Error(global.ERR_INVALID, []string{"mon_access_token"})
 			return
 		}
 	} else {
-		response.Error(nested.ERR_ACCESS, []string{""})
+		response.Error(global.ERR_ACCESS, []string{""})
 		return
 	}
-	response.OkWithData(nested.M{
+	response.OkWithData(tools.M{
 		"apis": s.Worker().Model().Report.GetAPICounters(),
 	})
 }
@@ -136,15 +138,15 @@ func (s *SystemService) monitorActivity(requester *nested.Account, request *nest
 // @Command: system/online_users
 func (s *SystemService) onlineUsers(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	bundleIDs := s.Worker().Model().GetBundles()
-	r := make([]nested.M, 0, len(bundleIDs))
+	r := make([]tools.M, 0, len(bundleIDs))
 	for _, bundleID := range bundleIDs {
-		r = append(r, nested.M{
+		r = append(r, tools.M{
 			"bundle_id": bundleID,
 			"accounts":  s.Worker().Model().Websocket.GetAccountsByBundleID(bundleID),
 		})
 
 	}
-	response.OkWithData(nested.M{
+	response.OkWithData(tools.M{
 		"online_users": r,
 	})
 }
@@ -156,16 +158,16 @@ func (s *SystemService) setLicense(requester *nested.Account, request *nestedGat
 	if v, ok := request.Data["license_key"].(string); ok {
 		licenseKey = v
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"license_key"})
+		response.Error(global.ERR_INCOMPLETE, []string{"license_key"})
 		return
 	}
 	s.Worker().Model().License.Set(licenseKey)
 	if !s.Worker().Model().License.Load() {
-		response.Error(nested.ERR_INVALID, []string{"license_key"})
+		response.Error(global.ERR_INVALID, []string{"license_key"})
 		return
 	}
 	if s.Worker().Model().License.IsExpired() {
-		response.Error(nested.ERR_INVALID, []string{"license_key"})
+		response.Error(global.ERR_INVALID, []string{"license_key"})
 	} else {
 		s.Worker().Server().ResetLicense()
 		response.Ok()
@@ -175,5 +177,5 @@ func (s *SystemService) setLicense(requester *nested.Account, request *nestedGat
 // @Command: system/get_license
 func (s *SystemService) getLicense(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
 	license := s.Worker().Model().License.Get()
-	response.OkWithData(nested.M{"license": license})
+	response.OkWithData(tools.M{"license": license})
 }

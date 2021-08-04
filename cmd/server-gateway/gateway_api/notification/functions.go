@@ -1,6 +1,8 @@
 package nestedServiceNotification
 
 import (
+	"git.ronaksoft.com/nested/server/pkg/global"
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"strings"
 
 	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
@@ -14,11 +16,11 @@ func (s *NotificationService) getNotificationByID(requester *nested.Account, req
 	if v, ok := request.Data["notification_id"].(string); ok {
 		notif = _Model.Notification.GetByID(v)
 		if notif == nil {
-			response.Error(nested.ERR_INVALID, []string{"notification_id"})
+			response.Error(global.ERR_INVALID, []string{"notification_id"})
 			return
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"notification_id"})
+		response.Error(global.ERR_INCOMPLETE, []string{"notification_id"})
 		return
 	}
 	response.OkWithData(s.Worker().Map().Notification(requester, *notif))
@@ -51,11 +53,11 @@ func (s *NotificationService) getNotificationsByAccountID(requester *nested.Acco
 	pg := s.Worker().Argument().GetPagination(request)
 	notifications := _Model.Notification.GetByAccountID(requester.ID, pg, only_unreads, subject)
 	if details {
-		r := make([]nested.M, 0, pg.GetLimit())
+		r := make([]tools.M, 0, pg.GetLimit())
 		for _, n := range notifications {
 			r = append(r, s.Worker().Map().Notification(requester, n))
 		}
-		d := nested.M{
+		d := tools.M{
 			"skip":                 pg.GetSkip(),
 			"limit":                pg.GetLimit(),
 			"total_notifications":  requester.Counters.TotalNotifications,
@@ -64,7 +66,7 @@ func (s *NotificationService) getNotificationsByAccountID(requester *nested.Acco
 		}
 		response.OkWithData(d)
 	} else {
-		d := nested.M{
+		d := tools.M{
 			"skip":                 pg.GetSkip(),
 			"limit":                pg.GetLimit(),
 			"total_notifications":  requester.Counters.TotalNotifications,
@@ -96,7 +98,7 @@ func (s *NotificationService) markNotificationAsRead(requester *nested.Account, 
 		}
 		response.Ok()
 	} else {
-		response.Error(nested.ERR_INVALID, []string{"notification_id"})
+		response.Error(global.ERR_INVALID, []string{"notification_id"})
 	}
 	return
 }
@@ -107,7 +109,7 @@ func (s *NotificationService) markNotificationAsReadByPost(requester *nested.Acc
 	var post *nested.Post
 
 	if post = s.Worker().Argument().GetPost(request, response); post == nil {
-		response.Error(nested.ERR_INVALID, []string{"post_id"})
+		response.Error(global.ERR_INVALID, []string{"post_id"})
 		return
 	}
 	notificationIDs := _Model.Notification.MarkAsReadByPostID(post.ID, requester.ID)
@@ -134,7 +136,7 @@ func (s *NotificationService) removeNotification(requester *nested.Account, requ
 		}
 		response.Ok()
 	} else {
-		response.Error(nested.ERR_INVALID, []string{"notification_id"})
+		response.Error(global.ERR_INVALID, []string{"notification_id"})
 	}
 
 }
@@ -147,14 +149,14 @@ func (s *NotificationService) resetNotificationCounter(requester *nested.Account
 
 // @Command:	notification/get_counter
 func (s *NotificationService) getNotificationCounter(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
-	account := _Model.Account.GetByID(requester.ID, nested.M{"counters": 1})
+	account := _Model.Account.GetByID(requester.ID, tools.M{"counters": 1})
 	if account != nil {
-		response.OkWithData(nested.M{
+		response.OkWithData(tools.M{
 			"unread_notifications": account.Counters.UnreadNotifications,
 			"total_notifications":  account.Counters.TotalNotifications,
 		})
 	} else {
-		response.Error(nested.ERR_UNKNOWN, []string{})
+		response.Error(global.ERR_UNKNOWN, []string{})
 	}
 	return
 }

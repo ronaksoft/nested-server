@@ -2,6 +2,8 @@ package nestedServiceClient
 
 import (
 	"encoding/json"
+	"git.ronaksoft.com/nested/server/pkg/global"
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"strings"
 
 	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
@@ -23,7 +25,7 @@ type PlaceOrder map[string]int
 
 // @Command:	client/get_server_details
 func (s *ClientService) getServerDetails(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
-	r := nested.M{
+	r := tools.M{
 		"cyrus_id":         s.Worker().Config().GetString("BUNDLE_ID"),
 		"server_timestamp": nested.Timestamp(),
 	}
@@ -37,7 +39,7 @@ func (s *ClientService) uploadContacts(requester *nested.Account, request *neste
 	contacts := new(ClientContacts)
 	if v, ok := request.Data["contacts"].(string); ok {
 		if err := json.Unmarshal([]byte(v), contacts); err != nil {
-			response.Error(nested.ERR_INVALID, []string{"contacts"})
+			response.Error(global.ERR_INVALID, []string{"contacts"})
 			return
 		}
 		// fix the phone numbers
@@ -52,7 +54,7 @@ func (s *ClientService) uploadContacts(requester *nested.Account, request *neste
 			//_Model.Phone.SaveContact(c)
 		}
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"contacts"})
+		response.Error(global.ERR_INCOMPLETE, []string{"contacts"})
 		return
 	}
 
@@ -67,27 +69,27 @@ func (s *ClientService) saveKey(requester *nested.Account, request *nestedGatewa
 	if v, ok := request.Data["key_name"].(string); ok {
 		keyName = v
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"key_name"})
+		response.Error(global.ERR_INCOMPLETE, []string{"key_name"})
 		return
 	}
 	if v, ok := request.Data["key_value"].(string); ok {
-		if len(keyValue) > nested.DEFAULT_MAX_CLIENT_OBJ_SIZE {
-			response.Error(nested.ERR_LIMIT, []string{"key_value"})
+		if len(keyValue) > global.DEFAULT_MAX_CLIENT_OBJ_SIZE {
+			response.Error(global.ERR_LIMIT, []string{"key_value"})
 			return
 		}
 		keyValue = v
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"key_value"})
+		response.Error(global.ERR_INCOMPLETE, []string{"key_value"})
 		return
 	}
 	if requester.Counters.Keys >= requester.Limits.Keys {
-		response.Error(nested.ERR_LIMIT, []string{"keys"})
+		response.Error(global.ERR_LIMIT, []string{"keys"})
 		return
 	}
 	if _Model.Account.SaveKey(requester.ID, keyName, keyValue) {
 		response.Ok()
 	} else {
-		response.Error(nested.ERR_UNKNOWN, []string{})
+		response.Error(global.ERR_UNKNOWN, []string{})
 	}
 }
 
@@ -98,11 +100,11 @@ func (s *ClientService) getKey(requester *nested.Account, request *nestedGateway
 	if v, ok := request.Data["key_name"].(string); ok {
 		keyName = v
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"key_name"})
+		response.Error(global.ERR_INCOMPLETE, []string{"key_name"})
 		return
 	}
 	keyValue := _Model.Account.GetKey(requester.ID, keyName)
-	response.OkWithData(nested.M{"key_value": keyValue})
+	response.OkWithData(tools.M{"key_value": keyValue})
 }
 
 // @Command:	client/get_all_keys
@@ -116,7 +118,7 @@ func (s *ClientService) getAllKeys(requester *nested.Account, request *nestedGat
 		}
 
 	}
-	response.OkWithData(nested.M{"keys": keyNames})
+	response.OkWithData(tools.M{"keys": keyNames})
 }
 
 // @Command:	client/remove_key
@@ -126,7 +128,7 @@ func (s *ClientService) removeKey(requester *nested.Account, request *nestedGate
 	if v, ok := request.Data["key_name"].(string); ok {
 		keyName = v
 	} else {
-		response.Error(nested.ERR_INCOMPLETE, []string{"key_name"})
+		response.Error(global.ERR_INCOMPLETE, []string{"key_name"})
 		return
 	}
 	_Model.Account.RemoveKey(requester.ID, keyName)

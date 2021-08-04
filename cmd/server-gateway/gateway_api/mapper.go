@@ -314,9 +314,10 @@ func (m *Mapper) Place(requester *nested.Account, place nested.Place, access too
 		return r
 	}
 
-	memberType := tools.MemberTypeKeyHolder
+
+	memberType := nested.MemberTypeKeyHolder
 	if access[nested.PlaceAccessControl] {
-		memberType = tools.MemberTypeCreator
+		memberType = nested.MemberTypeCreator
 	}
 	r := tools.M{
 		"_id":             place.ID,
