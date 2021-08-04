@@ -2,7 +2,6 @@ package convert
 
 import (
 	"fmt"
-	"git.ronaksoft.com/nested/server/pkg/log"
 	"os"
 	"os/exec"
 	"path"
@@ -53,7 +52,6 @@ func (ep *ExecPath) init() error {
 		cmdPath := fmt.Sprintf("%s/%s", path.Dir(vField.String()), cmd)
 
 		if execPath, err := exec.LookPath(cmd); err != nil {
-			log.Warn(err.Error())
 			return err
 		} else {
 			cmdPath = execPath

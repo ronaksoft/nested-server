@@ -12,6 +12,7 @@ import (
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 	"github.com/kataras/iris"
+	"go.uber.org/zap"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -789,12 +790,11 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 			defer wgProcess.Done()
 
 			if err := process.Process(r); err != nil {
-				log.Warn(err.Error())
-				// TODO: Retry
+				log.Warn("We got error on process file", zap.Error(err))
 			}
 
 			// Let's read the remaining
-			io.Copy(ioutil.Discard, r)
+			_, _ = io.Copy(ioutil.Discard, r)
 		}(rs[k+1], v)
 	}
 

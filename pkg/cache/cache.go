@@ -22,7 +22,7 @@ type Manager struct {
 func New(redisDSN string) (*Manager, error) {
 	cm := new(Manager)
 	if _, err := redis.Dial("tcp", redisDSN); err != nil {
-		log.Warn(err.Error())
+		log.Warn("We got error on dialing Redis", zap.Error(err), zap.String("DSN", redisDSN))
 		return nil, err
 	} else {
 		cm.Pool = &redis.Pool{
@@ -31,7 +31,7 @@ func New(redisDSN string) (*Manager, error) {
 			Dial: func() (redis.Conn, error) {
 				c, err := redis.Dial("tcp", redisDSN)
 				if err != nil {
-					log.Warn("Redis Pool Connection Error", zap.Error(err))
+					log.Warn("We got error on dial redis pool conn", zap.Error(err))
 				}
 				return c, err
 			},

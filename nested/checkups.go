@@ -151,7 +151,7 @@ func StartupCheckups() {
 				fmt.Sprintf("integers.%s", global.SystemConstantsPlaceMaxChildren):       global.DefaultPlaceMaxChildren,
 			},
 		); err != nil {
-			log.Warn("StartupChecks::", zap.Error(err))
+			log.Warn("We got error on StartupChecks::", zap.Error(err))
 		}
 	}
 

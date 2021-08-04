@@ -331,7 +331,6 @@ func (p *documentMetaReader) Process(r io.Reader) error {
 	switch p.MimeType {
 	case "application/pdf":
 		if m, err := _FileConverter.Pdf.Meta(r); err != nil {
-			log.Warn(err.Error())
 			return err
 
 		} else {
