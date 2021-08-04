@@ -4,9 +4,8 @@ stages:
   - deploy
 
 variables:
-  GATEWAY_VER:  "4.0"
+  GATEWAY_VER:  "5.0"
   MTA_VER: "2.0"
-  NTFY_VER: "3.0"
   DOCKER_TLS_CERTDIR: ""
 
 build:compile:
@@ -14,7 +13,6 @@ build:compile:
   image: golang:latest
   script:
     - mkdir -p $CI_PROJECT_DIR/cmd/server-gateway/_build
-    - mkdir -p $CI_PROJECT_DIR/cmd/server-ntfy/_build
     - mkdir -p $CI_PROJECT_DIR/cmd/server-mta/_build
     - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -mod=vendor -a -ldflags '-s' -o $CI_PROJECT_DIR/cmd/server-gateway/_build/server-gateway ./cmd/server-gateway
     - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -mod=vendor -a -ldflags '-s' -o $CI_PROJECT_DIR/cmd/server-mta/_build/mail-store-cli ./cmd/server-mta/mail-store-cli
@@ -39,9 +37,6 @@ deploy:production:
     - cd ./server-gateway
     - docker build --pull -t $CI_REGISTRY_IMAGE/gateway:$GATEWAY_VER .
     - docker push $CI_REGISTRY_IMAGE/gateway:$GATEWAY_VER
-    - cd ../server-ntfy
-    - docker build --pull -t $CI_REGISTRY_IMAGE/ntfy:$NTFY_VER .
-    - docker push $CI_REGISTRY_IMAGE/ntfy:$NTFY_VER
     - cd ../server-mta
     - docker build --pull -t $CI_REGISTRY_IMAGE/mta:$MTA_VER .
     - docker push $CI_REGISTRY_IMAGE/mta:$MTA_VER
@@ -62,9 +57,6 @@ deploy:staging:
     - cd ./server-gateway
     - docker build --pull -t $CI_REGISTRY_IMAGE/gateway:MULTI_DOMAIN .
     - docker push $CI_REGISTRY_IMAGE/gateway:MULTI_DOMAIN
-    - cd ../server-ntfy
-    - docker build --pull -t $CI_REGISTRY_IMAGE/ntfy:MULTI_DOMAIN .
-    - docker push $CI_REGISTRY_IMAGE/ntfy:MULTI_DOMAIN
     - cd ../server-mta
     - docker build --pull -t $CI_REGISTRY_IMAGE/mta:MULTI_DOMAIN .
     - docker push $CI_REGISTRY_IMAGE/mta:MULTI_DOMAIN
