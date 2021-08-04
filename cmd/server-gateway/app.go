@@ -2,17 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"git.ronaksoft.com/nested/server/pkg/global"
-	"git.ronaksoft.com/nested/server/pkg/log"
-	"git.ronaksoft.com/nested/server/pkg/pusher"
-	"git.ronaksoft.com/nested/server/pkg/rpc"
-	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
-	"net/http"
-	"os"
-	"strings"
-	"sync"
-	"time"
-
 	"git.ronaksoft.com/nested/server/cmd/server-gateway/gateway_api"
 	"git.ronaksoft.com/nested/server/cmd/server-gateway/gateway_api/account"
 	"git.ronaksoft.com/nested/server/cmd/server-gateway/gateway_api/admin"
@@ -32,11 +21,21 @@ import (
 	"git.ronaksoft.com/nested/server/cmd/server-gateway/gateway_api/system"
 	"git.ronaksoft.com/nested/server/cmd/server-gateway/gateway_api/task"
 	"git.ronaksoft.com/nested/server/cmd/server-gateway/gateway_file"
-	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/nested"
+	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/log"
+	"git.ronaksoft.com/nested/server/pkg/pusher"
+	"git.ronaksoft.com/nested/server/pkg/rpc"
+	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"github.com/iris-contrib/middleware/cors"
 	"github.com/kataras/iris"
 	"github.com/kataras/iris/websocket"
 	"go.uber.org/zap"
+	"net/http"
+	"os"
+	"strings"
+	"sync"
+	"time"
 )
 
 var (

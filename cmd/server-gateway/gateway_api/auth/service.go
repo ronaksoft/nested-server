@@ -2,7 +2,7 @@ package nestedServiceAuth
 
 import (
 	"git.ronaksoft.com/nested/server/cmd/server-gateway/gateway_api"
-	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/nested"
 	"git.ronaksoft.com/nested/server/pkg/rpc"
 )
 

@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"git.ronaksoft.com/nested/server/cmd/server-gateway/gateway_file/convert"
-	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/nested"
 	"go.uber.org/zap"
 	"gopkg.in/fzerorubigd/onion.v3"
 )

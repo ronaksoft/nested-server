@@ -1,7 +1,7 @@
 package api
 
 import (
-	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/nested"
 	"git.ronaksoft.com/nested/server/pkg/log"
 	"git.ronaksoft.com/nested/server/pkg/pusher"
 	"git.ronaksoft.com/nested/server/pkg/rpc"

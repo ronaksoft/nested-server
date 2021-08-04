@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"strings"
 
-	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/nested"
 )
 
 // @Command: system/get_counters

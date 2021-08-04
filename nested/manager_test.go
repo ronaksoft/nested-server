@@ -1,7 +1,7 @@
 package nested_test
 
 import (
-	nested "git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/nested"
 )
 
 /*

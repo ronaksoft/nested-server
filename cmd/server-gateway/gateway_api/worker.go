@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/nested"
 	"github.com/globalsign/mgo/bson"
 	"gopkg.in/fzerorubigd/onion.v3"
 )

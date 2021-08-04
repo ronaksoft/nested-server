@@ -16,7 +16,7 @@ import (
 	"sync"
 	"time"
 
-	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/nested"
 	"git.ronaksoft.com/nested/server/pkg/protocol"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"

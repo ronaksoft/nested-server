@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 	"git.ronaksoft.com/nested/server/cmd/server-mta/mail-store-cli/client-storage"
-	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/nested"
 	"go.uber.org/zap"
 	"io"
 	"os"

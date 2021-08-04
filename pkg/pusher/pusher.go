@@ -3,7 +3,7 @@ package pusher
 import (
 	"encoding/json"
 	"fmt"
-	nested "git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/nested"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
 	"git.ronaksoft.com/nested/server/pkg/session"

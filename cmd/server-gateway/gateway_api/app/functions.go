@@ -6,7 +6,7 @@ import (
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"strings"
 
-	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/nested"
 )
 
 // @Command: app/exists

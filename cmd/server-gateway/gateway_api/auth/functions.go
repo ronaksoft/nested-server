@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/nested"
 )
 
 // @Command:	auth/get_verification

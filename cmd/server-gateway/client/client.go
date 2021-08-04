@@ -1,7 +1,7 @@
 package nestedGateway
 
 import (
-	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/nested"
 )
 
 type UploadedFile struct {

@@ -5,7 +5,7 @@ import (
 	"crypto/sha512"
 	"encoding/json"
 	"fmt"
-	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/nested"
 	"github.com/spf13/cobra"
 	"os"
 	"strconv"

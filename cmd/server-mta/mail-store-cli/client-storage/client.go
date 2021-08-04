@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/nested"
 	"git.ronaksoft.com/nested/server/pkg/protocol"
 	"io"
 	"mime/multipart"

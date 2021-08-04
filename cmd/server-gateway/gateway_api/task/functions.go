@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/nested"
 	"github.com/globalsign/mgo/bson"
 	"time"
 )

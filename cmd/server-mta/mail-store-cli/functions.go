@@ -7,7 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"git.ronaksoft.com/nested/server/cmd/server-mta/mail-store-cli/client-storage"
-	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/nested"
 	"github.com/jhillyerd/enmime"
 	"go.uber.org/zap"
 	"io"

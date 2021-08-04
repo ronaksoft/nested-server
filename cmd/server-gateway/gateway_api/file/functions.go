@@ -1,7 +1,7 @@
 package nestedServiceFile
 
 import (
-	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/nested"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/rpc"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"

@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"git.ronaksoft.com/nested/server/cmd/server-gateway/gateway_api"
-	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/nested"
 	"github.com/globalsign/mgo/bson"
 )
 
