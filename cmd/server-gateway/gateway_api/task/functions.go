@@ -3,11 +3,11 @@ package nestedServiceTask
 import (
 	"encoding/base64"
 	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/rpc"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"strconv"
 	"strings"
 
-	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoft.com/nested/server/model"
 	"github.com/globalsign/mgo/bson"
 	"time"
@@ -27,7 +27,7 @@ import (
 // @Input:	todos				string		+	(base64(txt);weight[1-10],...)
 // @Input:	due_date			    int 		+	(timestamp milli-seconds)
 // @Input:	due_date_has_clock	bool	+	(compulsory if due_date is set)
-func (s *TaskService) create(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) create(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	// Initialize Task Create Query
 	tcr := nested.TaskCreateRequest{
 		AssignorID: requester.ID,
@@ -170,7 +170,7 @@ func (s *TaskService) create(requester *nested.Account, request *nestedGateway.R
 // @Command:	task/add_comment
 // @Input:	task_id		string	*
 // @Input:	txt			string	*
-func (s *TaskService) addComment(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) addComment(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var commentText string
 	task := s.Worker().Argument().GetTask(request, response)
 	if task == nil {
@@ -203,7 +203,7 @@ func (s *TaskService) addComment(requester *nested.Account, request *nestedGatew
 // @Command:	task/add_attachment
 // @Input:	task_id				string	*
 // @Input:	universal_id			string 	*	(comma separated)
-func (s *TaskService) addAttachment(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) addAttachment(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var universalIDs []nested.UniversalID
 	task := s.Worker().Argument().GetTask(request, response)
 	if task == nil {
@@ -239,7 +239,7 @@ func (s *TaskService) addAttachment(requester *nested.Account, request *nestedGa
 // @Command:	task/add_label
 // @Input:	task_id				string	*
 // @Input:	label_id				string	+	(comma separated)
-func (s *TaskService) addLabel(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) addLabel(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var labelIDs []string
 	task := s.Worker().Argument().GetTask(request, response)
 	if task == nil {
@@ -270,7 +270,7 @@ func (s *TaskService) addLabel(requester *nested.Account, request *nestedGateway
 // @Input:	task_id			string	*
 // @Input:	txt 				string	*
 // @Input:	weight			int		+	(between 1 - 10)
-func (s *TaskService) addTodo(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) addTodo(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var todoText string
 	var todoWeight = 1
 	task := s.Worker().Argument().GetTask(request, response)
@@ -310,7 +310,7 @@ func (s *TaskService) addTodo(requester *nested.Account, request *nestedGateway.
 // @Command: task/add_watcher
 // @Input:	task_id		string		*
 // @Input:	watcher_id	string		*	(comma separated)
-func (s *TaskService) addWatcher(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) addWatcher(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var watcherIDs []string
 	task := s.Worker().Argument().GetTask(request, response)
 	if task == nil {
@@ -343,7 +343,7 @@ func (s *TaskService) addWatcher(requester *nested.Account, request *nestedGatew
 // @Command: task/add_editor
 // @Input:	task_id		string		*
 // @Input:	editor_id	string		*	(comma separated)
-func (s *TaskService) addEditor(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) addEditor(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var editorIDs []string
 	task := s.Worker().Argument().GetTask(request, response)
 	if task == nil {
@@ -376,7 +376,7 @@ func (s *TaskService) addEditor(requester *nested.Account, request *nestedGatewa
 // @Command: task/update_assignee
 // @Input:	task_id		string		*
 // @Input:	account_id	string		* (comma separated)
-func (s *TaskService) updateAssignee(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) updateAssignee(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var accountIDs []string
 	task := s.Worker().Argument().GetTask(request, response)
 	if task == nil {
@@ -413,7 +413,7 @@ func (s *TaskService) updateAssignee(requester *nested.Account, request *nestedG
 // @Command: task/add_candidate
 // @Input:	task_id			string		*
 // @Input:	candidate_id	string		*	(comma separated)
-func (s *TaskService) addCandidate(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) addCandidate(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var candidateIDs []string
 	task := s.Worker().Argument().GetTask(request, response)
 	if task == nil {
@@ -447,7 +447,7 @@ func (s *TaskService) addCandidate(requester *nested.Account, request *nestedGat
 // @Input:	filter 			string 	*	("assigned_to_me" | "created_by_me" | "watched" | "candidate" | "upcoming")
 // @Input:	status_filter	int		+	(comma separated)[Max. 10 TASK_STATE]
 // @Pagination
-func (s *TaskService) getByFilter(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) getByFilter(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var filter string
 	var statusFilter []nested.TaskStatus
 	var tasks []nested.Task
@@ -516,7 +516,7 @@ func (s *TaskService) getByFilter(requester *nested.Account, request *nestedGate
 // @Input:      keyword             string
 // @Input:      due_date            float64      (days)
 // @Input:      created_at          float64      (days)
-func (s *TaskService) getByCustomFilter(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) getByCustomFilter(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var assignorIDs, assigneeIDs, labelIDs []string
 	var labelLogic = "and"
 	var statusFilter []nested.TaskStatus
@@ -590,7 +590,7 @@ func (s *TaskService) getByCustomFilter(requester *nested.Account, request *nest
 // @Input:	only_comments	bool		+
 // @Input:	details			bool		+
 // @Pagination
-func (s *TaskService) getActivities(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) getActivities(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var onlyComments, details bool
 	var activities []nested.TaskActivity
 
@@ -627,7 +627,7 @@ func (s *TaskService) getActivities(requester *nested.Account, request *nestedGa
 
 // @Command:	task/get_many
 // @Input:	task_id		string	*	(comma separated)
-func (s *TaskService) getMany(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) getMany(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var taskIDs []bson.ObjectId
 	if v, ok := request.Data["task_id"].(string); ok {
 		ids := strings.SplitN(v, ",", global.DefaultMaxResultLimit)
@@ -652,7 +652,7 @@ func (s *TaskService) getMany(requester *nested.Account, request *nestedGateway.
 // @Command: task/get_many_activities
 // @Input:	activity_id		string	*	(comma separated)
 // @Input:	details			bool		+
-func (s *TaskService) getManyActivities(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) getManyActivities(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var taskActivityIDs []bson.ObjectId
 	var details bool
 	if v, ok := request.Data["activity_id"].(string); ok {
@@ -679,7 +679,7 @@ func (s *TaskService) getManyActivities(requester *nested.Account, request *nest
 // @Command:	task/remove_attachment
 // @Input:	task_id			string	*
 // @Input:	universal_id		string	*	(comma separated)
-func (s *TaskService) removeAttachment(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) removeAttachment(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var attachmentIDs []nested.UniversalID
 	task := s.Worker().Argument().GetTask(request, response)
 	if task == nil {
@@ -704,7 +704,7 @@ func (s *TaskService) removeAttachment(requester *nested.Account, request *neste
 
 // @Command:	task/remove
 // @Input:	task_id		string	*
-func (s *TaskService) remove(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) remove(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	task := s.Worker().Argument().GetTask(request, response)
 	if task == nil {
 		return
@@ -725,7 +725,7 @@ func (s *TaskService) remove(requester *nested.Account, request *nestedGateway.R
 // @Command:	task/remove_comment
 // @Input:	task_id			string	*
 // @Input:	activity_id		string	*
-func (s *TaskService) removeComment(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) removeComment(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var activityID bson.ObjectId
 	task := s.Worker().Argument().GetTask(request, response)
 	if task == nil {
@@ -762,7 +762,7 @@ func (s *TaskService) removeComment(requester *nested.Account, request *nestedGa
 // @Command:	task/remove_label
 // @Input:	task_id			string	*
 // @Input:	label_id			string	*	(comma separated)
-func (s *TaskService) removeLabel(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) removeLabel(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var labelIDs []string
 	task := s.Worker().Argument().GetTask(request, response)
 	if task == nil {
@@ -793,7 +793,7 @@ func (s *TaskService) removeLabel(requester *nested.Account, request *nestedGate
 // @Command:	task/remove_todo
 // @Input:	task_id			string	*
 // @Input:	todo_id			int		*		(comma separated)
-func (s *TaskService) removeTodo(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) removeTodo(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var todoIDs []int
 	task := s.Worker().Argument().GetTask(request, response)
 	if task == nil {
@@ -824,7 +824,7 @@ func (s *TaskService) removeTodo(requester *nested.Account, request *nestedGatew
 // @Command:	task/remove_watcher
 // @Input:	task_id		string		*
 // @Input:	watcher_id	string		*		(comma separated)
-func (s *TaskService) removeWatcher(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) removeWatcher(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var watcherIDs []string
 	task := s.Worker().Argument().GetTask(request, response)
 	if task == nil {
@@ -853,7 +853,7 @@ func (s *TaskService) removeWatcher(requester *nested.Account, request *nestedGa
 // @Command:	task/remove_editor
 // @Input:	task_id		string		*
 // @Input:	editor_id	string		*		(comma separated)
-func (s *TaskService) removeEditor(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) removeEditor(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var editorIDs []string
 	task := s.Worker().Argument().GetTask(request, response)
 	if task == nil {
@@ -882,7 +882,7 @@ func (s *TaskService) removeEditor(requester *nested.Account, request *nestedGat
 // @Command:	task/remove_candidate
 // @Input:	task_id				string		*
 // @Input:	candidate_id		string		*		(comma separated)
-func (s *TaskService) removeCandidate(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) removeCandidate(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var candidateIDs []string
 	task := s.Worker().Argument().GetTask(request, response)
 	if task == nil {
@@ -912,7 +912,7 @@ func (s *TaskService) removeCandidate(requester *nested.Account, request *nested
 // @Input:	task_id		string		*
 // @Input:	response		string		*	(accept | reject | resign)
 // @Input:	reason		string		+
-func (s *TaskService) respond(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) respond(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var respond, reason string
 	task := s.Worker().Argument().GetTask(request, response)
 	if task == nil {
@@ -979,7 +979,7 @@ func (s *TaskService) respond(requester *nested.Account, request *nestedGateway.
 // @Input:	task_id		string		*
 // @Input:	status		int			*		(TaskStatusCompleted | TaskStatusHold | TaskStatusCanceled | TaskStatusFailed)
 // @Deprecated
-func (s *TaskService) setStatus(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) setStatus(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var status nested.TaskStatus
 	task := s.Worker().Argument().GetTask(request, response)
 	if task == nil {
@@ -1008,7 +1008,7 @@ func (s *TaskService) setStatus(requester *nested.Account, request *nestedGatewa
 // @Command: task/set_state
 // @Input:	task_id		string		*
 // @Input:	state		string		*		("complete" | "hold" | "in_progress" | "failed")
-func (s *TaskService) setState(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) setState(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var state string
 	task := s.Worker().Argument().GetTask(request, response)
 	if task == nil {
@@ -1069,7 +1069,7 @@ func (s *TaskService) setState(requester *nested.Account, request *nestedGateway
 // @Input:	desc 					string	+
 // @Input:	due_date				int 	+	(timestamp milli-seconds)
 // @Input:	due_date_has_clock		bool	+	(compulsory if due_date is set)
-func (s *TaskService) update(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) update(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var title, desc string
 	var dueDate uint64
 	var dueDateHasClock bool
@@ -1134,7 +1134,7 @@ func (s *TaskService) update(requester *nested.Account, request *nestedGateway.R
 // @Input:	txt 				string	*
 // @Input:	weight			int		+	(between 1 - 10)
 // @Input:	done				bool		+
-func (s *TaskService) updateTodo(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *TaskService) updateTodo(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var todoID int
 	var todo *nested.TaskToDo
 	task := s.Worker().Argument().GetTask(request, response)

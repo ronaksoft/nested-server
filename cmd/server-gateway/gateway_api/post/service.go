@@ -1,9 +1,9 @@
 package nestedServicePost
 
 import (
-	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoft.com/nested/server/cmd/server-gateway/gateway_api"
 	"git.ronaksoft.com/nested/server/model"
+	"git.ronaksoft.com/nested/server/pkg/rpc"
 )
 
 const (
@@ -86,7 +86,7 @@ func (s *PostService) GetServicePrefix() string {
 	return SERVICE_PREFIX
 }
 
-func (s *PostService) ExecuteCommand(authLevel api.AuthLevel, requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PostService) ExecuteCommand(authLevel api.AuthLevel, requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	commandName := request.Command
 	if cmd, ok := s.serviceCommands[commandName]; ok {
 		if authLevel >= cmd.MinAuthLevel {

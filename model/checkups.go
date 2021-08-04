@@ -134,7 +134,7 @@ func StartupCheckups() {
 		_Manager.Place.CreatePersonalPlace(p)
 
 		// add the new user to his/her new personal place
-		_Manager.Place.AddKeyholder("nested", "nested")
+		_Manager.Place.AddKeyHolder("nested", "nested")
 		_Manager.Place.Promote("nested", "nested")
 
 		if err := _MongoDB.C(global.CollectionSystemInternal).Insert(

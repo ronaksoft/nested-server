@@ -2,17 +2,17 @@ package nestedServiceSession
 
 import (
 	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/rpc"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"strings"
 
-	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoft.com/nested/server/model"
 	"github.com/globalsign/mgo/bson"
 )
 
 // @Command:	session/close
 // @CommandInfo:	terminates the current session.
-func (s *SessionService) close(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *SessionService) close(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	session := s.Worker().Model().Session.GetByID(request.SessionKey)
 	if s == nil {
 		response.Error(global.ErrInvalid, []string{"_sk"})
@@ -24,7 +24,7 @@ func (s *SessionService) close(requester *nested.Account, request *nestedGateway
 	}
 	s.Worker().Model().Session.Expire(request.SessionKey)
 	if session.DeviceID != "" {
-		s.Worker().Pusher().Notification.UnregisterDevice(session.DeviceID, session.DeviceToken, session.AccountID)
+		s.Worker().Pusher().UnregisterDevice(session.DeviceID, session.DeviceToken, session.AccountID)
 	}
 	response.Ok()
 
@@ -39,7 +39,7 @@ func (s *SessionService) close(requester *nested.Account, request *nestedGateway
 // @Input:	_did			string		+
 // @Input:	_dt			string		+
 // @Input:	_os			string		+
-func (s *SessionService) recall(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *SessionService) recall(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var sk bson.ObjectId
 	var ss, did, dt, os string
 	if v, ok := request.Data["_sk"].(string); ok {
@@ -89,7 +89,7 @@ func (s *SessionService) recall(requester *nested.Account, request *nestedGatewa
 
 	// Register device in NTFY
 	if did != "" && dt != "" && os != "" {
-		s.Worker().Pusher().Notification.RegisterDevice(did, dt, os, session.AccountID)
+		s.Worker().Pusher().RegisterDevice(did, dt, os, session.AccountID)
 	}
 
 	// Update Session Document
@@ -103,7 +103,7 @@ func (s *SessionService) recall(requester *nested.Account, request *nestedGatewa
 
 	// Register websocket in NTFY
 	if len(request.WebsocketID) > 0 {
-		s.Worker().Pusher().Notification.RegisterWebsocket(session.AccountID, did, s.Worker().Config().GetString("BUNDLE_ID"), request.WebsocketID)
+		s.Worker().Pusher().RegisterWebsocket(session.AccountID, did, s.Worker().Config().GetString("BUNDLE_ID"), request.WebsocketID)
 	}
 
 	account := s.Worker().Model().Account.GetByID(
@@ -149,7 +149,7 @@ func (s *SessionService) recall(requester *nested.Account, request *nestedGatewa
 // @Input:	_did		string	+
 // @Input:	_dt		string	+
 // @Input:	_os		string	+
-func (s *SessionService) register(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *SessionService) register(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var uid, pass, did, dt, os string
 	if v, ok := request.Data["uid"].(string); ok {
 		uid = strings.ToLower(v)
@@ -222,14 +222,14 @@ func (s *SessionService) register(requester *nested.Account, request *nestedGate
 	session.ClientVersion = request.ClientVersion
 	session.Login()
 
-	// Register device in NTFY
+	// Register device in Pusher
 	if did != "" && dt != "" && os != "" {
-		s.Worker().Pusher().Notification.RegisterDevice(did, dt, os, uid)
+		_ = s.Worker().Pusher().RegisterDevice(did, dt, os, uid)
 	}
 
-	// Register websocket in NTFY
+	// Register websocket in Pusher
 	if len(request.WebsocketID) > 0 {
-		s.Worker().Pusher().Notification.RegisterWebsocket(uid, did, s.Worker().Config().GetString("BUNDLE_ID"), request.WebsocketID)
+		_ = s.Worker().Pusher().RegisterWebsocket(uid, did, s.Worker().Config().GetString("BUNDLE_ID"), request.WebsocketID)
 	}
 
 	r := tools.M{
@@ -262,7 +262,7 @@ func (s *SessionService) register(requester *nested.Account, request *nestedGate
 }
 
 // @Command:	session/get_actives
-func (s *SessionService) getAllActives(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *SessionService) getAllActives(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	sessions := s.Worker().Model().Session.GetByUser(requester.ID, s.Worker().Argument().GetPagination(request))
 	r := make([]tools.M, 0, len(sessions))
 	for _, s := range sessions {
@@ -282,7 +282,7 @@ func (s *SessionService) getAllActives(requester *nested.Account, request *neste
 
 // @Command:	session/close_active
 // @Input:	_sk		string		*	(session key)
-func (s *SessionService) closeActive(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *SessionService) closeActive(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var sessionKey bson.ObjectId
 	if v, ok := request.Data["_sk"].(string); ok {
 		if bson.IsObjectIdHex(v) {
@@ -317,7 +317,7 @@ func (s *SessionService) closeActive(requester *nested.Account, request *nestedG
 }
 
 // @Command: session/close_all_actives
-func (s *SessionService) closeAllActives(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *SessionService) closeAllActives(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	session := s.Worker().Model().Session.GetByID(request.SessionKey)
 	if session == nil {
 		response.Error(global.ErrUnknown, []string{})

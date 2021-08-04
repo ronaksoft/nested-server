@@ -170,7 +170,7 @@ func (m *Model) ExternalPushPlaceActivityPostAdded(post *nested.Post) {
 }
 
 func (m *Model) InternalPlaceActivitySyncPush(targets []string, placeID string, action int) {
-	_LOG.Info("InternalPlaceActivitySyncPush", zap.Strings("targets", targets), zap.String("placeID", placeID), zap.Int("action", action))
+	_LOG.Info("internalPlaceActivitySyncPush", zap.Strings("targets", targets), zap.String("placeID", placeID), zap.Int("action", action))
 	if len(targets) == 0 {
 		return
 	}
@@ -190,7 +190,7 @@ func (m *Model) InternalPlaceActivitySyncPush(targets []string, placeID string, 
 			},
 		}
 		if jmsg, err := json.Marshal(msg); err != nil {
-			_LOG.Error("NotificationClient::InternalPlaceActivitySyncPush::Error::", zap.Error(err))
+			_LOG.Error("NotificationClient::internalPlaceActivitySyncPush::Error::", zap.Error(err))
 		} else {
 			if err := m.InternalPush(targets[iStart:iEnd], string(jmsg), false); err != nil {
 				_LOG.Error(err.Error())
@@ -223,7 +223,7 @@ func (m *Model) InternalPush(targets []string, msg string, localonly bool) error
 	}
 
 	if b, err := json.Marshal(cmd); err != nil {
-		_LOG.Error("NotificationClient::InternalPush::Error::", zap.Error(err))
+		_LOG.Error("NotificationClient::internalPush::Error::", zap.Error(err))
 		return err
 	} else {
 		if err := m.Ntfy.Nat.Publish("NTFY.PUSH.INTERNAL", b); err != nil {

@@ -1,9 +1,9 @@
 package nestedServiceFile
 
 import (
-	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoft.com/nested/server/model"
 	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/rpc"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"github.com/globalsign/mgo/bson"
 )
@@ -13,7 +13,7 @@ import (
 // @Input:	universal_id	string		*
 // @Input:	post_id			string		+
 // @Input: task_id			string		+
-func (s *FileService) getDownloadToken(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *FileService) getDownloadToken(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var uniID nested.UniversalID
 	var fileInfo *nested.FileInfo
 	var post *nested.Post
@@ -93,7 +93,7 @@ func (s *FileService) getDownloadToken(requester *nested.Account, request *neste
 
 // @Command: file/get_upload_token
 // @CommandInfo:	Creates an upload token for the user of current session
-func (s *FileService) getUploadToken(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *FileService) getUploadToken(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	if token, err := nested.GenerateUploadToken(request.SessionKey); err != nil {
 		response.Error(global.ErrUnknown, []string{})
 	} else {
@@ -104,7 +104,7 @@ func (s *FileService) getUploadToken(requester *nested.Account, request *nestedG
 
 // @Command: file/get
 // @Input:	universal_id		string	*
-func (s *FileService) getFileByID(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *FileService) getFileByID(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var f *nested.FileInfo
 	if v, ok := request.Data["universal_id"].(string); ok {
 		uniID := nested.UniversalID(v)
@@ -122,7 +122,7 @@ func (s *FileService) getFileByID(requester *nested.Account, request *nestedGate
 
 // @Command:	file/get_recent_files
 // @Pagination
-func (s *FileService) getRecentFiles(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *FileService) getRecentFiles(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	files := _Model.File.GetFilesByPlaces(requester.BookmarkedPlaceIDs, s.Worker().Argument().GetPagination(request))
 	r := make([]tools.M, 0, len(files))
 	for _, f := range files {
@@ -133,7 +133,7 @@ func (s *FileService) getRecentFiles(requester *nested.Account, request *nestedG
 
 // @Command: file/get_by_token
 // @Input:	token		string	*
-func (s *FileService) getFileByToken(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *FileService) getFileByToken(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var f *nested.FileInfo
 	var uniID nested.UniversalID
 	if v, ok := request.Data["token"].(string); ok {
@@ -153,10 +153,10 @@ func (s *FileService) getFileByToken(requester *nested.Account, request *nestedG
 	response.OkWithData(s.Worker().Map().FileInfo(*f))
 }
 
-func (s *FileService) uploadFile(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *FileService) uploadFile(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	// TODO:: implement it
 }
 
-func (s *FileService) downloadFile(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *FileService) downloadFile(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	// TODO:: implement it
 }

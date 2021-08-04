@@ -14,20 +14,21 @@ import (
 )
 
 const (
-	THUMBNAIL_32      string = "x32"
-	THUMBNAIL_64      string = "x64"
-	THUMBNAIL_128     string = "x128"
-	THUMBNAIL_PREVIEW string = "pre"
+	Thumbnail32      string = "x32"
+	Thumbnail64      string = "x64"
+	Thumbnail128     string = "x128"
+	ThumbnailPreview string = "pre"
 )
 
-var DEFAULT_THUMBNAIL_SIZES = map[string]uint{
-	THUMBNAIL_32:      32,
-	THUMBNAIL_64:      64,
-	THUMBNAIL_128:     256,
-	THUMBNAIL_PREVIEW: 1024,
+var DefaultThumbnailSizes = map[string]uint{
+	Thumbnail32:      32,
+	Thumbnail64:      64,
+	Thumbnail128:     256,
+	ThumbnailPreview: 1024,
 }
 
 type pipe func(w io.Writer, r io.Reader) (int64, error)
+
 type Processor interface {
 	Process(io.Reader) error
 }

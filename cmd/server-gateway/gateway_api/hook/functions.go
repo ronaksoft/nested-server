@@ -2,10 +2,10 @@ package nestedServiceHook
 
 import (
 	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/rpc"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"strconv"
 
-	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoft.com/nested/server/model"
 	"github.com/globalsign/mgo/bson"
 )
@@ -15,7 +15,7 @@ import (
 // @Input: hook_name       string     *
 // @Input: event_type      int        *
 // @Input: url             string     *
-func (s *HookService) addPlaceHook(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *HookService) addPlaceHook(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var place *nested.Place
 	var url, hookName string
 	var eventType int
@@ -63,7 +63,7 @@ func (s *HookService) addPlaceHook(requester *nested.Account, request *nestedGat
 // @Input: hook_name       string     *
 // @Input: event_type      int        * (0x201)
 // @Input: url             string     *
-func (s *HookService) addAccountHook(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *HookService) addAccountHook(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var account *nested.Account
 	var url, hookName string
 	var eventType int
@@ -108,7 +108,7 @@ func (s *HookService) addAccountHook(requester *nested.Account, request *nestedG
 
 // @Command:	hook/remove
 // @Input: hook_id          string    *
-func (s *HookService) removeHook(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *HookService) removeHook(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var hookID bson.ObjectId
 	if v, ok := request.Data["hook_id"].(string); ok {
 		if !bson.IsObjectIdHex(v) {
@@ -129,7 +129,7 @@ func (s *HookService) removeHook(requester *nested.Account, request *nestedGatew
 }
 
 // @Command:    hook/list
-func (s *HookService) list(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *HookService) list(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	hooks := s.Worker().Model().Hook.GetHooksBySetterID(
 		requester.ID,
 		s.Worker().Argument().GetPagination(request),

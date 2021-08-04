@@ -1,15 +1,15 @@
 package nestedServiceContact
 
 import (
-	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoft.com/nested/server/model"
 	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/rpc"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 )
 
 // @Command:	contact/add
 // @Input:	contact_id		string	*
-func (s *ContactService) addContact(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *ContactService) addContact(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var contactID string
 	if v, ok := request.Data["contact_id"].(string); ok {
 		contactID = v
@@ -31,7 +31,7 @@ func (s *ContactService) addContact(requester *nested.Account, request *nestedGa
 
 // @Command:	contact/add_favorite
 // @Input:	contact_id		string	*
-func (s *ContactService) addContactToFavorite(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *ContactService) addContactToFavorite(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var contactID string
 	if v, ok := request.Data["contact_id"].(string); ok {
 		contactID = v
@@ -58,7 +58,7 @@ func (s *ContactService) addContactToFavorite(requester *nested.Account, request
 
 // @Command:	contact/get
 // @Input:	contact_id		string	*
-func (s *ContactService) getContact(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *ContactService) getContact(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var contactID string
 	if v, ok := request.Data["contact_id"].(string); ok {
 		contactID = v
@@ -76,7 +76,7 @@ func (s *ContactService) getContact(requester *nested.Account, request *nestedGa
 
 // @Command:	contact/get_all
 // @Input:	hash		string	+
-func (s *ContactService) getAllContacts(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *ContactService) getAllContacts(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var hash string
 	if v, ok := request.Data["hash"].(string); ok {
 		hash = v
@@ -114,7 +114,7 @@ func (s *ContactService) getAllContacts(requester *nested.Account, request *nest
 
 // @Command:	contact/remove_contact
 // @Input:	contact_id		string	*
-func (s *ContactService) removeContact(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *ContactService) removeContact(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var contactID string
 	if v, ok := request.Data["contact_id"].(string); ok {
 		contactID = v
@@ -142,7 +142,7 @@ func (s *ContactService) removeContact(requester *nested.Account, request *neste
 
 // @Command:	contact/remove_favorite
 // @Input:	contact_id		string	*
-func (s *ContactService) removeContactFromFavorite(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *ContactService) removeContactFromFavorite(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var contactID string
 	if v, ok := request.Data["contact_id"].(string); ok {
 		contactID = v

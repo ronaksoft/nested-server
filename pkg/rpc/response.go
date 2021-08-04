@@ -1,9 +1,18 @@
-package nestedGateway
+package rpc
 
 import (
 	"git.ronaksoft.com/nested/server/pkg/global"
-	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
+	"git.ronaksoft.com/nested/server/pkg/toolbox"
 )
+
+/*
+   Creation Time: 2021 - Aug - 04
+   Created by:  (ehsan)
+   Maintainers:
+      1.  Ehsan N. Moosa (E2)
+   Auditor: Ehsan N. Moosa (E2)
+   Copyright Ronak Software Group 2020
+*/
 
 // Response is the json wrapper around the server's response
 type Response struct {

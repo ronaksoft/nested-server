@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/rpc"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"html/template"
 	"log"
@@ -14,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoft.com/nested/server/cmd/server-gateway/gateway_api"
 	"git.ronaksoft.com/nested/server/model"
 )
@@ -23,7 +23,7 @@ import (
 // @Input:  msg_id          string      *
 // @Input:  msg_body        string      *
 // @Input:  msg_subject     string      *
-func (s *AdminService) setMessageTemplate(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) setMessageTemplate(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var msgID, msgSubject, msgBody string
 	if v, ok := request.Data["msg_id"].(string); ok && len(v) > 0 {
 		msgID = v
@@ -51,7 +51,7 @@ func (s *AdminService) setMessageTemplate(requester *nested.Account, request *ne
 }
 
 // @Command: admin/get_message_templates
-func (s *AdminService) getMessageTemplates(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) getMessageTemplates(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	response.OkWithData(tools.M{
 		"message_templates": s.Worker().Model().System.GetMessageTemplates(),
 	})
@@ -59,7 +59,7 @@ func (s *AdminService) getMessageTemplates(requester *nested.Account, request *n
 
 // @Command: admin/remove_message_template
 // @Input:  msg_id          string      *
-func (s *AdminService) removeMessageTemplates(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) removeMessageTemplates(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var msgID string
 	if v, ok := request.Data["msg_id"].(string); ok && len(v) > 0 {
 		msgID = v
@@ -73,7 +73,7 @@ func (s *AdminService) removeMessageTemplates(requester *nested.Account, request
 
 // @Command: admin/health_check
 // @Input:	check_state		bool		+
-func (s *AdminService) checkSystemHealth(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) checkSystemHealth(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var checkState bool
 	if v, ok := request.Data["check_state"].(bool); ok {
 		checkState = v
@@ -103,7 +103,7 @@ func (s *AdminService) checkSystemHealth(requester *nested.Account, request *nes
 // @Input:  attaches			string 	+	(comma separated)
 // @Input:  content_type		string	+	(text/plain | text/html)
 // @Input:  iframe_url         string +
-func (s *AdminService) createPost(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) createPost(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var targets []string
 	var attachments []string
 	var subject, body, content_type, iframeUrl string
@@ -278,7 +278,7 @@ func (s *AdminService) createPost(requester *nested.Account, request *nestedGate
 // @Input:  post_id			string	+
 // @Input:  txt     			string 	+
 // @Input:  attachment_id	    string	+
-func (s *AdminService) addComment(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) addComment(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var post *nested.Post
 	var txt string
 	var attachmentID nested.UniversalID
@@ -328,7 +328,7 @@ func (s *AdminService) addComment(requester *nested.Account, request *nestedGate
 
 // @Command: admin/promote
 // @Input:	account_id		string		*
-func (s *AdminService) promoteAccount(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) promoteAccount(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var accountID string
 	if v, ok := request.Data["account_id"].(string); ok {
 		accountID = v
@@ -346,7 +346,7 @@ func (s *AdminService) promoteAccount(requester *nested.Account, request *nested
 
 // @Command: admin/demote
 // @Input:	account_id		string		*
-func (s *AdminService) demoteAccount(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) demoteAccount(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var accountID string
 	if v, ok := request.Data["account_id"].(string); ok {
 		accountID = v
@@ -371,7 +371,7 @@ func (s *AdminService) demoteAccount(requester *nested.Account, request *nestedG
 // @Input:	policy.add_member	string	*	(creators | everyone)
 // @Input:	policy.add_post		string	*	(creators | everyone)
 // @Input:	policy.add_place		string	*	(creators | everyone)
-func (s *AdminService) createGrandPlace(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) createGrandPlace(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	pcr := nested.PlaceCreateRequest{}
 	if v, ok := request.Data["place_id"].(string); ok {
 		pcr.ID = strings.ToLower(v)
@@ -489,7 +489,7 @@ func (s *AdminService) createGrandPlace(requester *nested.Account, request *nest
 // @Input:	policy.add_member	string	*	(creators | everyone)
 // @Input:	policy.add_post		string	*	(creators | everyone)
 // @Input:	policy.add_place		string	*	(creators | everyone)
-func (s *AdminService) createPlace(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) createPlace(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	pcr := nested.PlaceCreateRequest{}
 
 	if v, ok := request.Data["place_id"].(string); ok {
@@ -643,7 +643,7 @@ func (s *AdminService) createPlace(requester *nested.Account, request *nestedGat
 // @Input:	policy.add_post			string	+	(creators | everyone)
 // @Input:	policy.add_member		string	+	(creators | everyone)
 // @Input:	policy.add_place			string	+	(creators | everyone)
-func (s *AdminService) updatePlace(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) updatePlace(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var place *nested.Place
 	placeUpdate := tools.M{}
 	placeLimitsUpdate := nested.MI{}
@@ -765,7 +765,7 @@ func (s *AdminService) updatePlace(requester *nested.Account, request *nestedGat
 // @Input:	grand_parent_id 		string			+
 // @Input: sort					string			+	(key_holders | creators | children | place_type)
 // @Pagination
-func (s *AdminService) listPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) listPlaces(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var keyword, filter, grandParentID, sort string
 	if v, ok := request.Data["keyword"].(string); ok {
 		keyword = v
@@ -801,7 +801,7 @@ func (s *AdminService) listPlaces(requester *nested.Account, request *nestedGate
 
 // @Command:	admin/place_remove
 // @Input:	place_id		string		*
-func (s *AdminService) removePlace(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) removePlace(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
 		return
@@ -826,7 +826,7 @@ func (s *AdminService) removePlace(requester *nested.Account, request *nestedGat
 // @Command:	admin/place_add_member
 // @Input:	place_id		string		*
 // @Input: account_id		string		* (comma separated)
-func (s *AdminService) addPlaceMember(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) addPlaceMember(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var place *nested.Place
 	var accountIDs []string
 	var ignoredAccountIDs []string
@@ -880,7 +880,7 @@ func (s *AdminService) addPlaceMember(requester *nested.Account, request *nested
 			continue
 		}
 
-		s.Worker().Model().Place.AddKeyholder(place.ID, accountID)
+		s.Worker().Model().Place.AddKeyHolder(place.ID, accountID)
 
 		// Enables notification by default
 		s.Worker().Model().Account.SetPlaceNotification(accountID, place.ID, true)
@@ -897,7 +897,7 @@ func (s *AdminService) addPlaceMember(requester *nested.Account, request *nested
 // @Command:	admin/place_promote_member
 // @Input:	place_id		string	*
 // @Input:	account_id		string	*
-func (s *AdminService) promotePlaceMember(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) promotePlaceMember(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var accountID string
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
@@ -927,7 +927,7 @@ func (s *AdminService) promotePlaceMember(requester *nested.Account, request *ne
 // @Command:	admin/place_demote_member
 // @Input:	place_id		string	*
 // @Input:	account_id		string	*
-func (s *AdminService) demotePlaceMember(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) demotePlaceMember(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var accountID string
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
@@ -955,7 +955,7 @@ func (s *AdminService) demotePlaceMember(requester *nested.Account, request *nes
 // @Command:	admin/place_remove_member
 // @Input:	place_id		string	*
 // @Input:	account_id		string	*
-func (s *AdminService) removePlaceMember(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) removePlaceMember(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var accountID string
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
@@ -999,7 +999,7 @@ func (s *AdminService) removePlaceMember(requester *nested.Account, request *nes
 
 // @Command:	admin/place_list_members
 // @Input:	place_id		string		*
-func (s *AdminService) listPlaceMembers(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) listPlaceMembers(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
 		return
@@ -1054,7 +1054,7 @@ func (s *AdminService) listPlaceMembers(requester *nested.Account, request *nest
 // @Command:	admin/place_set_picture
 // @Input:	place_id			string	*
 // @Input:	universal_id		string	*
-func (s *AdminService) setPlaceProfilePicture(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) setPlaceProfilePicture(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
 		return
@@ -1084,7 +1084,7 @@ func (s *AdminService) setPlaceProfilePicture(requester *nested.Account, request
 // @Input:	email	 	string	+
 // @Input:	phone		string  *	(format example: 98912345678)
 // @Input:   send_sms    bool       +
-func (s *AdminService) createAccount(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) createAccount(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	baseURL := s.Worker().Config().GetString("WEBAPP_BASE_URL")
 	var uid, pass, fname, lname, gender, dob, country, email, phone string
 	var passAutoGenerated, sendSms bool
@@ -1197,7 +1197,7 @@ func (s *AdminService) createAccount(requester *nested.Account, request *nestedG
 	s.Worker().Model().Place.CreatePersonalPlace(pcr)
 
 	// add the new user to his/her new personal place
-	s.Worker().Model().Place.AddKeyholder(pcr.ID, pcr.AccountID)
+	s.Worker().Model().Place.AddKeyHolder(pcr.ID, pcr.AccountID)
 	s.Worker().Model().Place.Promote(pcr.ID, pcr.AccountID)
 
 	// add the personal place to his/her favorite place
@@ -1222,7 +1222,7 @@ func (s *AdminService) createAccount(requester *nested.Account, request *nestedG
 			}
 			// if user is not a keyHolder or Creator of place grandPlace, then make him to be
 			if !grandPlace.IsMember(uid) {
-				s.Worker().Model().Place.AddKeyholder(grandPlace.ID, uid)
+				s.Worker().Model().Place.AddKeyHolder(grandPlace.ID, uid)
 				// Enables notification by default
 				s.Worker().Model().Account.SetPlaceNotification(uid, grandPlace.ID, true)
 
@@ -1237,7 +1237,7 @@ func (s *AdminService) createAccount(requester *nested.Account, request *nestedG
 				continue
 			}
 			//if !place.HasKeyholderLimit() {
-			s.Worker().Model().Place.AddKeyholder(place.ID, uid)
+			s.Worker().Model().Place.AddKeyHolder(place.ID, uid)
 
 			// Enables notification by default
 			s.Worker().Model().Account.SetPlaceNotification(uid, place.ID, true)
@@ -1315,7 +1315,7 @@ func (s *AdminService) createAccount(requester *nested.Account, request *nestedG
 // @Input:	filter		string	+	(users_enabled | users_disabled | users | devices | all)
 // @Input:	sort 		string	+	(joined_on | birthday | user_id | email)
 // @Pagination
-func (s *AdminService) listAccounts(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) listAccounts(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var keyword, filter, sort string
 	if v, ok := request.Data["keyword"].(string); ok {
 		keyword = v
@@ -1350,7 +1350,7 @@ func (s *AdminService) listAccounts(requester *nested.Account, request *nestedGa
 
 // @Command:	admin/account_disable
 // @Input:	account_id		string	*
-func (s *AdminService) disableAccount(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) disableAccount(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var account *nested.Account
 	if accountID, ok := request.Data["account_id"].(string); ok {
 		account = s.Worker().Model().Account.GetByID(accountID, nil)
@@ -1369,7 +1369,7 @@ func (s *AdminService) disableAccount(requester *nested.Account, request *nested
 
 // @Command:	admin/account_enable
 // @Input:	account_id		string	*
-func (s *AdminService) enableAccount(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) enableAccount(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var account *nested.Account
 
 	// Check License Limit
@@ -1398,7 +1398,7 @@ func (s *AdminService) enableAccount(requester *nested.Account, request *nestedG
 // @Command:	admin/account_set_pass
 // @Input:	account_id		string	*
 // @Input:	new_pass			string	*
-func (s *AdminService) setAccountPassword(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) setAccountPassword(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var newPass string
 	var account *nested.Account
 	if accountID, ok := request.Data["account_id"].(string); ok {
@@ -1427,7 +1427,7 @@ func (s *AdminService) setAccountPassword(requester *nested.Account, request *ne
 
 // @Command:	admin/account_list_places
 // @Input:	account_id		string	*
-func (s *AdminService) listPlacesOfAccount(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) listPlacesOfAccount(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var account *nested.Account
 	if accountID, ok := request.Data["account_id"].(string); ok {
 		account = s.Worker().Model().Account.GetByID(accountID, nil)
@@ -1478,7 +1478,7 @@ func (s *AdminService) listPlacesOfAccount(requester *nested.Account, request *n
 // @Input:	force_password				bool		    +
 // @Input:	limits.grand_places		    int		    +
 // @Input:	authority.label_editor		bool		    +
-func (s *AdminService) updateAccount(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) updateAccount(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var account *nested.Account
 	accountUpdateRequest := nested.AccountUpdateRequest{}
 	accountLimitsUpdateRequest := nested.MI{}
@@ -1585,7 +1585,7 @@ func (s *AdminService) updateAccount(requester *nested.Account, request *nestedG
 // @Command: admin/account_set_picture
 // @Input:	account_id		string		*
 // @Input:	universal_id		string		*
-func (s *AdminService) setAccountProfilePicture(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) setAccountProfilePicture(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var account *nested.Account
 	var uni_id nested.UniversalID
 	if accountID, ok := request.Data["account_id"].(string); ok {
@@ -1614,7 +1614,7 @@ func (s *AdminService) setAccountProfilePicture(requester *nested.Account, reque
 
 // @Command: admin/account_remove_picture
 // @Input:	account_id		string		*
-func (s *AdminService) removeAccountProfilePicture(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) removeAccountProfilePicture(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var account *nested.Account
 	if accountID, ok := request.Data["account_id"].(string); ok {
 		account = s.Worker().Model().Account.GetByID(accountID, nil)
@@ -1666,7 +1666,7 @@ func (s *AdminService) prepareWelcome(accountID string) {
 // @Input:  attaches			string 	+	(comma separated)
 // @Input:  content_type		string	+	(text/plain | text/html)
 // @Input:  iframe_url         string +
-func (s *AdminService) createPostForAllAccounts(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) createPostForAllAccounts(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var targets []string
 	var attachments []string
 	var subject, body, content_type, iframeUrl, filter string
@@ -1779,7 +1779,7 @@ func (s *AdminService) createPostForAllAccounts(requester *nested.Account, reque
 
 // @Command:	admin/default_places_add
 // @Input:  	place_ids			string	+
-func (s *AdminService) addDefaultPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) addDefaultPlaces(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var places []string
 	ids := s.Worker().Model().Place.GetDefaultPlaces()
 	if v, ok := request.Data["place_ids"].(string); ok {
@@ -1819,7 +1819,7 @@ func (s *AdminService) addDefaultPlaces(requester *nested.Account, request *nest
 }
 
 // @Command:	admin/default_places_get
-func (s *AdminService) getDefaultPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) getDefaultPlaces(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	pg := s.Worker().Argument().GetPagination(request)
 	if placeIDs, total := s.Worker().Model().Place.GetDefaultPlacesWithPagination(pg); placeIDs == nil {
 		response.Error(global.ErrUnknown, []string{""})
@@ -1832,7 +1832,7 @@ func (s *AdminService) getDefaultPlaces(requester *nested.Account, request *nest
 
 // @Command:	admin/default_places_remove
 // @Input:  	place_ids			string	+
-func (s *AdminService) removeDefaultPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) removeDefaultPlaces(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var placeIDs []string
 	if v, ok := request.Data["place_ids"].(string); ok {
 		ids := strings.SplitN(v, ",", -1)
@@ -1855,7 +1855,7 @@ func (s *AdminService) removeDefaultPlaces(requester *nested.Account, request *n
 
 // @Command:	admin/default_places_set_users
 // @Input:  	account_ids			string	+
-func (s *AdminService) defaultPlacesSetUsers(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AdminService) defaultPlacesSetUsers(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var accountIDs []string
 	if v, ok := request.Data["account_ids"].(string); ok {
 		ids := strings.SplitN(v, ",", -1)
@@ -1886,7 +1886,7 @@ func (s *AdminService) defaultPlacesSetUsers(requester *nested.Account, request 
 				}
 				// if user is not a keyHolder or Creator of place grandPlace, then make him to be
 				if !grandPlace.IsMember(uid) {
-					s.Worker().Model().Place.AddKeyholder(grandPlace.ID, uid)
+					s.Worker().Model().Place.AddKeyHolder(grandPlace.ID, uid)
 					// Enables notification by default
 					s.Worker().Model().Account.SetPlaceNotification(uid, grandPlace.ID, true)
 
@@ -1901,7 +1901,7 @@ func (s *AdminService) defaultPlacesSetUsers(requester *nested.Account, request 
 					continue
 				}
 				//if !place.HasKeyholderLimit() {
-				s.Worker().Model().Place.AddKeyholder(place.ID, uid)
+				s.Worker().Model().Place.AddKeyHolder(place.ID, uid)
 
 				// Enables notification by default
 				s.Worker().Model().Account.SetPlaceNotification(uid, place.ID, true)

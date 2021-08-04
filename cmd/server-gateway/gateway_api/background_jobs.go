@@ -1,11 +1,9 @@
 package api
 
 import (
-	"log"
 	"sync"
 	"time"
 
-	"git.ronaksoft.com/nested/server/cmd/server-ntfy/client"
 	"git.ronaksoft.com/nested/server/model"
 	"gopkg.in/fzerorubigd/onion.v3"
 )
@@ -13,19 +11,22 @@ import (
 // BackgroundJob are runnable structures handler background workers
 type BackgroundJob struct {
 	chShutdown chan bool
-	server     *API
+	server     *Server
 	period     time.Duration
 	job        func(worker *BackgroundJob)
 }
 
-func NewBackgroundJob(server *API, d time.Duration, f func(w *BackgroundJob)) *BackgroundJob {
-	w := new(BackgroundJob)
-	w.period = d
-	w.job = f
-	w.server = server
-	w.chShutdown = make(chan bool)
-	return w
+func NewBackgroundJob(server *Server, d time.Duration, f func(w *BackgroundJob)) *BackgroundJob {
+	bg := &BackgroundJob{
+		period:     d,
+		job:        f,
+		server:     server,
+		chShutdown: make(chan bool),
+	}
+
+	return bg
 }
+
 func (bw *BackgroundJob) Run(wGroup *sync.WaitGroup) {
 	wGroup.Add(1)
 	defer wGroup.Done()
@@ -38,12 +39,15 @@ func (bw *BackgroundJob) Run(wGroup *sync.WaitGroup) {
 		}
 	}
 }
+
 func (bw *BackgroundJob) Shutdown() {
 	bw.chShutdown <- true
 }
+
 func (bw *BackgroundJob) Config() *onion.Onion {
 	return bw.server.config
 }
+
 func (bw *BackgroundJob) Model() *nested.Manager {
 	return bw.server.model
 }
@@ -63,18 +67,7 @@ func JobReporter(b *BackgroundJob) {
 	)
 }
 
-// JobOverdueTasks
 func JobOverdueTasks(b *BackgroundJob) {
-	var ntfyClient *ntfy.Client
-	for ntfyClient == nil {
-		ntfyClient = ntfy.NewClient(b.Config().GetString("JOB_ADDRESS"), b.Model())
-		if ntfyClient == nil {
-			log.Println("BackgroundJob::TaskMonitor::Failed to connected to ntfy server")
-		}
-		time.Sleep(5 * time.Second)
-	}
-	ntfyClient.SetDomain(b.Config().GetString("SENDER_DOMAIN"))
-	defer ntfyClient.Close()
 
 	buckets := b.Model().TimeBucket.GetBucketsBefore(nested.Timestamp())
 	for _, bucket := range buckets {
@@ -92,14 +85,14 @@ func JobOverdueTasks(b *BackgroundJob) {
 			// Notify Assignor of the task
 			if len(task.AssigneeID) > 0 {
 				n1 := b.Model().Notification.TaskOverdue(task.AssignorID, &overdueTasks[i])
-				ntfyClient.ExternalPushNotification(n1)
-				ntfyClient.InternalNotificationSyncPush([]string{task.AssigneeID}, nested.NotificationTypeTaskOverDue)
+				b.server.pusher.ExternalPushNotification(n1)
+				b.server.pusher.InternalNotificationSyncPush([]string{task.AssigneeID}, nested.NotificationTypeTaskOverDue)
 			}
 			// Notify Assignee of the task
 			if len(task.AssignorID) > 0 && task.AssignorID != task.AssigneeID {
 				n2 := b.Model().Notification.TaskOverdue(task.AssigneeID, &overdueTasks[i])
-				ntfyClient.ExternalPushNotification(n2)
-				ntfyClient.InternalNotificationSyncPush([]string{task.AssignorID}, nested.NotificationTypeTaskOverDue)
+				b.server.pusher.ExternalPushNotification(n2)
+				b.server.pusher.InternalNotificationSyncPush([]string{task.AssignorID}, nested.NotificationTypeTaskOverDue)
 			}
 
 		}
@@ -108,7 +101,6 @@ func JobOverdueTasks(b *BackgroundJob) {
 
 }
 
-// JobLicenseManager
 func JobLicenseManager(b *BackgroundJob) {
 	license := b.Model().License.Get()
 	licenseTime := time.Unix(int64(license.ExpireDate/1000), 0)

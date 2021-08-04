@@ -2,12 +2,13 @@ package api
 
 import (
 	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/pusher"
+	"git.ronaksoft.com/nested/server/pkg/rpc"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"strconv"
 	"strings"
 	"time"
 
-	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoft.com/nested/server/model"
 	"github.com/globalsign/mgo/bson"
 	"gopkg.in/fzerorubigd/onion.v3"
@@ -25,7 +26,7 @@ import (
 // Worker
 // are runnable structures which handle input requests
 // services are registered with Worker
-// API
+// Server
 // 	|------>(n) Worker
 // 	|			|----------> (n)	Service
 // 	|			|----------> (1)	Mapper
@@ -33,28 +34,27 @@ import (
 // 	|			|----------> (1)	ResponseHandler
 // 	|------>(n) ResponseWorker
 type Worker struct {
-	server   *API
+	server   *Server
 	mapper   *Mapper
 	model    *nested.Manager
-	pusher   *PushManager
 	argument *ArgumentHandler
 	mailer   *Mailer
 	services map[string]Service
 }
 
-func NewWorker(server *API) *Worker {
+func NewWorker(server *Server) *Worker {
 	sw := new(Worker)
 	sw.server = server
 	sw.services = map[string]Service{}
 	sw.model = server.model
 	sw.mapper = NewMapper(sw)
 	sw.argument = NewArgumentHandler(sw)
-	sw.pusher = NewPushManager(sw)
 	sw.mailer = NewMailer(sw)
 
 	return sw
 }
-func (sw *Worker) Execute(request *nestedGateway.Request, response *nestedGateway.Response) {
+
+func (sw *Worker) Execute(request *rpc.Request, response *rpc.Response) {
 	var requester *nested.Account = nil
 	response.RequestID = request.RequestID
 	response.Format = request.Format
@@ -125,39 +125,51 @@ func (sw *Worker) Execute(request *nestedGateway.Request, response *nestedGatewa
 	return
 	// sw.request.ResponseChannel <- *sw.response
 }
-func (sw *Worker) RegisterService(service Service) {
-	sw.services[service.GetServicePrefix()] = service
+
+func (sw *Worker) RegisterService(services ...Service) {
+	for _, s := range services {
+		sw.services[s.GetServicePrefix()] = s
+	}
+
 }
+
 func (sw *Worker) Argument() *ArgumentHandler {
 	return sw.argument
 }
+
 func (sw *Worker) Config() *onion.Onion {
 	return sw.server.config
 }
+
 func (sw *Worker) GetService(prefix string) Service {
 	if _, ok := sw.services[prefix]; ok {
 		return sw.services[prefix]
 	}
 	return nil
 }
+
 func (sw *Worker) Map() *Mapper {
 	return sw.mapper
 }
+
 func (sw *Worker) Mailer() *Mailer {
 	return sw.mailer
 }
+
 func (sw *Worker) Model() *nested.Manager {
 	return sw.model
 }
-func (sw *Worker) Pusher() *PushManager {
-	return sw.pusher
+
+func (sw *Worker) Pusher() *pusher.Pusher {
+	return sw.server.pusher
 }
-func (sw *Worker) Server() *API {
+
+func (sw *Worker) Server() *Server {
 	return sw.server
 }
+
 func (sw *Worker) Shutdown() {
 	sw.model.Shutdown()
-	sw.pusher.CloseConnection()
 }
 
 // ArgumentHandler provides functions for easy argument extraction
@@ -171,7 +183,7 @@ func NewArgumentHandler(worker *Worker) *ArgumentHandler {
 	return ah
 }
 
-func (ae *ArgumentHandler) GetAccount(request *nestedGateway.Request, response *nestedGateway.Response) *nested.Account {
+func (ae *ArgumentHandler) GetAccount(request *rpc.Request, response *rpc.Response) *nested.Account {
 	var account *nested.Account
 	if accountID, ok := request.Data["account_id"].(string); ok {
 		account = ae.worker.Model().Account.GetByID(accountID, nil)
@@ -185,7 +197,8 @@ func (ae *ArgumentHandler) GetAccount(request *nestedGateway.Request, response *
 	}
 	return account
 }
-func (ae *ArgumentHandler) GetAccounts(request *nestedGateway.Request, response *nestedGateway.Response) []nested.Account {
+
+func (ae *ArgumentHandler) GetAccounts(request *rpc.Request, response *rpc.Response) []nested.Account {
 	var uniqueAccountIDs []string
 	var accounts []nested.Account
 	if csAccountIDs, ok := request.Data["account_id"].(string); ok {
@@ -203,7 +216,8 @@ func (ae *ArgumentHandler) GetAccounts(request *nestedGateway.Request, response 
 	}
 	return accounts
 }
-func (ae *ArgumentHandler) GetAccountIDs(request *nestedGateway.Request, response *nestedGateway.Response) []string {
+
+func (ae *ArgumentHandler) GetAccountIDs(request *rpc.Request, response *rpc.Response) []string {
 	var uniqueAccountIDs []string
 	if csAccountIDs, ok := request.Data["account_id"].(string); ok {
 		accountIDs := strings.SplitN(csAccountIDs, ",", global.DefaultMaxResultLimit)
@@ -219,7 +233,8 @@ func (ae *ArgumentHandler) GetAccountIDs(request *nestedGateway.Request, respons
 	}
 	return uniqueAccountIDs
 }
-func (ae *ArgumentHandler) GetComment(request *nestedGateway.Request, response *nestedGateway.Response) *nested.Comment {
+
+func (ae *ArgumentHandler) GetComment(request *rpc.Request, response *rpc.Response) *nested.Comment {
 	var comment *nested.Comment
 	if commentID, ok := request.Data["comment_id"].(string); ok {
 		if bson.IsObjectIdHex(commentID) {
@@ -238,7 +253,8 @@ func (ae *ArgumentHandler) GetComment(request *nestedGateway.Request, response *
 	}
 	return comment
 }
-func (ae *ArgumentHandler) GetLabel(request *nestedGateway.Request, response *nestedGateway.Response) *nested.Label {
+
+func (ae *ArgumentHandler) GetLabel(request *rpc.Request, response *rpc.Response) *nested.Label {
 	var label *nested.Label
 	if labelID, ok := request.Data["label_id"].(string); ok {
 		label = ae.worker.Model().Label.GetByID(labelID)
@@ -252,7 +268,8 @@ func (ae *ArgumentHandler) GetLabel(request *nestedGateway.Request, response *ne
 	}
 	return label
 }
-func (ae *ArgumentHandler) GetLabelRequest(request *nestedGateway.Request, response *nestedGateway.Response) *nested.LabelRequest {
+
+func (ae *ArgumentHandler) GetLabelRequest(request *rpc.Request, response *rpc.Response) *nested.LabelRequest {
 	var labelRequest *nested.LabelRequest
 
 	if labelRequestID, ok := request.Data["request_id"].(string); ok {
@@ -271,7 +288,8 @@ func (ae *ArgumentHandler) GetLabelRequest(request *nestedGateway.Request, respo
 	}
 	return labelRequest
 }
-func (ae *ArgumentHandler) GetPlace(request *nestedGateway.Request, response *nestedGateway.Response) *nested.Place {
+
+func (ae *ArgumentHandler) GetPlace(request *rpc.Request, response *rpc.Response) *nested.Place {
 	var place *nested.Place
 	if placeID, ok := request.Data["place_id"].(string); ok {
 		place = ae.worker.Model().Place.GetByID(placeID, nil)
@@ -285,7 +303,8 @@ func (ae *ArgumentHandler) GetPlace(request *nestedGateway.Request, response *ne
 	}
 	return place
 }
-func (ae *ArgumentHandler) GetPost(request *nestedGateway.Request, response *nestedGateway.Response) *nested.Post {
+
+func (ae *ArgumentHandler) GetPost(request *rpc.Request, response *rpc.Response) *nested.Post {
 	var post *nested.Post
 	if postID, ok := request.Data["post_id"].(string); ok {
 		if bson.IsObjectIdHex(postID) {
@@ -304,7 +323,8 @@ func (ae *ArgumentHandler) GetPost(request *nestedGateway.Request, response *nes
 	}
 	return post
 }
-func (ae *ArgumentHandler) GetPagination(request *nestedGateway.Request) nested.Pagination {
+
+func (ae *ArgumentHandler) GetPagination(request *rpc.Request) nested.Pagination {
 	pg := nested.NewPagination(0, 0, 0, 0)
 	if v, ok := request.Data["skip"].(float64); ok {
 		pg.SetSkip(int(v))
@@ -332,7 +352,8 @@ func (ae *ArgumentHandler) GetPagination(request *nestedGateway.Request) nested.
 	}
 	return pg
 }
-func (ae *ArgumentHandler) GetTask(request *nestedGateway.Request, response *nestedGateway.Response) *nested.Task {
+
+func (ae *ArgumentHandler) GetTask(request *rpc.Request, response *rpc.Response) *nested.Task {
 	var task *nested.Task
 	if taskID, ok := request.Data["task_id"].(string); ok {
 		if bson.IsObjectIdHex(taskID) {

@@ -15,7 +15,7 @@ func init() {
 }
 
 func main() {
-	server := NewGatewayServer()
+	server := NewAPP()
 	server.Run()
 	server.Shutdown()
 }

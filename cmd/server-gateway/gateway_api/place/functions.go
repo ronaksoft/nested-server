@@ -2,18 +2,18 @@ package nestedServicePlace
 
 import (
 	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/rpc"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"regexp"
 	"strings"
 
-	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoft.com/nested/server/model"
 )
 
 // @Command: place/add_member
 // @Input:	place_id		string	*
 // @Input:	member_id		string	*	(comma separated)
-func (s *PlaceService) addPlaceMember(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) addPlaceMember(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var place *nested.Place
 	var memberIDs []string
 	if placeID, ok := request.Data["place_id"].(string); ok {
@@ -48,7 +48,7 @@ func (s *PlaceService) addPlaceMember(requester *nested.Account, request *nested
 	for _, m := range memberIDs {
 		if grandPlace.IsMember(m) && !place.IsMember(m) {
 			if !place.HasKeyholderLimit() {
-				s.Worker().Model().Place.AddKeyholder(place.ID, m)
+				s.Worker().Model().Place.AddKeyHolder(place.ID, m)
 
 				// Enables notification by default
 				s.Worker().Model().Account.SetPlaceNotification(m, place.ID, true)
@@ -71,7 +71,7 @@ func (s *PlaceService) addPlaceMember(requester *nested.Account, request *nested
 // @Command: place/count_unread_posts
 // @Input:	place_id		string	*
 // @Input:	subs			bool	+
-func (s *PlaceService) countPlaceUnreadPosts(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) countPlaceUnreadPosts(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var placeIDs []string
 	var withSubPlaces bool
 	if v, ok := request.Data["place_id"].(string); ok {
@@ -126,7 +126,7 @@ func (s *PlaceService) countPlaceUnreadPosts(requester *nested.Account, request 
 // @Input:	policy.add_member	string	*	(creators | everyone)
 // @Input:	policy.add_post		string	*	(creators | everyone)
 // @Input:	policy.add_place		string	*	(creators | everyone)
-func (s *PlaceService) createGrandPlace(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) createGrandPlace(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	pcr := nested.PlaceCreateRequest{}
 	if requester.Limits.GrandPlaces == 0 {
 		response.Error(global.ErrLimit, []string{"no_grand_places"})
@@ -225,7 +225,7 @@ func (s *PlaceService) createGrandPlace(requester *nested.Account, request *nest
 		return
 	}
 	// Add the creator of the place
-	s.Worker().Model().Place.AddKeyholder(pcr.ID, requester.ID)
+	s.Worker().Model().Place.AddKeyHolder(pcr.ID, requester.ID)
 	s.Worker().Model().Place.Promote(pcr.ID, requester.ID)
 	s.Worker().Model().Account.SetLimit(requester.ID, "grand_places", requester.Limits.GrandPlaces-1)
 
@@ -260,7 +260,7 @@ func (s *PlaceService) createGrandPlace(requester *nested.Account, request *nest
 // @Input:	policy.add_member	string	*	(creators | everyone)
 // @Input:	policy.add_post		string	*	(creators | everyone)
 // @Input:	policy.add_place		string	*	(creators | everyone)
-func (s *PlaceService) createLockedPlace(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) createLockedPlace(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	pcr := nested.PlaceCreateRequest{}
 
 	if v, ok := request.Data["place_id"].(string); ok {
@@ -392,7 +392,7 @@ func (s *PlaceService) createLockedPlace(requester *nested.Account, request *nes
 		}
 	}
 	// Add the creator of the place
-	s.Worker().Model().Place.AddKeyholder(pcr.ID, requester.ID)
+	s.Worker().Model().Place.AddKeyHolder(pcr.ID, requester.ID)
 	s.Worker().Model().Place.Promote(pcr.ID, requester.ID)
 
 	// Enable Notification by default
@@ -421,7 +421,7 @@ func (s *PlaceService) createLockedPlace(requester *nested.Account, request *nes
 // @Input:	place_id				string	*
 // @Input:	place_name			string	*
 // @Input:	place_description	string	+
-func (s *PlaceService) createUnlockedPlace(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) createUnlockedPlace(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	pcr := nested.PlaceCreateRequest{}
 	if v, ok := request.Data["place_id"].(string); ok {
 		pcr.ID = strings.ToLower(v)
@@ -499,7 +499,7 @@ func (s *PlaceService) createUnlockedPlace(requester *nested.Account, request *n
 	}
 
 	// Add the creator of the place
-	s.Worker().Model().Place.AddKeyholder(pcr.ID, requester.ID)
+	s.Worker().Model().Place.AddKeyHolder(pcr.ID, requester.ID)
 	s.Worker().Model().Place.Promote(pcr.ID, requester.ID)
 
 	// Enable Notification by default
@@ -527,7 +527,7 @@ func (s *PlaceService) createUnlockedPlace(requester *nested.Account, request *n
 // @Command:	place/demote_member
 // @Input:	place_id				string	*
 // @Input:	member_id			string	*
-func (s *PlaceService) demoteMember(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) demoteMember(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var memberID string
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
@@ -562,7 +562,7 @@ func (s *PlaceService) demoteMember(requester *nested.Account, request *nestedGa
 
 // @Command:	place/get_access
 // @Input:	place_id				string	*	(comma separated)
-func (s *PlaceService) getPlaceAccess(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) getPlaceAccess(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var places []nested.Place
 	if v, ok := request.Data["place_id"].(string); ok {
 		placeIDs := strings.SplitN(v, ",", global.DefaultMaxResultLimit)
@@ -598,7 +598,7 @@ func (s *PlaceService) getPlaceAccess(requester *nested.Account, request *nested
 
 // @Command:	place/get
 // @Input:	place_id				string	*
-func (s *PlaceService) getPlaceInfo(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) getPlaceInfo(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
 		return
@@ -609,7 +609,7 @@ func (s *PlaceService) getPlaceInfo(requester *nested.Account, request *nestedGa
 // @Command:	place/get_many
 // @Input:	place_id				string	*	(comma separated)
 // @Input:	member_id			string	*
-func (s *PlaceService) getManyPlacesInfo(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) getManyPlacesInfo(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var places []nested.Place
 	if v, ok := request.Data["place_id"].(string); ok {
 		placeIDs := strings.Split(v, ",")
@@ -632,7 +632,7 @@ func (s *PlaceService) getManyPlacesInfo(requester *nested.Account, request *nes
 // @Command:	place/get_activities
 // @Input:	place_id				string	*
 // @Input:	details				bool		+
-func (s *PlaceService) getPlaceActivities(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) getPlaceActivities(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var place *nested.Place
 	var details bool
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
@@ -665,7 +665,7 @@ func (s *PlaceService) getPlaceActivities(requester *nested.Account, request *ne
 // @Input:	place_id		string	*
 // @Input:	filter		string	+ AUD | DOC | IMG | VID | OTH | all
 // @Input:	filename		string	+
-func (s *PlaceService) getPlaceFiles(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) getPlaceFiles(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var filter, filename string
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
@@ -706,7 +706,7 @@ func (s *PlaceService) getPlaceFiles(requester *nested.Account, request *nestedG
 // @Command:	place/get_unread_posts
 // @Input:	place_id		string	*
 // @Input:	subs			bool		+	(default: FALSE)
-func (s *PlaceService) getPlaceUnreadPosts(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) getPlaceUnreadPosts(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var subPlaces bool
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
@@ -738,7 +738,7 @@ func (s *PlaceService) getPlaceUnreadPosts(requester *nested.Account, request *n
 
 // @Command:	place/get_notification
 // @Input:	place_id		string	*
-func (s *PlaceService) getPlaceNotification(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) getPlaceNotification(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
 		return
@@ -753,7 +753,7 @@ func (s *PlaceService) getPlaceNotification(requester *nested.Account, request *
 
 // @Command:	place/get_creators
 // @Input:	place_id		string	*
-func (s *PlaceService) getPlaceCreators(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) getPlaceCreators(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
 		return
@@ -786,7 +786,7 @@ func (s *PlaceService) getPlaceCreators(requester *nested.Account, request *nest
 
 // @Command:	place/get_key_holders
 // @Input:	place_id		string	*
-func (s *PlaceService) getPlaceKeyholders(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) getPlaceKeyholders(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
 		return
@@ -818,7 +818,7 @@ func (s *PlaceService) getPlaceKeyholders(requester *nested.Account, request *ne
 
 // @Command:	place/get_members
 // @Input:	place_id		string	*
-func (s *PlaceService) getPlaceMembers(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) getPlaceMembers(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
 		return
@@ -849,7 +849,7 @@ func (s *PlaceService) getPlaceMembers(requester *nested.Account, request *neste
 
 // @Command:	place/get_sub_places
 // @Input:	place_id		string	*
-func (s *PlaceService) getSubPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) getSubPlaces(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
 		return
@@ -892,7 +892,7 @@ func (s *PlaceService) getSubPlaces(requester *nested.Account, request *nestedGa
 
 // @Command:	place/get_mutual_places
 // @Input:	account_id		string	*
-func (s *PlaceService) getMutualPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) getMutualPlaces(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var accountID string
 	if v, ok := request.Data["account_id"].(string); ok {
 		accountID = v
@@ -931,7 +931,7 @@ func (s *PlaceService) getMutualPlaces(requester *nested.Account, request *neste
 // @Command:	place/get_posts
 // @Input:	place_id		string	*
 // @Input:	by_update	bool		+
-func (s *PlaceService) getPlacePosts(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) getPlacePosts(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var sort_item string
 	var place *nested.Place
 	var posts []nested.Post
@@ -973,7 +973,7 @@ func (s *PlaceService) getPlacePosts(requester *nested.Account, request *nestedG
 // @Command:	place/invite_member
 // @Input:	place_id			string	*
 // @Input:	member_id		string	*	(comma separated)
-func (s *PlaceService) invitePlaceMember(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) invitePlaceMember(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var memberIDs []string
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
@@ -1011,7 +1011,7 @@ func (s *PlaceService) invitePlaceMember(requester *nested.Account, request *nes
 		}
 
 		if !place.HasKeyholderLimit() {
-			s.Worker().Model().Place.AddKeyholder(place.ID, m)
+			s.Worker().Model().Place.AddKeyHolder(place.ID, m)
 
 			// Enables notification by default
 			s.Worker().Model().Account.SetPlaceNotification(m, place.ID, true)
@@ -1031,7 +1031,7 @@ func (s *PlaceService) invitePlaceMember(requester *nested.Account, request *nes
 
 // @Command:	place/leave
 // @Input:	place_id		string	*
-func (s *PlaceService) leavePlace(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) leavePlace(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
 		return
@@ -1074,7 +1074,7 @@ func (s *PlaceService) leavePlace(requester *nested.Account, request *nestedGate
 
 // @Command:	place/mark_all_read
 // @Input:	place_id		string	*
-func (s *PlaceService) markAllPostsAsRead(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) markAllPostsAsRead(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
 		return
@@ -1085,7 +1085,7 @@ func (s *PlaceService) markAllPostsAsRead(requester *nested.Account, request *ne
 
 // @Command:	place/available
 // @Input:	place_id		string	*
-func (s *PlaceService) placeIDAvailable(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) placeIDAvailable(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	if placeID, ok := request.Data["place_id"].(string); ok {
 		if s.Worker().Model().Place.Available(strings.ToLower(placeID)) {
 			response.Ok()
@@ -1102,7 +1102,7 @@ func (s *PlaceService) placeIDAvailable(requester *nested.Account, request *nest
 // @Command:	place/promote_member
 // @Input:	place_id		string	*
 // @Input:	member_id	string	*
-func (s *PlaceService) promoteMember(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) promoteMember(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var memberID string
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
@@ -1133,7 +1133,7 @@ func (s *PlaceService) promoteMember(requester *nested.Account, request *nestedG
 // @Command:	place/pin_post
 // @Input:	place_id		string	*
 // @Input: post_id          string *
-func (s *PlaceService) pinPost(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) pinPost(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var place *nested.Place
 	var post *nested.Post
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
@@ -1157,7 +1157,7 @@ func (s *PlaceService) pinPost(requester *nested.Account, request *nestedGateway
 
 // @Command:	place/remove
 // @Input:	place_id		string	*
-func (s *PlaceService) remove(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) remove(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
 		return
@@ -1189,7 +1189,7 @@ func (s *PlaceService) remove(requester *nested.Account, request *nestedGateway.
 
 // @Command:	place/remove_favorite
 // @Input:	place_id		string	*
-func (s *PlaceService) removePlaceFromFavorites(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) removePlaceFromFavorites(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
 		return
@@ -1207,7 +1207,7 @@ func (s *PlaceService) removePlaceFromFavorites(requester *nested.Account, reque
 // @Command:	place/remove_member
 // @Input:	place_id		string	*
 // @Input:	member_id	string	*
-func (s *PlaceService) removeMember(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) removeMember(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var memberID string
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
@@ -1258,7 +1258,7 @@ func (s *PlaceService) removeMember(requester *nested.Account, request *nestedGa
 
 // @Command:	place/remove_picture
 // @Input:	place_id		string	*
-func (s *PlaceService) removePicture(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) removePicture(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
 		return
@@ -1275,7 +1275,7 @@ func (s *PlaceService) removePicture(requester *nested.Account, request *nestedG
 
 // @Command:	place/add_favorite
 // @Input:	place_id		string	*
-func (s *PlaceService) setPlaceAsFavorite(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) setPlaceAsFavorite(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
 		return
@@ -1293,7 +1293,7 @@ func (s *PlaceService) setPlaceAsFavorite(requester *nested.Account, request *ne
 // @Command:	place/set_notification
 // @Input:	place_id		string	*
 // @Input:	state		bool		*
-func (s *PlaceService) setPlaceNotification(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) setPlaceNotification(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var state bool
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
@@ -1319,7 +1319,7 @@ func (s *PlaceService) setPlaceNotification(requester *nested.Account, request *
 // @Command:	place/set_picture
 // @Input:	place_id			string	*
 // @Input:	universal_id		string	*
-func (s *PlaceService) setPicture(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) setPicture(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var uniID nested.UniversalID
 	var place *nested.Place
 	pic := nested.Picture{}
@@ -1357,7 +1357,7 @@ func (s *PlaceService) setPicture(requester *nested.Account, request *nestedGate
 // @Input:	policy.add_post			string	+	(creators | everyone)
 // @Input:	policy.add_member		string	+	(creators | everyone)
 // @Input:	policy.add_place			string	+	(creators | everyone)
-func (s *PlaceService) update(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) update(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var place *nested.Place
 	placeUpdateRequest := tools.M{}
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
@@ -1450,7 +1450,7 @@ func (s *PlaceService) update(requester *nested.Account, request *nestedGateway.
 // @Command:	place/unpin_post
 // @Input:	place_id		string	*
 // @Input: post_id          string *
-func (s *PlaceService) unpinPost(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) unpinPost(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var place *nested.Place
 	var post *nested.Post
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
@@ -1474,7 +1474,7 @@ func (s *PlaceService) unpinPost(requester *nested.Account, request *nestedGatew
 
 // @Command:	place/get_blocked_addresses
 // @Input:	    place_id		string	 *
-func (s *PlaceService) getBlockedAddresses(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) getBlockedAddresses(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var Addresses []string
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
@@ -1492,7 +1492,7 @@ func (s *PlaceService) getBlockedAddresses(requester *nested.Account, request *n
 // @Command:	place/add_to_blacklist
 // @Input:	place_id		string	 *
 // @Input:  addresses       []string *
-func (s *PlaceService) addToBlackList(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) addToBlackList(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var addresses []string
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
@@ -1526,7 +1526,7 @@ func (s *PlaceService) addToBlackList(requester *nested.Account, request *nested
 // @Command:	place/remove_from_blacklist
 // @Input:	place_id		string	 *
 // @Input:  addresses       []string *
-func (s *PlaceService) removeFromBlacklist(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PlaceService) removeFromBlacklist(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var addresses []string
 	var place *nested.Place
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {

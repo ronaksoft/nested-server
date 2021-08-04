@@ -3,7 +3,9 @@ package file
 import (
 	"errors"
 	"fmt"
+	nestedGateway "git.ronaksoft.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/rpc"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"io"
 	"io/ioutil"
@@ -14,7 +16,6 @@ import (
 	"sync"
 	"time"
 
-	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoft.com/nested/server/model"
 	"git.ronaksoft.com/nested/server/pkg/protocol"
 	"github.com/globalsign/mgo"
@@ -26,9 +27,10 @@ func (fs *Server) ForceDownload(ctx iris.Context) {
 	ctx.Values().Set("forceDownload", true)
 	ctx.Next()
 }
+
 func (fs *Server) ServeFileByFileToken(ctx iris.Context) {
 	fileToken := ctx.Params().Get("fileToken")
-	resp := new(nestedGateway.Response)
+	resp := new(rpc.Response)
 	if v, err := _NestedModel.Token.GetFileByToken(fileToken); err != nil {
 		ctx.StatusCode(http.StatusUnauthorized)
 		resp.Error(global.ErrInvalid, []string{"fileToken"})
@@ -41,11 +43,12 @@ func (fs *Server) ServeFileByFileToken(ctx iris.Context) {
 	// Go to next handler
 	ctx.Next()
 }
+
 func (fs *Server) ServePublicFiles(ctx iris.Context) {
 	var fileInfo *nested.FileInfo
 	universalID := nested.UniversalID(ctx.Params().Get("universalID"))
 
-	resp := new(nestedGateway.Response)
+	resp := new(rpc.Response)
 	if v := _NestedModel.File.GetByID(universalID, nil); v == nil {
 		ctx.StatusCode(http.StatusUnauthorized)
 		resp.Error(global.ErrInvalid, []string{"universal_id"})
@@ -66,11 +69,12 @@ func (fs *Server) ServePublicFiles(ctx iris.Context) {
 	// Go to next handler
 	ctx.Next()
 }
+
 func (fs *Server) ServePrivateFiles(ctx iris.Context) {
 	universalID := nested.UniversalID(ctx.Params().Get("universalID"))
 	//sessionID := ctx.Params().Get("sessionID")
 	downloadToken := ctx.Params().Get("downloadToken")
-	resp := new(nestedGateway.Response)
+	resp := new(rpc.Response)
 
 	//if !bson.IsObjectIdHex(sessionID) {
 	//    ctx.StatusCode(http.StatusUnauthorized)
@@ -102,9 +106,10 @@ func (fs *Server) ServePrivateFiles(ctx iris.Context) {
 	// Go to next handler
 	ctx.Next()
 }
+
 func (fs *Server) ServerFileBySystem(ctx iris.Context) {
 	apiKey := ctx.Params().Get("apiKey")
-	resp := new(nestedGateway.Response)
+	resp := new(rpc.Response)
 	if apiKey != fs.apiKey {
 		ctx.StatusCode(http.StatusUnauthorized)
 		resp.Error(global.ErrAccess, []string{})
@@ -115,10 +120,11 @@ func (fs *Server) ServerFileBySystem(ctx iris.Context) {
 	// Go to next handler
 	ctx.Next()
 }
+
 func (fs *Server) Download(ctx iris.Context) {
 	var fileInfo *nested.FileInfo
 	var file *mgo.GridFile
-	resp := new(nestedGateway.Response)
+	resp := new(rpc.Response)
 
 	universalID := nested.UniversalID(ctx.Params().Get("universalID"))
 	forceDownload, _ := ctx.Values().GetBool("forceDownload")
@@ -163,7 +169,7 @@ func (fs *Server) Download(ctx iris.Context) {
 func (fs *Server) UploadSystem(ctx iris.Context) {
 	var multipartReader *multipart.Reader
 	apiKey := ctx.Params().Get("apiKey")
-	resp := new(nestedGateway.Response)
+	resp := new(rpc.Response)
 	if apiKey != fs.apiKey {
 		ctx.StatusCode(http.StatusUnauthorized)
 		resp.Error(global.ErrAccess, []string{})
@@ -244,12 +250,13 @@ func (fs *Server) UploadSystem(ctx iris.Context) {
 	}
 	ctx.JSON(resp)
 }
+
 func (fs *Server) UploadUser(ctx iris.Context) {
 	var session *nested.Session
 	var multipartReader *multipart.Reader
 	uploadType := strings.ToUpper(ctx.Params().Get("uploadType"))
 	sessionID := ctx.Params().Get("sessionID")
-	resp := new(nestedGateway.Response)
+	resp := new(rpc.Response)
 	if !bson.IsObjectIdHex(sessionID) {
 		ctx.StatusCode(http.StatusUnauthorized)
 		resp.Error(global.ErrAccess, []string{})
@@ -339,11 +346,12 @@ func (fs *Server) UploadUser(ctx iris.Context) {
 	}
 	ctx.JSON(resp)
 }
+
 func (fs *Server) UploadApp(ctx iris.Context) {
 	var multipartReader *multipart.Reader
 	uploadType := strings.ToUpper(ctx.Params().Get("uploadType"))
 	appToken := ctx.Params().Get("appToken")
-	resp := new(nestedGateway.Response)
+	resp := new(rpc.Response)
 	token := _NestedModel.Token.GetAppToken(appToken)
 	if token == nil {
 		ctx.StatusCode(http.StatusUnauthorized)
@@ -470,41 +478,41 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 			// Thumbs
 			processList = []Processor{
 				&previewGenerator{
-					MaxWidth:  DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_PREVIEW],
+					MaxWidth:  DefaultThumbnailSizes[ThumbnailPreview],
 					Uploader:  storedFileInfo.Metadata.Uploader,
 					Filename:  storedFileInfo.Name,
 					MimeType:  storedFileInfo.MimeType,
-					ThumbName: THUMBNAIL_PREVIEW,
+					ThumbName: ThumbnailPreview,
 					MetaData:  metaData,
 					Lock:      metaDataLock,
 					WaitGroup: wgMetaData,
 				},
 				&thumbGenerator{
-					MaxDimension: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_32],
+					MaxDimension: DefaultThumbnailSizes[Thumbnail32],
 					Uploader:     storedFileInfo.Metadata.Uploader,
 					Filename:     storedFileInfo.Name,
 					MimeType:     storedFileInfo.MimeType,
-					ThumbName:    THUMBNAIL_32,
+					ThumbName:    Thumbnail32,
 					MetaData:     metaData,
 					Lock:         metaDataLock,
 					WaitGroup:    wgMetaData,
 				},
 				&thumbGenerator{
-					MaxDimension: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_64],
+					MaxDimension: DefaultThumbnailSizes[Thumbnail64],
 					Uploader:     storedFileInfo.Metadata.Uploader,
 					Filename:     storedFileInfo.Name,
 					MimeType:     storedFileInfo.MimeType,
-					ThumbName:    THUMBNAIL_64,
+					ThumbName:    Thumbnail64,
 					MetaData:     metaData,
 					Lock:         metaDataLock,
 					WaitGroup:    wgMetaData,
 				},
 				&thumbGenerator{
-					MaxDimension: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_128],
+					MaxDimension: DefaultThumbnailSizes[Thumbnail128],
 					Uploader:     storedFileInfo.Metadata.Uploader,
 					Filename:     storedFileInfo.Name,
 					MimeType:     storedFileInfo.MimeType,
-					ThumbName:    THUMBNAIL_128,
+					ThumbName:    Thumbnail128,
 					MetaData:     metaData,
 					Lock:         metaDataLock,
 					WaitGroup:    wgMetaData,
@@ -556,10 +564,10 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 		// Thumbs
 		fileInfo.Status = nested.FileStatusPublic
 		processList = []Processor{
-			&previewGenerator{MaxWidth: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_PREVIEW], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: THUMBNAIL_PREVIEW, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
-			&thumbGenerator{MaxDimension: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_32], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: THUMBNAIL_32, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
-			&thumbGenerator{MaxDimension: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_64], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: THUMBNAIL_64, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
-			&thumbGenerator{MaxDimension: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_128], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: THUMBNAIL_128, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
+			&previewGenerator{MaxWidth: DefaultThumbnailSizes[ThumbnailPreview], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: ThumbnailPreview, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
+			&thumbGenerator{MaxDimension: DefaultThumbnailSizes[Thumbnail32], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: Thumbnail32, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
+			&thumbGenerator{MaxDimension: DefaultThumbnailSizes[Thumbnail64], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: Thumbnail64, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
+			&thumbGenerator{MaxDimension: DefaultThumbnailSizes[Thumbnail128], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: Thumbnail128, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
 		}
 
 		wgMetaData.Add(len(processList))
@@ -586,10 +594,10 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 		// Meta Reader
 		processList = []Processor{
 			&videoMetaReader{MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
-			&previewGenerator{MaxWidth: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_PREVIEW], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: THUMBNAIL_PREVIEW, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
-			&thumbGenerator{MaxDimension: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_32], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: THUMBNAIL_32, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
-			&thumbGenerator{MaxDimension: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_64], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: THUMBNAIL_64, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
-			&thumbGenerator{MaxDimension: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_128], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: THUMBNAIL_128, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
+			&previewGenerator{MaxWidth: DefaultThumbnailSizes[ThumbnailPreview], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: ThumbnailPreview, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
+			&thumbGenerator{MaxDimension: DefaultThumbnailSizes[Thumbnail32], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: Thumbnail32, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
+			&thumbGenerator{MaxDimension: DefaultThumbnailSizes[Thumbnail64], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: Thumbnail64, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
+			&thumbGenerator{MaxDimension: DefaultThumbnailSizes[Thumbnail128], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: Thumbnail128, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
 		}
 
 		wgMetaData.Add(len(processList))
@@ -615,10 +623,10 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 		// Meta Reader
 		processList = []Processor{
 			&audioMetaReader{MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
-			&previewGenerator{MaxWidth: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_PREVIEW], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: THUMBNAIL_PREVIEW, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
-			&thumbGenerator{MaxDimension: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_32], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: THUMBNAIL_32, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
-			&thumbGenerator{MaxDimension: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_64], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: THUMBNAIL_64, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
-			&thumbGenerator{MaxDimension: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_128], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: THUMBNAIL_128, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
+			&previewGenerator{MaxWidth: DefaultThumbnailSizes[ThumbnailPreview], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: ThumbnailPreview, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
+			&thumbGenerator{MaxDimension: DefaultThumbnailSizes[Thumbnail32], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: Thumbnail32, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
+			&thumbGenerator{MaxDimension: DefaultThumbnailSizes[Thumbnail64], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: Thumbnail64, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
+			&thumbGenerator{MaxDimension: DefaultThumbnailSizes[Thumbnail128], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: Thumbnail128, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
 		}
 
 		wgMetaData.Add(len(processList))
@@ -677,10 +685,10 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 		// Meta Reader
 		processList = []Processor{
 			&imageMetaReader{MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
-			&previewGenerator{MaxWidth: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_PREVIEW], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: THUMBNAIL_PREVIEW, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
-			&thumbGenerator{MaxDimension: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_32], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: THUMBNAIL_32, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
-			&thumbGenerator{MaxDimension: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_64], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: THUMBNAIL_64, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
-			&thumbGenerator{MaxDimension: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_128], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: THUMBNAIL_128, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
+			&previewGenerator{MaxWidth: DefaultThumbnailSizes[ThumbnailPreview], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: ThumbnailPreview, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
+			&thumbGenerator{MaxDimension: DefaultThumbnailSizes[Thumbnail32], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: Thumbnail32, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
+			&thumbGenerator{MaxDimension: DefaultThumbnailSizes[Thumbnail64], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: Thumbnail64, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
+			&thumbGenerator{MaxDimension: DefaultThumbnailSizes[Thumbnail128], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: Thumbnail128, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
 		}
 
 		wgMetaData.Add(len(processList))
@@ -708,10 +716,10 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 		// Meta Reader
 		processList = []Processor{
 			&gifMetaReader{MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
-			&previewGenerator{MaxWidth: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_PREVIEW], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: THUMBNAIL_PREVIEW, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
-			&thumbGenerator{MaxDimension: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_32], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: THUMBNAIL_32, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
-			&thumbGenerator{MaxDimension: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_64], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: THUMBNAIL_64, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
-			&thumbGenerator{MaxDimension: DEFAULT_THUMBNAIL_SIZES[THUMBNAIL_128], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: THUMBNAIL_128, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
+			&previewGenerator{MaxWidth: DefaultThumbnailSizes[ThumbnailPreview], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: ThumbnailPreview, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
+			&thumbGenerator{MaxDimension: DefaultThumbnailSizes[Thumbnail32], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: Thumbnail32, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
+			&thumbGenerator{MaxDimension: DefaultThumbnailSizes[Thumbnail64], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: Thumbnail64, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
+			&thumbGenerator{MaxDimension: DefaultThumbnailSizes[Thumbnail128], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: Thumbnail128, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
 		}
 
 		wgMetaData.Add(len(processList))
@@ -845,16 +853,16 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 
 			for k, v := range metaData.Thumbnails {
 				switch k {
-				case THUMBNAIL_32:
+				case Thumbnail32:
 					fileInfo.Thumbnails.X32 = nested.UniversalID(v.ID)
 
-				case THUMBNAIL_64:
+				case Thumbnail64:
 					fileInfo.Thumbnails.X64 = nested.UniversalID(v.ID)
 
-				case THUMBNAIL_128:
+				case Thumbnail128:
 					fileInfo.Thumbnails.X128 = nested.UniversalID(v.ID)
 
-				case THUMBNAIL_PREVIEW:
+				case ThumbnailPreview:
 					fileInfo.Thumbnails.Preview = nested.UniversalID(v.ID)
 				}
 			}

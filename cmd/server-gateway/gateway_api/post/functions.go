@@ -3,10 +3,10 @@ package nestedServicePost
 import (
 	"fmt"
 	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/rpc"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"strings"
 
-	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoft.com/nested/server/cmd/server-gateway/gateway_api"
 	"git.ronaksoft.com/nested/server/model"
 	"github.com/globalsign/mgo/bson"
@@ -15,7 +15,7 @@ import (
 // @Command:	post/add_label
 // @Input:	post_id			string	*
 // @Input:	label_id			string	*
-func (s *PostService) addLabelToPost(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PostService) addLabelToPost(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var label *nested.Label
 	var post *nested.Post
 	if post = s.Worker().Argument().GetPost(request, response); post == nil {
@@ -59,7 +59,7 @@ func (s *PostService) addLabelToPost(requester *nested.Account, request *nestedG
 // @Input:	post_id			string	*
 // @Input:	txt				string	*
 // @Input:	attachment_id	string	*
-func (s *PostService) addComment(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PostService) addComment(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var post *nested.Post
 	var txt string
 	var attachmentID nested.UniversalID
@@ -119,7 +119,7 @@ func (s *PostService) addComment(requester *nested.Account, request *nestedGatew
 // @Command:	post/attach_place
 // @Input:	post_id			string	*
 // @Input:	place_id			string	*	(comma separated)
-func (s *PostService) attachPlace(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PostService) attachPlace(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var post *nested.Post
 	if post = s.Worker().Argument().GetPost(request, response); post == nil {
 		return
@@ -187,7 +187,7 @@ func (s *PostService) attachPlace(requester *nested.Account, request *nestedGate
 // @Input:	forward_from		string 	+	(post_id)
 // @Input:  body                string  *
 // @Input:	no_comment		bool		+
-func (s *PostService) createPost(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PostService) createPost(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var targets []string
 	var attachments []string
 	var subject, body, contentType, iframeUrl string
@@ -402,7 +402,7 @@ func (s *PostService) createPost(requester *nested.Account, request *nestedGatew
 // @Command:	post/get
 // @Input:	post_id			string	*
 // @Input:	mark_as_read		bool		+
-func (s *PostService) getPost(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PostService) getPost(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var post *nested.Post
 	var markAsRead bool
 	if post = s.Worker().Argument().GetPost(request, response); post == nil {
@@ -427,7 +427,7 @@ func (s *PostService) getPost(requester *nested.Account, request *nestedGateway.
 // @Input: post_id          string *
 // @Input: subject          string *
 // @Input: body             string *
-func (s *PostService) editPost(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PostService) editPost(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var subject, body string
 	var post *nested.Post
 
@@ -461,7 +461,7 @@ func (s *PostService) editPost(requester *nested.Account, request *nestedGateway
 
 // @Command:	post/get_many
 // @Input:	post_id			string	*	(comma separated)
-func (s *PostService) getManyPosts(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PostService) getManyPosts(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	postIDs := make([]bson.ObjectId, 0, global.DefaultMaxResultLimit)
 	noAccessPostIDs := make([]bson.ObjectId, 0)
 	if v, ok := request.Data["post_id"].(string); ok {
@@ -493,7 +493,7 @@ func (s *PostService) getManyPosts(requester *nested.Account, request *nestedGat
 
 // @Command:	post/get_chain
 // @Input:	post_id			string	*
-func (s *PostService) getPostChain(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PostService) getPostChain(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var post *nested.Post
 	if post = s.Worker().Argument().GetPost(request, response); post == nil {
 		return
@@ -525,7 +525,7 @@ func (s *PostService) getPostChain(requester *nested.Account, request *nestedGat
 
 // @Command:	post/get_counters
 // @Input:	post_id			string	*
-func (s *PostService) getPostCounters(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PostService) getPostCounters(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var post *nested.Post
 	if post = s.Worker().Argument().GetPost(request, response); post == nil {
 		return
@@ -537,7 +537,7 @@ func (s *PostService) getPostCounters(requester *nested.Account, request *nested
 // @Command:	post/get_activities
 // @Input:	post_id				string	    *
 // @Input:	details				bool		+
-func (s *PostService) getPostActivities(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PostService) getPostActivities(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var post *nested.Post
 	var details bool
 	if post = s.Worker().Argument().GetPost(request, response); post == nil {
@@ -569,7 +569,7 @@ func (s *PostService) getPostActivities(requester *nested.Account, request *nest
 // @Command:	post/get_comments
 // @Input:	post_id			string	*
 // @Pagination
-func (s *PostService) getCommentsByPost(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PostService) getCommentsByPost(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var post *nested.Post
 	if post = s.Worker().Argument().GetPost(request, response); post == nil {
 		return
@@ -596,7 +596,7 @@ func (s *PostService) getCommentsByPost(requester *nested.Account, request *nest
 // @Command:	post/get_comment
 // @Input:	post_id			string	*
 // @Input:	comment_id		string	*
-func (s *PostService) getCommentByID(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PostService) getCommentByID(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var post *nested.Post
 	var comment *nested.Comment
 	if post = s.Worker().Argument().GetPost(request, response); post == nil {
@@ -612,7 +612,7 @@ func (s *PostService) getCommentByID(requester *nested.Account, request *nestedG
 // @Command:	post/get_many_comments
 // @Input:	post_id			string	*
 // @Input:	comment_id		string	*	(comma separated)
-func (s *PostService) getManyCommentsByIDs(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PostService) getManyCommentsByIDs(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	commentIDs := make([]bson.ObjectId, 0, global.DefaultMaxResultLimit)
 	noAccessCommentIDs := make([]bson.ObjectId, 0)
 	if v, ok := request.Data["comment_id"].(string); ok {
@@ -648,7 +648,7 @@ func (s *PostService) getManyCommentsByIDs(requester *nested.Account, request *n
 
 // @Command:	post/mark_as_read
 // @Input:	post_id			string	*
-func (s *PostService) markPostAsRead(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PostService) markPostAsRead(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var post *nested.Post
 	if post = s.Worker().Argument().GetPost(request, response); post == nil {
 		return
@@ -672,7 +672,7 @@ func (s *PostService) markPostAsRead(requester *nested.Account, request *nestedG
 
 // @Command:	post/add_to_bookmarks
 // @Input:	post_id			string	*
-func (s *PostService) addToBookmarks(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PostService) addToBookmarks(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var post *nested.Post
 	if post = s.Worker().Argument().GetPost(request, response); post == nil {
 		return
@@ -691,7 +691,7 @@ func (s *PostService) addToBookmarks(requester *nested.Account, request *nestedG
 // @Command:	post/remove_comment
 // @Input:	post_id			string	*
 // @Input:	comment_id		string	*
-func (s *PostService) removeComment(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PostService) removeComment(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var post *nested.Post
 	var comment *nested.Comment
 	if post = s.Worker().Argument().GetPost(request, response); post == nil {
@@ -731,7 +731,7 @@ func (s *PostService) removeComment(requester *nested.Account, request *nestedGa
 // @Command:	post/set_notification
 // @Input:	post_id			string	*
 // @Input:	state			bool		+
-func (s *PostService) setPostNotification(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PostService) setPostNotification(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var post *nested.Post
 	if post = s.Worker().Argument().GetPost(request, response); post == nil {
 		return
@@ -756,7 +756,7 @@ func (s *PostService) setPostNotification(requester *nested.Account, request *ne
 // @Command:	post/remove
 // @Input:	post_id			string	*
 // @Input:	place_id			string	*
-func (s *PostService) removePost(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PostService) removePost(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var place *nested.Place
 	var post *nested.Post
 	if post = s.Worker().Argument().GetPost(request, response); post == nil {
@@ -781,7 +781,7 @@ func (s *PostService) removePost(requester *nested.Account, request *nestedGatew
 // @Command:	post/remove_label
 // @Input:	post_id			string	*
 // @Input:	label_id			string	*
-func (s *PostService) removeLabelFromPost(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PostService) removeLabelFromPost(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var label *nested.Label
 	var post *nested.Post
 	if label = s.Worker().Argument().GetLabel(request, response); label == nil {
@@ -818,7 +818,7 @@ func (s *PostService) removeLabelFromPost(requester *nested.Account, request *ne
 // @Input:	post_id			string	*
 // @Input:	old_place_id		string	*
 // @Input:	new_place_id		string	*
-func (s *PostService) movePost(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PostService) movePost(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var post *nested.Post
 	var oldPlace, newPlace *nested.Place
 	if post = s.Worker().Argument().GetPost(request, response); post == nil {
@@ -867,7 +867,7 @@ func (s *PostService) movePost(requester *nested.Account, request *nestedGateway
 
 // @Command:	post/retract
 // @Input:	post_id			string	*
-func (s *PostService) retractPost(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PostService) retractPost(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var post *nested.Post
 	if post = s.Worker().Argument().GetPost(request, response); post == nil {
 		return
@@ -891,7 +891,7 @@ func (s *PostService) retractPost(requester *nested.Account, request *nestedGate
 
 // @Command:	post/remove_from_bookmarks
 // @Input:	post_id			string	*
-func (s *PostService) removeFromBookmarks(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PostService) removeFromBookmarks(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var post *nested.Post
 	if post = s.Worker().Argument().GetPost(request, response); post == nil {
 		return
@@ -903,7 +903,7 @@ func (s *PostService) removeFromBookmarks(requester *nested.Account, request *ne
 // @Command:	post/who_read
 // @Input:	post_id			string	*
 // @Pagination
-func (s *PostService) whoHaveReadThisPost(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *PostService) whoHaveReadThisPost(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var post *nested.Post
 	if post = s.Worker().Argument().GetPost(request, response); post == nil {
 		return

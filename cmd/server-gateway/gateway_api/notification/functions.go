@@ -2,16 +2,16 @@ package nestedServiceNotification
 
 import (
 	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/rpc"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"strings"
 
-	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoft.com/nested/server/model"
 )
 
 // @Command:	notification/get
 // @Input:	notification_id		string	*
-func (s *NotificationService) getNotificationByID(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *NotificationService) getNotificationByID(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var notif *nested.Notification
 	if v, ok := request.Data["notification_id"].(string); ok {
 		notif = _Model.Notification.GetByID(v)
@@ -31,7 +31,7 @@ func (s *NotificationService) getNotificationByID(requester *nested.Account, req
 // @Input:	only_unread		bool		+
 // @Input:	details			bool		+
 // @Input:	subject			string	+	‌("all", "task", "post")
-func (s *NotificationService) getNotificationsByAccountID(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *NotificationService) getNotificationsByAccountID(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var only_unreads, details bool
 	var subject string
 	if v, ok := request.Data["only_unread"].(bool); ok {
@@ -80,7 +80,7 @@ func (s *NotificationService) getNotificationsByAccountID(requester *nested.Acco
 
 // @Command:	notification/mark_as_read
 // @Input:	notification_id		string		*	(all | ID)
-func (s *NotificationService) markNotificationAsRead(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *NotificationService) markNotificationAsRead(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	if v, ok := request.Data["notification_id"].(string); ok {
 		switch v {
 		case "all":
@@ -105,7 +105,7 @@ func (s *NotificationService) markNotificationAsRead(requester *nested.Account, 
 
 // @Command: notification/mark_as_read_by_post
 // @Input: post_id  string
-func (s *NotificationService) markNotificationAsReadByPost(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *NotificationService) markNotificationAsReadByPost(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var post *nested.Post
 
 	if post = s.Worker().Argument().GetPost(request, response); post == nil {
@@ -125,7 +125,7 @@ func (s *NotificationService) markNotificationAsReadByPost(requester *nested.Acc
 
 // @Command:	notification/remove
 // @Input:	notification_id		string	*
-func (s *NotificationService) removeNotification(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *NotificationService) removeNotification(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	if v, ok := request.Data["notification_id"].(string); ok {
 		ids := strings.SplitN(v, ",", 100)
 		for _, nid := range ids {
@@ -142,13 +142,13 @@ func (s *NotificationService) removeNotification(requester *nested.Account, requ
 }
 
 // @Command:	notification/reset_counter
-func (s *NotificationService) resetNotificationCounter(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *NotificationService) resetNotificationCounter(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	_Model.Account.ResetUnreadNotificationCounter(requester.ID)
 	response.Ok()
 }
 
 // @Command:	notification/get_counter
-func (s *NotificationService) getNotificationCounter(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *NotificationService) getNotificationCounter(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	account := _Model.Account.GetByID(requester.ID, tools.M{"counters": 1})
 	if account != nil {
 		response.OkWithData(tools.M{

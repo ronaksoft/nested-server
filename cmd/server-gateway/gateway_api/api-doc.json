@@ -4067,7 +4067,7 @@
 				},{
 					"name": "status",
 					"type": "int",
-					"comment": "(TASK_STATUS_COMPLETED | TASK_STATUS_HOLD | TASK_STATUS_CANCELED | TASK_STATUS_FAILED)",
+					"comment": "(TaskStatusCompleted | TaskStatusHold | TaskStatusCanceled | TaskStatusFailed)",
 					"required": true
 				}
 			],

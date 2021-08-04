@@ -1,9 +1,10 @@
 package api
 
 import (
-	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoft.com/nested/server/model"
 	"git.ronaksoft.com/nested/server/pkg/log"
+	"git.ronaksoft.com/nested/server/pkg/pusher"
+	"git.ronaksoft.com/nested/server/pkg/rpc"
 	"gopkg.in/fzerorubigd/onion.v3"
 	"sync"
 )
@@ -26,20 +27,21 @@ type (
 
 type ServiceCommand struct {
 	MinAuthLevel AuthLevel
-	Execute      func(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response)
+	Execute      func(requester *nested.Account, request *rpc.Request, response *rpc.Response)
 }
 
 type Service interface {
 	GetServicePrefix() string
-	ExecuteCommand(authLevel AuthLevel, requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response)
+	ExecuteCommand(authLevel AuthLevel, requester *nested.Account, request *rpc.Request, response *rpc.Response)
 	Worker() *Worker
 }
 
-type API struct {
+type Server struct {
 	m      sync.Mutex
 	wg     *sync.WaitGroup
 	config *onion.Onion
 	model  *nested.Manager
+	pusher *pusher.Pusher
 
 	requestWorker     *Worker
 	backgroundWorkers []*BackgroundJob
@@ -55,8 +57,8 @@ type Flags struct {
 	LicenseSlowMode    int
 }
 
-func NewServer(config *onion.Onion, wg *sync.WaitGroup) *API {
-	s := new(API)
+func NewServer(config *onion.Onion, wg *sync.WaitGroup, pushFunc pusher.PushFunc) *Server {
+	s := new(Server)
 	s.config = config
 	s.wg = wg
 
@@ -77,19 +79,26 @@ func NewServer(config *onion.Onion, wg *sync.WaitGroup) *API {
 	// Register Bundle
 	s.model.RegisterBundle(config.GetString("BUNDLE_ID"))
 
+	// Initialize Pusher
+	s.pusher = pusher.New(
+		s.model,
+		config.GetString("BUNDLE_ID"), config.GetString("SENDER_DOMAIN"),
+		pushFunc,
+	)
 	// Instantiate Worker
 	s.requestWorker = NewWorker(s)
 
 	return s
 }
 
-func (s *API) RegisterBackgroundJob(backgroundJob *BackgroundJob) {
-	s.backgroundWorkers = append(s.backgroundWorkers, backgroundJob)
-	go backgroundJob.Run(s.wg)
-
+func (s *Server) RegisterBackgroundJob(backgroundJobs ...*BackgroundJob) {
+	for _, bg := range backgroundJobs {
+		s.backgroundWorkers = append(s.backgroundWorkers, bg)
+		go bg.Run(s.wg)
+	}
 }
 
-func (s *API) Shutdown() {
+func (s *Server) Shutdown() {
 	// Shutdowns the DB and Cache Connections
 	s.model.Shutdown()
 
@@ -102,21 +111,21 @@ func (s *API) Shutdown() {
 	}
 }
 
-func (s *API) GetFlags() Flags {
+func (s *Server) GetFlags() Flags {
 	return s.flags
 }
 
-func (s *API) ResetLicense() {
+func (s *Server) ResetLicense() {
 	s.flags.LicenseSlowMode = 0
 	s.flags.LicenseExpired = false
 }
 
-func (s *API) SetHealthCheckState(b bool) {
+func (s *Server) SetHealthCheckState(b bool) {
 	s.m.Lock()
 	s.flags.HealthCheckRunning = b
 	s.m.Unlock()
 }
 
-func (s *API) Worker() *Worker {
+func (s *Server) Worker() *Worker {
 	return s.requestWorker
 }

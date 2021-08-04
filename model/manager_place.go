@@ -69,12 +69,11 @@ type PlaceCreateRequest struct {
 	Picture       Picture
 }
 
-type DefaulPlace struct {
+type DefaultPlace struct {
 	ID      bson.ObjectId `json:"_id" bson:"_id"`
 	PlaceID string        `json:"place_id" bson:"place_id"`
 }
 
-// Place Manager and Methods
 type PlaceManager struct{}
 
 func NewPlaceManager() *PlaceManager {
@@ -136,7 +135,7 @@ func (pm *PlaceManager) removeCache(placeID string) bool {
 
 // AddKeyHolder add the accountID to the list of placeID key holders, if he/she was not
 // a member of that place before (i.e. he/she is not creator or key holder of the placeID)
-func (pm *PlaceManager) AddKeyholder(placeID, accountID string) *PlaceManager {
+func (pm *PlaceManager) AddKeyHolder(placeID, accountID string) *PlaceManager {
 	defer _Manager.Place.removeCache(placeID)
 	defer _Manager.Account.removeCache(accountID)
 
@@ -645,7 +644,7 @@ func (pm *PlaceManager) Promote(placeID, accountID string) *PlaceManager {
 	return pm
 }
 
-// bookmarkPost pins postID to one of the pinned posts of placeID
+// PinPost pins postID to one of the pinned posts of placeID
 func (pm *PlaceManager) PinPost(placeID string, postID bson.ObjectId) bool {
 	defer _Manager.Place.removeCache(placeID)
 
@@ -689,7 +688,7 @@ func (pm *PlaceManager) UnpinPost(placeID string, postID bson.ObjectId) bool {
 }
 
 // Remove deletes the place forever and all the posts and activities of that place will be gone.
-// also all the members will be removed from the place
+// Also, all the members will be removed from the place
 func (pm *PlaceManager) Remove(placeID string, accountID string) bool {
 	defer _Manager.Place.removeCache(placeID)
 
@@ -1013,7 +1012,7 @@ func (pm *PlaceManager) AddDefaultPlaces(placeIDs []string) bool {
 	bulk := db.C(global.CollectionPlacesDefault).Bulk()
 	bulk.Unordered()
 	for _, id := range placeIDs {
-		d := DefaulPlace{
+		d := DefaultPlace{
 			ID:      bson.NewObjectId(),
 			PlaceID: id,
 		}
@@ -1032,7 +1031,7 @@ func (pm *PlaceManager) GetDefaultPlacesWithPagination(pg Pagination) ([]string,
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
-	defaultPlaces := make([]DefaulPlace, 0, pg.GetLimit())
+	defaultPlaces := make([]DefaultPlace, 0, pg.GetLimit())
 	ids := make([]string, 0, pg.GetLimit())
 	err := db.C(global.CollectionPlacesDefault).Find(nil).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&defaultPlaces)
 	if err != nil {
@@ -1055,7 +1054,7 @@ func (pm *PlaceManager) GetDefaultPlaces() []string {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
-	var defaultPlaces []DefaulPlace
+	var defaultPlaces []DefaultPlace
 	err := db.C(global.CollectionPlacesDefault).Find(nil).All(&defaultPlaces)
 	if err != nil {
 		log.Warn(err.Error())

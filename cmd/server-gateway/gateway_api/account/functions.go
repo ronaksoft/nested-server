@@ -3,18 +3,18 @@ package nestedServiceAccount
 import (
 	"fmt"
 	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/rpc"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"regexp"
 	"strings"
 	"time"
 
-	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoft.com/nested/server/model"
 )
 
 // @Command: account/available
 // @Input:	account_id		string		*
-func (s *AccountService) accountIDAvailable(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AccountService) accountIDAvailable(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var accountID string
 	if v, ok := request.Data["account_id"].(string); ok {
 		accountID = strings.ToLower(v)
@@ -33,7 +33,7 @@ func (s *AccountService) accountIDAvailable(requester *nested.Account, request *
 // @Command: account/trust_email
 // @Input:  email_addr		string		*
 // @Input:  domain            bool       *
-func (s *AccountService) addToTrustList(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AccountService) addToTrustList(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var emailAddr string
 	if v, ok := request.Data["email_addr"].(string); ok {
 		emailAddr = v
@@ -59,7 +59,7 @@ func (s *AccountService) addToTrustList(requester *nested.Account, request *nest
 // @Input:	vid				string		*
 // @Input:	pass			string		*
 // @Input:	phone			string		*
-func (s *AccountService) changePhone(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AccountService) changePhone(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var verification *nested.Verification
 	var password, phone string
 	if !requester.Privacy.ChangeProfile {
@@ -110,7 +110,7 @@ func (s *AccountService) changePhone(requester *nested.Account, request *nestedG
 
 // @Command: account/get
 // @Input:	account_id		string		*
-func (s *AccountService) getAccountInfo(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AccountService) getAccountInfo(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var d tools.M
 	var details bool
 	var account *nested.Account
@@ -139,7 +139,7 @@ func (s *AccountService) getAccountInfo(requester *nested.Account, request *nest
 
 // @Command: account/get_many
 // @Input:	account_id		string	*	(comma separated)
-func (s *AccountService) getManyAccountsInfo(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AccountService) getManyAccountsInfo(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var accounts []nested.Account
 	if v, ok := request.Data["account_id"].(string); ok {
 		inputs := strings.SplitN(v, ",", global.DefaultMaxResultLimit)
@@ -167,7 +167,7 @@ func (s *AccountService) getManyAccountsInfo(requester *nested.Account, request 
 
 // @Command: account/get_by_token
 // @Input:	token		string	*
-func (s *AccountService) getAccountInfoByToken(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AccountService) getAccountInfoByToken(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var account *nested.Account
 	if v, ok := request.Data["token"].(string); ok {
 		account = _Model.Account.GetAccountByLoginToken(v)
@@ -185,7 +185,7 @@ func (s *AccountService) getAccountInfoByToken(requester *nested.Account, reques
 // @Command: account/get_posts
 // @Input:	by_update		string		+
 // @Pagination
-func (s *AccountService) getAccountPosts(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AccountService) getAccountPosts(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var sort_item string
 	if _, ok := request.Data["by_update"]; ok {
 		sort_item = nested.POST_SORT_LAST_UPDATE
@@ -208,7 +208,7 @@ func (s *AccountService) getAccountPosts(requester *nested.Account, request *nes
 
 // @Command: account/get_pinned_posts
 // @Pagination
-func (s *AccountService) getAccountPinnedPosts(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AccountService) getAccountPinnedPosts(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	pg := s.Worker().Argument().GetPagination(request)
 	posts := _Model.Post.GetPinnedPosts(requester.ID, pg)
 	r := make([]tools.M, 0, len(posts))
@@ -226,7 +226,7 @@ func (s *AccountService) getAccountPinnedPosts(requester *nested.Account, reques
 // @Command: account/get_favorite_posts
 // @Input:	by_update		string		+
 // @Pagination
-func (s *AccountService) getAccountFavoritePosts(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AccountService) getAccountFavoritePosts(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var sort_item string
 
 	if _, ok := request.Data["by_update"]; ok {
@@ -251,7 +251,7 @@ func (s *AccountService) getAccountFavoritePosts(requester *nested.Account, requ
 
 // @Command: account/get_sent_posts
 // @Pagination
-func (s *AccountService) getAccountSentPosts(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AccountService) getAccountSentPosts(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	pg := s.Worker().Argument().GetPagination(request)
 	posts := _Model.Post.GetPostsBySender(requester.ID, nested.POST_SORT_TIMESTAMP, pg)
 	r := make([]tools.M, 0, len(posts))
@@ -269,7 +269,7 @@ func (s *AccountService) getAccountSentPosts(requester *nested.Account, request 
 // @Command: account/get_all_places
 // @Input:	with_children		bool		+
 // @Input:	filter				string		+	(creator | key_holder | all)
-func (s *AccountService) getAccountAllPlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AccountService) getAccountAllPlaces(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var d []tools.M
 	var filter string
 	var withChildren bool
@@ -323,7 +323,7 @@ func (s *AccountService) getAccountAllPlaces(requester *nested.Account, request 
 }
 
 // @Command: account/get_favorite_places
-func (s *AccountService) getAccountFavoritePlaces(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AccountService) getAccountFavoritePlaces(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	r := make([]tools.M, 0)
 	places := _Model.Place.GetPlacesByIDs(requester.BookmarkedPlaceIDs)
 	for _, place := range places {
@@ -338,7 +338,7 @@ func (s *AccountService) getAccountFavoritePlaces(requester *nested.Account, req
 // @Command: account/set_password
 // @Input:	old_pass	string	*
 // @Input:	new_pass	string	*
-func (s *AccountService) setAccountPassword(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AccountService) setAccountPassword(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var oldPass, newPass, accountID string
 	var account *nested.Account
 	if v, ok := request.Data["old_pass"].(string); ok {
@@ -384,7 +384,7 @@ func (s *AccountService) setAccountPassword(requester *nested.Account, request *
 // @Command: account/set_password_by_token
 // @Input:	token			string		*
 // @Input:	new_pass		string		*
-func (s *AccountService) setAccountPasswordByLoginToken(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AccountService) setAccountPasswordByLoginToken(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var account *nested.Account
 	var token, newPass string
 	if v, ok := request.Data["token"].(string); ok {
@@ -416,7 +416,7 @@ func (s *AccountService) setAccountPasswordByLoginToken(requester *nested.Accoun
 
 // @Command: account/set_picture
 // @Input:	universal_id		string			*
-func (s *AccountService) setAccountPicture(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AccountService) setAccountPicture(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var uni_id nested.UniversalID
 	if !requester.Privacy.ChangePicture {
 		response.Error(global.ErrAccess, []string{"contact_admin"})
@@ -439,7 +439,7 @@ func (s *AccountService) setAccountPicture(requester *nested.Account, request *n
 }
 
 // @Command: account/remove_picture
-func (s *AccountService) removeAccountPicture(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AccountService) removeAccountPicture(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	pic := nested.Picture{}
 	_Model.Account.SetPicture(requester.ID, pic)
 	response.Ok()
@@ -448,7 +448,7 @@ func (s *AccountService) removeAccountPicture(requester *nested.Account, request
 
 // @Command: account/untrust_email
 // @Input:	email_addr		string			*
-func (s *AccountService) removeFromTrustList(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AccountService) removeFromTrustList(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var emailAddr string
 	if v, ok := request.Data["email_addr"].(string); ok {
 		emailAddr = v
@@ -468,7 +468,7 @@ func (s *AccountService) removeFromTrustList(requester *nested.Account, request 
 // @Input:	_dt		string 		*	(device token)
 // @Input:	_did	    string 		*	(device id)
 // @Input:	_os		string 		*	(android | ios | chrome | firefox | safari | opera | edge)
-func (s *AccountService) registerDevice(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AccountService) registerDevice(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var deviceID, deviceToken, deviceOS string
 	if v, ok := request.Data["_dt"].(string); ok {
 		deviceToken = v
@@ -480,14 +480,14 @@ func (s *AccountService) registerDevice(requester *nested.Account, request *nest
 		deviceOS = v
 	}
 
-	s.Worker().Pusher().Notification.RegisterDevice(deviceID, deviceToken, deviceOS, requester.ID)
+	s.Worker().Pusher().RegisterDevice(deviceID, deviceToken, deviceOS, requester.ID)
 	response.Ok()
 }
 
 // @Command: account/unregister_device
 // @Input:	_dt		string 		*	(device token)
 // @Input:	_did	string 		*	(device id)
-func (s *AccountService) unregisterDevice(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AccountService) unregisterDevice(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var deviceID, deviceToken string
 	if v, ok := request.Data["_dt"].(string); ok {
 		deviceToken = v
@@ -495,7 +495,7 @@ func (s *AccountService) unregisterDevice(requester *nested.Account, request *ne
 	if v, ok := request.Data["_did"].(string); ok {
 		deviceID = v
 	}
-	s.Worker().Pusher().Notification.UnregisterDevice(deviceID, deviceToken, requester.ID)
+	s.Worker().Pusher().UnregisterDevice(deviceID, deviceToken, requester.ID)
 	response.Ok()
 }
 
@@ -506,7 +506,7 @@ func (s *AccountService) unregisterDevice(requester *nested.Account, request *ne
 // @Input:	dob			string			+	(YYYY-MM-DD)
 // @Input:	email		string			+
 // @Input:	searchable	bool			+
-func (s *AccountService) updateAccount(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AccountService) updateAccount(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	aur := nested.AccountUpdateRequest{}
 	placeUpdateRequest := tools.M{}
 	if !requester.Privacy.ChangeProfile {
@@ -582,7 +582,7 @@ func (s *AccountService) updateAccount(requester *nested.Account, request *neste
 // @Input:	username		string			*
 // @Input:	password		string			*
 // @Input:	status			bool			*
-func (s *AccountService) updateEmail(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AccountService) updateEmail(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var host, username, password string
 	var port int
 	var status bool
@@ -661,7 +661,7 @@ func (s *AccountService) updateEmail(requester *nested.Account, request *nestedG
 }
 
 // @Command: account/remove_email
-func (s *AccountService) removeEmail(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AccountService) removeEmail(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	accountMail := nested.AccountMail{
 		Active:           false,
 		OutgoingSMTPHost: "",

@@ -2,17 +2,17 @@ package nestedServiceSearch
 
 import (
 	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/rpc"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"strings"
 
-	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoft.com/nested/server/model"
 )
 
 // @Command:	search/places_for_compose
 // @Input:	keyword			string		+
 // @Pagination
-func (s *SearchService) placesForCompose(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *SearchService) placesForCompose(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var keyword string
 	if v, ok := request.Data["keyword"].(string); ok {
 		keyword = v
@@ -38,7 +38,7 @@ func (s *SearchService) placesForCompose(requester *nested.Account, request *nes
 // @Command:	search/places_for_search
 // @Input:	keyword			string		+
 // @Pagination
-func (s *SearchService) placesForSearch(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *SearchService) placesForSearch(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var keyword string
 	if v, ok := request.Data["keyword"].(string); ok {
 		keyword = v
@@ -59,7 +59,7 @@ func (s *SearchService) placesForSearch(requester *nested.Account, request *nest
 // @Command:	search/accounts
 // @Input:	keyword			string		+
 // @Pagination
-func (s *SearchService) accounts(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *SearchService) accounts(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var keyword string
 	if v, ok := request.Data["keyword"].(string); ok {
 		keyword = v
@@ -77,7 +77,7 @@ func (s *SearchService) accounts(requester *nested.Account, request *nestedGatew
 // @Command:	search/accounts_for_admin
 // @Input:	keyword			string		+
 // @Pagination
-func (s *SearchService) accountsForAdmin(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *SearchService) accountsForAdmin(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var keyword string
 	if v, ok := request.Data["keyword"].(string); ok {
 		keyword = v
@@ -96,7 +96,7 @@ func (s *SearchService) accountsForAdmin(requester *nested.Account, request *nes
 // @Input:	keyword			string		+
 // @Input:	place_id		string		*
 // @Pagination
-func (s *SearchService) accountsForInvite(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *SearchService) accountsForInvite(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var accounts []nested.Account
 	var keyword string
 	place := s.Worker().Argument().GetPlace(request, response)
@@ -123,7 +123,7 @@ func (s *SearchService) accountsForInvite(requester *nested.Account, request *ne
 // @Input:	keyword			string		+
 // @Input:	place_id			string		*
 // @Pagination
-func (s *SearchService) accountsForAdd(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *SearchService) accountsForAdd(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var placeID string
 	var keywords []string
 	if v, ok := request.Data["keyword"].(string); ok {
@@ -144,7 +144,7 @@ func (s *SearchService) accountsForAdd(requester *nested.Account, request *neste
 // @Command:	search/accounts_for_mention
 // @Input:	keyword		string		+
 // @Input:	post_id		string		*
-func (s *SearchService) accountsForMention(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *SearchService) accountsForMention(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var keywords []string
 	var post *nested.Post
 	if post = s.Worker().Argument().GetPost(request, response); post == nil {
@@ -167,7 +167,7 @@ func (s *SearchService) accountsForMention(requester *nested.Account, request *n
 // @Command:	search/accounts_for_task_mention
 // @Input:	keyword		string		+
 // @Input:	task_id		string		*
-func (s *SearchService) accountsForTaskMention(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *SearchService) accountsForTaskMention(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var keyword string
 	var task *nested.Task
 	if task = s.Worker().Argument().GetTask(request, response); task == nil {
@@ -188,7 +188,7 @@ func (s *SearchService) accountsForTaskMention(requester *nested.Account, reques
 // @Command:	search/accounts_for_search
 // @Input:	keyword			string		+
 // @Pagination
-func (s *SearchService) accountsForSearch(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *SearchService) accountsForSearch(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var keyword string
 	if v, ok := request.Data["keyword"].(string); ok {
 		keyword = v
@@ -208,7 +208,7 @@ func (s *SearchService) accountsForSearch(requester *nested.Account, request *ne
 // @Input:	keyword			string	+
 // @Input:	filter			string	+	(my_privates | privates | public | all)
 // @Input:	details			bool		+
-func (s *SearchService) labels(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *SearchService) labels(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var keyword, filter string
 	var details bool
 	if v, ok := request.Data["keyword"].(string); ok {
@@ -254,7 +254,7 @@ func (s *SearchService) labels(requester *nested.Account, request *nestedGateway
 // @Input:	label_title		string 	+	(comma separated)
 // @Input:	has_attachment	 bool	+
 // @Pagination
-func (s *SearchService) posts(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *SearchService) posts(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var hasAttachment bool
 	var keyword string
 	senderIDs := make([]string, 0, 10)
@@ -307,7 +307,7 @@ func (s *SearchService) posts(requester *nested.Account, request *nestedGateway.
 // @Input:	label_id			    string 	+	(comma separated)
 // @Input:	label_title			string 	+	(comma separated)
 // @Input:	has_attachment	 	bool	    +
-func (s *SearchService) tasks(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *SearchService) tasks(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var hasAttachment bool
 	var keyword string
 	assignorIDs := make([]string, 0, 10)
@@ -353,7 +353,7 @@ func (s *SearchService) tasks(requester *nested.Account, request *nestedGateway.
 
 // @Command:	search/apps
 // @Input:	keyword				string	+
-func (s *SearchService) apps(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *SearchService) apps(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var keyword string
 	if v, ok := request.Data["keyword"].(string); ok {
 		keyword = v
@@ -370,7 +370,7 @@ func (s *SearchService) apps(requester *nested.Account, request *nestedGateway.R
 // @Input:	account_id		string	*
 // @Input:	keyword			string	+
 // @Pagination
-func (s *SearchService) conversation(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *SearchService) conversation(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var accountID, keywords string
 	if v, ok := request.Data["account_id"].(string); ok {
 		accountID = v
@@ -399,7 +399,7 @@ func (s *SearchService) conversation(requester *nested.Account, request *nestedG
 
 // @Command:	search/suggestions
 // @Input:	keyword			string	+
-func (s *SearchService) suggestions(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *SearchService) suggestions(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var keyword string
 	if v, ok := request.Data["keyword"].(string); ok {
 		keyword = v

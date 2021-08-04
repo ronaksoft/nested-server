@@ -7,7 +7,6 @@ import (
 	"git.ronaksoft.com/nested/server/pkg/cache"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
-	"git.ronaksoft.com/nested/server/pkg/session"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 	"go.uber.org/zap"
@@ -49,8 +48,6 @@ func init() {
 
 // Manager is the wrapper around all the other managers
 type Manager struct {
-	Device        *session.DeviceManager
-	Websocket     *session.WebsocketManager
 	Account       *AccountManager
 	App           *AppManager
 	Contact       *ContactManager
@@ -122,34 +119,32 @@ func NewManager(instanceID, mongoDSN, redisDSN string, logLevel int) (*Manager, 
 		_Cache = c
 	}
 
-	_Manager = new(Manager)
-	_Manager.Device = session.NewDeviceManager(_MongoSession)
-	_Manager.Websocket = session.NewWebsocketManager(_Cache)
-
-	_Manager.Account = NewAccountManager()
-	_Manager.App = NewAppManager()
-	_Manager.Contact = NewContactManager()
-	_Manager.File = NewFileManager()
-	_Manager.Group = NewGroupManager()
-	_Manager.Hook = NewHookManager()
-	_Manager.Label = NewLabelManager()
-	_Manager.License = NewLicenceManager()
-	_Manager.Notification = NewNotificationManager()
-	_Manager.Phone = NewPhoneManager()
-	_Manager.Place = NewPlaceManager()
-	_Manager.PlaceActivity = NewPlaceActivityManager()
-	_Manager.Post = NewPostManager()
-	_Manager.PostActivity = NewPostActivityManager()
-	_Manager.Report = NewReportManager()
-	_Manager.Search = NewSearchManager()
-	_Manager.Session = NewSessionManager()
-	_Manager.Store = NewStoreManager()
-	_Manager.System = NewSystemManager()
-	_Manager.Task = NewTaskManager()
-	_Manager.TaskActivity = NewTaskActivityManager()
-	_Manager.TimeBucket = NewTimeBucketManager()
-	_Manager.Token = NewTokenManager()
-	_Manager.Verification = NewVerificationManager()
+	_Manager = &Manager{
+		Account:       NewAccountManager(),
+		App:           NewAppManager(),
+		Contact:       NewContactManager(),
+		File:          NewFileManager(),
+		Group:         NewGroupManager(),
+		Hook:          NewHookManager(),
+		Label:         NewLabelManager(),
+		License:       NewLicenceManager(),
+		Notification:  NewNotificationManager(),
+		Phone:         NewPhoneManager(),
+		Place:         NewPlaceManager(),
+		PlaceActivity: NewPlaceActivityManager(),
+		Post:          NewPostManager(),
+		PostActivity:  NewPostActivityManager(),
+		Report:        NewReportManager(),
+		Search:        NewSearchManager(),
+		Session:       NewSessionManager(),
+		Store:         NewStoreManager(),
+		System:        NewSystemManager(),
+		Task:          NewTaskManager(),
+		TaskActivity:  NewTaskActivityManager(),
+		TimeBucket:    NewTimeBucketManager(),
+		Token:         NewTokenManager(),
+		Verification:  NewVerificationManager(),
+	}
 
 	// Load the system constants
 	_Manager.System.LoadIntegerConstants()
@@ -191,6 +186,14 @@ func (m *Manager) GetBundles() []string {
 		return r.BundleIDs
 	}
 
+}
+
+func (m *Manager) DB() *mgo.Session {
+	return _MongoSession
+}
+
+func (m *Manager) Cache() *cache.Manager {
+	return _Cache
 }
 
 // ModelCheckHealth checks the whole database in a time-consuming manner

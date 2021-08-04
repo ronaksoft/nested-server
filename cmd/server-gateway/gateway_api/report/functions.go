@@ -1,9 +1,9 @@
 package nestedServiceReport
 
 import (
-	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoft.com/nested/server/model"
 	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/rpc"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 )
 
@@ -13,7 +13,7 @@ import (
 // @Input:	to			string 	+	(YYYY-MM-DD:HH)
 // @Input:	res			string	+	(h | d | m)
 // @Input:   key         string     *
-func (s *ReportService) ReportTimeSeriesSingleValue(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *ReportService) ReportTimeSeriesSingleValue(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var from, to, key, res string
 	if v, ok := request.Data["from"].(string); ok {
 		// TODO:: check from format YYYY-MM-DD:HH

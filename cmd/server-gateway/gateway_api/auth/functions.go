@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/rpc"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"html/template"
 	"log"
@@ -11,14 +12,13 @@ import (
 	"strings"
 	"time"
 
-	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoft.com/nested/server/model"
 )
 
 // @Command:	auth/get_verification
 // @Input:	phone	string	*
 // @Input:	uid 	string	*
-func (s *AuthService) getPhoneVerificationCode(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AuthService) getPhoneVerificationCode(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var phone string
 	if v, ok := request.Data["phone"].(string); ok {
 		phone = strings.TrimLeft(v, " +0")
@@ -57,7 +57,7 @@ func (s *AuthService) getPhoneVerificationCode(requester *nested.Account, reques
 
 // @Command:	auth/get_email_verification
 // @Input:	email	string	*
-func (s *AuthService) getEmailVerificationCode(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AuthService) getEmailVerificationCode(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var email string
 
 	if v, ok := request.Data["email"].(string); ok {
@@ -85,7 +85,7 @@ func (s *AuthService) getEmailVerificationCode(requester *nested.Account, reques
 // @Command:	auth/verify_code
 // @Input:	code	string	*
 // @Input:	vid 	string	*	"Verification ID"
-func (s *AuthService) verifyCode(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AuthService) verifyCode(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var verifyID string
 	var code string
 	if v, ok := request.Data["vid"].(string); ok {
@@ -107,7 +107,7 @@ func (s *AuthService) verifyCode(requester *nested.Account, request *nestedGatew
 
 // @Command:	auth/send_text
 // @Input:	vid		string	*
-func (s *AuthService) sendCodeByText(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AuthService) sendCodeByText(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var verification *nested.Verification
 	if v, ok := request.Data["vid"].(string); ok {
 		verification = s.Worker().Model().Verification.GetByID(v)
@@ -143,7 +143,7 @@ func (s *AuthService) sendCodeByText(requester *nested.Account, request *nestedG
 // @Command:	auth/recover_pass
 // @Input:	vid			string	*
 // @Input:	new_pass	string	*
-func (s *AuthService) recoverPassword(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AuthService) recoverPassword(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var verification *nested.Verification
 	var newPass string
 	if v, ok := request.Data["vid"].(string); ok {
@@ -181,7 +181,7 @@ func (s *AuthService) recoverPassword(requester *nested.Account, request *nested
 
 // @Command:	auth/recover_username
 // @Input:	vid		string	*
-func (s *AuthService) recoverUsername(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AuthService) recoverUsername(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var verification *nested.Verification
 	if v, ok := request.Data["vid"].(string); ok {
 		verification = s.Worker().Model().Verification.GetByID(v)
@@ -216,7 +216,7 @@ func (s *AuthService) recoverUsername(requester *nested.Account, request *nested
 
 // @Command:	auth/phone_available
 // @Input:	phone		string	*
-func (s *AuthService) phoneAvailable(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AuthService) phoneAvailable(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var phone string
 	if v, ok := request.Data["phone"].(string); ok {
 		phone = strings.TrimLeft(v, " +0")
@@ -245,7 +245,7 @@ func (s *AuthService) phoneAvailable(requester *nested.Account, request *nestedG
 // @Input:	email		string	+
 // @Input:	phone		string	*
 // @Input:	vid			string	*
-func (s *AuthService) registerUserAccount(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AuthService) registerUserAccount(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var uid, pass, fname, lname, gender, dob, country, email, phone string
 	var verification *nested.Verification
 
@@ -370,7 +370,7 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 	s.Worker().Model().Place.CreatePersonalPlace(pcr)
 
 	// add the new user to his/her new personal place
-	s.Worker().Model().Place.AddKeyholder(pcr.ID, pcr.AccountID)
+	s.Worker().Model().Place.AddKeyHolder(pcr.ID, pcr.AccountID)
 	s.Worker().Model().Place.Promote(pcr.ID, pcr.AccountID)
 
 	// add the personal place to his/her favorite place
@@ -396,7 +396,7 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 			// if user is not a keyHolder or Creator of place grandPlace, then make him to be
 			if !grandPlace.IsMember(uid) {
 				log.Println("grandPlace.IsMember(uid):: not member of grandPlcae")
-				s.Worker().Model().Place.AddKeyholder(grandPlace.ID, uid)
+				s.Worker().Model().Place.AddKeyHolder(grandPlace.ID, uid)
 				// Enables notification by default
 				s.Worker().Model().Account.SetPlaceNotification(uid, grandPlace.ID, true)
 
@@ -412,7 +412,7 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 				continue
 			}
 			//if !place.HasKeyholderLimit() {
-			s.Worker().Model().Place.AddKeyholder(place.ID, uid)
+			s.Worker().Model().Place.AddKeyHolder(place.ID, uid)
 
 			// Enables notification by default
 			s.Worker().Model().Account.SetPlaceNotification(uid, place.ID, true)
@@ -438,7 +438,7 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *ne
 // @Input:	app_name			string	*
 // @Input:	app_homepage 		string	+
 // @Input:	app_callback_url	string	+
-func (s *AuthService) authorizeApp(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *AuthService) authorizeApp(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var appID, appName, appHomepage, appCallbackUrl string
 	if v, ok := request.Data["app_id"].(string); ok {
 		appID = v

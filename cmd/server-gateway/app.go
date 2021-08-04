@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
+	"git.ronaksoft.com/nested/server/pkg/pusher"
+	"git.ronaksoft.com/nested/server/pkg/rpc"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"net/http"
 	"os"
@@ -11,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoft.com/nested/server/cmd/server-gateway/gateway_api"
 	"git.ronaksoft.com/nested/server/cmd/server-gateway/gateway_api/account"
 	"git.ronaksoft.com/nested/server/cmd/server-gateway/gateway_api/admin"
@@ -31,7 +32,6 @@ import (
 	"git.ronaksoft.com/nested/server/cmd/server-gateway/gateway_api/system"
 	"git.ronaksoft.com/nested/server/cmd/server-gateway/gateway_api/task"
 	"git.ronaksoft.com/nested/server/cmd/server-gateway/gateway_file"
-	"git.ronaksoft.com/nested/server/cmd/server-ntfy/client"
 	"git.ronaksoft.com/nested/server/model"
 	"github.com/iris-contrib/middleware/cors"
 	"github.com/kataras/iris"
@@ -43,19 +43,17 @@ var (
 	_WelcomeMsgBytes []byte
 )
 
-// GatewayServer
-type GatewayServer struct {
+type APP struct {
 	wg    *sync.WaitGroup
 	ws    *websocket.Server
 	iris  *iris.Application
 	model *nested.Manager
-	ntfy  *ntfy.Client
 	file  *file.Server
-	api   *api.API
+	api   *api.Server
 }
 
-func NewGatewayServer() *GatewayServer {
-	gateway := new(GatewayServer)
+func NewAPP() *APP {
+	app := new(APP)
 
 	// Set Welcome Message to send to clients when they connect
 	_WelcomeMsg := tools.M{
@@ -76,11 +74,11 @@ func NewGatewayServer() *GatewayServer {
 	); err != nil {
 		os.Exit(1)
 	} else {
-		gateway.model = model
+		app.model = model
 	}
 
-	// Initialize Websocket API
-	gateway.ws = websocket.New(websocket.Config{
+	// Initialize websocket Server
+	app.ws = websocket.New(websocket.Config{
 		ReadBufferSize:    4096,
 		WriteBufferSize:   4096,
 		MaxMessageSize:    1 * 1024 * 1024,
@@ -89,28 +87,11 @@ func NewGatewayServer() *GatewayServer {
 		ReadTimeout:       1 * time.Minute,
 		WriteTimeout:      5 * time.Minute,
 	})
-	gateway.ws.OnConnection(gateway.websocketOnConnection)
-
-	// Initialize NTFY Client
-	gateway.ntfy = ntfy.NewClient(_Config.GetString("JOB_ADDRESS"), gateway.model)
-
-	// If a push message received from NATS then send it to the response channel for
-	// delivery to end-user
-	gateway.ntfy.OnWebsocketPush(func(push *ntfy.WebsocketPush) {
-		if gateway.ws.IsConnected(push.WebsocketID) {
-			conn := gateway.ws.GetConnection(push.WebsocketID)
-			conn.EmitMessage([]byte(push.Payload))
-		} else {
-			gateway.model.Websocket.Remove(push.WebsocketID, push.BundleID)
-		}
-	})
-
-	// Remove all the websockets
-	gateway.model.Websocket.RemoveByBundleID(_Config.GetString("BUNDLE_ID"))
+	app.ws.OnConnection(app.websocketOnConnection)
 
 	// Initialize IRIS Framework
-	gateway.iris = iris.New()
-	gateway.iris.Use(
+	app.iris = iris.New()
+	app.iris.Use(
 		cors.New(cors.Options{
 			AllowedHeaders: []string{
 				"origin", "access-control-allow-origin", "content-type",
@@ -121,96 +102,106 @@ func NewGatewayServer() *GatewayServer {
 			},
 		}))
 
-	gateway.wg = new(sync.WaitGroup)
+	app.wg = new(sync.WaitGroup)
 
-	// Initialize API API
-	gateway.api = api.NewServer(_Config, gateway.wg)
+	// Initialize Server Server
+	app.api = api.NewServer(_Config, app.wg,
+		func(push pusher.WebsocketPush) bool {
+			if app.ws.IsConnected(push.WebsocketID) {
+				conn := app.ws.GetConnection(push.WebsocketID)
+				_ = conn.EmitMessage([]byte(push.Payload))
+				return true
+			}
+			return false
+		},
+	)
 
 	// Register all the available services in the server worker
-	gateway.api.Worker().RegisterService(nestedServiceAccount.NewAccountService(gateway.api.Worker()))
-	gateway.api.Worker().RegisterService(nestedServiceApp.NewAppService(gateway.api.Worker()))
-	gateway.api.Worker().RegisterService(nestedServiceAdmin.NewAdminService(gateway.api.Worker()))
-	gateway.api.Worker().RegisterService(nestedServiceAuth.NewAuthService(gateway.api.Worker()))
-	gateway.api.Worker().RegisterService(nestedServiceHook.NewHookService(gateway.api.Worker()))
-	gateway.api.Worker().RegisterService(nestedServiceClient.NewClientService(gateway.api.Worker()))
-	gateway.api.Worker().RegisterService(nestedServiceContact.NewContactService(gateway.api.Worker()))
-	gateway.api.Worker().RegisterService(nestedServiceFile.NewFileService(gateway.api.Worker()))
-	gateway.api.Worker().RegisterService(nestedServiceLabel.NewLabelService(gateway.api.Worker()))
-	gateway.api.Worker().RegisterService(nestedServiceNotification.NewNotificationService(gateway.api.Worker()))
-	gateway.api.Worker().RegisterService(nestedServicePlace.NewPlaceService(gateway.api.Worker()))
-	gateway.api.Worker().RegisterService(nestedServicePost.NewPostService(gateway.api.Worker()))
-	gateway.api.Worker().RegisterService(nestedServiceReport.NewReportService(gateway.api.Worker()))
-	gateway.api.Worker().RegisterService(nestedServiceSearch.NewSearchService(gateway.api.Worker()))
-	gateway.api.Worker().RegisterService(nestedServiceSession.NewSessionService(gateway.api.Worker()))
-	gateway.api.Worker().RegisterService(nestedServiceSystem.NewSystemService(gateway.api.Worker()))
-	gateway.api.Worker().RegisterService(nestedServiceTask.NewTaskService(gateway.api.Worker()))
+	app.api.Worker().RegisterService(
+		nestedServiceAccount.NewAccountService(app.api.Worker()),
+		nestedServiceApp.NewAppService(app.api.Worker()),
+		nestedServiceAdmin.NewAdminService(app.api.Worker()),
+		nestedServiceAuth.NewAuthService(app.api.Worker()),
+		nestedServiceHook.NewHookService(app.api.Worker()),
+		nestedServiceClient.NewClientService(app.api.Worker()),
+		nestedServiceContact.NewContactService(app.api.Worker()),
+		nestedServiceFile.NewFileService(app.api.Worker()),
+		nestedServiceLabel.NewLabelService(app.api.Worker()),
+		nestedServiceNotification.NewNotificationService(app.api.Worker()),
+		nestedServicePlace.NewPlaceService(app.api.Worker()),
+		nestedServicePost.NewPostService(app.api.Worker()),
+		nestedServiceReport.NewReportService(app.api.Worker()),
+		nestedServiceSearch.NewSearchService(app.api.Worker()),
+		nestedServiceSession.NewSessionService(app.api.Worker()),
+		nestedServiceSystem.NewSystemService(app.api.Worker()),
+		nestedServiceTask.NewTaskService(app.api.Worker()),
+	)
 
 	// Register and run BackgroundWorkers
-	gateway.api.RegisterBackgroundJob(api.NewBackgroundJob(gateway.api, 1*time.Minute, api.JobReporter))
-	gateway.api.RegisterBackgroundJob(api.NewBackgroundJob(gateway.api, 1*time.Minute, api.JobOverdueTasks))
-	gateway.api.RegisterBackgroundJob(api.NewBackgroundJob(gateway.api, 1*time.Hour, api.JobLicenseManager))
+	app.api.RegisterBackgroundJob(api.NewBackgroundJob(app.api, 1*time.Minute, api.JobReporter))
+	app.api.RegisterBackgroundJob(api.NewBackgroundJob(app.api, 1*time.Minute, api.JobOverdueTasks))
+	app.api.RegisterBackgroundJob(api.NewBackgroundJob(app.api, 1*time.Hour, api.JobLicenseManager))
 
-	// Initialize File API
-	gateway.file = file.NewServer(_Config, gateway.model)
+	// Initialize File Server
+	app.file = file.NewServer(_Config, app.model)
 
 	// Root Handlers (Deprecated)
-	gateway.iris.Get("/", gateway.httpOnConnection)
-	gateway.iris.Post("/", gateway.httpOnConnection)
+	app.iris.Get("/", app.httpOnConnection)
+	app.iris.Post("/", app.httpOnConnection)
 
-	// API Handlers
-	apiParty := gateway.iris.Party("/api")
-	apiParty.Get("/check_auth", gateway.httpCheckAuth)
-	apiParty.Get("/", gateway.httpOnConnection)
-	apiParty.Post("/", gateway.httpOnConnection)
+	// Server Handlers
+	apiParty := app.iris.Party("/api")
+	apiParty.Get("/check_auth", app.httpCheckAuth)
+	apiParty.Get("/", app.httpOnConnection)
+	apiParty.Post("/", app.httpOnConnection)
 
 	// File Handlers
-	fileParty := gateway.iris.Party("/file")
-	fileParty.Get("/view/{fileToken:string}", gateway.file.ServeFileByFileToken, gateway.file.Download)
-	fileParty.Get("/view/{sessionID:string}/{universalID:string}", gateway.file.ServePublicFiles, gateway.file.Download)
-	fileParty.Get("/view/{sessionID:string}/{universalID:string}/{downloadToken:string}", gateway.file.ServePrivateFiles, gateway.file.Download)
-	fileParty.Get("/download/{fileToken:string}", gateway.file.ForceDownload, gateway.file.ServeFileByFileToken, gateway.file.Download)
-	fileParty.Get("/download/{sessionID:string}/{universalID:string}", gateway.file.ForceDownload, gateway.file.ServePublicFiles, gateway.file.Download)
-	fileParty.Get("/download/{sessionID:string}/{universalID:string}/{downloadToken:string}", gateway.file.ForceDownload, gateway.file.ServePrivateFiles, gateway.file.Download)
-	fileParty.Post("/upload/{uploadType:string}/{sessionID:string}/{uploadToken:string}", gateway.file.UploadUser)
+	fileParty := app.iris.Party("/file")
+	fileParty.Get("/view/{fileToken:string}", app.file.ServeFileByFileToken, app.file.Download)
+	fileParty.Get("/view/{sessionID:string}/{universalID:string}", app.file.ServePublicFiles, app.file.Download)
+	fileParty.Get("/view/{sessionID:string}/{universalID:string}/{downloadToken:string}", app.file.ServePrivateFiles, app.file.Download)
+	fileParty.Get("/download/{fileToken:string}", app.file.ForceDownload, app.file.ServeFileByFileToken, app.file.Download)
+	fileParty.Get("/download/{sessionID:string}/{universalID:string}", app.file.ForceDownload, app.file.ServePublicFiles, app.file.Download)
+	fileParty.Get("/download/{sessionID:string}/{universalID:string}/{downloadToken:string}", app.file.ForceDownload, app.file.ServePrivateFiles, app.file.Download)
+	fileParty.Post("/upload/{uploadType:string}/{sessionID:string}/{uploadToken:string}", app.file.UploadUser)
 	fileParty.Options("/upload/{uploadType:string}/{sessionID:string}/{uploadToken:string}", nil)
-	fileParty.Post("/upload/app/{uploadType:string}/{appToken:string}/{uploadToken:string}", gateway.file.UploadApp)
+	fileParty.Post("/upload/app/{uploadType:string}/{appToken:string}/{uploadToken:string}", app.file.UploadApp)
 	fileParty.Options("/upload/app/{uploadType:string}/{appToken:string}/{uploadToken:string}", nil)
 
 	// System Handlers
-	systemParty := gateway.iris.Party("/system")
-	systemParty.Get("/download/{apiKey:string}/{universalID:string}", gateway.file.ServerFileBySystem, gateway.file.Download)
-	systemParty.Post("/upload/{uploadType:string}/{apiKey:string}", gateway.file.UploadSystem)
+	systemParty := app.iris.Party("/system")
+	systemParty.Get("/download/{apiKey:string}/{universalID:string}", app.file.ServerFileBySystem, app.file.Download)
+	systemParty.Post("/upload/{uploadType:string}/{apiKey:string}", app.file.UploadSystem)
 
-	return gateway
+	return app
 }
 
 // Run
 // This is a blocking function which will run the Iris server
-func (gw *GatewayServer) Run() {
-	// Run API
+func (gw *APP) Run() {
+	// Run Server
 	if _Config.GetString("TLS_KEY_FILE") != "" && _Config.GetString("TLS_CERT_FILE") != "" {
-		gw.iris.Run(iris.TLS(
+		_ = gw.iris.Run(iris.TLS(
 			_Config.GetString("BIND_ADDRESS"),
 			_Config.GetString("TLS_CERT_FILE"),
 			_Config.GetString("TLS_KEY_FILE"),
 		))
 	} else {
-		gw.iris.Run(iris.Addr(
+		_ = gw.iris.Run(iris.Addr(
 			_Config.GetString("BIND_ADDRESS"),
 		))
 	}
 }
 
 // Shutdown clean up services before exiting
-func (gw *GatewayServer) Shutdown() {
+func (gw *APP) Shutdown() {
 	gw.model.Shutdown()
-	gw.ntfy.Close()
 }
 
 // httpOnConnection
 // This function is called with any request from clients. If the request has "Upgrade" header set to "websocket"
 // then context will be passed to 'websocketOnConnection'
-func (gw *GatewayServer) httpOnConnection(ctx iris.Context) {
+func (gw *APP) httpOnConnection(ctx iris.Context) {
 	startTime := time.Now()
 	upgrade := ctx.GetHeader("Upgrade")
 	if strings.ToLower(upgrade) == "websocket" {
@@ -218,7 +209,7 @@ func (gw *GatewayServer) httpOnConnection(ctx iris.Context) {
 		return
 	}
 
-	userRequest := new(nestedGateway.Request)
+	userRequest := new(rpc.Request)
 	if err := ctx.ReadJSON(userRequest); err != nil {
 		ctx.JSON(iris.Map{
 			"status":     "err",
@@ -236,8 +227,8 @@ func (gw *GatewayServer) httpOnConnection(ctx iris.Context) {
 		userRequest.AppToken = appToken
 	}
 
-	// Send to API
-	userResponse := new(nestedGateway.Response)
+	// Send to Server
+	userResponse := new(rpc.Response)
 	gw.api.Worker().Execute(userRequest, userResponse)
 
 	log.Info("HTTP Request Received",
@@ -254,7 +245,7 @@ func (gw *GatewayServer) httpOnConnection(ctx iris.Context) {
 }
 
 // httpCheckAuth
-func (gw *GatewayServer) httpCheckAuth(ctx iris.Context) {
+func (gw *APP) httpCheckAuth(ctx iris.Context) {
 	appToken := gw.model.Token.GetAppToken(ctx.GetHeader("X-APP-TOKEN"))
 	if appToken != nil && !appToken.Expired {
 		app := gw.model.App.GetByID(ctx.GetHeader("X-APP-ID"))
@@ -274,8 +265,8 @@ func (gw *GatewayServer) httpCheckAuth(ctx iris.Context) {
 
 // websocketOnConnection
 // This function will be called once in each websocket connection life-time
-func (gw *GatewayServer) websocketOnConnection(c websocket.Connection) {
-	log.Debug("Websocket Connected",
+func (gw *APP) websocketOnConnection(c websocket.Connection) {
+	log.Debug("websocket Connected",
 		zap.String("ConnID", c.ID()),
 		zap.String("RemoteIP", c.Context().Request().RemoteAddr),
 	)
@@ -283,22 +274,22 @@ func (gw *GatewayServer) websocketOnConnection(c websocket.Connection) {
 	// Send Welcome Message to the Client
 	_ = c.EmitMessage(_WelcomeMsgBytes)
 
-	// Websocket Message Handler
+	// websocket Message Handler
 	c.OnMessage(func(m []byte) {
 		if strings.HasPrefix(string(m), "PING!") {
 			_ = c.EmitMessage([]byte(strings.Replace(string(m), "PING!", "PONG!", 1)))
 		} else {
 			startTime := time.Now()
-			userRequest := &nestedGateway.Request{}
+			userRequest := &rpc.Request{}
 			_ = json.Unmarshal(m, userRequest)
 			userRequest.ClientIP = c.Context().RemoteAddr()
 			userRequest.UserAgent = c.Context().GetHeader("User-Agent")
 			userRequest.WebsocketID = c.ID()
 
-			// Send to API
-			userResponse := &nestedGateway.Response{}
+			// Send to Server
+			userResponse := &rpc.Response{}
 			gw.api.Worker().Execute(userRequest, userResponse)
-			log.Debug("Websocket Request Received",
+			log.Debug("websocket Request Received",
 				zap.String("AppID", userRequest.AppID),
 				zap.String("Cmd", userRequest.Command),
 				zap.String("Status", userResponse.Status),
@@ -310,8 +301,8 @@ func (gw *GatewayServer) websocketOnConnection(c websocket.Connection) {
 		}
 	})
 
-	// Websocket Disconnect Handler
+	// websocket Disconnect Handler
 	c.OnDisconnect(func() {
-		gw.model.Websocket.Remove(c.ID(), _BundleID)
+		_ = gw.api.Worker().Pusher().UnregisterWebsocket(c.ID(), _BundleID)
 	})
 }

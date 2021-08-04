@@ -2,10 +2,10 @@ package nestedServiceLabel
 
 import (
 	"git.ronaksoft.com/nested/server/pkg/global"
+	"git.ronaksoft.com/nested/server/pkg/rpc"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"strings"
 
-	"git.ronaksoft.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoft.com/nested/server/model"
 	"github.com/globalsign/mgo/bson"
 )
@@ -13,7 +13,7 @@ import (
 // @Command:	label/add_member
 // @Input:	account_id		string 		*	(comma separated)
 // @Input:	label_id			string		*
-func (s *LabelService) AddMemberToLabel(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *LabelService) addMemberToLabel(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var label *nested.Label
 	var accountIDs []string
 	if label = s.Worker().Argument().GetLabel(request, response); label == nil {
@@ -54,7 +54,7 @@ func (s *LabelService) AddMemberToLabel(requester *nested.Account, request *nest
 // @Input:	title		string		*
 // @Input:	code			string		+
 // @Input:	is_public	bool			+
-func (s *LabelService) CreateLabel(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *LabelService) createLabel(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var title, labelCode string
 	var isPublic bool
 	if v, ok := request.Data["title"].(string); ok {
@@ -108,7 +108,7 @@ func (s *LabelService) CreateLabel(requester *nested.Account, request *nestedGat
 // @Input:	label_id		string		*
 // @Input:	title		string		+
 // @Input:	code			string		+
-func (s *LabelService) CreateLabelRequest(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *LabelService) createLabelRequest(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var label *nested.Label
 	var labelTitle, labelCode string
 	if v, ok := request.Data["title"].(string); ok {
@@ -150,7 +150,7 @@ func (s *LabelService) CreateLabelRequest(requester *nested.Account, request *ne
 // @Command:	label/get_members
 // @Input:	label_id		string	*
 // @Pagination
-func (s *LabelService) GetLabelMembers(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *LabelService) getLabelMembers(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var label *nested.Label
 	if label = s.Worker().Argument().GetLabel(request, response); label == nil {
 		return
@@ -171,7 +171,7 @@ func (s *LabelService) GetLabelMembers(requester *nested.Account, request *neste
 
 // @Command:	label/get_many
 // @Input:	label_id		string		*	(comma separated)
-func (s *LabelService) GetManyLabels(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *LabelService) getManyLabels(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var labels []nested.Label
 	if v, ok := request.Data["label_id"].(string); ok {
 		labelIDs := strings.Split(v, ",")
@@ -197,7 +197,7 @@ func (s *LabelService) GetManyLabels(requester *nested.Account, request *nestedG
 
 // @Command:	label/get_requests
 // @Pagination
-func (s *LabelService) ListLabelRequests(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *LabelService) listLabelRequests(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	labelRequests := make([]nested.LabelRequest, 0)
 	if requester.Authority.LabelEditor {
 		labelRequests = _Model.Label.GetRequests(nested.LabelRequestStatusPending, s.Worker().Argument().GetPagination(request))
@@ -213,7 +213,7 @@ func (s *LabelService) ListLabelRequests(requester *nested.Account, request *nes
 
 // @Command:	label/remove_request
 // @Input:	request_id		string		*
-func (s *LabelService) RemoveLabelRequest(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *LabelService) removeLabelRequest(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var labelRequest *nested.LabelRequest
 	if labelRequest = s.Worker().Argument().GetLabelRequest(request, response); labelRequest == nil {
 		return
@@ -229,7 +229,7 @@ func (s *LabelService) RemoveLabelRequest(requester *nested.Account, request *ne
 
 // @Command: label/remove
 // @Input:	label_id		string	*
-func (s *LabelService) RemoveLabel(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *LabelService) removeLabel(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var label *nested.Label
 	if label = s.Worker().Argument().GetLabel(request, response); label == nil {
 		return
@@ -251,7 +251,7 @@ func (s *LabelService) RemoveLabel(requester *nested.Account, request *nestedGat
 // @Command: label/remove_member
 // @Input:	label_id		string	*
 // @Input:	account_id	string	*
-func (s *LabelService) RemoveMemberFromLabel(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *LabelService) removeMemberFromLabel(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var label *nested.Label
 	var account *nested.Account
 	if label = s.Worker().Argument().GetLabel(request, response); label == nil {
@@ -279,7 +279,7 @@ func (s *LabelService) RemoveMemberFromLabel(requester *nested.Account, request 
 // @Input:	label_id		string	*
 // @Input:	code			string	+
 // @Input:	title		string	*
-func (s *LabelService) UpdateLabel(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *LabelService) updateLabel(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var label *nested.Label
 	var labelTitle, labelCode string
 	if label = s.Worker().Argument().GetLabel(request, response); label == nil {
@@ -316,7 +316,7 @@ func (s *LabelService) UpdateLabel(requester *nested.Account, request *nestedGat
 // @Command: label/update_request
 // @Input:	request_id		string	*
 // @Input:	status			string	*		(approve | reject)
-func (s *LabelService) UpdateLabelRequest(requester *nested.Account, request *nestedGateway.Request, response *nestedGateway.Response) {
+func (s *LabelService) updateLabelRequest(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var status string
 	var labelRequest *nested.LabelRequest
 	if v, ok := request.Data["status"].(string); ok {
