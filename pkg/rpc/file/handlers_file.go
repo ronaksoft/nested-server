@@ -3,7 +3,6 @@ package file
 import (
 	"errors"
 	"fmt"
-	nestedGateway "git.ronaksoft.com/nested/server/cmd/server-gateway/client"
 	"git.ronaksoft.com/nested/server/nested"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
@@ -201,10 +200,10 @@ func (fs *Server) UploadSystem(ctx iris.Context) {
 				fileInfos = append(fileInfos, *fileInfo)
 			}
 		}
-		r := make([]nestedGateway.UploadedFile, 0, len(fileInfos))
+		r := make([]rpc.UploadedFile, 0, len(fileInfos))
 		for _, fileInfo := range fileInfos {
 			expDate := uint64(time.Now().Add(24*time.Hour).UnixNano() / 1000000)
-			uploadedFile := nestedGateway.UploadedFile{
+			uploadedFile := rpc.UploadedFile{
 				Type:                fileInfo.Type,
 				Size:                fileInfo.Size,
 				Name:                fileInfo.Filename,
@@ -232,7 +231,7 @@ func (fs *Server) UploadSystem(ctx iris.Context) {
 
 		} else {
 			expDate := uint64(time.Now().Add(24*time.Hour).UnixNano() / 1000000)
-			uploadedFile := nestedGateway.UploadedFile{
+			uploadedFile := rpc.UploadedFile{
 				Type:                fileInfo.Type,
 				Size:                fileInfo.Size,
 				Name:                fileInfo.Filename,
@@ -242,7 +241,7 @@ func (fs *Server) UploadSystem(ctx iris.Context) {
 			if len(string(fileInfo.Thumbnails.Original)) > 0 {
 				uploadedFile.Thumbs = fileInfo.Thumbnails
 			}
-			resp.OkWithData(tools.M{"files": []nestedGateway.UploadedFile{uploadedFile}})
+			resp.OkWithData(tools.M{"files": []rpc.UploadedFile{uploadedFile}})
 		}
 	default:
 		ctx.StatusCode(http.StatusBadRequest)
@@ -296,10 +295,10 @@ func (fs *Server) UploadUser(ctx iris.Context) {
 				fileInfos = append(fileInfos, *fileInfo)
 			}
 		}
-		r := make([]nestedGateway.UploadedFile, 0, len(fileInfos))
+		r := make([]rpc.UploadedFile, 0, len(fileInfos))
 		for _, fileInfo := range fileInfos {
 			expDate := uint64(time.Now().Add(24*time.Hour).UnixNano() / 1000000)
-			uploadedFile := nestedGateway.UploadedFile{
+			uploadedFile := rpc.UploadedFile{
 				Type:                fileInfo.Type,
 				Size:                fileInfo.Size,
 				Name:                fileInfo.Filename,
@@ -327,7 +326,7 @@ func (fs *Server) UploadUser(ctx iris.Context) {
 
 		} else {
 			expDate := uint64(time.Now().Add(24*time.Hour).UnixNano() / 1000000)
-			uploadedFile := nestedGateway.UploadedFile{
+			uploadedFile := rpc.UploadedFile{
 				Type:                fileInfo.Type,
 				Size:                fileInfo.Size,
 				Name:                fileInfo.Filename,
@@ -337,7 +336,7 @@ func (fs *Server) UploadUser(ctx iris.Context) {
 			if len(string(fileInfo.Thumbnails.Original)) > 0 {
 				uploadedFile.Thumbs = fileInfo.Thumbnails
 			}
-			resp.OkWithData(tools.M{"files": []nestedGateway.UploadedFile{uploadedFile}})
+			resp.OkWithData(tools.M{"files": []rpc.UploadedFile{uploadedFile}})
 		}
 	default:
 		ctx.StatusCode(http.StatusBadRequest)
@@ -385,10 +384,10 @@ func (fs *Server) UploadApp(ctx iris.Context) {
 				fileInfos = append(fileInfos, *fileInfo)
 			}
 		}
-		r := make([]nestedGateway.UploadedFile, 0, len(fileInfos))
+		r := make([]rpc.UploadedFile, 0, len(fileInfos))
 		for _, fileInfo := range fileInfos {
 			expDate := uint64(time.Now().Add(24*time.Hour).UnixNano() / 1000000)
-			uploadedFile := nestedGateway.UploadedFile{
+			uploadedFile := rpc.UploadedFile{
 				Type:                fileInfo.Type,
 				Size:                fileInfo.Size,
 				Name:                fileInfo.Filename,
@@ -416,7 +415,7 @@ func (fs *Server) UploadApp(ctx iris.Context) {
 
 		} else {
 			expDate := uint64(time.Now().Add(24*time.Hour).UnixNano() / 1000000)
-			uploadedFile := nestedGateway.UploadedFile{
+			uploadedFile := rpc.UploadedFile{
 				Type:                fileInfo.Type,
 				Size:                fileInfo.Size,
 				Name:                fileInfo.Filename,
@@ -426,7 +425,7 @@ func (fs *Server) UploadApp(ctx iris.Context) {
 			if len(string(fileInfo.Thumbnails.Original)) > 0 {
 				uploadedFile.Thumbs = fileInfo.Thumbnails
 			}
-			resp.OkWithData(tools.M{"files": []nestedGateway.UploadedFile{uploadedFile}})
+			resp.OkWithData(tools.M{"files": []rpc.UploadedFile{uploadedFile}})
 		}
 	default:
 		ctx.StatusCode(http.StatusBadRequest)
