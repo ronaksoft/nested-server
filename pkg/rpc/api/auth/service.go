@@ -7,17 +7,17 @@ import (
 )
 
 const (
-	SERVICE_PREFIX = "auth"
+	ServicePrefix = "auth"
 )
 const (
-	CMD_GET_VERIFICATION_CODE       = "auth/get_verification"
-	CMD_GET_EMAIL_VERIFICATION_CODE = "auth/get_email_verification"
-	CMD_VERIFY_CODE                 = "auth/verify_code"
-	CMD_SEND_CODE_SMS               = "auth/send_text"
-	CMD_REGISTER_USER               = "auth/register_user"
-	CMD_RECOVER_PASSWORD            = "auth/recover_pass"
-	CMD_RECOVER_USERNAME            = "auth/recover_username"
-	CMD_PHONE_AVAILABLE             = "auth/phone_available"
+	CmdGetVerificationCode      = "auth/get_verification"
+	CmdGetEmailVerificationCode = "auth/get_email_verification"
+	CmdVerifyCode               = "auth/verify_code"
+	CmdSendCodeSms              = "auth/send_text"
+	CmdRegisterUser             = "auth/register_user"
+	CmdRecoverPassword          = "auth/recover_pass"
+	CmdRecoverUsername          = "auth/recover_username"
+	CmdPhoneAvailable           = "auth/phone_available"
 )
 
 type AuthService struct {
@@ -30,21 +30,21 @@ func NewAuthService(worker *api.Worker) *AuthService {
 	s.worker = worker
 
 	s.serviceCommands = api.ServiceCommands{
-		CMD_GET_VERIFICATION_CODE:       {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.getPhoneVerificationCode},
-		CMD_GET_EMAIL_VERIFICATION_CODE: {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.getEmailVerificationCode},
-		CMD_VERIFY_CODE:                 {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.verifyCode},
-		CMD_SEND_CODE_SMS:               {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.sendCodeByText},
-		CMD_RECOVER_PASSWORD:            {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.recoverPassword},
-		CMD_RECOVER_USERNAME:            {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.recoverUsername},
-		CMD_PHONE_AVAILABLE:             {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.phoneAvailable},
-		CMD_REGISTER_USER:               {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.registerUserAccount},
+		CmdGetVerificationCode:      {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.getPhoneVerificationCode},
+		CmdGetEmailVerificationCode: {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.getEmailVerificationCode},
+		CmdVerifyCode:               {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.verifyCode},
+		CmdSendCodeSms:              {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.sendCodeByText},
+		CmdRecoverPassword:          {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.recoverPassword},
+		CmdRecoverUsername:          {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.recoverUsername},
+		CmdPhoneAvailable:           {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.phoneAvailable},
+		CmdRegisterUser:             {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.registerUserAccount},
 	}
 
 	return s
 }
 
 func (s *AuthService) GetServicePrefix() string {
-	return SERVICE_PREFIX
+	return ServicePrefix
 }
 
 func (s *AuthService) ExecuteCommand(authLevel api.AuthLevel, requester *nested.Account, request *rpc.Request, response *rpc.Response) {

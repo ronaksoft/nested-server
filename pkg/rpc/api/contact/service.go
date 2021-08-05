@@ -7,15 +7,15 @@ import (
 )
 
 const (
-	SERVICE_PREFIX string = "contact"
+	ServicePrefix string = "contact"
 )
 const (
-	CONTACT_CMD_ADD             string = "contact/add"
-	CONTACT_CMD_ADD_FAVORITE    string = "contact/add_favorite"
-	CONTACT_CMD_REMOVE          string = "contact/remove"
-	CONTACT_CMD_REMOVE_FAVORITE string = "contact/remove_favorite"
-	CONTACT_CMD_GET             string = "contact/get"
-	CONTACT_CMD_GET_ALL         string = "contact/get_all"
+	CmdAdd            string = "contact/add"
+	CmdAddFavorite    string = "contact/add_favorite"
+	CmdRemove         string = "contact/remove"
+	CmdRemoveFavorite string = "contact/remove_favorite"
+	CmdGet            string = "contact/get"
+	CmdGetAll         string = "contact/get_all"
 )
 
 var (
@@ -32,12 +32,12 @@ func NewContactService(worker *api.Worker) *ContactService {
 	s.worker = worker
 
 	s.serviceCommands = api.ServiceCommands{
-		CONTACT_CMD_ADD:             {MinAuthLevel: api.AuthLevelUser, Execute: s.addContact},
-		CONTACT_CMD_ADD_FAVORITE:    {MinAuthLevel: api.AuthLevelUser, Execute: s.addContactToFavorite},
-		CONTACT_CMD_GET:             {MinAuthLevel: api.AuthLevelUser, Execute: s.getContact},
-		CONTACT_CMD_GET_ALL:         {MinAuthLevel: api.AuthLevelUser, Execute: s.getAllContacts},
-		CONTACT_CMD_REMOVE:          {MinAuthLevel: api.AuthLevelUser, Execute: s.removeContact},
-		CONTACT_CMD_REMOVE_FAVORITE: {MinAuthLevel: api.AuthLevelUser, Execute: s.removeContactFromFavorite},
+		CmdAdd:            {MinAuthLevel: api.AuthLevelUser, Execute: s.addContact},
+		CmdAddFavorite:    {MinAuthLevel: api.AuthLevelUser, Execute: s.addContactToFavorite},
+		CmdGet:            {MinAuthLevel: api.AuthLevelUser, Execute: s.getContact},
+		CmdGetAll:         {MinAuthLevel: api.AuthLevelUser, Execute: s.getAllContacts},
+		CmdRemove:         {MinAuthLevel: api.AuthLevelUser, Execute: s.removeContact},
+		CmdRemoveFavorite: {MinAuthLevel: api.AuthLevelUser, Execute: s.removeContactFromFavorite},
 	}
 
 	_Model = s.worker.Model()
@@ -45,7 +45,7 @@ func NewContactService(worker *api.Worker) *ContactService {
 }
 
 func (s *ContactService) GetServicePrefix() string {
-	return SERVICE_PREFIX
+	return ServicePrefix
 }
 
 func (s *ContactService) ExecuteCommand(authLevel api.AuthLevel, requester *nested.Account, request *rpc.Request, response *rpc.Response) {

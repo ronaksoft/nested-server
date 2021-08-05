@@ -7,24 +7,24 @@ import (
 )
 
 const (
-	SERVICE_PREFIX string = "search"
+	ServicePrefix string = "search"
 )
 const (
-	CMD_PLACES_FOR_COMPOSE        = "search/places_for_compose"
-	CMD_PLACES_FOR_SEARCH         = "search/places_for_search"
-	CMD_ACCOUNTS_FOR_INVITE       = "search/accounts_for_invite"
-	CMD_ACCOUNTS_FOR_ADD          = "search/accounts_for_add"
-	CMD_ACCOUNTS_FOR_MENTION      = "search/accounts_for_mention"
-	CMD_ACCOUNTS_FOR_TASK_MENTION = "search/accounts_for_task_mention"
-	CMD_ACCOUNTS_FOR_SEARCH       = "search/accounts_for_search"
-	CMD_ACCOUNTS_FOR_ADMIN        = "search/accounts_for_admin"
-	CMD_ACCOUNTS                  = "search/accounts"
-	CMD_SUGGESTIONS               = "search/suggestions"
-	CMD_LABELS                    = "search/labels"
-	CMD_POSTS                     = "search/posts"
-	CMD_POSTS_CONVERSATION        = "search/posts_conversation"
-	CMD_TASKS                     = "search/tasks"
-	CMD_APPS                      = "search/apps"
+	CmdPlacesForCompose       = "search/places_for_compose"
+	CmdPlacesForSearch        = "search/places_for_search"
+	CmdAccountsForInvite      = "search/accounts_for_invite"
+	CmdAccountsForAdd         = "search/accounts_for_add"
+	CmdAccountsForMention     = "search/accounts_for_mention"
+	CmdAccountsForTaskMention = "search/accounts_for_task_mention"
+	CmdAccountsForSearch      = "search/accounts_for_search"
+	CmdAccountsForAdmin       = "search/accounts_for_admin"
+	CmdAccounts               = "search/accounts"
+	CmdSuggestions            = "search/suggestions"
+	CmdLabels                 = "search/labels"
+	CmdPosts                  = "search/posts"
+	CmdPostsConversation      = "search/posts_conversation"
+	CmdTasks                  = "search/tasks"
+	CmdApps                   = "search/apps"
 )
 
 type SearchService struct {
@@ -37,28 +37,28 @@ func NewSearchService(worker *api.Worker) *SearchService {
 	s.worker = worker
 
 	s.serviceCommands = api.ServiceCommands{
-		CMD_ACCOUNTS:                  {MinAuthLevel: api.AuthLevelAppL1, Execute: s.accounts},
-		CMD_ACCOUNTS_FOR_ADMIN:        {MinAuthLevel: api.AuthLevelUser, Execute: s.accountsForAdmin},
-		CMD_ACCOUNTS_FOR_SEARCH:       {MinAuthLevel: api.AuthLevelUser, Execute: s.accountsForSearch},
-		CMD_ACCOUNTS_FOR_ADD:          {MinAuthLevel: api.AuthLevelUser, Execute: s.accountsForAdd},
-		CMD_ACCOUNTS_FOR_INVITE:       {MinAuthLevel: api.AuthLevelUser, Execute: s.accountsForInvite},
-		CMD_ACCOUNTS_FOR_MENTION:      {MinAuthLevel: api.AuthLevelUser, Execute: s.accountsForMention},
-		CMD_ACCOUNTS_FOR_TASK_MENTION: {MinAuthLevel: api.AuthLevelUser, Execute: s.accountsForTaskMention},
-		CMD_LABELS:                    {MinAuthLevel: api.AuthLevelUser, Execute: s.labels},
-		CMD_PLACES_FOR_COMPOSE:        {MinAuthLevel: api.AuthLevelAppL1, Execute: s.placesForCompose},
-		CMD_PLACES_FOR_SEARCH:         {MinAuthLevel: api.AuthLevelAppL1, Execute: s.placesForSearch},
-		CMD_POSTS:                     {MinAuthLevel: api.AuthLevelUser, Execute: s.posts},
-		CMD_POSTS_CONVERSATION:        {MinAuthLevel: api.AuthLevelUser, Execute: s.conversation},
-		CMD_SUGGESTIONS:               {MinAuthLevel: api.AuthLevelUser, Execute: s.suggestions},
-		CMD_TASKS:                     {MinAuthLevel: api.AuthLevelUser, Execute: s.tasks},
-		CMD_APPS:                      {MinAuthLevel: api.AuthLevelUser, Execute: s.apps},
+		CmdAccounts:               {MinAuthLevel: api.AuthLevelAppL1, Execute: s.accounts},
+		CmdAccountsForAdmin:       {MinAuthLevel: api.AuthLevelUser, Execute: s.accountsForAdmin},
+		CmdAccountsForSearch:      {MinAuthLevel: api.AuthLevelUser, Execute: s.accountsForSearch},
+		CmdAccountsForAdd:         {MinAuthLevel: api.AuthLevelUser, Execute: s.accountsForAdd},
+		CmdAccountsForInvite:      {MinAuthLevel: api.AuthLevelUser, Execute: s.accountsForInvite},
+		CmdAccountsForMention:     {MinAuthLevel: api.AuthLevelUser, Execute: s.accountsForMention},
+		CmdAccountsForTaskMention: {MinAuthLevel: api.AuthLevelUser, Execute: s.accountsForTaskMention},
+		CmdLabels:                 {MinAuthLevel: api.AuthLevelUser, Execute: s.labels},
+		CmdPlacesForCompose:       {MinAuthLevel: api.AuthLevelAppL1, Execute: s.placesForCompose},
+		CmdPlacesForSearch:        {MinAuthLevel: api.AuthLevelAppL1, Execute: s.placesForSearch},
+		CmdPosts:                  {MinAuthLevel: api.AuthLevelUser, Execute: s.posts},
+		CmdPostsConversation:      {MinAuthLevel: api.AuthLevelUser, Execute: s.conversation},
+		CmdSuggestions:            {MinAuthLevel: api.AuthLevelUser, Execute: s.suggestions},
+		CmdTasks:                  {MinAuthLevel: api.AuthLevelUser, Execute: s.tasks},
+		CmdApps:                   {MinAuthLevel: api.AuthLevelUser, Execute: s.apps},
 	}
 
 	return s
 }
 
 func (s *SearchService) GetServicePrefix() string {
-	return SERVICE_PREFIX
+	return ServicePrefix
 }
 
 func (s *SearchService) ExecuteCommand(authLevel api.AuthLevel, requester *nested.Account, request *rpc.Request, response *rpc.Response) {

@@ -181,7 +181,7 @@ func (s *PostService) attachPlace(requester *nested.Account, request *rpc.Reques
 // @Input:	subject			string	+
 // @Input:	targets			string 	+	(comma separated)
 // @Input:	attaches			string 	+	(comma separated)
-// @Input:  label_id           string + (comma separated)
+// @Input:  label_id            string + (comma separated)
 // @Input:	content_type		string	+	(text/plain | text/html)
 // @Input:	reply_to			string 	+	(post_id)
 // @Input:	forward_from		string 	+	(post_id)
@@ -191,8 +191,8 @@ func (s *PostService) createPost(requester *nested.Account, request *rpc.Request
 	var targets []string
 	var attachments []string
 	var subject, body, contentType, iframeUrl string
-	var reply_to, forward_from bson.ObjectId
-	var no_comment bool
+	var replyTo, forwardFrom bson.ObjectId
+	var noComment bool
 	var labels []nested.Label
 	if v, ok := request.Data["targets"].(string); ok {
 		targets = strings.SplitN(v, ",", global.DefaultPostMaxTargets)
@@ -233,16 +233,16 @@ func (s *PostService) createPost(requester *nested.Account, request *rpc.Request
 	}
 	if v, ok := request.Data["reply_to"].(string); ok {
 		if bson.IsObjectIdHex(v) {
-			reply_to = bson.ObjectIdHex(v)
+			replyTo = bson.ObjectIdHex(v)
 		}
 	}
 	if v, ok := request.Data["forward_from"].(string); ok {
 		if bson.IsObjectIdHex(v) {
-			forward_from = bson.ObjectIdHex(v)
+			forwardFrom = bson.ObjectIdHex(v)
 		}
 	}
 	if v, ok := request.Data["no_comment"].(bool); ok {
-		no_comment = v
+		noComment = v
 	}
 	if v, ok := request.Data["iframe_url"].(string); ok {
 		iframeUrl = v
@@ -328,12 +328,12 @@ func (s *PostService) createPost(requester *nested.Account, request *rpc.Request
 	pcr := nested.PostCreateRequest{
 		PlaceIDs:    places,
 		Recipients:  emails,
-		ReplyTo:     reply_to,
-		ForwardFrom: forward_from,
+		ReplyTo:     replyTo,
+		ForwardFrom: forwardFrom,
 		ContentType: contentType,
 		SenderID:    requester.ID,
 		SystemData: nested.PostSystemData{
-			NoComment: no_comment,
+			NoComment: noComment,
 		},
 		IFrameUrl: iframeUrl,
 	}

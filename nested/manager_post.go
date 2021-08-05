@@ -274,7 +274,7 @@ func (pm *PostManager) AddComment(postID bson.ObjectId, senderID string, body st
 	return c
 }
 
-// AddPost creates a new post according with data provided by 'pcr'
+// AddPost creates a new post according to data provided by 'pcr'
 func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(global.DbName)
@@ -581,7 +581,7 @@ func (pm *PostManager) CommentHasAccess(commentID bson.ObjectId, accountID strin
 	return false
 }
 
-// Exists returns true if post exists and it is not deleted
+// Exists returns true if post exists, and it is not deleted
 func (pm *PostManager) Exists(postID bson.ObjectId) bool {
 	dbSession := _MongoSession.Clone()
 	db := dbSession.DB(global.DbName)
@@ -594,7 +594,7 @@ func (pm *PostManager) Exists(postID bson.ObjectId) bool {
 	return n > 0
 }
 
-// GetPostByID returns Post by postID, if postID does not exists it returns nil
+// GetPostByID returns Post by postID, if postID does not exist it returns nil
 func (pm *PostManager) GetPostByID(postID bson.ObjectId) *Post {
 	return _Manager.Post.readFromCache(postID)
 }
