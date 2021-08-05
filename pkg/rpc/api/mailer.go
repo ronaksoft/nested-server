@@ -17,7 +17,6 @@ import (
 	"gopkg.in/mail.v2"
 )
 
-// MailRequest
 type MailRequest struct {
 	Host     string
 	Port     int
@@ -26,14 +25,12 @@ type MailRequest struct {
 	PostID   bson.ObjectId
 }
 
-// MailTemplate
 type MailTemplate struct {
 	Body        template.HTML
 	Attachments []AttachmentTemplate
 	SenderName  string
 }
 
-// AttachmentTemplate
 type AttachmentTemplate struct {
 	Url          string
 	Group        string
@@ -44,6 +41,8 @@ type AttachmentTemplate struct {
 	HumanSize    string
 }
 
+
+// Mailer
 // "Url":          fmt.Sprintf("%s/file/download/%s", ew.jh.conf.GetString("CYRUS_URL"), attachment.Token),
 // "Group":        fileGroup(*attachment.FileInfo),
 // "HasThumbnail": attachment.ThumbInfo != nil,
@@ -51,7 +50,6 @@ type AttachmentTemplate struct {
 // "SrcX":         template.URL(fmt.Sprintf("cid:%s", contentId)),
 // "Ext":          strings.ToUpper(path.Ext(attachment.FileInfo.Filename)[1:]),
 // "HumanSize":    humanize.Bytes(uint64(attachment.FileInfo.Size)),
-// Mailer
 type Mailer struct {
 	worker          *Worker
 	domain          string
@@ -64,7 +62,6 @@ type Mailer struct {
 	chRequests      chan MailRequest
 }
 
-// NewMailer
 func NewMailer(worker *Worker) *Mailer {
 	m := new(Mailer)
 	m.worker = worker
@@ -81,12 +78,13 @@ func NewMailer(worker *Worker) *Mailer {
 		m.template = tpl
 	}
 
+	// run the mail in background
+	// TODO:: maybe a watch dog and graceful shutdown mechanic
 	go m.Run()
 
 	return m
 }
 
-// Run
 func (m *Mailer) Run() {
 	for req := range m.chRequests {
 		if req.Host == "" {
@@ -111,12 +109,10 @@ func (m *Mailer) Run() {
 	}
 }
 
-// SendRequest
 func (m *Mailer) SendRequest(req MailRequest) {
 	m.chRequests <- req
 }
 
-// createMessage
 func (m *Mailer) createMessage(postID bson.ObjectId) *mail.Message {
 	post := m.worker.Model().Post.GetPostByID(postID)
 	if post == nil {

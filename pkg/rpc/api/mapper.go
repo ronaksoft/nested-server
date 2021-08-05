@@ -27,6 +27,7 @@ func NewMapper(worker *Worker) *Mapper {
 	m.worker = worker
 	return m
 }
+
 func (m *Mapper) Account(account nested.Account, details bool) tools.M {
 	r := tools.M{
 		"_id":     account.ID,
@@ -61,6 +62,7 @@ func (m *Mapper) Account(account nested.Account, details bool) tools.M {
 	}
 	return r
 }
+
 func (m *Mapper) Comment(comment nested.Comment) tools.M {
 	s := m.worker.Model().Account.GetByID(comment.SenderID, nil)
 	r := tools.M{
@@ -86,6 +88,7 @@ func (m *Mapper) Comment(comment nested.Comment) tools.M {
 	}
 	return r
 }
+
 func (m *Mapper) Contact(requester *nested.Account, account nested.Account) tools.M {
 	// TODO:: this is awful code fix it as soon as possible
 	contacts := m.worker.Model().Contact.GetContacts(requester.ID)
@@ -122,6 +125,7 @@ func (m *Mapper) Contact(requester *nested.Account, account nested.Account) tool
 	}
 	return r
 }
+
 func (m *Mapper) FileInfo(f nested.FileInfo) tools.M {
 	// if UploadType is not set then set upload type as FILE
 	if f.UploadType == "" {
@@ -142,6 +146,7 @@ func (m *Mapper) FileInfo(f nested.FileInfo) tools.M {
 	}
 	return r
 }
+
 func (m *Mapper) Label(requester *nested.Account, label nested.Label, details bool) tools.M {
 	r := tools.M{
 		"_id":       label.ID,
@@ -168,6 +173,7 @@ func (m *Mapper) Label(requester *nested.Account, label nested.Label, details bo
 	}
 	return r
 }
+
 func (m *Mapper) LabelRequest(labelRequest nested.LabelRequest) tools.M {
 	var label *nested.Label
 	account := m.worker.Model().Account.GetByID(labelRequest.RequesterID, nil)
@@ -188,6 +194,7 @@ func (m *Mapper) LabelRequest(labelRequest nested.LabelRequest) tools.M {
 	}
 	return r
 }
+
 func (m *Mapper) Notification(requester *nested.Account, n nested.Notification) tools.M {
 	r := tools.M{
 		"_id":         n.ID,
@@ -283,6 +290,7 @@ func (m *Mapper) Notification(requester *nested.Account, n nested.Notification) 
 
 	return r
 }
+
 func (m *Mapper) Place(requester *nested.Account, place nested.Place, access tools.MB) tools.M {
 	if access == nil {
 		return tools.M{
@@ -338,6 +346,7 @@ func (m *Mapper) Place(requester *nested.Account, place nested.Place, access too
 	}
 	return r
 }
+
 func (m *Mapper) PlaceActivity(requester *nested.Account, placeActivity nested.PlaceActivity, details bool) tools.M {
 	if details {
 		var post *nested.Post
@@ -417,6 +426,7 @@ func (m *Mapper) PlaceActivity(requester *nested.Account, placeActivity nested.P
 	}
 	return r
 }
+
 func (m *Mapper) Post(requester *nested.Account, post nested.Post, preview bool) tools.M {
 	isTrusted := true
 	if !post.Internal {
@@ -538,6 +548,7 @@ func (m *Mapper) Post(requester *nested.Account, post nested.Post, preview bool)
 	r["related_tasks"] = postTasks
 	return r
 }
+
 func (m *Mapper) PostActivity(requester *nested.Account, postActivity nested.PostActivity, details bool) tools.M {
 	if details {
 		var comment *nested.Comment
@@ -597,6 +608,7 @@ func (m *Mapper) PostActivity(requester *nested.Account, postActivity nested.Pos
 	}
 	return r
 }
+
 func (m *Mapper) Task(requester *nested.Account, task nested.Task, details bool) tools.M {
 	if !details {
 		r := tools.M{
@@ -722,6 +734,7 @@ func (m *Mapper) Task(requester *nested.Account, task nested.Task, details bool)
 	return r
 
 }
+
 func (m *Mapper) TaskActivity(requester *nested.Account, taskActivity nested.TaskActivity, details bool) tools.M {
 	r := tools.M{
 		"_id":       taskActivity.ID,
@@ -790,6 +803,7 @@ func (m *Mapper) TaskActivity(requester *nested.Account, taskActivity nested.Tas
 	}
 	return r
 }
+
 func (m *Mapper) App(app nested.App) tools.M {
 	r := tools.M{
 		"_id":            app.ID,
@@ -801,6 +815,7 @@ func (m *Mapper) App(app nested.App) tools.M {
 	}
 	return r
 }
+
 func (m *Mapper) AppToken(appToken nested.AppToken) tools.M {
 	r := tools.M{
 		"_id": appToken.ID,
