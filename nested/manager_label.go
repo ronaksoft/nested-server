@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
+	"go.uber.org/zap"
 	"strings"
 
 	"github.com/globalsign/mgo/bson"
@@ -84,7 +85,7 @@ func (lm *LabelManager) AddMembers(labelID string, memberIDs []string) bool {
 			"$inc":      bson.M{"counters.members": len(memberIDs)},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -101,7 +102,7 @@ func (lm *LabelManager) AddMembers(labelID string, memberIDs []string) bool {
 		)
 	}
 	if _, err := bulk.Run(); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -127,7 +128,7 @@ func (lm *LabelManager) CreatePrivate(id, title, code, creatorID string) bool {
 		Public:     false,
 	}
 	if err := db.C(global.CollectionLabels).Insert(label); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -149,7 +150,7 @@ func (lm *LabelManager) CreatePublic(id, title, code, creatorID string) bool {
 		Public:     true,
 	}
 	if err := db.C(global.CollectionLabels).Insert(label); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -165,7 +166,7 @@ func (lm *LabelManager) CreatePublic(id, title, code, creatorID string) bool {
 			"$inc":      bson.M{"qty": 1},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 	return true
@@ -189,7 +190,7 @@ func (lm *LabelManager) CreateRequest(requesterID, labelID, title, colourCode st
 		Status:      LabelRequestStatusPending,
 	}
 	if err := db.C(global.CollectionLabelsRequests).Insert(labelRequest); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -203,7 +204,7 @@ func (lm *LabelManager) GetByID(id string) *Label {
 
 	label := new(Label)
 	if err := db.C(global.CollectionLabels).FindId(id).One(label); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	return label
@@ -217,7 +218,7 @@ func (lm *LabelManager) GetByIDs(ids []string) []Label {
 
 	var labels []Label
 	if err := db.C(global.CollectionLabels).Find(bson.M{"_id": bson.M{"$in": ids}}).All(&labels); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return []Label{}
 	}
 	return labels
@@ -231,7 +232,7 @@ func (lm *LabelManager) GetByTitles(titles []string) []Label {
 
 	var labels []Label
 	if err := db.C(global.CollectionLabels).Find(bson.M{"title": bson.M{"$in": titles}}).All(&labels); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return []Label{}
 	}
 	return labels
@@ -245,7 +246,7 @@ func (lm *LabelManager) GetRequestByID(requestID bson.ObjectId) *LabelRequest {
 
 	labelRequest := new(LabelRequest)
 	if err := db.C(global.CollectionLabelsRequests).FindId(requestID).One(labelRequest); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	return labelRequest
@@ -262,7 +263,7 @@ func (lm *LabelManager) GetRequests(status string, pg Pagination) []LabelRequest
 	if err := db.C(global.CollectionLabelsRequests).Find(
 		bson.M{"status": status},
 	).Sort("-timestamp").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&labelRequests); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return labelRequests
 }
@@ -281,7 +282,7 @@ func (lm *LabelManager) GetRequestsByAccountID(accountID string, pg Pagination) 
 			"requester_id": accountID,
 		},
 	).Sort("-timestamp").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&labelRequests); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return labelRequests
 }
@@ -301,7 +302,7 @@ func (lm *LabelManager) IncrementCounter(labelID string, counterName string, val
 			"$inc": bson.M{fmt.Sprintf("counters.%s", counterName): value},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -314,7 +315,7 @@ func (lm *LabelManager) Remove(labelID string) bool {
 	defer dbSession.Close()
 
 	if err := db.C(global.CollectionLabels).RemoveId(labelID); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -324,7 +325,7 @@ func (lm *LabelManager) Remove(labelID string) bool {
 		bson.M{"labels": labelID},
 		bson.M{"$pull": bson.M{"labels": labelID}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -335,7 +336,7 @@ func (lm *LabelManager) Remove(labelID string) bool {
 			"$inc":  bson.M{"qty": -1},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -354,7 +355,7 @@ func (lm *LabelManager) RemoveMember(labelID, memberID string) bool {
 			"$inc":  bson.M{"counters.members": -1},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	if err := db.C(global.CollectionAccountsLabels).Update(
@@ -364,7 +365,7 @@ func (lm *LabelManager) RemoveMember(labelID, memberID string) bool {
 			"$inc":  bson.M{"qty": -1},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return true
 }
@@ -408,7 +409,7 @@ func (lm *LabelManager) UpdateRequestStatus(updaterAccountID string, requestID b
 			"responder_id": updaterAccountID,
 		}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -430,7 +431,7 @@ func (lm *LabelManager) Update(labelID, colourCode, title string) bool {
 		q["title"] = title
 	}
 	if err := db.C(global.CollectionLabels).UpdateId(labelID, bson.M{"$set": q}); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true

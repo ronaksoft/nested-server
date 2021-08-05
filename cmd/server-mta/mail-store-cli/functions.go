@@ -341,10 +341,10 @@ func store(domain, sender string, recipients []string, mailEnvelope *enmime.Enve
 		postCreateReq.AttachmentIDs = postAttachmentIDs
 		postCreateReq.AttachmentSizes = postAttachmentSizes
 		if len(bodyHtml) > 0 {
-			postCreateReq.ContentType = nested.CONTENT_TYPE_TEXT_HTML
+			postCreateReq.ContentType = nested.ContentTypeTextHtml
 			postCreateReq.Body = bodyHtml
 		} else {
-			postCreateReq.ContentType = nested.CONTENT_TYPE_TEXT_PLAIN
+			postCreateReq.ContentType = nested.ContentTypeTextPlain
 			postCreateReq.Body = bodyPlain
 		}
 		// Validate Targets and Separate places and emails

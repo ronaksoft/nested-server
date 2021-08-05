@@ -67,7 +67,7 @@ func Encrypt(keyText, text string) string {
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return ""
 	}
 
@@ -93,7 +93,7 @@ func Decrypt(keyText, cryptoText string) string {
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return ""
 	}
 
@@ -170,7 +170,7 @@ func UseDownloadToken(token string) (bool, UniversalID) {
 
 	if len(p) > 3 {
 		if et, err := strconv.Atoi(p[3]); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 
 			return false, ""
 		} else if Timestamp() > uint64(et) {
@@ -191,7 +191,7 @@ func UseUploadToken(token string, sk bson.ObjectId) (bool, string) {
 
 	if len(p) > 2 {
 		if et, err := strconv.Atoi(p[2]); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 
 			return false, ""
 		} else if Timestamp() > uint64(et) {

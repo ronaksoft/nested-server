@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
+	"go.uber.org/zap"
 
 	"github.com/globalsign/mgo/bson"
 )
@@ -23,7 +24,7 @@ func (pm *PostActivityManager) Remove(activityID bson.ObjectId) bool {
 		activityID,
 		bson.M{"$set": bson.M{"_removed": true}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -36,7 +37,7 @@ func (pm *PostActivityManager) GetActivityByID(activityID bson.ObjectId) *PostAc
 
 	postActivity := new(PostActivity)
 	if err := db.C(global.CollectionPostsActivities).FindId(activityID).One(postActivity); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	return postActivity
@@ -51,7 +52,7 @@ func (pm *PostActivityManager) GetActivitiesByIDs(activityIDs []bson.ObjectId) [
 	if err := db.C(global.CollectionPostsActivities).Find(
 		bson.M{"_id": bson.M{"$in": activityIDs}},
 	).All(&postActivities); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	return postActivities
@@ -79,7 +80,7 @@ func (pm *PostActivityManager) GetActivitiesByPostID(postID bson.ObjectId, pg Pa
 	// Log Explain Query
 
 	if err := Q.All(&postActivities); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return []PostActivity{}
 	}
 	return postActivities
@@ -101,7 +102,7 @@ func (pm *PostActivityManager) CommentAdd(postID bson.ObjectId, actorID string, 
 	}
 
 	if err := db.C(global.CollectionPostsActivities).Insert(v); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return
 }
@@ -122,7 +123,7 @@ func (pm *PostActivityManager) CommentRemove(postID bson.ObjectId, actorID strin
 	}
 
 	if err := db.C(global.CollectionPostsActivities).Insert(v); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return
 }
@@ -143,7 +144,7 @@ func (pm *PostActivityManager) LabelAdd(postID bson.ObjectId, actorID string, la
 	}
 
 	if err := db.C(global.CollectionPostsActivities).Insert(v); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return
 }
@@ -164,7 +165,7 @@ func (pm *PostActivityManager) LabelRemove(postID bson.ObjectId, actorID string,
 	}
 
 	if err := db.C(global.CollectionPostsActivities).Insert(v); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return
 }
@@ -186,7 +187,7 @@ func (pm *PostActivityManager) PlaceMove(postID bson.ObjectId, actorID string, o
 	}
 
 	if err := db.C(global.CollectionPostsActivities).Insert(v); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return
 }
@@ -207,7 +208,7 @@ func (pm *PostActivityManager) PlaceAttached(postID bson.ObjectId, actorID strin
 	}
 
 	if err := db.C(global.CollectionPostsActivities).Insert(v); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return
 }
@@ -227,7 +228,7 @@ func (pm *PostActivityManager) Edit(postID bson.ObjectId, actorID string) {
 	}
 
 	if err := db.C(global.CollectionPostsActivities).Insert(v); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return
 

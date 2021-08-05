@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
+	"go.uber.org/zap"
 	"net/http"
 
 	"github.com/globalsign/mgo/bson"
@@ -145,7 +146,7 @@ func (m *HookManager) AddHook(setterID, hookName string, anchorID interface{}, h
 	hook.Url = url
 
 	if err := db.C(global.CollectionHooks).Insert(hook); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -157,7 +158,7 @@ func (m *HookManager) RemoveHook(hookID bson.ObjectId) bool {
 	defer dbSession.Close()
 
 	if err := db.C(global.CollectionHooks).RemoveId(hookID); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -173,7 +174,7 @@ func (m *HookManager) GetHooksBySetterID(setterID string, pg Pagination) []Hook 
 	if err := db.C(global.CollectionHooks).Find(
 		bson.M{"set_by": setterID},
 	).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&hooks); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return hooks
 }
@@ -212,7 +213,7 @@ func (m *HookManager) hHook(e HookEvent) {
 	defer iter.Close()
 
 	if b, err := json.Marshal(e); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	} else {
 		postBody := new(bytes.Buffer)
 		hook := new(Hook)

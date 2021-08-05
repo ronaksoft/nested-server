@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
+	"go.uber.org/zap"
 	"time"
 
 	"github.com/globalsign/mgo"
@@ -60,7 +61,7 @@ func (vm *VerificationManager) CreateByPhone(phone string) *Verification {
 		v.LongCode = base64.URLEncoding.EncodeToString(md5.New().Sum([]byte(RandomID(10))))
 	}
 	if err := db.C(global.CollectionVerifications).Insert(v); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return v
 }
@@ -85,7 +86,7 @@ func (vm *VerificationManager) CreateByEmail(email string) *Verification {
 		v.LongCode = base64.URLEncoding.EncodeToString(md5.New().Sum([]byte(RandomID(10))))
 	}
 	if err := db.C(global.CollectionVerifications).Insert(v); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return v
 }
@@ -100,7 +101,7 @@ func (vm *VerificationManager) GetByID(verifyID string) *Verification {
 
 	v := new(Verification)
 	if err := db.C(global.CollectionVerifications).FindId(verifyID).One(v); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	return v
@@ -120,7 +121,7 @@ func (vm *VerificationManager) Verify(verifyID, code string) bool {
 		ReturnNew: true,
 	}
 	if _, err := db.C(global.CollectionVerifications).FindId(verifyID).Apply(ch, v); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	// expire the verification if too many wrong attempts or too long
@@ -162,7 +163,7 @@ func (vm *VerificationManager) Verified(verifyID string) bool {
 
 	v := new(Verification)
 	if err := db.C(global.CollectionVerifications).FindId(verifyID).One(v); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return v.Verified
@@ -176,10 +177,10 @@ func (vm *VerificationManager) IncrementSmsCounter(verifyID string) {
 
 	v := new(Verification)
 	if err := db.C(global.CollectionVerifications).FindId(verifyID).One(v); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	if err := db.C(global.CollectionVerifications).UpdateId(verifyID, bson.M{"$inc": bson.M{"counters.sms": 1}}); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 }
 
@@ -191,10 +192,10 @@ func (vm *VerificationManager) IncrementCallCounter(verifyID string) {
 
 	v := new(Verification)
 	if err := db.C(global.CollectionVerifications).FindId(verifyID).One(v); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	if err := db.C(global.CollectionVerifications).UpdateId(verifyID, bson.M{"$inc": bson.M{"counters.call": 1}}); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 }
 
@@ -206,10 +207,10 @@ func (vm *VerificationManager) IncrementEmailCounter(verifyID string) {
 
 	v := new(Verification)
 	if err := db.C(global.CollectionVerifications).FindId(verifyID).One(v); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	if err := db.C(global.CollectionVerifications).UpdateId(verifyID, bson.M{"$inc": bson.M{"counters.email": 1}}); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 }
 
@@ -221,9 +222,9 @@ func (vm *VerificationManager) Expire(verifyID string) {
 
 	v := new(Verification)
 	if err := db.C(global.CollectionVerifications).FindId(verifyID).One(v); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	if err := db.C(global.CollectionVerifications).UpdateId(verifyID, bson.M{"$set": bson.M{"expired": true}}); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 }

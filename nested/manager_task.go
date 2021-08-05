@@ -7,6 +7,7 @@ import (
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
+	"go.uber.org/zap"
 
 	"github.com/globalsign/mgo/bson"
 	"github.com/gomodule/redigo/redis"
@@ -60,7 +61,7 @@ func (tm *TaskManager) readFromCache(taskID bson.ObjectId) *Task {
 		if err := _MongoDB.C(global.CollectionTasks).Find(
 			bson.M{"_id": taskID, "_removed": false},
 		).One(task); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 			return nil
 		}
 		gobTask := new(bytes.Buffer)
@@ -154,7 +155,7 @@ func (tm *TaskManager) CreateTask(tcr TaskCreateRequest) *Task {
 
 	// Create the task object in db
 	if err := db.C(global.CollectionTasks).Insert(task); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 
@@ -168,7 +169,7 @@ func (tm *TaskManager) CreateTask(tcr TaskCreateRequest) *Task {
 		task.RelatedPost,
 		bson.M{"$addToSet": bson.M{"related_tasks": task.ID}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 	// Set task as the owner of the attachments
@@ -192,7 +193,7 @@ func (tm *TaskManager) CreateTask(tcr TaskCreateRequest) *Task {
 			"$inc":      bson.M{"counters.related_tasks": 1},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 	_Manager.TaskActivity.Created(task.ID, task.AssignorID)
@@ -234,7 +235,7 @@ func (tm *TaskManager) GetByAssigneeID(accountID string, pg Pagination, filter [
 		q["status"] = bson.M{"$in": filter}
 	}
 	if err := db.C(global.CollectionTasks).Find(q).Sort("-_id").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&tasks); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return tasks
 }
@@ -256,7 +257,7 @@ func (tm *TaskManager) GetByAssignorID(accountID string, pg Pagination, filter [
 		q["status"] = bson.M{"$in": filter}
 	}
 	if err := db.C(global.CollectionTasks).Find(q).Sort("-_id").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&tasks); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return tasks
 }
@@ -281,7 +282,7 @@ func (tm *TaskManager) GetByWatcherEditorID(accountID string, pg Pagination, fil
 		q["status"] = bson.M{"$in": filter}
 	}
 	if err := db.C(global.CollectionTasks).Find(q).Sort("-_id").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&tasks); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return tasks
 }
@@ -303,7 +304,7 @@ func (tm *TaskManager) GetByCandidateID(accountID string, pg Pagination, filter 
 		q["status"] = bson.M{"$in": filter}
 	}
 	if err := db.C(global.CollectionTasks).Find(q).Sort("-_id").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&tasks); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return tasks
 }
@@ -390,7 +391,7 @@ func (tm *TaskManager) GetUpcomingTasks(accountID string, pg Pagination) []Task 
 		"_removed": false,
 	}
 	if err := db.C(global.CollectionTasks).Find(q).Sort("-due_date").Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&tasks); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return tasks
 }
@@ -411,7 +412,7 @@ func (tm *TaskManager) RemoveTask(taskID bson.ObjectId) bool {
 		taskID,
 		bson.M{"$set": bson.M{"_removed": true}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -420,7 +421,7 @@ func (tm *TaskManager) RemoveTask(taskID bson.ObjectId) bool {
 		bson.M{"task_id": taskID},
 		bson.M{"$set": bson.M{"_removed": true}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -430,7 +431,7 @@ func (tm *TaskManager) RemoveTask(taskID bson.ObjectId) bool {
 			bson.M{"_id": bson.M{"$in": task.RelatedTasks}},
 			bson.M{"$unset": bson.M{"related_to": true}},
 		); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 		}
 	}
 
@@ -442,7 +443,7 @@ func (tm *TaskManager) RemoveTask(taskID bson.ObjectId) bool {
 				"$inc":  bson.M{"counters.related_tasks": -1},
 			},
 		); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 		}
 	}
 	return true
@@ -550,7 +551,7 @@ func (t *Task) AddAttachments(accountID string, fileIDs []UniversalID) bool {
 			"$inc":      bson.M{"counters.attachments": len(fileIDs)},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -584,7 +585,7 @@ func (t *Task) AddLabels(accountID string, labelIDs []string) bool {
 			"$inc":      bson.M{"counters.labels": len(labelIDs)},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -617,7 +618,7 @@ func (t *Task) AddToDo(accountID string, txt string, weight int) *TaskToDo {
 			"$inc": bson.M{"counters.todo_nid": 1},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 
@@ -650,7 +651,7 @@ func (t *Task) AddWatchers(adderID string, watcherIDs []string) bool {
 			"$inc": bson.M{"counters.watchers": len(watcherIDs)},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -682,7 +683,7 @@ func (t *Task) AddEditors(adderID string, editorIDs []string) bool {
 			"$inc": bson.M{"counters.editors": len(editorIDs)},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -715,7 +716,7 @@ func (t *Task) AddCandidates(adderID string, candidateIDs []string) bool {
 			"$inc": bson.M{"counters.watchers": len(candidateIDs)},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -743,7 +744,7 @@ func (t *Task) RemoveAttachments(accountID string, fileIDs []UniversalID) bool {
 			"$inc":  bson.M{"counters.attachments": -len(fileIDs)},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -776,7 +777,7 @@ func (t *Task) RemoveLabels(accountID string, labelIDs []string) bool {
 			"$inc":  bson.M{"counters.labels": -len(labelIDs)},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -809,7 +810,7 @@ func (t *Task) RemoveToDo(accountID string, todoID int) bool {
 		t.ID,
 		bson.M{"$pull": bson.M{"todos": bson.M{"_id": todoID}}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -853,7 +854,7 @@ func (t *Task) RemoveEditors(removerID string, editorIDs []string) bool {
 			"$inc": bson.M{"counters.editors": -len(editorIDs)},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -898,7 +899,7 @@ func (t *Task) RemoveWatchers(removerID string, watcherIDs []string) bool {
 			"$inc": bson.M{"counters.watchers": -len(watcherIDs)},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -930,7 +931,7 @@ func (t *Task) RemoveCandidates(removerID string, candidateIDs []string) bool {
 			"$inc": bson.M{"counters.candidates": -len(candidateIDs)},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -950,7 +951,7 @@ func (t *Task) UpdateMemberIDs() {
 		t.ID,
 		bson.M{"$set": bson.M{"members": memberIDs.KeysToArray()}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return
 }
@@ -974,7 +975,7 @@ func (t *Task) UpdateStatus(accountID string, newStatus TaskStatus) bool {
 				"completed_on": Timestamp(),
 			}},
 		); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 			return false
 		}
 		_Manager.Report.CountTaskCompletedPerAccount(t.AssigneeID)
@@ -988,7 +989,7 @@ func (t *Task) UpdateStatus(accountID string, newStatus TaskStatus) bool {
 				"completed_on": 0,
 			}},
 		); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 			return false
 		}
 		_Manager.TaskActivity.StatusChanged(t.ID, accountID, newStatus)
@@ -1028,7 +1029,7 @@ func (t *Task) UpdateTodo(accountID string, todoID int, text string, weight int,
 			"todos.$.done":   done,
 		}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -1065,7 +1066,7 @@ func (t *Task) Update(accountID string, title, desc string, dueDate uint64, dueD
 				"due_date_has_clock": dueDateHasClock,
 			}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	if t.Title != title {
@@ -1109,7 +1110,7 @@ func (t *Task) UpdateAssignee(accountID string, candidateIDs []string) bool {
 				},
 			},
 		); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 			return false
 		}
 		_Manager.TaskActivity.AssigneeChanged(t.ID, accountID, candidateIDs[0])
@@ -1129,7 +1130,7 @@ func (t *Task) UpdateAssignee(accountID string, candidateIDs []string) bool {
 				},
 			},
 		); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 			return false
 		}
 		_Manager.TaskActivity.CandidateAdded(t.ID, accountID, candidateIDs)
@@ -1300,7 +1301,7 @@ func (t *Task) Accept(accountID string) bool {
 			},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -1327,7 +1328,7 @@ func (t *Task) Reject(accountID, reason string) bool {
 				"$inc":  bson.M{"counters.candidates": -1},
 			},
 		); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 			return false
 		}
 
@@ -1347,7 +1348,7 @@ func (t *Task) Reject(accountID, reason string) bool {
 				"$inc":  bson.M{"counters.candidates": -1},
 			},
 		); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 			return false
 		}
 		_Manager.TaskActivity.CandidateRemoved(t.ID, accountID, []string{accountID})
@@ -1378,7 +1379,7 @@ func (t *Task) Resign(accountID, reason string) bool {
 			},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 

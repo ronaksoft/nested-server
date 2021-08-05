@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
+	"go.uber.org/zap"
 
 	"github.com/globalsign/mgo/bson"
 	"github.com/gomodule/redigo/redis"
@@ -45,7 +46,7 @@ func (sm *SessionManager) readFromCache(sessionID bson.ObjectId) *Session {
 	keyID := fmt.Sprintf("session:gob:%s", sessionID.Hex())
 	if gobSession, err := redis.Bytes(c.Do("GET", keyID)); err != nil {
 		if err := _MongoDB.C(global.CollectionSessions).FindId(sessionID).One(session); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 			return nil
 		}
 
@@ -66,7 +67,7 @@ func (sm *SessionManager) updateCache(sessionID bson.ObjectId) bool {
 	defer c.Close()
 	keyID := fmt.Sprintf("session:gob:%s", sessionID.Hex())
 	if err := _MongoDB.C(global.CollectionSessions).FindId(sessionID).One(session); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		c.Do("DEL", keyID)
 		return false
 	}
@@ -111,7 +112,7 @@ func (sm *SessionManager) Create(in MS) (bson.ObjectId, error) {
 			Expired: false,
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return "", err
 	}
 	return sk, nil
@@ -151,7 +152,7 @@ func (sm *SessionManager) GetByUser(accountID string, pg Pagination) []Session {
 		"uid":     accountID,
 		"expired": false,
 	}).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&s); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return s
 
@@ -188,7 +189,7 @@ func (sm *SessionManager) Set(sk bson.ObjectId, v bson.M) bool {
 		},
 		bson.M{"$set": v},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -211,7 +212,7 @@ func (sm *SessionManager) UpdateLastAccess(sk bson.ObjectId) bool {
 		},
 		bson.M{"$set": bson.M{"last_access": Timestamp()}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true

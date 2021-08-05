@@ -188,9 +188,9 @@ func (s *AccountService) getAccountInfoByToken(requester *nested.Account, reques
 func (s *AccountService) getAccountPosts(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var sort_item string
 	if _, ok := request.Data["by_update"]; ok {
-		sort_item = nested.POST_SORT_LAST_UPDATE
+		sort_item = nested.PostSortLastUpdate
 	} else {
-		sort_item = nested.POST_SORT_TIMESTAMP
+		sort_item = nested.PostSortTimestamp
 	}
 	pg := s.Worker().Argument().GetPagination(request)
 	posts := _Model.Post.GetPostsOfPlaces(append(requester.AccessPlaceIDs, "*"), sort_item, pg)
@@ -230,9 +230,9 @@ func (s *AccountService) getAccountFavoritePosts(requester *nested.Account, requ
 	var sort_item string
 
 	if _, ok := request.Data["by_update"]; ok {
-		sort_item = nested.POST_SORT_LAST_UPDATE
+		sort_item = nested.PostSortLastUpdate
 	} else {
-		sort_item = nested.POST_SORT_TIMESTAMP
+		sort_item = nested.PostSortTimestamp
 	}
 
 	pg := s.Worker().Argument().GetPagination(request)
@@ -253,7 +253,7 @@ func (s *AccountService) getAccountFavoritePosts(requester *nested.Account, requ
 // @Pagination
 func (s *AccountService) getAccountSentPosts(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	pg := s.Worker().Argument().GetPagination(request)
-	posts := _Model.Post.GetPostsBySender(requester.ID, nested.POST_SORT_TIMESTAMP, pg)
+	posts := _Model.Post.GetPostsBySender(requester.ID, nested.PostSortTimestamp, pg)
 	r := make([]tools.M, 0, len(posts))
 	for _, post := range posts {
 		r = append(r, s.Worker().Map().Post(requester, post, true))

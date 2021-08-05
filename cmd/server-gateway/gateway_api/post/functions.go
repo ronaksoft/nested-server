@@ -217,13 +217,13 @@ func (s *PostService) createPost(requester *nested.Account, request *rpc.Request
 	}
 	if v, ok := request.Data["content_type"].(string); ok {
 		switch v {
-		case nested.CONTENT_TYPE_TEXT_HTML, nested.CONTENT_TYPE_TEXT_PLAIN:
+		case nested.ContentTypeTextHtml, nested.ContentTypeTextPlain:
 			contentType = v
 		default:
-			contentType = nested.CONTENT_TYPE_TEXT_PLAIN
+			contentType = nested.ContentTypeTextPlain
 		}
 	} else {
-		contentType = nested.CONTENT_TYPE_TEXT_PLAIN
+		contentType = nested.ContentTypeTextPlain
 	}
 	if v, ok := request.Data["subject"].(string); ok {
 		subject = v

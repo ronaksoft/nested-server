@@ -938,10 +938,10 @@ func (s *PlaceService) getPlacePosts(requester *nested.Account, request *rpc.Req
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
 		return
 	}
-	sort_item = nested.POST_SORT_TIMESTAMP
+	sort_item = nested.PostSortTimestamp
 	if v, ok := request.Data["by_update"].(bool); ok {
 		if v {
-			sort_item = nested.POST_SORT_LAST_UPDATE
+			sort_item = nested.PostSortLastUpdate
 		}
 	}
 

@@ -61,7 +61,7 @@ func JobReporter(b *BackgroundJob) {
 	b.Model().Report.FlushToDB()
 
 	b.Model().System.SetSystemInfo(
-		nested.SYS_INFO_USERAPI,
+		nested.SysInfoUserAPI,
 		bundleID,
 		nested.SystemInfo(),
 	)

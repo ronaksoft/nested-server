@@ -4,10 +4,11 @@ import (
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
 	"github.com/globalsign/mgo/bson"
+	"go.uber.org/zap"
 )
 
 const (
-	NOTIFICATION_GROUP = "_ntfy"
+	NotificationGroup = "_ntfy"
 )
 
 type GroupManager struct{}
@@ -27,7 +28,7 @@ func (gm *GroupManager) CreatePlaceGroup(placeID, name string) string {
 		"_id":   groupID,
 		"items": []string{},
 	}); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	if err := db.C("places").UpdateId(
 		placeID,
@@ -35,7 +36,7 @@ func (gm *GroupManager) CreatePlaceGroup(placeID, name string) string {
 			"$set": bson.M{"groups." + name: groupID},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return groupID
 }
@@ -52,7 +53,7 @@ func (gm *GroupManager) AddItems(groupID string, items []string) {
 			"items": bson.M{"$each": items},
 		}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 }
 
@@ -66,7 +67,7 @@ func (gm *GroupManager) RemoveItems(groupID string, items []string) {
 		bson.M{"_id": groupID},
 		bson.M{"$pullAll": bson.M{"items": items}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 }
 

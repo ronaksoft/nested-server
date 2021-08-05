@@ -7,6 +7,7 @@ import (
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
+	"go.uber.org/zap"
 	"regexp"
 	"strings"
 
@@ -87,7 +88,7 @@ func (pm *PlaceManager) readFromCache(placeID string) *Place {
 	keyID := fmt.Sprintf("place:gob:%s", placeID)
 	if gobPlace, err := redis.Bytes(c.Do("GET", keyID)); err != nil {
 		if err := _MongoDB.C(global.CollectionPlaces).FindId(placeID).One(place); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 			return nil
 		}
 		gobPlace := new(bytes.Buffer)
@@ -158,7 +159,7 @@ func (pm *PlaceManager) AddKeyHolder(placeID, accountID string) *PlaceManager {
 			"$inc":      bson.M{"counters.key_holders": 1},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 	// Update ACCOUNTS collection
@@ -166,7 +167,7 @@ func (pm *PlaceManager) AddKeyHolder(placeID, accountID string) *PlaceManager {
 		bson.M{"_id": accountID},
 		bson.M{"$addToSet": bson.M{"access_places": placeID}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 	// Update POSTS.READS.COUNTERS collection
@@ -307,10 +308,10 @@ func (pm *PlaceManager) CreatePersonalPlace(pcr PlaceCreateRequest) *Place {
 	p.Picture = pcr.Picture
 
 	if err := db.C(global.CollectionPlaces).Insert(p); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	} else if err = db.C(global.CollectionPlaces).FindId(p.ID).One(&p); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 
@@ -325,7 +326,7 @@ func (pm *PlaceManager) CreatePersonalPlace(pcr PlaceCreateRequest) *Place {
 	_Manager.PlaceActivity.PlaceAdd(pcr.AccountID, pcr.ID)
 
 	// create a group for members want notification for this place
-	_Manager.Group.CreatePlaceGroup(pcr.ID, NOTIFICATION_GROUP)
+	_Manager.Group.CreatePlaceGroup(pcr.ID, NotificationGroup)
 
 	return &p
 }
@@ -361,10 +362,10 @@ func (pm *PlaceManager) CreateGrandPlace(pcr PlaceCreateRequest) *Place {
 	place.Picture = pcr.Picture
 
 	if err := db.C(global.CollectionPlaces).Insert(place); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	} else if err = db.C(global.CollectionPlaces).FindId(place.ID).One(&place); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 
@@ -375,7 +376,7 @@ func (pm *PlaceManager) CreateGrandPlace(pcr PlaceCreateRequest) *Place {
 	_Manager.PlaceActivity.PlaceAdd(pcr.AccountID, pcr.ID)
 
 	// create notification group for members who want to get notification
-	_Manager.Group.CreatePlaceGroup(pcr.ID, NOTIFICATION_GROUP)
+	_Manager.Group.CreatePlaceGroup(pcr.ID, NotificationGroup)
 	return &place
 }
 
@@ -411,10 +412,10 @@ func (pm *PlaceManager) CreateLockedPlace(pcr PlaceCreateRequest) *Place {
 	p.Level = parentPlace.Level + 1
 
 	if err := db.C(global.CollectionPlaces).Insert(p); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	} else if db.C(global.CollectionPlaces).FindId(p.ID).One(&p); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 
@@ -423,7 +424,7 @@ func (pm *PlaceManager) CreateLockedPlace(pcr PlaceCreateRequest) *Place {
 		p.GetParentID(),
 		bson.M{"$inc": bson.M{"counters.childs": 1}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 	// Update System.Internal Counter
@@ -433,7 +434,7 @@ func (pm *PlaceManager) CreateLockedPlace(pcr PlaceCreateRequest) *Place {
 	_Manager.PlaceActivity.PlaceAdd(pcr.AccountID, pcr.ID)
 
 	// create a group to hold accounts who want notification for this place
-	_Manager.Group.CreatePlaceGroup(pcr.ID, NOTIFICATION_GROUP)
+	_Manager.Group.CreatePlaceGroup(pcr.ID, NotificationGroup)
 	return &p
 }
 
@@ -477,10 +478,10 @@ func (pm *PlaceManager) CreateUnlockedPlace(pcr PlaceCreateRequest) *Place {
 	p.Level = 1
 
 	if err := db.C(global.CollectionPlaces).Insert(p); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	} else if db.C(global.CollectionPlaces).FindId(p.ID).One(&p); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 
@@ -502,7 +503,7 @@ func (pm *PlaceManager) CreateUnlockedPlace(pcr PlaceCreateRequest) *Place {
 	_Manager.PlaceActivity.PlaceAdd(pcr.AccountID, pcr.ID)
 
 	// create a group to hold accounts who want notification for this place
-	_Manager.Group.CreatePlaceGroup(pcr.ID, NOTIFICATION_GROUP)
+	_Manager.Group.CreatePlaceGroup(pcr.ID, NotificationGroup)
 	return &p
 
 }
@@ -531,7 +532,7 @@ func (pm *PlaceManager) Demote(placeID, accountID string) *PlaceManager {
 			},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return pm
 }
@@ -594,7 +595,7 @@ func (pm *PlaceManager) IncrementCounter(placeIDs []string, counterName string, 
 			bson.M{"_id": bson.M{"$in": placeIDs}},
 			bson.M{"$inc": bson.M{keyName: c}},
 		); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 			return false
 		}
 	}
@@ -637,7 +638,7 @@ func (pm *PlaceManager) Promote(placeID, accountID string) *PlaceManager {
 			},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	_Manager.Account.UpdatePlaceConnection(accountID, []string{placeID}, 1)
@@ -663,7 +664,7 @@ func (pm *PlaceManager) PinPost(placeID string, postID bson.ObjectId) bool {
 			},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -681,7 +682,7 @@ func (pm *PlaceManager) UnpinPost(placeID string, postID bson.ObjectId) bool {
 		bson.M{"_id": placeID},
 		bson.M{"$pull": bson.M{"pinned_posts": postID}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -713,7 +714,7 @@ func (pm *PlaceManager) Remove(placeID string, accountID string) bool {
 			place.GetParentID(),
 			bson.M{"$inc": bson.M{"counters.childs": -1}},
 		); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 		}
 	}
 
@@ -726,7 +727,7 @@ func (pm *PlaceManager) Remove(placeID string, accountID string) bool {
 				"$inc":  bson.M{"counters.unlocked_childs": -1},
 			},
 		); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 		}
 	}
 
@@ -744,7 +745,7 @@ func (pm *PlaceManager) Remove(placeID string, accountID string) bool {
 
 	// Remove the place from PLACES collection
 	if err := db.C(global.CollectionPlaces).RemoveId(placeID); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -775,14 +776,14 @@ func (pm *PlaceManager) RemoveAllMembers(placeID string) {
 		bson.M{"_id": bson.M{"$in": memberIDs}},
 		bson.M{"$pull": bson.M{"access_places": placeID}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 	if _, err := db.C(global.CollectionAccounts).UpdateAll(
 		bson.M{"bookmarked_places": placeID},
 		bson.M{"$pull": bson.M{"bookmarked_places": placeID}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 }
@@ -808,7 +809,7 @@ func (pm *PlaceManager) RemoveKeyHolder(placeID, accountID, actorID string) *Pla
 			"$inc":  bson.M{"counters.key_holders": -1},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 	// Update ACCOUNTS collection
@@ -821,7 +822,7 @@ func (pm *PlaceManager) RemoveKeyHolder(placeID, accountID, actorID string) *Pla
 			"recently_visited":  placeID,
 		}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	if _, err := db.C(global.CollectionPostsReads).UpdateAll(
 		bson.M{
@@ -831,7 +832,7 @@ func (pm *PlaceManager) RemoveKeyHolder(placeID, accountID, actorID string) *Pla
 		},
 		bson.M{"$set": bson.M{"read": true}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 	// Update POSTS.READS.COUNTERS collection
@@ -841,7 +842,7 @@ func (pm *PlaceManager) RemoveKeyHolder(placeID, accountID, actorID string) *Pla
 			"place_id":   placeID,
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 	if place.IsGrandPlace() {
@@ -852,13 +853,13 @@ func (pm *PlaceManager) RemoveKeyHolder(placeID, accountID, actorID string) *Pla
 					"place_id":   unlockedPlaceID,
 				},
 			); err != nil {
-				log.Warn(err.Error())
+				log.Warn("Got error", zap.Error(err))
 			}
 		}
 	}
 
 	// Remove the accountID from Notification Group of the place
-	_Manager.Group.RemoveItems(place.Groups[NOTIFICATION_GROUP], []string{accountID})
+	_Manager.Group.RemoveItems(place.Groups[NotificationGroup], []string{accountID})
 
 	// Remove the
 	_Manager.PlaceActivity.MemberRemove(actorID, placeID, accountID, "")
@@ -883,7 +884,7 @@ func (pm *PlaceManager) SetPicture(placeID string, pic Picture) {
 		placeID,
 		bson.M{"$set": bson.M{"picture": pic}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 }
 
@@ -904,7 +905,7 @@ func (pm *PlaceManager) Update(placeID string, placeUpdateRequest tools.M) bool 
 	}
 	if len(placeUpdateRequest) > 0 {
 		if err := db.C(global.CollectionPlaces).UpdateId(placeID, bson.M{"$set": placeUpdateRequest}); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 			return false
 		}
 	}
@@ -938,7 +939,7 @@ func (pm *PlaceManager) UpdateLimits(placeID string, limits MI) bool {
 		bson.M{"grand_parent_id": placeID},
 		bson.M{"$set": m},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -950,7 +951,7 @@ func (pm *PlaceManager) GetPlaceBlockedAddresses(placeID string) []string {
 	defer dbSession.Close()
 	blockedAddresses := BlockedAddresses{}
 	if err := db.C(global.CollectionPlacesBlockedAddresses).FindId(placeID).One(&blockedAddresses); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	return blockedAddresses.Addresses
@@ -966,7 +967,7 @@ func (pm *PlaceManager) AddToBlacklist(placeID string, addresses []string) bool 
 		bson.M{"$addToSet": bson.M{"addresses": bson.M{"$each": addresses}}},
 	)
 	if err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -982,7 +983,7 @@ func (pm *PlaceManager) RemoveFromBlacklist(placeID string, addresses []string) 
 		bson.M{"$pull": bson.M{"addresses": bson.M{"$in": addresses}}},
 	)
 	if err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -997,7 +998,7 @@ func (pm *PlaceManager) IsBlocked(placeID, address string) bool {
 		bson.M{"addresses": address},
 	).Count()
 	if err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return n > 0
@@ -1020,7 +1021,7 @@ func (pm *PlaceManager) AddDefaultPlaces(placeIDs []string) bool {
 	}
 	_, err := bulk.Run()
 	if err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -1035,7 +1036,7 @@ func (pm *PlaceManager) GetDefaultPlacesWithPagination(pg Pagination) ([]string,
 	ids := make([]string, 0, pg.GetLimit())
 	err := db.C(global.CollectionPlacesDefault).Find(nil).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&defaultPlaces)
 	if err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil, 0
 	}
 	for _, placeID := range defaultPlaces {
@@ -1043,7 +1044,7 @@ func (pm *PlaceManager) GetDefaultPlacesWithPagination(pg Pagination) ([]string,
 	}
 	n, err := db.C(global.CollectionPlacesDefault).Find(nil).Count()
 	if err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil, 0
 	}
 	return ids, n
@@ -1057,7 +1058,7 @@ func (pm *PlaceManager) GetDefaultPlaces() []string {
 	var defaultPlaces []DefaultPlace
 	err := db.C(global.CollectionPlacesDefault).Find(nil).All(&defaultPlaces)
 	if err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	ids := make([]string, 0, len(defaultPlaces))
@@ -1074,7 +1075,7 @@ func (pm *PlaceManager) RemoveDefaultPlaces(placeIDs []string) bool {
 	defer dbSession.Close()
 	err := db.C(global.CollectionPlacesDefault).Remove(bson.M{"place_id": bson.M{"$in": placeIDs}})
 	if err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true

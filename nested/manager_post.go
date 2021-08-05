@@ -8,6 +8,7 @@ import (
 	"git.ronaksoft.com/nested/server/pkg/log"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"github.com/PuerkitoBio/goquery"
+	"go.uber.org/zap"
 	"io"
 	"strings"
 
@@ -18,21 +19,21 @@ import (
 )
 
 const (
-	POST_TYPE_NORMAL = 0x02
+	PostTypeNormal = 0x02
 )
 const (
-	CONTENT_TYPE_TEXT_HTML  = "text/html"
-	CONTENT_TYPE_TEXT_PLAIN = "text/plain"
+	ContentTypeTextHtml  = "text/html"
+	ContentTypeTextPlain = "text/plain"
 )
 const (
-	POST_SORT_TIMESTAMP   = "timestamp"
-	POST_SORT_LAST_UPDATE = "last_update"
-	POST_SORT_PIN_TIME    = "pin_time"
+	PostSortTimestamp  = "timestamp"
+	PostSortLastUpdate = "last_update"
+	PostSortPinTime    = "pin_time"
 )
 const (
-	COMMENT_TYPE_TEXT     CommentType = 0x00
-	COMMENT_TYPE_VOICE    CommentType = 0x01
-	COMMENT_TYPE_ACTIVITY CommentType = 0x02
+	CommentTypeText     CommentType = 0x00
+	CommentTypeVoice    CommentType = 0x01
+	CommentTypeActivity CommentType = 0x02
 )
 
 type PostManager struct{}
@@ -48,7 +49,7 @@ func (pm *PostManager) readFromCache(postID bson.ObjectId) *Post {
 	keyID := fmt.Sprintf("post:gob:%s", postID.Hex())
 	if gobPost, err := redis.Bytes(c.Do("GET", keyID)); err != nil {
 		if err := _MongoDB.C(global.CollectionPosts).FindId(postID).One(post); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 			return nil
 		}
 		gobPost := new(bytes.Buffer)
@@ -69,7 +70,7 @@ func (pm *PostManager) readCommentFromCache(commentID bson.ObjectId) *Comment {
 	keyID := fmt.Sprintf("comment:gob:%s", commentID.Hex())
 	if gobComment, err := redis.Bytes(c.Do("GET", keyID)); err != nil {
 		if err := _MongoDB.C(global.CollectionPostsComments).FindId(commentID).One(comment); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 			return nil
 		}
 		gobComment := new(bytes.Buffer)
@@ -201,10 +202,10 @@ func (pm *PostManager) AddComment(postID bson.ObjectId, senderID string, body st
 		Timestamp: Timestamp(),
 	}
 	if len(attachmentID) != 0 {
-		c.Type = COMMENT_TYPE_VOICE
+		c.Type = CommentTypeVoice
 		c.AttachmentID = attachmentID
 	} else {
-		c.Type = COMMENT_TYPE_TEXT
+		c.Type = CommentTypeText
 	}
 
 	if 0 == len(c.Body) {
@@ -213,7 +214,7 @@ func (pm *PostManager) AddComment(postID bson.ObjectId, senderID string, body st
 
 	// Insert the new comment
 	if err := db.C(global.CollectionPostsComments).Insert(c); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 
@@ -239,7 +240,7 @@ func (pm *PostManager) AddComment(postID bson.ObjectId, senderID string, body st
 			},
 		},
 	}); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 
@@ -281,7 +282,7 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 
 	post := Post{}
 	ts := Timestamp()
-	post.Type = POST_TYPE_NORMAL
+	post.Type = PostTypeNormal
 	post.ReplyTo = pcr.ReplyTo
 	post.ForwardFrom = pcr.ForwardFrom
 	post.ContentType = pcr.ContentType
@@ -344,7 +345,7 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 	}
 
 	switch pcr.ContentType {
-	case CONTENT_TYPE_TEXT_PLAIN:
+	case ContentTypeTextPlain:
 		post.Content = post.Body
 		if len(post.Body) > 256 {
 			post.Ellipsis = true
@@ -353,7 +354,7 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 			post.Preview = post.Body
 		}
 	default:
-		post.ContentType = CONTENT_TYPE_TEXT_HTML
+		post.ContentType = ContentTypeTextHtml
 		// clear body text from html elements
 		p := strings.NewReader(pcr.Body)
 		doc, _ := goquery.NewDocumentFromReader(p)
@@ -373,7 +374,7 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 	}
 
 	if err := db.C(global.CollectionPosts).Insert(post); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 
@@ -423,7 +424,7 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 			})
 		}
 		if _, err := bulk.Run(); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 		}
 
 		// Update unread counters
@@ -477,7 +478,7 @@ func (pm *PostManager) AddAccountToWatcherList(postID bson.ObjectId, accountID s
 		bson.M{"_id": postID},
 		bson.M{"$addToSet": bson.M{"accounts": accountID}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -506,7 +507,7 @@ func (pm *PostManager) AttachPlace(postID bson.ObjectId, placeID, accountID stri
 			},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -536,13 +537,13 @@ func (pm *PostManager) AddRelatedTask(postID, taskID bson.ObjectId) {
 		bson.M{"_id": postID},
 		bson.M{"$addToSet": bson.M{"related_tasks": taskID}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	if err := db.C(global.CollectionTasks).Update(
 		bson.M{"_id": taskID},
 		bson.M{"$set": bson.M{"related_post": postID}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 }
@@ -560,13 +561,13 @@ func (pm *PostManager) RemoveRelatedTask(postID, taskID bson.ObjectId) {
 		bson.M{"_id": postID, "related_tasks": taskID},
 		bson.M{"$pull": bson.M{"related_tasks": taskID}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	if err := db.C(global.CollectionTasks).Update(
 		bson.M{"_id": taskID},
 		bson.M{"$unset": bson.M{"related_post": postID}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 }
 
@@ -605,8 +606,8 @@ func (pm *PostManager) GetPostsByIDs(postIDs []bson.ObjectId) []Post {
 
 // GetPostsByPlace returns an array of Posts that are in placeID
 // sortItem could have any of these values:
-//		POST_SORT_LAST_UPDATE
-//		POST_SORT_TIMESTAMP
+//		PostSortLastUpdate
+//		PostSortTimestamp
 // this function is preferred to be called instead of GetPostsOfPlaces
 func (pm *PostManager) GetPostsByPlace(placeID, sortItem string, pg Pagination) []Post {
 	dbSession := _MongoSession.Copy()
@@ -616,9 +617,9 @@ func (pm *PostManager) GetPostsByPlace(placeID, sortItem string, pg Pagination) 
 	q := bson.M{"_removed": false}
 	posts := make([]Post, 0, global.DefaultMaxResultLimit)
 	switch sortItem {
-	case POST_SORT_LAST_UPDATE, POST_SORT_TIMESTAMP:
+	case PostSortLastUpdate, PostSortTimestamp:
 	default:
-		sortItem = POST_SORT_TIMESTAMP
+		sortItem = PostSortTimestamp
 	}
 	sortDir := fmt.Sprintf("-%s", sortItem)
 	q, sortDir = pg.FillQuery(q, sortItem, sortDir)
@@ -628,24 +629,24 @@ func (pm *PostManager) GetPostsByPlace(placeID, sortItem string, pg Pagination) 
 	// Log Explain Query
 
 	if err := Q.All(&posts); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return posts
 }
 
 // GetPostsBySender returns an array of Posts that are sent by accountID
 // sortItem could have any of these values:
-//		POST_SORT_LAST_UPDATE
-//		POST_SORT_TIMESTAMP
+//		PostSortLastUpdate
+//		PostSortTimestamp
 func (pm *PostManager) GetPostsBySender(accountID, sortItem string, pg Pagination) []Post {
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	switch sortItem {
-	case POST_SORT_LAST_UPDATE, POST_SORT_TIMESTAMP:
+	case PostSortLastUpdate, PostSortTimestamp:
 	default:
-		sortItem = POST_SORT_TIMESTAMP
+		sortItem = PostSortTimestamp
 	}
 	sortDir := fmt.Sprintf("-%s", sortItem)
 	q := bson.M{"_removed": false}
@@ -664,17 +665,17 @@ func (pm *PostManager) GetPostsBySender(accountID, sortItem string, pg Paginatio
 
 // GetPostsOfPlaces returns an array of Posts that are in any of the places
 // sortItem could have any of these values:
-//		POST_SORT_LAST_UPDATE
-//		POST_SORT_TIMESTAMP
+//		PostSortLastUpdate
+//		PostSortTimestamp
 func (pm *PostManager) GetPostsOfPlaces(places []string, sortItem string, pg Pagination) []Post {
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	switch sortItem {
-	case POST_SORT_LAST_UPDATE, POST_SORT_TIMESTAMP:
+	case PostSortLastUpdate, PostSortTimestamp:
 	default:
-		sortItem = POST_SORT_TIMESTAMP
+		sortItem = PostSortTimestamp
 	}
 	sortDir := fmt.Sprintf("-%s", sortItem)
 
@@ -700,7 +701,7 @@ func (pm *PostManager) GetPostWatchers(postID bson.ObjectId) []string {
 		Accounts []string      `bson:"accounts"`
 	}{}
 	if err := db.C(global.CollectionPostsWatchers).Find(bson.M{"_id": postID}).One(&watchers); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return []string{}
 	}
 	return watchers.Accounts
@@ -715,7 +716,7 @@ func (pm *PostManager) GetUnreadPostsByPlace(placeID, accountID string, subPlace
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	sortItem := POST_SORT_TIMESTAMP
+	sortItem := PostSortTimestamp
 	sortDir := fmt.Sprintf("-%s", sortItem)
 	// Match query
 	mq := bson.M{
@@ -753,7 +754,7 @@ func (pm *PostManager) GetAccountsWhoReadThis(postID bson.ObjectId, pg Paginatio
 	Q := db.C(global.CollectionPostsReadsAccounts).Find(bson.M{"post_id": postID}).Skip(pg.GetSkip()).Limit(pg.GetLimit())
 	// Log Explain Query
 	if err := Q.All(&pr); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return pr
 }
@@ -786,7 +787,7 @@ func (pm *PostManager) GetCommentsByPostID(postID bson.ObjectId, pg Pagination) 
 		"post_id":  postID,
 		"_removed": false,
 	}
-	sortItem := POST_SORT_TIMESTAMP
+	sortItem := PostSortTimestamp
 	sortDir := fmt.Sprintf("-%s", sortItem)
 	q, sortDir = pg.FillQuery(q, sortItem, sortDir)
 	Q := db.C(global.CollectionPostsComments).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit())
@@ -805,7 +806,7 @@ func (pm *PostManager) GetPinnedPosts(accountID string, pg Pagination) []Post {
 	q := bson.M{
 		"account_id": accountID,
 	}
-	sortItem := POST_SORT_PIN_TIME
+	sortItem := PostSortPinTime
 	sortDir := fmt.Sprintf("-%s", sortItem)
 	q, sortDir = pg.FillQuery(q, sortItem, sortDir)
 
@@ -907,7 +908,7 @@ func (pm *PostManager) HideComment(commentID bson.ObjectId, accountID string) bo
 			},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -955,7 +956,7 @@ func (pm *PostManager) MarkAsRead(postID bson.ObjectId, accountID string) bool {
 			"read":       false,
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	} else {
 		// Add the accountID to the list of readers if he/she is not already exists
@@ -1038,7 +1039,7 @@ func (pm *PostManager) Move(postID bson.ObjectId, oldPlaceID, newPlaceID, accoun
 			},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	if err := db.C(global.CollectionPosts).UpdateId(
@@ -1048,7 +1049,7 @@ func (pm *PostManager) Move(postID bson.ObjectId, oldPlaceID, newPlaceID, accoun
 			"$addToSet": bson.M{"removed_places": oldPlaceID},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -1057,14 +1058,14 @@ func (pm *PostManager) Move(postID bson.ObjectId, oldPlaceID, newPlaceID, accoun
 		bson.M{"_id": newPlaceID},
 		bson.M{"$inc": bson.M{"counters.posts": 1}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	if err := db.C(global.CollectionPlaces).Update(
 		bson.M{"_id": oldPlaceID},
 		bson.M{"$inc": bson.M{"counters.posts": -1}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -1111,7 +1112,7 @@ func (pm *PostManager) BookmarkPost(accountID string, postID bson.ObjectId) {
 				"pin_time": Timestamp(),
 			}},
 		); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 		}
 	}
 }
@@ -1149,7 +1150,7 @@ func (pm *PostManager) Remove(accountID string, postID bson.ObjectId, placeID st
 				"$set":      bson.M{"_removed": true},
 			},
 		); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 		}
 	} else {
 		if err := db.C(global.CollectionPosts).Update(
@@ -1159,7 +1160,7 @@ func (pm *PostManager) Remove(accountID string, postID bson.ObjectId, placeID st
 				"$addToSet": bson.M{"removed_places": placeID},
 			},
 		); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 		}
 	}
 
@@ -1207,7 +1208,7 @@ func (pm *PostManager) RemoveComment(accountID string, commentID bson.ObjectId) 
 	}
 	c := new(Comment)
 	if ci, err := db.C(global.CollectionPostsComments).FindId(commentID).Apply(ch, c); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	} else {
 		if ci.Updated == 0 {
@@ -1262,7 +1263,7 @@ func (pm *PostManager) RemoveAccountFromWatcherList(postID bson.ObjectId, accoun
 		bson.M{"_id": postID},
 		bson.M{"$pull": bson.M{"accounts": accountID}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -1280,7 +1281,7 @@ func (pm *PostManager) SetEmailMessageID(postID bson.ObjectId, messageID string)
 			"$set": bson.M{"email_meta.message_id": messageID},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return true
 }
@@ -1295,7 +1296,7 @@ func (pm *PostManager) UnpinPost(accountID string, postID bson.ObjectId) {
 		"post_id":    postID,
 		"account_id": accountID,
 	}); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 }
 
@@ -1308,7 +1309,7 @@ func (pm *PostManager) IsPinned(accountID string, postID bson.ObjectId) bool {
 	if n, err := db.C(global.CollectionAccountsPosts).Find(bson.M{
 		"account_id": accountID, "post_id": postID,
 	}).Count(); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	} else if n > 0 {
 		return true
 	}
@@ -1445,7 +1446,7 @@ func (p *Post) AddLabel(accountID, labelID string) bool {
 			"$inc":      bson.M{"counters.labels": 1},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -1473,7 +1474,7 @@ func (p *Post) RemoveLabel(accountID, labelID string) bool {
 			"$inc":  bson.M{"counters.labels": -1},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -1502,7 +1503,7 @@ func (p *Post) MarkAsRead(accountID string) bool {
 			"read":       false,
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	} else {
 		// Add the accountID to the list of readers if he/she is not already exists
@@ -1548,7 +1549,7 @@ func (p *Post) Update(postSubject, postBody string) bool {
 	var postPreview, postContent string
 	var ellipsis bool
 	switch p.ContentType {
-	case CONTENT_TYPE_TEXT_PLAIN:
+	case ContentTypeTextPlain:
 		postContent = postBody
 		if len(postBody) > 256 {
 			ellipsis = true
@@ -1556,7 +1557,7 @@ func (p *Post) Update(postSubject, postBody string) bool {
 		} else {
 			postPreview = postBody
 		}
-	case CONTENT_TYPE_TEXT_HTML:
+	case ContentTypeTextHtml:
 		reader := strings.NewReader(postBody)
 		doc, _ := goquery.NewDocumentFromReader(reader)
 		doc.Find("").Each(func(i int, el *goquery.Selection) {
@@ -1588,7 +1589,7 @@ func (p *Post) Update(postSubject, postBody string) bool {
 			},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 

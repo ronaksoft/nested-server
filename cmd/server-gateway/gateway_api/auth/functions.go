@@ -475,7 +475,7 @@ func (s *AuthService) prepareWelcome(accountID string) {
 		SenderID:    "nested",
 		Subject:     msgTemplates["WELCOME_MSG"].Subject,
 		Body:        body.String(),
-		ContentType: nested.CONTENT_TYPE_TEXT_HTML,
+		ContentType: nested.ContentTypeTextHtml,
 		PlaceIDs:    []string{accountID},
 		SystemData: nested.PostSystemData{
 			NoComment: true,

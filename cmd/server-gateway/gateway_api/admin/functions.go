@@ -131,13 +131,13 @@ func (s *AdminService) createPost(requester *nested.Account, request *rpc.Reques
 	}
 	if v, ok := request.Data["content_type"].(string); ok {
 		switch v {
-		case nested.CONTENT_TYPE_TEXT_HTML, nested.CONTENT_TYPE_TEXT_PLAIN:
+		case nested.ContentTypeTextHtml, nested.ContentTypeTextPlain:
 			content_type = v
 		default:
-			content_type = nested.CONTENT_TYPE_TEXT_PLAIN
+			content_type = nested.ContentTypeTextPlain
 		}
 	} else {
-		content_type = nested.CONTENT_TYPE_TEXT_PLAIN
+		content_type = nested.ContentTypeTextPlain
 	}
 	if v, ok := request.Data["subject"].(string); ok {
 		subject = v
@@ -1651,7 +1651,7 @@ func (s *AdminService) prepareWelcome(accountID string) {
 		SenderID:    "nested",
 		Subject:     msgTemplates["WELCOME_MSG"].Subject,
 		Body:        body.String(),
-		ContentType: nested.CONTENT_TYPE_TEXT_HTML,
+		ContentType: nested.ContentTypeTextHtml,
 		PlaceIDs:    []string{accountID},
 		SystemData: nested.PostSystemData{
 			NoComment: true,
@@ -1687,13 +1687,13 @@ func (s *AdminService) createPostForAllAccounts(requester *nested.Account, reque
 	}
 	if v, ok := request.Data["content_type"].(string); ok {
 		switch v {
-		case nested.CONTENT_TYPE_TEXT_HTML, nested.CONTENT_TYPE_TEXT_PLAIN:
+		case nested.ContentTypeTextHtml, nested.ContentTypeTextPlain:
 			content_type = v
 		default:
-			content_type = nested.CONTENT_TYPE_TEXT_PLAIN
+			content_type = nested.ContentTypeTextPlain
 		}
 	} else {
-		content_type = nested.CONTENT_TYPE_TEXT_PLAIN
+		content_type = nested.ContentTypeTextPlain
 	}
 	if v, ok := request.Data["subject"].(string); ok {
 		subject = v

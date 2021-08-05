@@ -1,5 +1,11 @@
 package nested
 
+import (
+	"git.ronaksoft.com/nested/server/pkg/log"
+	"go.uber.org/zap"
+	"time"
+)
+
 /*
    Creation Time: 2018 - May - 13
    Created by:  (ehsan)
@@ -54,18 +60,19 @@ func RunDoctor(routines []string) bool {
 
 	_FinishedRoutines = make([]string, 0, len(_CheckupRoutines))
 	if routines == nil {
-		for key, checkupRoutine := range _CheckupRoutines {
+		for r := range _CheckupRoutines {
+			routines = append(routines, r)
+		}
+	}
+
+	for _, key := range routines {
+		if checkupRoutine, ok := _CheckupRoutines[key]; ok {
 			_CurrentRunningCheckup = key
 			_FinishedRoutines = append(_FinishedRoutines, _CurrentRunningCheckup)
+			log.Info("Checkup routine started", zap.String("Name", key))
+			startTime := time.Now()
 			checkupRoutine()
-		}
-	} else {
-		for _, key := range routines {
-			if checkupRoutine, ok := _CheckupRoutines[key]; ok {
-				_CurrentRunningCheckup = key
-				_FinishedRoutines = append(_FinishedRoutines, _CurrentRunningCheckup)
-				checkupRoutine()
-			}
+			log.Info("Checkup routine finished", zap.String("Name", key), zap.Duration("D", time.Now().Sub(startTime)))
 		}
 	}
 	return true

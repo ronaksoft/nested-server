@@ -463,7 +463,7 @@ func (rcm *ReportManager) resetAllCounters() {
 	c.Send("DEL", fmt.Sprintf("report:counter:%s", ReportCounterTaskAssignedPerAccount))
 
 	if err := c.Flush(); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 }
@@ -622,7 +622,7 @@ func (rcm *ReportManager) GetAPICounters() MI {
 
 	m := MI{}
 	if err := db.C(global.CollectionReportsCounters).FindId("apiCommands").One(&m); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	return m

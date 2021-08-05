@@ -8,14 +8,15 @@ import (
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"github.com/globalsign/mgo/bson"
 	"github.com/gomodule/redigo/redis"
+	"go.uber.org/zap"
 )
 
 const (
-	SYS_INFO_USERAPI = "userapi"
-	SYS_INFO_GATEWAY = "gateway"
-	SYS_INFO_MSGAPI  = "msgapi"
-	SYS_INFO_STORAGE = "storage"
-	SYS_INFO_ROUTER  = "router"
+	SysInfoUserAPI = "userapi"
+	SysInfoGateway = "gateway"
+	SysInfoMsgAPI  = "msgapi"
+	SysInfoStorage = "storage"
+	SysInfoRouter  = "router"
 )
 
 type SystemConstants struct {
@@ -148,7 +149,7 @@ func (sm *SystemManager) GetCounters() MI {
 
 	m := MI{}
 	if err := db.C(global.CollectionSystemInternal).FindId("counters").One(m); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return m
 }
@@ -365,7 +366,7 @@ func (sm *SystemManager) SetMessageTemplate(msgID, msgSubject, msgBody string) b
 				"body":    msgBody,
 			}}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -378,7 +379,7 @@ func (sm *SystemManager) GetMessageTemplates() map[string]MessageTemplate {
 
 	templates := make(map[string]MessageTemplate)
 	if err := db.C(global.CollectionSystemInternal).FindId("message_templates").One(&templates); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return templates
 }
@@ -393,15 +394,15 @@ func (sm *SystemManager) RemoveMessageTemplate(msgID string) {
 		bson.M{
 			"$unset": bson.M{msgID: ""},
 		}); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 }
 
 func (sm *SystemManager) SetSystemInfo(key, bundleID string, info tools.M) bool {
 	switch key {
-	case SYS_INFO_GATEWAY, SYS_INFO_MSGAPI, SYS_INFO_ROUTER,
-		SYS_INFO_STORAGE, SYS_INFO_USERAPI:
+	case SysInfoGateway, SysInfoMsgAPI, SysInfoRouter,
+		SysInfoStorage, SysInfoUserAPI:
 	default:
 		return false
 	}
@@ -409,7 +410,7 @@ func (sm *SystemManager) SetSystemInfo(key, bundleID string, info tools.M) bool 
 	c := _Cache.GetConn()
 	defer c.Close()
 	if jsonInfo, err := json.Marshal(info); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	} else {
 		c.Do("HSET", keyID, bundleID, jsonInfo)
 	}
@@ -422,7 +423,7 @@ func (sm *SystemManager) GetSystemInfo(key string) MS {
 	defer c.Close()
 	info := MS{}
 	if m, err := redis.StringMap(c.Do("HGETALL", keyID)); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	} else {
 		for k, v := range m {

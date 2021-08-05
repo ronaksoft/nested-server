@@ -97,11 +97,11 @@ func (s *SystemService) disableMonitor(requester *nested.Account, request *rpc.R
 // @Command: system/stats
 func (s *SystemService) getSystemStats(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	M := tools.M{
-		nested.SYS_INFO_USERAPI: tools.M{},
-		nested.SYS_INFO_GATEWAY: tools.M{},
-		nested.SYS_INFO_MSGAPI:  tools.M{},
-		nested.SYS_INFO_STORAGE: tools.M{},
-		nested.SYS_INFO_ROUTER:  tools.M{},
+		nested.SysInfoUserAPI: tools.M{},
+		nested.SysInfoGateway: tools.M{},
+		nested.SysInfoMsgAPI:  tools.M{},
+		nested.SysInfoStorage: tools.M{},
+		nested.SysInfoRouter:  tools.M{},
 	}
 
 	for key := range M {

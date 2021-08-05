@@ -512,7 +512,7 @@ func (p *Pusher) ExternalPushPlaceActivityPostAdded(post *nested.Post) {
 			log.Warn("ExternalPushNotification::Error::Place_Not_Exists", zap.String("PostID", post.ID.Hex()))
 			continue
 		}
-		memberIDs := p.model.Group.GetItems(place.Groups[nested.NOTIFICATION_GROUP])
+		memberIDs := p.model.Group.GetItems(place.Groups[nested.NotificationGroup])
 		for _, memberID := range memberIDs {
 			if memberID != post.SenderID {
 				pushData["account_id"] = memberID
@@ -563,7 +563,7 @@ func (p *Pusher) ExternalPushPlaceActivityPostAttached(post *nested.Post, placeI
 			log.Warn("ExternalPushNotification::Error::Place_Not_Exists", zap.String("PostID", post.ID.Hex()))
 			continue
 		}
-		memberIDs := p.model.Group.GetItems(place.Groups[nested.NOTIFICATION_GROUP])
+		memberIDs := p.model.Group.GetItems(place.Groups[nested.NotificationGroup])
 		for _, memberID := range memberIDs {
 			if memberID != post.SenderID {
 				pushData["account_id"] = memberID

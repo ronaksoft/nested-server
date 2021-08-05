@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
+	"go.uber.org/zap"
 	"io"
 	"time"
 
@@ -122,7 +123,7 @@ func (fm *StoreManager) Save(r io.Reader, info StoredFileInfo) *StoredFileInfo {
 
 	var gFile *mgo.GridFile
 	if gf, err := store.Create(finfo.Name); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	} else {
 		gFile = gf
@@ -134,7 +135,7 @@ func (fm *StoreManager) Save(r io.Reader, info StoredFileInfo) *StoredFileInfo {
 	gFile.SetContentType(finfo.MimeType)
 
 	if n, err := io.Copy(gFile, r); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		gFile.Abort()
 		return nil
 	} else if 0 == n {
@@ -157,7 +158,7 @@ func (fm *StoreManager) SetThumbnails(uniID UniversalID, thumbnails Thumbnails) 
 	defer dbSession.Close()
 
 	if err := store.Files.UpdateId(uniID, bson.M{"$set": bson.M{"metadata.thumbnails": thumbnails}}); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return err
 	}
 	return nil
@@ -170,7 +171,7 @@ func (fm *StoreManager) SetMeta(uniID UniversalID, meta interface{}) error {
 	defer dbSession.Close()
 
 	if err := store.Files.UpdateId(uniID, bson.M{"$set": bson.M{"metadata.meta": meta}}); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return err
 	}
 	return nil
@@ -183,7 +184,7 @@ func (fm *StoreManager) Exists(uniID UniversalID) bool {
 	defer dbSession.Close()
 
 	if c, err := store.Files.FindId(uniID).Count(); err != nil || 0 == c {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true

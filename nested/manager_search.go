@@ -6,6 +6,7 @@ import (
 	"git.ronaksoft.com/nested/server/pkg/log"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"github.com/globalsign/mgo/bson"
+	"go.uber.org/zap"
 	"strings"
 )
 
@@ -77,7 +78,7 @@ func (sm *SearchManager) Places(keyword, filter, sort, grandParentID string, pg 
 	// Log Explain Query
 
 	if err := Q.All(&places); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return places
 }
@@ -242,7 +243,7 @@ func (sm *SearchManager) Accounts(keyword, filter, sort string, pg Pagination) [
 	}
 
 	if err := Q.Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&accounts); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 	return accounts
@@ -473,7 +474,7 @@ func (sm *SearchManager) Apps(keyword string, pg Pagination) []App {
 	if err := db.C(global.CollectionApps).Find(
 		bson.M{"app_name": bson.M{"$regex": fmt.Sprintf("%s", keyword), "$options": "i"}},
 	).Limit(pg.GetLimit()).All(&apps); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return apps
 }
@@ -507,7 +508,7 @@ func (sm *SearchManager) Labels(accountID, keyword, filter string, pg Pagination
 	default:
 	}
 	if err := db.C(global.CollectionLabels).Find(q).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&labels); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return labels
 }
@@ -518,7 +519,7 @@ func (sm *SearchManager) Posts(keyword, accountID string, placeIDs, senderIDs, l
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	sortItem := POST_SORT_TIMESTAMP
+	sortItem := PostSortTimestamp
 	sortDir := fmt.Sprintf("-%s", sortItem)
 	q := bson.M{}
 	switch len(labelIDs) {
@@ -570,7 +571,7 @@ func (sm *SearchManager) PostsConversations(peerID1, peerID2, keywords string, p
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	sortItem := POST_SORT_TIMESTAMP
+	sortItem := PostSortTimestamp
 	sortDir := fmt.Sprintf("-%s", sortItem)
 	q := bson.M{
 		"$or": []bson.M{
@@ -602,7 +603,7 @@ func (sm *SearchManager) PostsConversations(peerID1, peerID2, keywords string, p
 
 	posts := make([]Post, 0, pg.GetLimit())
 	if err := db.C(global.CollectionPosts).Find(q).Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&posts); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return posts
 }
@@ -613,7 +614,7 @@ func (sm *SearchManager) Tasks(keyword, accountID string, assignorIDs, assigneeI
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
-	sortItem := POST_SORT_TIMESTAMP
+	sortItem := PostSortTimestamp
 	sortDir := fmt.Sprintf("-%s", sortItem)
 	q := bson.M{
 		"_removed": false,
@@ -686,7 +687,7 @@ func (sm *SearchManager) AddPlaceToSearchIndex(placeID, placeName string, p Pict
 	if _, err := db.C(global.CollectionSearchIndexPlaces).UpsertId(placeID,
 		bson.M{"$set": bson.M{"name": placeName, "picture": p}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 }
 
@@ -721,7 +722,7 @@ func (sm *SearchManager) AddSearchHistory(accountID, keyword string) bool {
 			},
 		}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -783,7 +784,7 @@ func (sm *SearchManager) AccountIDs(filter string) []string {
 
 	var accountIDs []string
 	if err := Q.Select(bson.M{"_id": 1}).All(&accountIDs); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 	return accountIDs

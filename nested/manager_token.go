@@ -8,6 +8,7 @@ import (
 	"git.ronaksoft.com/nested/server/pkg/log"
 	"github.com/globalsign/mgo/bson"
 	"github.com/gomodule/redigo/redis"
+	"go.uber.org/zap"
 	"time"
 )
 
@@ -88,7 +89,7 @@ func (tm *TokenManager) CreateFileToken(uniID UniversalID, issuerID, receiverEma
 		Receiver: receiverEmail,
 	}
 	if err := db.C(global.CollectionTokensFiles).Insert(ft); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return "", err
 	}
 	return ft.ID, nil
@@ -107,7 +108,7 @@ func (tm *TokenManager) CreateLoginToken(uid string) string {
 		ExpireOn:  uint64(time.Now().AddDate(0, 1, 0).UnixNano() / 1000000),
 	}
 	if err := db.C(global.CollectionTokensLogins).Insert(token); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return ""
 	}
 	return token.ID
@@ -131,7 +132,7 @@ func (tm *TokenManager) CreateAppToken(accountID, appID string) string {
 		"app_id":     appID,
 	}).One(&token); err != nil {
 		if err := db.C(global.CollectionTokensApps).Insert(token); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 			return ""
 		}
 	}
@@ -147,7 +148,7 @@ func (tm *TokenManager) GetFileByToken(token string) (UniversalID, error) {
 
 	ft := new(FileToken)
 	if err := db.C(global.CollectionTokensFiles).FindId(token).One(ft); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return "", err
 	}
 	return ft.FileID, nil
@@ -161,7 +162,7 @@ func (tm *TokenManager) GetFileToken(token string) *FileToken {
 
 	ft := new(FileToken)
 	if err := db.C(global.CollectionTokensFiles).FindId(token).One(ft); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	return ft
@@ -175,12 +176,12 @@ func (tm *TokenManager) GetLoginToken(token string) *LoginToken {
 
 	loginToken := new(LoginToken)
 	if err := db.C(global.CollectionTokensLogins).FindId(token).One(loginToken); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	if loginToken.Expired || loginToken.ExpireOn < Timestamp() {
 		if err := db.C(global.CollectionTokensLogins).RemoveId(token); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 			return nil
 		}
 	}
@@ -195,12 +196,12 @@ func (tm *TokenManager) GetAppToken(token string) *AppToken {
 
 	appToken := new(AppToken)
 	if err := db.C(global.CollectionTokensApps).FindId(token).One(appToken); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	if appToken.Expired {
 		if err := db.C(global.CollectionTokensApps).RemoveId(token); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 			return nil
 		}
 	}
@@ -217,7 +218,7 @@ func (tm *TokenManager) GetAppTokenByAccountID(accountID string, pg Pagination) 
 	if err := db.C(global.CollectionTokensApps).Find(
 		bson.M{"account_id": accountID},
 	).Skip(pg.GetSkip()).Limit(pg.GetLimit()).All(&appTokens); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return appTokens
 }
@@ -230,7 +231,7 @@ func (tm *TokenManager) AppTokenExists(accountID, appID string) bool {
 	if n, err := db.C(global.CollectionTokensApps).Find(
 		bson.M{"account_id": accountID, "app_id": appID},
 	).Count(); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	} else if n > 0 {
 		return true
@@ -248,7 +249,7 @@ func (tm *TokenManager) IncreaseAccessCounter(token string) {
 		token,
 		bson.M{"$inc": bson.M{"access_counter": 1}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 }
 
@@ -259,7 +260,7 @@ func (tm *TokenManager) RevokeFileToken(token string) bool {
 	defer dbSession.Close()
 
 	if err := db.C(global.CollectionTokensFiles).RemoveId(token); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -272,7 +273,7 @@ func (tm *TokenManager) RevokeLoginToken(token string) bool {
 	defer dbSession.Close()
 
 	if err := db.C(global.CollectionTokensLogins).RemoveId(token); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -288,7 +289,7 @@ func (tm *TokenManager) RevokeAppToken(accountID, token string) bool {
 		"_id":        token,
 		"account_id": accountID,
 	}); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -303,7 +304,7 @@ func (tm *TokenManager) RemoveAppTokenForAll(appId string) bool {
 	if _, err := db.C(global.CollectionTokensApps).RemoveAll(bson.M{
 		"app_id": appId,
 	}); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -319,7 +320,7 @@ func (tm *TokenManager) SetAppFavoriteStatus(accountID, appID string, state bool
 		bson.M{"account_id": accountID, "app_id": appID},
 		bson.M{"$set": bson.M{"favorite": state}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true

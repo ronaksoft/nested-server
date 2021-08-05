@@ -4,6 +4,7 @@ import (
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
 	"github.com/globalsign/mgo/bson"
+	"go.uber.org/zap"
 )
 
 type AppManager struct{}
@@ -49,7 +50,7 @@ func (m *AppManager) Register(appID, appName, homepage, callbackURL, developer, 
 	}
 
 	if err := _MongoDB.C(global.CollectionApps).Insert(a); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -58,7 +59,7 @@ func (m *AppManager) Register(appID, appName, homepage, callbackURL, developer, 
 // UnRegister removes the app from the verified apps list
 func (m *AppManager) UnRegister(appID string) bool {
 	if err := _MongoDB.C(global.CollectionApps).RemoveId(appID); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -71,7 +72,7 @@ func (m *AppManager) GetByID(appID string) *App {
 		return &_AppStore
 	}
 	if err := _MongoDB.C(global.CollectionApps).FindId(appID).One(app); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	return app
@@ -83,7 +84,7 @@ func (m *AppManager) GetManyByIDs(appIDs []string) []App {
 	if err := _MongoDB.C(global.CollectionApps).Find(
 		bson.M{"_id": bson.M{"$in": appIDs}},
 	).One(&apps); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return apps
 }
@@ -93,7 +94,7 @@ func (m *AppManager) ExpireTokens(appID string) {
 	if _, err := _MongoDB.C(global.CollectionTokensApps).RemoveAll(
 		bson.M{"app_id": appID},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 }
 
@@ -103,7 +104,7 @@ func (m *AppManager) Exists(appID string) bool {
 		return true
 	}
 	if n, err := _MongoDB.C(global.CollectionApps).FindId(appID).Count(); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	} else if n > 0 {
 		return true

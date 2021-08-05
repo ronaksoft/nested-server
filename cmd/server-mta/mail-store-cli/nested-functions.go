@@ -157,7 +157,7 @@ func (m *Model) ExternalPushPlaceActivityPostAdded(post *nested.Post) {
 			_LOG.Debug("ExternalPushActivityAddPost::Error::Place_Not_Exists")
 			continue
 		}
-		memberIDs := m.GetItems(place.Groups[nested.NOTIFICATION_GROUP])
+		memberIDs := m.GetItems(place.Groups[nested.NotificationGroup])
 		for _, memberID := range memberIDs {
 			if memberID != post.SenderID {
 				pushData["account_id"] = memberID
@@ -481,7 +481,7 @@ func (m *Model) AddPost(pcr nested.PostCreateRequest) *nested.Post {
 
 	post := nested.Post{}
 	ts := nested.Timestamp()
-	post.Type = nested.POST_TYPE_NORMAL
+	post.Type = nested.PostTypeNormal
 	post.ReplyTo = pcr.ReplyTo
 	post.ForwardFrom = pcr.ForwardFrom
 	post.ContentType = pcr.ContentType
@@ -549,7 +549,7 @@ func (m *Model) AddPost(pcr nested.PostCreateRequest) *nested.Post {
 	}
 
 	switch pcr.ContentType {
-	case nested.CONTENT_TYPE_TEXT_PLAIN:
+	case nested.ContentTypeTextPlain:
 		if len(post.Body) > 256 {
 			post.Ellipsis = true
 			post.Preview = string(post.Body[:256])
@@ -557,7 +557,7 @@ func (m *Model) AddPost(pcr nested.PostCreateRequest) *nested.Post {
 			post.Preview = post.Body
 		}
 	default:
-		post.ContentType = nested.CONTENT_TYPE_TEXT_HTML
+		post.ContentType = nested.ContentTypeTextHtml
 		strings.NewReader(pcr.Body)
 		post.Body = sanitizeBody(strings.NewReader(pcr.Body), post.Internal).String()
 		if len(pcr.Body) > 256 {

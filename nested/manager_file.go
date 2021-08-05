@@ -7,6 +7,7 @@ import (
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
+	"go.uber.org/zap"
 	"path/filepath"
 	"strings"
 	"time"
@@ -80,7 +81,7 @@ func (fm *FileManager) readFromCache(fileID UniversalID) *FileInfo {
 	keyID := fmt.Sprintf("file:gob:%s", fileID)
 	if gobFile, err := redis.Bytes(c.Do("GET", keyID)); err != nil {
 		if err := _MongoDB.C(global.CollectionFiles).FindId(fileID).One(file); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 			return nil
 		}
 		gobFile := new(bytes.Buffer)
@@ -135,7 +136,7 @@ func (fm *FileManager) AddFile(f FileInfo) bool {
 		return false
 	}
 	if err := db.C(global.CollectionFiles).Insert(f); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return true
 }
@@ -149,7 +150,7 @@ func (fm *FileManager) AddPostAsOwner(uniID UniversalID, postID bson.ObjectId) {
 		uniID,
 		bson.M{"$inc": bson.M{"ref_count": 1}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 	if err := db.C(global.CollectionPostsFiles).Insert(
@@ -158,7 +159,7 @@ func (fm *FileManager) AddPostAsOwner(uniID UniversalID, postID bson.ObjectId) {
 			"post_id":      postID,
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 }
 
@@ -171,7 +172,7 @@ func (fm *FileManager) AddTaskAsOwner(uniID UniversalID, taskID bson.ObjectId) {
 		uniID,
 		bson.M{"$inc": bson.M{"ref_count": 1}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 	if err := _MongoDB.C(global.CollectionTasksFiles).Insert(
@@ -180,7 +181,7 @@ func (fm *FileManager) AddTaskAsOwner(uniID UniversalID, taskID bson.ObjectId) {
 			"task_id":      taskID,
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 }
@@ -213,21 +214,21 @@ func (fm *FileManager) SetStatus(uniID UniversalID, fileStatus string) bool {
 				"status":      fileStatus,
 			}},
 		); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 		}
 	case FileStatusAttached:
 		if err := db.C(global.CollectionFiles).Update(
 			bson.M{"_id": uniID, "status": bson.M{"$ne": FileStatusPublic}},
 			bson.M{"$set": bson.M{"status": fileStatus}},
 		); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 		}
 	case FileStatusInternal:
 		if err := db.C(global.CollectionFiles).Update(
 			bson.M{"_id": uniID},
 			bson.M{"$set": bson.M{"status": fileStatus}},
 		); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 		}
 	default:
 		return false
@@ -245,7 +246,7 @@ func (fm *FileManager) SetMetadata(uniID UniversalID, meta interface{}) {
 		bson.M{"_id": uniID},
 		bson.M{"$set": bson.M{"metadata": meta}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 }
 
@@ -367,13 +368,13 @@ func (fm *FileManager) RemoveTaskAsOwner(uniID UniversalID, taskID bson.ObjectId
 		uniID,
 		bson.M{"$inc": bson.M{"ref_count": -1}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 	if err := db.C(global.CollectionTasksFiles).Remove(
 		bson.M{"universal_id": uniID, "task_id": taskID},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return
 }
@@ -388,13 +389,13 @@ func (fm *FileManager) RemovePostAsOwner(uniID UniversalID, postID bson.ObjectId
 		uniID,
 		bson.M{"$inc": bson.M{"ref_count": -1}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 	if err := db.C(global.CollectionPostsFiles).Remove(
 		bson.M{"universal_id": uniID, "post_id": postID},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return
 }
@@ -411,7 +412,7 @@ func (fm *FileManager) SetDimension(uniID UniversalID, width, height int64) bool
 			"height": height,
 		}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -429,7 +430,7 @@ func (fm *FileManager) SetThumbnails(uniID UniversalID, thumbs Picture) bool {
 			"thumbs": thumbs,
 		}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -442,7 +443,7 @@ func (fm *FileManager) IncrementDownloadCounter(uniID UniversalID, count int) bo
 	defer dbSession.Close()
 
 	if err := db.C(global.CollectionFiles).UpdateId(uniID, bson.M{"$inc": bson.M{"downloads": count}}); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 

@@ -79,7 +79,7 @@ func (c Audio) Meta(r io.Reader) (*AudioMeta, error) {
 
 	result := streams{}
 	if err := decoder.Decode(&result); err != nil {
-		
+
 		return nil, err
 	}
 
@@ -104,15 +104,14 @@ func (c Audio) ToMp3(r io.Reader, aQuality uint) (io.Reader, error) {
 	oFilename := "-"     // STDIN
 
 	if f, err := ioutil.TempFile(os.TempDir(), "nst_convert_audio_"); err != nil {
-		
 
 		return nil, err
 	} else if s, err := f.Stat(); err != nil {
-		
+
 		return nil, err
 
 	} else if n, err := io.Copy(f, r); err != nil {
-		
+
 		return nil, err
 
 	} else if 0 == n {

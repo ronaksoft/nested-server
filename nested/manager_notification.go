@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
+	"go.uber.org/zap"
 	"strconv"
 	"strings"
 
@@ -142,7 +143,7 @@ func (nm *NotificationManager) GetByAccountID(
 	if err := db.C(global.CollectionNotifications).Find(query).
 		Sort(sortDir).Skip(pg.GetSkip()).Limit(pg.GetLimit()).
 		All(&n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return n
 }
@@ -253,7 +254,7 @@ func (nm *NotificationManager) Remove(notificationID string) bool {
 		notificationID,
 		bson.M{"$set": bson.M{"_removed": true}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -281,7 +282,7 @@ func (nm *NotificationManager) AddMention(senderID, mentionedID string, postID, 
 	n.Removed = false
 
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -308,7 +309,7 @@ func (nm *NotificationManager) JoinedPlace(adderID, addedID, placeID string) *No
 	n.Removed = false
 
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -362,7 +363,7 @@ func (nm *NotificationManager) Comment(accountID, commenterID string, postID, co
 
 	n.Data.Others = []string{n.ActorID}
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -389,7 +390,7 @@ func (nm *NotificationManager) Promoted(promotedID, promoterID, placeID string) 
 	n.Removed = false
 
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -416,7 +417,7 @@ func (nm *NotificationManager) Demoted(demotedID, demoterID, placeID string) *No
 	n.Removed = false
 
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -459,7 +460,7 @@ func (nm *NotificationManager) PlaceSettingsChanged(accountID, changerID, placeI
 		}
 	}
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -486,7 +487,7 @@ func (nm *NotificationManager) NewSession(accountID, clientID string) *Notificat
 	n.Removed = false
 
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -516,7 +517,7 @@ func (nm *NotificationManager) LabelRequestApproved(
 	n.Removed = false
 
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -547,7 +548,7 @@ func (nm *NotificationManager) LabelRequestRejected(
 	n.Removed = false
 
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -596,7 +597,7 @@ func (nm *NotificationManager) LabelRequest(accountID, requesterID string) *Noti
 	}
 
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -623,7 +624,7 @@ func (nm *NotificationManager) LabelJoined(accountID, labelID, adderID string) *
 	n.Removed = false
 
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -652,7 +653,7 @@ func (nm *NotificationManager) TaskAssigned(accountID, assignorID string, task *
 	n.Data.TaskTitle = task.Title
 
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -682,7 +683,7 @@ func (nm *NotificationManager) TaskWatcherAdded(accountID, adderID string, task 
 	n.Data.TaskTitle = task.Title
 
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -711,7 +712,7 @@ func (nm *NotificationManager) TaskEditorAdded(accountID, adderID string, task *
 	n.Data.TaskTitle = task.Title
 
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -740,7 +741,7 @@ func (nm *NotificationManager) TaskCandidateAdded(accountID, adderID string, tas
 	n.Data.TaskTitle = task.Title
 
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -770,7 +771,7 @@ func (nm *NotificationManager) TaskAssigneeChanged(accountID, newAssigneeID, act
 	n.Data.TaskTitle = task.Title
 
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	n.incrementCounter()
 	return n
@@ -800,7 +801,7 @@ func (nm *NotificationManager) TaskUpdated(
 	n.Data.TaskDesc = newDesc
 	n.Data.TaskTitle = newTitle
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -829,7 +830,7 @@ func (nm *NotificationManager) TaskOverdue(accountID string, task *Task) *Notifi
 	n.Data.TaskTitle = task.Title
 
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -859,7 +860,7 @@ func (nm *NotificationManager) TaskDueTimeUpdated(accountID string, task *Task) 
 	n.Data.TaskTitle = task.Title
 
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -889,7 +890,7 @@ func (nm *NotificationManager) TaskRejected(accountID, actorID string, task *Tas
 	n.Data.TaskTitle = task.Title
 
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -919,7 +920,7 @@ func (nm *NotificationManager) TaskAccepted(accountID, actorID string, task *Tas
 	n.Data.TaskTitle = task.Title
 
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -949,7 +950,7 @@ func (nm *NotificationManager) TaskCompleted(accountID, actorID string, task *Ta
 	n.Data.TaskTitle = task.Title
 
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -979,7 +980,7 @@ func (nm *NotificationManager) TaskHold(accountID, actorID string, task *Task) *
 	n.Data.TaskTitle = task.Title
 
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -1009,7 +1010,7 @@ func (nm *NotificationManager) TaskInProgress(accountID, actorID string, task *T
 	n.Data.TaskTitle = task.Title
 
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -1039,7 +1040,7 @@ func (nm *NotificationManager) TaskFailed(accountID, actorID string, task *Task)
 	n.Data.TaskTitle = task.Title
 
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -1072,7 +1073,7 @@ func (nm *NotificationManager) TaskCommentMentioned(
 	n.Data.TaskTitle = task.Title
 
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()
@@ -1129,7 +1130,7 @@ func (nm *NotificationManager) TaskComment(accountID, actorID string, task *Task
 
 	n.Data.Others = []string{n.ActorID}
 	if err := db.C(global.CollectionNotifications).Insert(n); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	n.incrementCounter()

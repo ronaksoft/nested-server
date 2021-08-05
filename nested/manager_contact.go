@@ -4,6 +4,7 @@ import (
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
 	"github.com/globalsign/mgo/bson"
+	"go.uber.org/zap"
 )
 
 type Contacts struct {
@@ -35,7 +36,7 @@ func (cm *ContactManager) AddContact(accountID, contactID string) bool {
 			"$set":      bson.M{"hash": RandomID(8)},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 	_Manager.Account.UpdateAccountConnection(accountID, []string{contactID}, 1)
@@ -63,7 +64,7 @@ func (cm *ContactManager) AddMutualContact(accountID1, accountID2 string) bool {
 		},
 	)
 	if _, err := bulk.Run(); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -81,7 +82,7 @@ func (cm *ContactManager) AddContactToFavorite(accountID, contactID string) bool
 			"$set":      bson.M{"hash": RandomID(8)},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 
@@ -121,7 +122,7 @@ func (cm *ContactManager) RemoveContact(accountID, contactID string) bool {
 		},
 	)
 	if _, err := bulk.Run(); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	_Manager.Account.UpdateAccountConnection(accountID, []string{contactID}, -1)
@@ -140,7 +141,7 @@ func (cm *ContactManager) RemoveContactFromFavorite(accountID, contactID string)
 			"$set":  bson.M{"hash": RandomID(8)},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	_Manager.Account.UpdateAccountConnection(accountID, []string{contactID}, -5)
@@ -154,7 +155,7 @@ func (cm *ContactManager) GetContacts(accountID string) Contacts {
 
 	c := Contacts{}
 	if err := db.C(global.CollectionContacts).FindId(accountID).One(&c); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return c
 }

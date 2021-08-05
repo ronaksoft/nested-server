@@ -4,6 +4,7 @@ import (
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
 	"github.com/globalsign/mgo/bson"
+	"go.uber.org/zap"
 )
 
 type PhoneManager struct {
@@ -52,7 +53,7 @@ func (pm *PhoneManager) UnRegisterPhoneToAccount(accountID, phoneNumber string) 
 		phoneNumber,
 		bson.M{"$unset": bson.M{"owner_id": ""}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return
 }

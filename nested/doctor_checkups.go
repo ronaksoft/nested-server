@@ -7,6 +7,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
+	"go.uber.org/zap"
 	"strings"
 	"time"
 )
@@ -27,10 +28,7 @@ import (
 //  3. Count all Unlocked children places
 // In the end, it updates Place counters: KEY_HOLDERS, CREATORS, CHILDS, POSTS
 func SyncPlaceCounters() {
-	log.Info("--> Routine:: SyncPlaceCounters")
-	defer log.Info("<-- Routine:: SyncPlaceCounters")
 	place := new(Place)
-
 	iter := _MongoDB.C(global.CollectionPlaces).Find(bson.M{}).Iter()
 	defer iter.Close()
 	for iter.Next(place) {
@@ -83,8 +81,6 @@ func SyncPlaceCounters() {
 // This routine iterate over global.CollectionPosts and for each Post:
 //  1. Count all the comments
 func SyncPostCounters() {
-	log.Info("--> Routine:: SyncPostCounters")
-	defer log.Info("<-- Routine:: SyncPostCounters")
 	post := new(Post)
 	iter := _MongoDB.C(global.CollectionPosts).Find(bson.M{}).Iter()
 	defer iter.Close()
@@ -110,8 +106,6 @@ func SyncPostCounters() {
 // This routine iterates over global.CollectionLabels and for each Label:
 //  1. Count Posts and Tasks which has that label
 func SyncLabelCounters() {
-	log.Info("--> Routine:: SyncLabelCounters")
-	defer log.Info("<-- Routine:: SyncLabelCounters")
 	label := new(Label)
 	iter := _MongoDB.C(global.CollectionLabels).Find(bson.M{}).Iter()
 	defer iter.Close()
@@ -140,8 +134,6 @@ func SyncLabelCounters() {
 // This routine iterates over global.CollectionTasks and for each task:
 //  1. Count Comments
 func SyncTaskCounters() {
-	log.Info("--> Routine:: SyncTaskCounters")
-	defer log.Info("<-- Routine:: SyncTaskCounters")
 	task := new(Task)
 	iter := _MongoDB.C(global.CollectionTasks).Find(bson.M{}).Iter()
 	defer iter.Close()
@@ -167,13 +159,9 @@ func SyncTaskCounters() {
 	}
 }
 
-// SyncFileRefCounters
-// This routine iterates over global.CollectionPosts and COLLECTIONS_TASKS and update the ref_count of the
+// SyncFileRefCounters iterates over global.CollectionPosts and COLLECTIONS_TASKS and update the ref_count of the
 // files in the global.CollectionFiles
 func SyncFileRefCounters() {
-	log.Info("--> Routine:: SyncFileRefCounters")
-	defer log.Info("<-- Routine:: SyncFileRefCounters")
-
 	_MongoDB.C(global.CollectionFiles).UpdateAll(bson.M{}, bson.M{"$set": bson.M{"ref_count": 0}})
 	iter1 := _MongoDB.C(global.CollectionPosts).Find(bson.M{}).Iter()
 	post := new(Post)
@@ -221,12 +209,8 @@ func SyncFileRefCounters() {
 	iter3.Close()
 }
 
-// SyncSystemCounters
-// This routines counts all the accounts (active, de-active), places (grand places, locked places, unlocked places)
+// SyncSystemCounters counts all the accounts (active, de-active), places (grand places, locked places, unlocked places)
 func SyncSystemCounters() {
-	log.Info("--> Routine:: SyncSystemCounters")
-	defer log.Info("<-- Routine:: SyncSystemCounters")
-
 	enabledAccounts, _ := _MongoDB.C(global.CollectionAccounts).Find(bson.M{"disabled": false}).Count()
 	disabledAccounts, _ := _MongoDB.C(global.CollectionAccounts).Find(bson.M{"disabled": true}).Count()
 	personalPlaces, _ := _MongoDB.C(global.CollectionPlaces).Find(bson.M{
@@ -259,15 +243,10 @@ func SyncSystemCounters() {
 }
 
 func CleanupSessions() {
-	log.Info("--> Routine:: CleanupSessions")
-	defer log.Info("<-- Routine:: CleanupSessions")
 	_MongoDB.C(global.CollectionSessions).RemoveAll(bson.M{"expired": true})
 }
 
 func CleanupTasks() {
-	log.Info("--> Routine:: CleanupTasks")
-	defer log.Info("<-- Routine:: CleanupTasks")
-
 	iter := _MongoDB.C(global.CollectionTasks).Find(bson.M{"_removed": true}).Iter()
 	defer iter.Close()
 	task := new(Task)
@@ -281,9 +260,6 @@ func CleanupTasks() {
 }
 
 func CleanupPosts() {
-	log.Info("--> Routine:: CleanupPosts")
-	defer log.Info("<-- Routine:: CleanupPosts")
-
 	iter := _MongoDB.C(global.CollectionPosts).Find(bson.M{"_removed": true}).Iter()
 	defer iter.Close()
 	task := new(Task)
@@ -301,9 +277,6 @@ func CleanupPosts() {
 // CleanupTempFiles
 // Cleanup Temporary Files
 func CleanupTempFiles() {
-	log.Info("--> Routine:: CleanupTempFiles")
-	defer log.Info("<-- Routine:: CleanupTempFiles")
-
 	iter := _MongoDB.C(global.CollectionFiles).Find(bson.M{}).Iter()
 	defer iter.Close()
 	file := new(FileInfo)
@@ -321,8 +294,6 @@ func CleanupTempFiles() {
 
 // FixReferredTmpFiles Fix file status of task attached files
 func FixReferredTmpFiles() {
-	log.Info("--> Routine:: FixReferedTmpFiles")
-	defer log.Info("<-- Routine:: FixReferedTmpFiles")
 	iter := _MongoDB.C(global.CollectionFiles).Find(bson.M{"ref_count": bson.M{"$gt": 0}}).Iter()
 	defer iter.Close()
 	file := new(FileInfo)
@@ -338,10 +309,8 @@ func FixReferredTmpFiles() {
 
 // FixSearchIndexPlacesCollection Fix file status of task attached files
 func FixSearchIndexPlacesCollection() {
-	log.Info("--> Routine:: FixSearchIndexPlacesCollection")
-	defer log.Info("<-- Routine:: FixSearchIndexPlacesCollection")
 	if err := _MongoDB.C(global.CollectionSearchIndexPlaces).DropCollection(); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	_ = _MongoDB.C(global.CollectionSearchIndexPlaces).EnsureIndex(mgo.Index{Key: []string{"name"}, Background: true})
 	iter := _MongoDB.C(global.CollectionPlaces).Find(bson.M{}).Iter()
@@ -349,7 +318,7 @@ func FixSearchIndexPlacesCollection() {
 	for iter.Next(place) {
 		if place.Privacy.Search {
 			if err := _MongoDB.C(global.CollectionSearchIndexPlaces).Insert(bson.M{"_id": place.ID, "name": place.Name, "picture": place.Picture}); err != nil {
-				log.Warn(err.Error())
+				log.Warn("Got error", zap.Error(err))
 			}
 		}
 	}
@@ -357,12 +326,9 @@ func FixSearchIndexPlacesCollection() {
 }
 
 func AddContentToPost() {
-	log.Info("--> Routine:: AddContentToPost")
-	defer log.Info("<-- Routine:: AddContentToPost")
-
 	err := _MongoDB.C(global.CollectionTasks).DropIndexName("title_text_description_text_todos_text")
 	if err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		fmt.Println("DropIndexName", err)
 	}
 	_ = _MongoDB.C(global.CollectionTasks).EnsureIndex(mgo.Index{
@@ -377,7 +343,7 @@ func AddContentToPost() {
 
 	err = _MongoDB.C(global.CollectionPosts).DropIndexName("body_text_subject_text")
 	if err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		fmt.Println("DropIndexName", err)
 	}
 	_ = _MongoDB.C(global.CollectionPosts).EnsureIndex(mgo.Index{
@@ -396,9 +362,9 @@ func AddContentToPost() {
 	for iter.Next(p) {
 		var postContent string
 		switch p.ContentType {
-		case CONTENT_TYPE_TEXT_PLAIN:
+		case ContentTypeTextPlain:
 			postContent = p.Body
-		case CONTENT_TYPE_TEXT_HTML:
+		case ContentTypeTextHtml:
 			reader := strings.NewReader(p.Body)
 			doc, _ := goquery.NewDocumentFromReader(reader)
 			doc.Find("").Each(func(i int, el *goquery.Selection) {
@@ -410,7 +376,7 @@ func AddContentToPost() {
 		}
 		err := _MongoDB.C(global.CollectionPosts).UpdateId(p.ID, bson.M{"$set": bson.M{"content": postContent}})
 		if err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 		}
 	}
 }

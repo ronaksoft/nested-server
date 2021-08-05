@@ -79,7 +79,7 @@ func NewManager(instanceID, mongoDSN, redisDSN string, logLevel int) (*Manager, 
 	tlsConfig := new(tls.Config)
 	tlsConfig.InsecureSkipVerify = true
 	if dialInfo, err := mgo.ParseURL(mongoDSN); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil, err
 	} else {
 		dialInfo.Timeout = 5 * time.Second
@@ -91,7 +91,7 @@ func NewManager(instanceID, mongoDSN, redisDSN string, logLevel int) (*Manager, 
 			}
 		}
 		if mongoSession, err := mgo.DialWithInfo(dialInfo); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 			if mongoSession, err = mgo.Dial(mongoDSN); err != nil {
 				log.Warn(err.Error(), zap.String("DSN", mongoDSN))
 				return nil, err
@@ -170,7 +170,7 @@ func (m *Manager) RegisterBundle(bundleID string) {
 		bson.M{"_id": "bundles"},
 		bson.M{"$addToSet": bson.M{"bundle_ids": bundleID}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 }
 
@@ -180,7 +180,7 @@ func (m *Manager) GetBundles() []string {
 		BundleIDs []string `bson:"bundle_ids"`
 	}{}
 	if err := _MongoDB.C(global.CollectionSystemInternal).FindId("bundles").One(&r); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return []string{}
 	} else {
 		return r.BundleIDs

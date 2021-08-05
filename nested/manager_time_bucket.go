@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
+	"go.uber.org/zap"
 	"time"
 
 	"github.com/globalsign/mgo/bson"
@@ -39,7 +40,7 @@ func (bm *TimeBucketManager) GetBucketsBefore(timestamp uint64) []TimeBucket {
 	if err := db.C(global.CollectionTimeBuckets).Find(
 		bson.M{"_id": bson.M{"$lt": bucketID}},
 	).All(&buckets); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return buckets
 }
@@ -51,7 +52,7 @@ func (bm *TimeBucketManager) GetByID(bucketID string) *TimeBucket {
 
 	bucket := new(TimeBucket)
 	if err := db.C(global.CollectionTimeBuckets).FindId(bucketID).One(bucket); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	return bucket
@@ -67,7 +68,7 @@ func (bm *TimeBucketManager) AddOverdueTask(timestamp uint64, taskID bson.Object
 		bson.M{"_id": bucketID},
 		bson.M{"$addToSet": bson.M{"overdue_tasks": taskID}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -83,7 +84,7 @@ func (bm *TimeBucketManager) RemoveOverdueTask(timestamp uint64, taskID bson.Obj
 		bson.M{"_id": bucketID, "overdue_tasks": taskID},
 		bson.M{"$pull": bson.M{"overdue_tasks": taskID}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -95,7 +96,7 @@ func (bm *TimeBucketManager) Remove(bucketID string) bool {
 	defer dbSession.Close()
 
 	if err := db.C(global.CollectionTimeBuckets).RemoveId(bucketID); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true

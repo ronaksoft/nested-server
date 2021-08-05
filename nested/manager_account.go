@@ -10,6 +10,7 @@ import (
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 	"github.com/gomodule/redigo/redis"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"regexp"
 	"strings"
@@ -87,7 +88,6 @@ type AccountMail struct {
 	OutgoingSMTPPass string `json:"outgoing_smtp_pass" bson:"outgoing_smtp_pass"`
 }
 
-// Account Manager and Methods
 type AccountManager struct{}
 
 func NewAccountManager() *AccountManager { return new(AccountManager) }
@@ -153,30 +153,30 @@ func (am *AccountManager) readKeyFromCache(keyID string) string {
 	}
 }
 
-func (am *AccountManager) removeCache(accountID string) bool {
+func (am *AccountManager) removeCache(accountID string) {
 	c := _Cache.Pool.Get()
 	defer c.Close()
 	keyID := fmt.Sprintf("account:gob:%s", accountID)
-	c.Do("DEL", keyID)
-	return true
+	_, _ = c.Do("DEL", keyID)
+	return
 }
 
-func (am *AccountManager) removeKeyCache(keyID string) bool {
+func (am *AccountManager) removeKeyCache(keyID string) {
 	c := _Cache.Pool.Get()
 	defer c.Close()
-	c.Do("DEL", fmt.Sprintf("account-key:json:%s", keyID))
-	return true
+	_, _ = c.Do("DEL", fmt.Sprintf("account-key:json:%s", keyID))
+	return
 }
 
-func (am *AccountManager) removeMultiFromCache(accountIDs []string) bool {
+func (am *AccountManager) removeMultiFromCache(accountIDs []string) {
 	c := _Cache.Pool.Get()
 	defer c.Close()
 	for _, accountID := range accountIDs {
 		keyID := fmt.Sprintf("account:json:%s", accountID)
 		c.Send("DEL", keyID)
 	}
-	c.Flush()
-	return true
+	_ = c.Flush()
+	return
 }
 
 // AddPlaceToBookmarks
@@ -719,9 +719,9 @@ func (am *AccountManager) SetPlaceNotification(accountID, placeID string, on boo
 		return am
 	} else {
 		if on {
-			_Manager.Group.AddItems(p.Groups[NOTIFICATION_GROUP], []string{accountID})
+			_Manager.Group.AddItems(p.Groups[NotificationGroup], []string{accountID})
 		} else {
-			_Manager.Group.RemoveItems(p.Groups[NOTIFICATION_GROUP], []string{accountID})
+			_Manager.Group.RemoveItems(p.Groups[NotificationGroup], []string{accountID})
 		}
 	}
 	return am
@@ -811,13 +811,13 @@ func (am *AccountManager) Update(accountID string, aur AccountUpdateRequest) boo
 			accountID,
 			bson.M{"$set": bson.M{"full_name": fmt.Sprintf("%s %s", account.FirstName, account.LastName)}},
 		); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 		}
 		if err := _MongoDB.C(global.CollectionPlaces).UpdateId(
 			accountID,
 			bson.M{"$set": bson.M{"name": fmt.Sprintf("%s %s", account.FirstName, account.LastName)}},
 		); err != nil {
-			log.Warn(err.Error())
+			log.Warn("Got error", zap.Error(err))
 		}
 	}
 
@@ -928,7 +928,7 @@ func (am AccountManager) UnTrustRecipient(accountID string, recipients []string)
 		accountID,
 		bson.M{"$pull": bson.M{"recipients": bson.M{"$in": recipients}}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -942,7 +942,7 @@ func (am AccountManager) TrustRecipient(accountID string, recipients []string) b
 			"$addToSet": bson.M{"recipients": bson.M{"$each": recipients}},
 		},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true

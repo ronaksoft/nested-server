@@ -5,6 +5,7 @@ import (
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
 	"github.com/globalsign/mgo/bson"
+	"go.uber.org/zap"
 )
 
 const (
@@ -40,7 +41,7 @@ func (tm *PlaceActivityManager) GetByID(activityID bson.ObjectId) *PlaceActivity
 
 	t := new(PlaceActivity)
 	if err := db.C(global.CollectionPlacesActivities).FindId(activityID).One(&t); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return nil
 	}
 	return t
@@ -86,7 +87,7 @@ func (tm *PlaceActivityManager) PostAdd(actorID string, placeIDs []string, postI
 		bulk.Insert(v)
 	}
 	if _, err := bulk.Run(); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return
 }
@@ -108,7 +109,7 @@ func (tm *PlaceActivityManager) PostAttachPlace(actorID, newPlaceID string, post
 		PlaceID:    newPlaceID,
 	}
 	if err := db.C(global.CollectionPlacesActivities).Insert(v); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 }
@@ -141,7 +142,7 @@ func (tm *PlaceActivityManager) PostMove(actorID, oldPlaceID, newPlaceID string,
 	bulk.Insert(v)
 
 	if _, err := bulk.Run(); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 	tm.PostRemove(actorID, oldPlaceID, postID)
@@ -161,7 +162,7 @@ func (tm *PlaceActivityManager) PostRemove(actorID, placeID string, postID bson.
 		PostID:    postID,
 	}
 	if err := db.C(global.CollectionPlacesActivities).Insert(v); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 	return
@@ -197,7 +198,7 @@ func (tm *PlaceActivityManager) PlaceRemove(placeID string) {
 		bson.M{"action": PlaceActivityActionPlaceAdd, "place_id": placeID, "_removed": false},
 		bson.M{"$set": bson.M{"_removed": true, "last_update": ts}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 
 	// remove all the MEMBER_JOIN actions
@@ -205,7 +206,7 @@ func (tm *PlaceActivityManager) PlaceRemove(placeID string) {
 		bson.M{"action": PlaceActivityActionMemberJoin, "place_id": placeID},
 		bson.M{"$set": bson.M{"_removed": true, "last_update": ts}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 	return
 }

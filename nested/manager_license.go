@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
+	"go.uber.org/zap"
 	"time"
 
 	"github.com/globalsign/mgo/bson"
@@ -37,7 +38,7 @@ func NewLicenceManager() *LicenseManager {
 func (m *LicenseManager) Load() bool {
 	r := MS{}
 	if err := _MongoDB.C(global.CollectionSystemInternal).FindId("license_key").One(r); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	licenseKey := r["value"]
@@ -46,7 +47,7 @@ func (m *LicenseManager) Load() bool {
 	}
 	jsonLicense := Decrypt(LicenseEncryptKey, licenseKey)
 	if err := json.Unmarshal([]byte(jsonLicense), m.license); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 		return false
 	}
 	return true
@@ -72,6 +73,6 @@ func (m *LicenseManager) Set(licenseKey string) {
 			"value": licenseKey,
 		}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("Got error", zap.Error(err))
 	}
 }
