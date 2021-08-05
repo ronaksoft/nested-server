@@ -439,6 +439,9 @@ func (am *AccountManager) GetBookmarkedPlaceIDs(accountID string) []string {
 func (am *AccountManager) GetKey(accountID, keyName string) string {
 	keyID := fmt.Sprintf("%s.%s", accountID, keyName)
 	keyValue := am.readKeyFromCache(keyID)
+	if keyValue == "" {
+		return "{}"
+	}
 	return keyValue
 }
 
