@@ -123,7 +123,6 @@ func (sw *Worker) Execute(request *rpc.Request, response *rpc.Response) {
 	sw.Model().Report.CountDataIn(request.PacketSize)
 
 	return
-	// sw.request.ResponseChannel <- *sw.response
 }
 
 func (sw *Worker) RegisterService(services ...Service) {
