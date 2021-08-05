@@ -1,9 +1,9 @@
 package file
 
 import (
-	"git.ronaksoft.com/nested/server/cmd/server-gateway/gateway_file/convert"
 	"git.ronaksoft.com/nested/server/nested"
 	"git.ronaksoft.com/nested/server/pkg/log"
+	"git.ronaksoft.com/nested/server/pkg/rpc/file/convert"
 	"go.uber.org/zap"
 	"gopkg.in/fzerorubigd/onion.v3"
 )

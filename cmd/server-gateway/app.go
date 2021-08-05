@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"git.ronaksoft.com/nested/server/cmd/server-gateway/gateway_file"
 	"git.ronaksoft.com/nested/server/nested"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
@@ -26,6 +25,7 @@ import (
 	"git.ronaksoft.com/nested/server/pkg/rpc/api/session"
 	"git.ronaksoft.com/nested/server/pkg/rpc/api/system"
 	"git.ronaksoft.com/nested/server/pkg/rpc/api/task"
+	"git.ronaksoft.com/nested/server/pkg/rpc/file"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"github.com/iris-contrib/middleware/cors"
 	"github.com/kataras/iris"
