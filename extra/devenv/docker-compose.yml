@@ -3,35 +3,23 @@ services:
 
   cyrus:
     restart: always
-    image: registry.ronaksoft.com/nested/server-gateway:4.0
-    container_name: nested-server-edge
+    image: registry.ronaksoft.com/nested/server:1.0
+    container_name: nested-server
     ports:
       - "6061:6060"
       - "80:8080"
     environment:
-      - NST_INSTANCE_ID=20180800010
-      - NST_BUNDLE_ID=CYRUS-001
+      - NST_INSTANCE_ID=TEST_INSTANCE
       - NST_MONGO_DSN=mongodb://mongodb:27001/nested
       - NST_REDIS_DSN=cache:637
       - NST_DEBUG_LEVEL=-1
       - NST_RUN_MODE=DEVELOPMENT
+      - NST_DOMAINS=nested.local
+      - NST_SENDER_DOMAIN=nested.local
     networks:
       test-nested:
         aliases:
           - "test-edge-01"
-
-  web:
-    restart: always
-    image: registry.ronaksoft.com/nested/legacy/web-app:v4.10.25
-    container_name: nested-web
-    environment:
-      - NST_XERXES_URL=https://xerxes.nested.me:80
-        - NST_HTTP_CYRUS_URL=http://cyrus
-        - NST_WS_CYRUS_URL=ws://cyrus
-        - NST_UPLOAD_SIZE_LIMIT=104857600
-        - NST_DOMAIN=nested.me
-        - SHOW_FOOTER=true
-        - DEFAULT_LOCALE=fa
 
 networks:
   test-nested:

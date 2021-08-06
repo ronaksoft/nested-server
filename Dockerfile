@@ -4,6 +4,7 @@ MAINTAINER Ehsan N. Moosa
 # Update and install packages required for Nested server
 RUN apt update
 RUN apt -y install ffmpeg imagemagick poppler-utils postfix sasl2-bin opendkim opendkim-tools
+RUN apt -y install telnet
 
 # Create Mailer Account
 RUN groupadd --gid 237400 nested-mail

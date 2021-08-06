@@ -15,17 +15,17 @@ type RecipientGroup struct {
 	Bcc []string
 }
 
-// Retrieve all (to, cc, bcc) recipients
+// GetAll Retrieve all (to, cc, bcc) recipients
 func (r *RecipientGroup) GetAll() []string {
 	return append(append(r.To, r.Cc...), r.Bcc...)
 }
 
-// Retrieve all non-blind (to, cc) recipients
+// GetAllNonBlind Retrieve all non-blind (to, cc) recipients
 func (r *RecipientGroup) GetAllNonBlind() []string {
 	return append(r.To, r.Cc...)
 }
 
-// Retrieve direct (to) recipients located under specific domain
+// GetToByDomain Retrieve direct (to) recipients located under specific domain
 func (r *RecipientGroup) GetToByDomain(domain string) []string {
 	recipients := r.To
 
@@ -39,7 +39,7 @@ func (r *RecipientGroup) GetToByDomain(domain string) []string {
 	return myRecipients
 }
 
-// Retrieve carbon-copy (cc) recipients located under specific domain
+// GetCcByDomain Retrieve carbon-copy (cc) recipients located under specific domain
 func (r *RecipientGroup) GetCcByDomain(domain string) []string {
 	recipients := r.Cc
 
@@ -53,7 +53,7 @@ func (r *RecipientGroup) GetCcByDomain(domain string) []string {
 	return myRecipients
 }
 
-// Retrieve blind-carbon-copy (bcc) recipients located under specific domain
+// GetBccByDomain Retrieve blind-carbon-copy (bcc) recipients located under specific domain
 func (r *RecipientGroup) GetBccByDomain(domain string) []string {
 	recipients := r.Bcc
 
@@ -67,7 +67,7 @@ func (r *RecipientGroup) GetBccByDomain(domain string) []string {
 	return myRecipients
 }
 
-// Retrieve all (to, cc, bcc) recipients located under specific domain
+// GetAllByDomain Retrieve all (to, cc, bcc) recipients located under specific domain
 func (r *RecipientGroup) GetAllByDomain(domain string) []string {
 	recipients := r.GetAll()
 
@@ -81,7 +81,7 @@ func (r *RecipientGroup) GetAllByDomain(domain string) []string {
 	return myRecipients
 }
 
-// Retrieve all non-blind (to, cc) recipients located under specific domain
+// GetAllNonBlindByDomain Retrieve all non-blind (to, cc) recipients located under specific domain
 func (r *RecipientGroup) GetAllNonBlindByDomain(domain string) []string {
 	recipients := r.GetAllNonBlind()
 
