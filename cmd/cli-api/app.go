@@ -7,6 +7,7 @@ import (
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
 	"git.ronaksoft.com/nested/server/pkg/mail/lmtp"
+	mailmap "git.ronaksoft.com/nested/server/pkg/mail/map"
 	"git.ronaksoft.com/nested/server/pkg/pusher"
 	"git.ronaksoft.com/nested/server/pkg/rpc"
 	"git.ronaksoft.com/nested/server/pkg/rpc/api"
@@ -53,6 +54,7 @@ type APP struct {
 	file      *file.Server
 	api       *api.Server
 	mailStore *smtp.Server
+	mailMap   *mailmap.Server
 }
 
 func NewAPP() *APP {
@@ -151,6 +153,9 @@ func NewAPP() *APP {
 	// Initialize Mail Store (LMTP)
 	app.mailStore = lmtp.New(config.GetString(config.MailStoreSock))
 
+	// Initialize Mail Map (TCP)
+	app.mailMap = mailmap.New(app.model)
+
 	// Root Handlers (Deprecated)
 	app.iris.Get("/", app.httpOnConnection)
 	app.iris.Post("/", app.httpOnConnection)
@@ -190,6 +195,10 @@ func (gw *APP) Run() {
 		if err != nil {
 			panic(err)
 		}
+	}()
+
+	go func() {
+		gw.mailMap.Run()
 	}()
 
 	// Run Server

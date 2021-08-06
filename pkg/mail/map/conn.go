@@ -1,20 +1,23 @@
-package main
+package mailmap
 
 import (
 	"encoding/csv"
 	"fmt"
 	"git.ronaksoft.com/nested/server/nested"
-	"git.ronaksoft.com/nested/server/pkg/config"
 	"git.ronaksoft.com/nested/server/pkg/log"
 	"go.uber.org/zap"
 	"net"
 	"net/mail"
-	"os"
 	"strings"
 )
 
 /*
-	MailMap provides postfix the virtual mailbox map. It listens on a port (i.e. Default 237401)
+   Creation Time: 2021 - Aug - 06
+   Created by:  (ehsan)
+   Maintainers:
+      1.  Ehsan N. Moosa (E2)
+   Auditor: Ehsan N. Moosa (E2)
+   Copyright Ronak Software Group 2020
 */
 
 // Requests
@@ -30,40 +33,7 @@ const (
 	ResSuccess     = "200"
 )
 
-var (
-	_Nested *nested.Manager
-)
-
-func main() {
-	// Set Log Level
-	log.SetLevel(log.Level(config.GetInt(config.LogLevel)))
-
-	listener, err := net.Listen("tcp", ":23741")
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-
-	// Initialize Nested Model
-	_Nested, err = nested.NewManager(
-		config.GetString(config.InstanceID),
-		config.GetString(config.MongoDSN),
-		config.GetString(config.RedisDSN),
-		config.GetInt(config.LogLevel),
-	)
-	if err != nil {
-		os.Exit(1)
-	}
-
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			continue
-		}
-		go handleConn(conn)
-	}
-}
-
-func handleConn(conn net.Conn) {
+func (s *Server) handleConn(conn net.Conn) {
 	defer func() {
 		_ = conn.Close()
 	}()
@@ -90,14 +60,14 @@ func handleConn(conn net.Conn) {
 	log.Info("MailMap:: Request Received", zap.Strings("Records", record))
 	switch cmd {
 	case ReqGet:
-		Get(conn, strings.ToLower(email.Address))
+		s.Get(conn, strings.ToLower(email.Address))
 	case ReqPut:
 	default:
 		_, _ = fmt.Fprintln(conn, fmt.Sprintf("%s COMMAND READ ERROR", ResError))
 	}
 }
 
-func Get(conn net.Conn, email string) {
+func (s *Server) Get(conn net.Conn, email string) {
 	emailParts := strings.Split(email, "@")
 	if len(emailParts) != 2 {
 		fmt.Fprintln(conn, fmt.Sprintf("%s COMMAND READ ERROR", ResError))
@@ -105,7 +75,7 @@ func Get(conn net.Conn, email string) {
 	}
 	placeID := emailParts[0]
 
-	place := _Nested.Place.GetByID(placeID, nil)
+	place := s.model.Place.GetByID(placeID, nil)
 	if place == nil || place.Privacy.Receptive != nested.PlaceReceptiveExternal {
 		_, _ = fmt.Fprintln(conn, fmt.Sprintf("%s Unavailable", ResUnavailable))
 		return
