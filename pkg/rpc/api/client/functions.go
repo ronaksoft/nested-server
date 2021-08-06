@@ -27,7 +27,7 @@ type PlaceOrder map[string]int
 // @Command:	client/get_server_details
 func (s *ClientService) getServerDetails(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	r := tools.M{
-		"cyrus_id":         config.GetString("BUNDLE_ID"),
+		"cyrus_id":         config.GetString(config.BundleID),
 		"server_timestamp": nested.Timestamp(),
 	}
 	response.OkWithData(r)

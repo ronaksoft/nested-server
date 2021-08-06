@@ -28,6 +28,7 @@ const (
 	SmtpHost           = "SMTP_HOST"
 	SmtpPort           = "SMTP_PORT"
 	InstanceID         = "INSTANCE_ID"
+	WebAppBaseURL      = "WEBAPP_BASE_URL"
 )
 
 var (

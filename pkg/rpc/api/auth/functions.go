@@ -44,9 +44,9 @@ func (s *AuthService) getPhoneVerificationCode(requester *nested.Account, reques
 	verification := s.Worker().Model().Verification.CreateByPhone(phone)
 
 	adp := NewADP(
-		config.GetString("ADP_USERNAME"),
-		config.GetString("ADP_PASSWORD"),
-		config.GetString("ADP_MESSAGE_URL"),
+		config.GetString(config.ADPUsername),
+		config.GetString(config.ADPPassword),
+		config.GetString(config.ADPMessageUrl),
 	)
 	adp.SendSms(verification.Phone, "Nested verification code is: "+verification.ShortCode)
 	response.OkWithData(tools.M{
