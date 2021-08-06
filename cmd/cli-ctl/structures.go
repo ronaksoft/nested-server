@@ -16,12 +16,6 @@ type SSLCertificate struct {
 	Certificate         []byte   `bson:"cert" json:"cert"`
 }
 
-type ArsacesConfig struct {
-	Host        string `yaml:"Conn"`
-	Port        string `yaml:"Port"`
-	PortExposed bool   `yaml:"PortExposed"`
-}
-
 type CyrusConfig struct {
 	BundleID       string `yaml:"BundleID"`
 	Host           string `yaml:"Conn"`
@@ -81,7 +75,6 @@ type Config struct {
 	RedisCacheDSN      string          `yaml:"RedisCacheDSN"`
 	ExternalJobUrl     string          `yaml:"ExternalJobUrl"`
 	CyrusFileSystemKey string          `yaml:"CyrusFileSystemKey"`
-	Arsaces            ArsacesConfig   `yaml:"Arsaces"`
 	Cyrus              CyrusConfig     `yaml:"Cyrus"`
 	Web                WebappConfig    `yaml:"Web"`
 	Mongo              MongoConfig     `yaml:"Mongo"`

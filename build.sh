@@ -9,11 +9,8 @@ mkdir -p $buildDir
 ## Build CLI_API
 execName=cli-api
 env GOOS=linux GOARCH=amd64 go build -o $buildDir/$execName ./cmd/$execName
-## Build CLI_ADMIN
-execName=cli-admin
-env GOOS=linux GOARCH=amd64 go build -o $buildDir/$execName ./cmd/$execName
-## Build CLI_CTL
-execName=cli-ctl
+## Build CLI_MAIL_MAP
+execName=cli-mail-map
 env GOOS=linux GOARCH=amd64 go build -o $buildDir/$execName ./cmd/$execName
 
 

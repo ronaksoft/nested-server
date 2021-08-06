@@ -29,6 +29,7 @@ const (
 	SmtpPort           = "SMTP_PORT"
 	InstanceID         = "INSTANCE_ID"
 	WebAppBaseURL      = "WEBAPP_BASE_URL"
+	NestedDir          = "NESTED_DIR"
 )
 
 var (
@@ -38,12 +39,11 @@ var (
 func init() {
 	dl := onion.NewDefaultLayer()
 
+	_ = dl.SetDefault(NestedDir, "/ronak/nested")
 	_ = dl.SetDefault(Domains, "nested.me") // comma separated
 	_ = dl.SetDefault(SenderDomain, "nested.me")
 	_ = dl.SetDefault(BundleID, "CYRUS.001")
 	_ = dl.SetDefault(BindAddress, "0.0.0.0:8080")
-
-	// InstanceID
 	_ = dl.SetDefault(InstanceID, "")
 
 	// Security

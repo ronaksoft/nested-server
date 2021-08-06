@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"gopkg.in/fzerorubigd/onion.v3"
-	"gopkg.in/fzerorubigd/onion.v3/extraenv"
 )
 
 var (
@@ -29,9 +28,6 @@ var RootCmd = &cobra.Command{
 }
 
 func init() {
-	// read config
-	_Config = readConfig()
-
 	// prepare default paths
 	pathYMLsDir = fmt.Sprintf("%s/yamls", _Config.GetString("NESTED_DIR"))
 	pathTemplatesDir = fmt.Sprintf("%s/templates", _Config.GetString("NESTED_DIR"))
@@ -40,15 +36,4 @@ func init() {
 
 	// prepare Root flags
 	RootCmd.PersistentFlags().String("config", pathConfigFile, "Config file")
-}
-
-func readConfig() *onion.Onion {
-	dl := onion.NewDefaultLayer()
-	dl.SetDefault("NESTED_DIR", "/ronak/nested")
-
-	cfg := onion.New()
-	cfg.AddLayer(dl)
-
-	cfg.AddLazyLayer(extraenv.NewExtraEnvLayer(""))
-	return cfg
 }

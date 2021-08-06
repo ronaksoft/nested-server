@@ -12,6 +12,7 @@ var CFCmd = &cobra.Command{
 	Use:   "cf",
 	Short: "Cloudflare APIs",
 }
+
 var CFCreateARecordCmd = &cobra.Command{
 	Use: "createARecord",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -33,6 +34,7 @@ var CFCreateARecordCmd = &cobra.Command{
 		}
 	},
 }
+
 var CFCreateMXRecordCmd = &cobra.Command{
 	Use: "createMXRecord",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -53,6 +55,7 @@ var CFCreateMXRecordCmd = &cobra.Command{
 		}
 	},
 }
+
 var CFCreateDKIMRecordCmd = &cobra.Command{
 	Use: "createDKIMRecord",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -75,6 +78,7 @@ var CFCreateDKIMRecordCmd = &cobra.Command{
 		}
 	},
 }
+
 var CFCreateNestedRecordCmd = &cobra.Command{
 	Use: "createNestedRecord",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -101,6 +105,7 @@ var CFCreateNestedRecordCmd = &cobra.Command{
 		}
 	},
 }
+
 var CFListDnsRecordsCmd = &cobra.Command{
 	Use: "listNestedRecords",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -126,6 +131,7 @@ var CFListDnsRecordsCmd = &cobra.Command{
 		}
 	},
 }
+
 var CFRemoveNestedRecordCmd = &cobra.Command{
 	Use: "removeNestedRecord",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -137,6 +143,7 @@ var CFRemoveNestedRecordCmd = &cobra.Command{
 		}
 	},
 }
+
 var CFInstallNestedCmd = &cobra.Command{
 	Use: "installNested",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -191,6 +198,7 @@ var CFInstallNestedCmd = &cobra.Command{
 
 	},
 }
+
 var CFUninstallNestedCmd = &cobra.Command{
 	Use: "uninstallNested",
 	Run: func(cmd *cobra.Command, args []string) {
