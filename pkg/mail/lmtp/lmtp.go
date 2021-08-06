@@ -6,6 +6,7 @@ import (
 	"go.uber.org/zap"
 	"io"
 	"io/ioutil"
+	"os"
 	"time"
 )
 
@@ -18,17 +19,42 @@ import (
    Copyright Ronak Software Group 2020
 */
 
-type Backend struct {
-	addr string
+type Server struct {
+	s *smtp.Server
 }
 
-func New(addr string) *smtp.Server {
+func New(addr string) *Server {
 	ss := smtp.NewServer(&Backend{})
 	ss.Addr = addr
 	ss.LMTP = true
 	ss.ReadTimeout = time.Second * 30
 	ss.WriteTimeout = time.Second * 30
-	return ss
+	return &Server{
+		s: ss,
+	}
+}
+
+func (s *Server) Run() {
+	go func() {
+		err := s.s.ListenAndServe()
+		if err != nil {
+			return
+		}
+	}()
+	time.Sleep(time.Second)
+	_ = os.Chmod(s.s.Addr, os.ModePerm)
+}
+
+func (s *Server) Close() {
+	_ = s.s.Close()
+}
+
+func (s *Server) Addr() string {
+	return s.s.Addr
+}
+
+type Backend struct {
+	addr string
 }
 
 func (s *Backend) Login(state *smtp.ConnectionState, username, password string) (smtp.Session, error) {

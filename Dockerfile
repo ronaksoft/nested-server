@@ -17,7 +17,6 @@ RUN postconf -e mydestination=localhost
 RUN postconf -e virtual_mailbox_maps=tcp:localhost:23741
 RUN postconf -e virtual_uid_maps=static:237400
 RUN postconf -e virtual_gid_maps=static:237400
-RUN postconf -e virtual_transport=lmtp:unix:/ronak/nested-mail.sock
 RUN postconf -e message_size_limit=50000000
 RUN postconf -e smtp_tls_security_level=may
 

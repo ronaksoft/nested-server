@@ -30,13 +30,13 @@ import (
 	"git.ronaksoft.com/nested/server/pkg/rpc/api/task"
 	"git.ronaksoft.com/nested/server/pkg/rpc/file"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
-	"github.com/emersion/go-smtp"
 	"github.com/iris-contrib/middleware/cors"
 	"github.com/kataras/iris"
 	"github.com/kataras/iris/websocket"
 	"go.uber.org/zap"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -53,7 +53,7 @@ type APP struct {
 	model     *nested.Manager
 	file      *file.Server
 	api       *api.Server
-	mailStore *smtp.Server
+	mailStore *lmtp.Server
 	mailMap   *mailmap.Server
 }
 
@@ -151,7 +151,7 @@ func NewAPP() *APP {
 	app.file = file.NewServer(app.model)
 
 	// Initialize Mail Store (LMTP)
-	app.mailStore = lmtp.New(config.GetString(config.MailStoreSock))
+	app.mailStore = lmtp.New(filepath.Join(config.GetString(config.PostfixCHRoot), config.GetString(config.MailStoreSock)))
 
 	// Initialize Mail Map (TCP)
 	app.mailMap = mailmap.New(app.model)
@@ -190,13 +190,10 @@ func NewAPP() *APP {
 // Run
 // This is a blocking function which will run the Iris server
 func (gw *APP) Run() {
-	go func() {
-		err := gw.mailStore.ListenAndServe()
-		if err != nil {
-			panic(err)
-		}
-	}()
+	log.Info("MailStore Server started", zap.String("Unix", gw.mailStore.Addr()))
+	gw.mailStore.Run()
 
+	log.Info("MailMap Server started", zap.String("TCP", gw.mailMap.Addr()))
 	go func() {
 		gw.mailMap.Run()
 	}()
@@ -218,7 +215,7 @@ func (gw *APP) Run() {
 
 // Shutdown clean up services before exiting
 func (gw *APP) Shutdown() {
-	_ = gw.mailStore.Close()
+	gw.mailStore.Close()
 	gw.model.Shutdown()
 }
 

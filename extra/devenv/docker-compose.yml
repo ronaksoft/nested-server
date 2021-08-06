@@ -16,6 +16,7 @@ services:
       - NST_RUN_MODE=DEVELOPMENT
       - NST_DOMAINS=nested.local
       - NST_SENDER_DOMAIN=nested.local
+      - NST_MAIL_STORE_SOCK=private/nested-mail
     networks:
       - test-nested
 

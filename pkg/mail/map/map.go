@@ -17,16 +17,22 @@ import (
 
 type Server struct {
 	model *nested.Manager
+	addr  string
 }
 
 func New(model *nested.Manager) *Server {
 	return &Server{
 		model: model,
+		addr:  "127.0.0.1:23741",
 	}
 }
 
+func (s *Server) Addr() string {
+	return s.addr
+}
+
 func (s *Server) Run() {
-	listener, err := net.Listen("tcp", "127.0.0.1:23741")
+	listener, err := net.Listen("tcp", s.addr)
 	if err != nil {
 		fmt.Println(err.Error())
 	}

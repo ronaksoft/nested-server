@@ -30,6 +30,7 @@ const (
 	InstanceID         = "INSTANCE_ID"
 	WebAppBaseURL      = "WEBAPP_BASE_URL"
 	NestedDir          = "NESTED_DIR"
+	PostfixCHRoot      = "POSTFIX_CHROOT"
 	MailStoreSock      = "MAIL_STORE_SOCK"
 )
 
@@ -39,7 +40,8 @@ var (
 
 func init() {
 	dl := onion.NewDefaultLayer()
-	_ = dl.SetDefault(MailStoreSock, "/ronak/nested-mail.sock")
+	_ = dl.SetDefault(PostfixCHRoot, "/var/spool/postfix")
+	_ = dl.SetDefault(MailStoreSock, "private/nested-mail")
 
 	_ = dl.SetDefault(NestedDir, "/ronak/nested")
 	_ = dl.SetDefault(Domains, "nested.me") // comma separated
