@@ -2,6 +2,7 @@ package nestedServicePost
 
 import (
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/config"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/rpc"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
@@ -257,7 +258,7 @@ func (s *PostService) createPost(requester *nested.Account, request *rpc.Request
 	mEmails := make(map[string]bool)
 	for _, v := range targets {
 		if idx := strings.Index(v, "@"); idx != -1 {
-			domains := strings.Split(s.Worker().Config().GetString("DOMAINS"), ",")
+			domains := strings.Split(config.GetString(config.Domains), ",")
 			isInternal := false
 			for _, domain := range domains {
 				if strings.HasSuffix(strings.ToLower(v), fmt.Sprintf("@%s", domain)) {

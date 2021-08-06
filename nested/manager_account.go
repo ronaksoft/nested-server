@@ -90,7 +90,7 @@ type AccountMail struct {
 
 type AccountManager struct{}
 
-func NewAccountManager() *AccountManager { return new(AccountManager) }
+func newAccountManager() *AccountManager { return new(AccountManager) }
 
 func (am *AccountManager) readFromCache(accountID string) *Account {
 	account := new(Account)

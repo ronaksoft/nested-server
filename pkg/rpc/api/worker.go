@@ -11,7 +11,6 @@ import (
 
 	"git.ronaksoft.com/nested/server/nested"
 	"github.com/globalsign/mgo/bson"
-	"gopkg.in/fzerorubigd/onion.v3"
 )
 
 /*
@@ -134,10 +133,6 @@ func (sw *Worker) RegisterService(services ...Service) {
 
 func (sw *Worker) Argument() *ArgumentHandler {
 	return sw.argument
-}
-
-func (sw *Worker) Config() *onion.Onion {
-	return sw.server.config
 }
 
 func (sw *Worker) GetService(prefix string) Service {

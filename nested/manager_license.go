@@ -28,9 +28,11 @@ type LicenseManager struct {
 	license *License
 }
 
-func NewLicenceManager() *LicenseManager {
-	lm := new(LicenseManager)
-	lm.license = new(License)
+func newLicenceManager() *LicenseManager {
+	lm := &LicenseManager{
+		license: &License{},
+	}
+	log.Info("Loading License", zap.Bool("Success", lm.Load()))
 	return lm
 }
 

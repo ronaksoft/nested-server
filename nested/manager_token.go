@@ -41,7 +41,7 @@ type AppToken struct {
 
 type TokenManager struct{}
 
-func NewTokenManager() *TokenManager {
+func newTokenManager() *TokenManager {
 	return new(TokenManager)
 }
 

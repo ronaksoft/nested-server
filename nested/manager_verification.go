@@ -37,7 +37,7 @@ type VerificationCounter struct {
 }
 type VerificationManager struct{}
 
-func NewVerificationManager() *VerificationManager {
+func newVerificationManager() *VerificationManager {
 	return new(VerificationManager)
 }
 

@@ -3,6 +3,7 @@ package nestedServiceAuth
 import (
 	"bytes"
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/config"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/rpc"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
@@ -43,9 +44,9 @@ func (s *AuthService) getPhoneVerificationCode(requester *nested.Account, reques
 	verification := s.Worker().Model().Verification.CreateByPhone(phone)
 
 	adp := NewADP(
-		s.Worker().Config().GetString("ADP_USERNAME"),
-		s.Worker().Config().GetString("ADP_PASSWORD"),
-		s.Worker().Config().GetString("ADP_MESSAGE_URL"),
+		config.GetString("ADP_USERNAME"),
+		config.GetString("ADP_PASSWORD"),
+		config.GetString("ADP_MESSAGE_URL"),
 	)
 	adp.SendSms(verification.Phone, "Nested verification code is: "+verification.ShortCode)
 	response.OkWithData(tools.M{
@@ -77,7 +78,7 @@ func (s *AuthService) getEmailVerificationCode(requester *nested.Account, reques
 
 	response.OkWithData(tools.M{
 		"vid": verification.ID,
-		//"email": fmt.Sprintf("%s******%s", string(phone[:3]), string(phone[len(phone) - 2:])),
+		// "email": fmt.Sprintf("%s******%s", string(phone[:3]), string(phone[len(phone) - 2:])),
 	})
 	return
 }
@@ -130,9 +131,9 @@ func (s *AuthService) sendCodeByText(requester *nested.Account, request *rpc.Req
 
 	if strings.HasPrefix(verification.Phone, "98") {
 		adp := NewADP(
-			s.Worker().Config().GetString("ADP_USERNAME"),
-			s.Worker().Config().GetString("ADP_PASSWORD"),
-			s.Worker().Config().GetString("ADP_MESSAGE_URL"),
+			config.GetString(config.ADPUsername),
+			config.GetString(config.ADPPassword),
+			config.GetString(config.ADPMessageUrl),
 		)
 		adp.SendSms(verification.Phone, "Nested verification code is: "+verification.ShortCode)
 	}
@@ -159,7 +160,7 @@ func (s *AuthService) recoverPassword(requester *nested.Account, request *rpc.Re
 		}
 	}
 	if v, ok := request.Data["new_pass"].(string); ok {
-		//FIXME:: check password meet requirements
+		// FIXME:: check password meet requirements
 		newPass = v
 	} else {
 		response.Error(global.ErrInvalid, []string{"new_pass"})
@@ -411,7 +412,7 @@ func (s *AuthService) registerUserAccount(requester *nested.Account, request *rp
 				log.Println("place.IsGrandPlace()")
 				continue
 			}
-			//if !place.HasKeyholderLimit() {
+			// if !place.HasKeyholderLimit() {
 			s.Worker().Model().Place.AddKeyHolder(place.ID, uid)
 
 			// Enables notification by default

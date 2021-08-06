@@ -11,7 +11,7 @@ import (
 
 type PostActivityManager struct{}
 
-func NewPostActivityManager() *PostActivityManager {
+func newPostActivityManager() *PostActivityManager {
 	return new(PostActivityManager)
 }
 

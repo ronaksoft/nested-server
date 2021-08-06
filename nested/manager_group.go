@@ -13,7 +13,7 @@ const (
 
 type GroupManager struct{}
 
-func NewGroupManager() *GroupManager {
+func newGroupManager() *GroupManager {
 	return new(GroupManager)
 }
 

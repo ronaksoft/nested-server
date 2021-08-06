@@ -75,12 +75,55 @@ type Manager struct {
 }
 
 func NewManager(instanceID, mongoDSN, redisDSN string, logLevel int) (*Manager, error) {
+	err := initMongoDB(mongoDSN, instanceID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = initCache(redisDSN)
+	if err != nil {
+		return nil, err
+	}
+
+	_Manager = &Manager{
+		Account:       newAccountManager(),
+		App:           newAppManager(),
+		Contact:       newContactManager(),
+		File:          newFileManager(),
+		Group:         newGroupManager(),
+		Hook:          newHookManager(),
+		Label:         newLabelManager(),
+		License:       newLicenceManager(),
+		Notification:  newNotificationManager(),
+		Phone:         newPhoneManager(),
+		Place:         newPlaceManager(),
+		PlaceActivity: newPlaceActivityManager(),
+		Post:          newPostManager(),
+		PostActivity:  newPostActivityManager(),
+		Report:        newReportManager(),
+		Search:        newSearchManager(),
+		Session:       newSessionManager(),
+		Store:         newStoreManager(),
+		System:        newSystemManager(),
+		Task:          newTaskManager(),
+		TaskActivity:  newTaskActivityManager(),
+		TimeBucket:    newTimeBucketManager(),
+		Token:         newTokenManager(),
+		Verification:  newVerificationManager(),
+	}
+
+	// Set Log Level
+	log.SetLevel(zapcore.Level(logLevel))
+
+	return _Manager, nil
+}
+func initMongoDB(mongoDSN, instanceID string) error {
 	// Initial MongoDB
 	tlsConfig := new(tls.Config)
 	tlsConfig.InsecureSkipVerify = true
 	if dialInfo, err := mgo.ParseURL(mongoDSN); err != nil {
-		log.Warn("Got error", zap.Error(err))
-		return nil, err
+		log.Warn("Got error on parsing MongoDB DSN", zap.Error(err))
+		return err
 	} else {
 		dialInfo.Timeout = 5 * time.Second
 		dialInfo.DialServer = func(addr *mgo.ServerAddr) (net.Conn, error) {
@@ -91,10 +134,10 @@ func NewManager(instanceID, mongoDSN, redisDSN string, logLevel int) (*Manager, 
 			}
 		}
 		if mongoSession, err := mgo.DialWithInfo(dialInfo); err != nil {
-			log.Warn("Got error", zap.Error(err))
+			log.Warn("Got error on dialing TLS to MongoDB", zap.Error(err))
 			if mongoSession, err = mgo.Dial(mongoDSN); err != nil {
-				log.Warn(err.Error(), zap.String("DSN", mongoDSN))
-				return nil, err
+				log.Warn("Got error on dialing plain to MongoDB", zap.Error(err), zap.String("DSN", mongoDSN))
+				return err
 			} else {
 				log.Info("MongoDB Connected")
 				_MongoSession = mongoSession
@@ -110,51 +153,17 @@ func NewManager(instanceID, mongoDSN, redisDSN string, logLevel int) (*Manager, 
 	global.StoreName = fmt.Sprintf("nested_store-%s", instanceID)
 	_MongoDB = _MongoSession.DB(global.DbName)
 	_MongoStore = _MongoSession.DB(global.StoreName).GridFS("fs")
-
+	return nil
+}
+func initCache(redisDSN string) error {
 	// Initialize Cache Redis
 	if c, err := cache.New(redisDSN); err != nil {
 		log.Warn("Redis Pool Connection Error", zap.Error(err))
-		return nil, err
+		return err
 	} else {
 		_Cache = c
 	}
-
-	_Manager = &Manager{
-		Account:       NewAccountManager(),
-		App:           NewAppManager(),
-		Contact:       NewContactManager(),
-		File:          NewFileManager(),
-		Group:         NewGroupManager(),
-		Hook:          NewHookManager(),
-		Label:         NewLabelManager(),
-		License:       NewLicenceManager(),
-		Notification:  NewNotificationManager(),
-		Phone:         NewPhoneManager(),
-		Place:         NewPlaceManager(),
-		PlaceActivity: NewPlaceActivityManager(),
-		Post:          NewPostManager(),
-		PostActivity:  NewPostActivityManager(),
-		Report:        NewReportManager(),
-		Search:        NewSearchManager(),
-		Session:       NewSessionManager(),
-		Store:         NewStoreManager(),
-		System:        NewSystemManager(),
-		Task:          NewTaskManager(),
-		TaskActivity:  NewTaskActivityManager(),
-		TimeBucket:    NewTimeBucketManager(),
-		Token:         NewTokenManager(),
-		Verification:  NewVerificationManager(),
-	}
-
-	// Load the system constants
-	_Manager.System.LoadIntegerConstants()
-	_Manager.System.LoadStringConstants()
-	_Manager.License.Load()
-
-	// Set Log Level
-	log.SetLevel(zapcore.Level(logLevel))
-
-	return _Manager, nil
+	return nil
 }
 
 func (m *Manager) RefreshDbConnection() {

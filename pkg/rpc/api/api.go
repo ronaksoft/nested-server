@@ -2,11 +2,9 @@ package api
 
 import (
 	"git.ronaksoft.com/nested/server/nested"
-	"git.ronaksoft.com/nested/server/pkg/log"
+	"git.ronaksoft.com/nested/server/pkg/config"
 	"git.ronaksoft.com/nested/server/pkg/pusher"
 	"git.ronaksoft.com/nested/server/pkg/rpc"
-	"go.uber.org/zap"
-	"gopkg.in/fzerorubigd/onion.v3"
 	"sync"
 )
 
@@ -40,7 +38,6 @@ type Service interface {
 type Server struct {
 	m      sync.Mutex
 	wg     *sync.WaitGroup
-	config *onion.Onion
 	model  *nested.Manager
 	pusher *pusher.Pusher
 
@@ -58,32 +55,21 @@ type Flags struct {
 	LicenseSlowMode    int
 }
 
-func NewServer(config *onion.Onion, wg *sync.WaitGroup, pushFunc pusher.PushFunc) *Server {
+func NewServer(wg *sync.WaitGroup, model *nested.Manager, pushFunc pusher.PushFunc) *Server {
 	s := new(Server)
-	s.config = config
 	s.wg = wg
+	s.model = model
 
-	// Instantiate Nested Model Manager
-	if model, err := nested.NewManager(
-		config.GetString("INSTANCE_ID"),
-		config.GetString("MONGO_DSN"),
-		config.GetString("REDIS_DSN"),
-		config.GetInt("DEBUG_LEVEL"),
-	); err != nil {
-		log.Fatal("we got error on initializing nested.Manager", zap.Error(err))
-	} else {
-		s.model = model
-	}
 	// Run Model Checkups
 	nested.StartupCheckups()
 
 	// Register Bundle
-	s.model.RegisterBundle(config.GetString("BUNDLE_ID"))
+	s.model.RegisterBundle(config.GetString(config.BundleID))
 
 	// Initialize Pusher
 	s.pusher = pusher.New(
 		s.model,
-		config.GetString("BUNDLE_ID"), config.GetString("SENDER_DOMAIN"),
+		config.GetString(config.BundleID), config.GetString(config.SenderDomain),
 		pushFunc,
 	)
 	// Instantiate Worker

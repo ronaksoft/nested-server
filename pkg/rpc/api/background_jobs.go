@@ -1,11 +1,10 @@
 package api
 
 import (
+	"git.ronaksoft.com/nested/server/nested"
+	"git.ronaksoft.com/nested/server/pkg/config"
 	"sync"
 	"time"
-
-	"git.ronaksoft.com/nested/server/nested"
-	"gopkg.in/fzerorubigd/onion.v3"
 )
 
 // BackgroundJob are runnable structures handler background workers
@@ -44,10 +43,6 @@ func (bw *BackgroundJob) Shutdown() {
 	bw.chShutdown <- true
 }
 
-func (bw *BackgroundJob) Config() *onion.Onion {
-	return bw.server.config
-}
-
 func (bw *BackgroundJob) Model() *nested.Manager {
 	return bw.server.model
 }
@@ -55,7 +50,7 @@ func (bw *BackgroundJob) Model() *nested.Manager {
 // JobReporter
 // Report De-bouncer Routine
 func JobReporter(b *BackgroundJob) {
-	bundleID := b.Config().GetString("BUNDLE_ID")
+	bundleID := config.GetString(config.BundleID)
 
 	// Flush counters into DB
 	b.Model().Report.FlushToDB()

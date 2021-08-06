@@ -48,7 +48,7 @@ type TaskAccess map[int]bool
 
 type TaskManager struct{}
 
-func NewTaskManager() *TaskManager {
+func newTaskManager() *TaskManager {
 	return new(TaskManager)
 }
 

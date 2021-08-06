@@ -26,7 +26,7 @@ const (
 
 type SearchManager struct{}
 
-func NewSearchManager() *SearchManager {
+func newSearchManager() *SearchManager {
 	return new(SearchManager)
 }
 

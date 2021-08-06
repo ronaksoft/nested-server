@@ -17,7 +17,7 @@ type Contacts struct {
 
 type ContactManager struct{}
 
-func NewContactManager() *ContactManager { return new(ContactManager) }
+func newContactManager() *ContactManager { return new(ContactManager) }
 
 func (cm *ContactManager) AddContact(accountID, contactID string) bool {
 	dbSession := _MongoSession.Clone()

@@ -1,6 +1,7 @@
 package nestedServiceSession
 
 import (
+	"git.ronaksoft.com/nested/server/pkg/config"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/rpc"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
@@ -103,7 +104,7 @@ func (s *SessionService) recall(requester *nested.Account, request *rpc.Request,
 
 	// Register websocket in NTFY
 	if len(request.WebsocketID) > 0 {
-		s.Worker().Pusher().RegisterWebsocket(session.AccountID, did, s.Worker().Config().GetString("BUNDLE_ID"), request.WebsocketID)
+		s.Worker().Pusher().RegisterWebsocket(session.AccountID, did, config.GetString("BUNDLE_ID"), request.WebsocketID)
 	}
 
 	account := s.Worker().Model().Account.GetByID(
@@ -229,7 +230,7 @@ func (s *SessionService) register(requester *nested.Account, request *rpc.Reques
 
 	// Register websocket in Pusher
 	if len(request.WebsocketID) > 0 {
-		_ = s.Worker().Pusher().RegisterWebsocket(uid, did, s.Worker().Config().GetString("BUNDLE_ID"), request.WebsocketID)
+		_ = s.Worker().Pusher().RegisterWebsocket(uid, did, config.GetString("BUNDLE_ID"), request.WebsocketID)
 	}
 
 	r := tools.M{

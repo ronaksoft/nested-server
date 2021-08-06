@@ -20,7 +20,7 @@ const (
 
 type PlaceActivityManager struct{}
 
-func NewPlaceActivityManager() *PlaceActivityManager {
+func newPlaceActivityManager() *PlaceActivityManager {
 	return new(PlaceActivityManager)
 }
 

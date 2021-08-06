@@ -1,20 +1,21 @@
 #!/usr/bin/env bash
 
 ## Define Variables
-GATEWAY_VER=4.0
-NTFY_VER=3.0
-MTA_VER=2.0
+NESTED_VER=1.0
+
+buildDir=./cmd/_build
+mkdir -p $buildDir
+
+## Build CLI_API
+execName=cli-api
+env GOOS=linux GOARCH=amd64 go build -o $buildDir/$execName ./cmd/$execName
+## Build CLI_ADMIN
+execName=cli-admin
+env GOOS=linux GOARCH=amd64 go build -o $buildDir/$execName ./cmd/$execName
+## Build CLI_CTL
+execName=cli-ctl
+env GOOS=linux GOARCH=amd64 go build -o $buildDir/$execName ./cmd/$execName
 
 
-## Build Server Gateway
-cd ./cmd/server-gateway/ || exit
-env GOOS=linux GOARCH=amd64 go build -o ./_build/server-gateway ./
-docker build --pull -t registry.ronaksoft.com/nested/server-gateway:${GATEWAY_VER} .
-cd ../..
+docker build --pull -t registry.ronaksoft.com/nested/server:${NESTED_VER} .
 
-## Build Server MTA
-cd ./cmd/server-mta/ || exit
-env GOOS=linux GOARCH=amd64 go build -o ./_build/mail-store-cli ./mail-store-cli/
-env GOOS=linux GOARCH=amd64 go build -o ./_build/mail-map ./mail-map/
-docker build --pull -t registry.ronaksoft.com/nested/server-mta:${MTA_VER} .
-cd ../..

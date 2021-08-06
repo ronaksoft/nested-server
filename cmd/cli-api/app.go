@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"git.ronaksoft.com/nested/server/nested"
+	"git.ronaksoft.com/nested/server/pkg/config"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
 	"git.ronaksoft.com/nested/server/pkg/pusher"
@@ -66,10 +67,10 @@ func NewAPP() *APP {
 
 	// Initialize Nested Model
 	if model, err := nested.NewManager(
-		_Config.GetString("INSTANCE_ID"),
-		_Config.GetString("MONGO_DSN"),
-		_Config.GetString("REDIS_DSN"),
-		_Config.GetInt("DEBUG_LEVEL"),
+		config.GetString(config.InstanceID),
+		config.GetString(config.MongoDSN),
+		config.GetString(config.RedisDSN),
+		config.GetInt(config.DebugLevel),
 	); err != nil {
 		os.Exit(1)
 	} else {
@@ -104,7 +105,7 @@ func NewAPP() *APP {
 	app.wg = new(sync.WaitGroup)
 
 	// Initialize Server Server
-	app.api = api.NewServer(_Config, app.wg,
+	app.api = api.NewServer(app.wg, app.model,
 		func(push pusher.WebsocketPush) bool {
 			if app.ws.IsConnected(push.WebsocketID) {
 				conn := app.ws.GetConnection(push.WebsocketID)
@@ -142,7 +143,7 @@ func NewAPP() *APP {
 	app.api.RegisterBackgroundJob(api.NewBackgroundJob(app.api, 1*time.Hour, api.JobLicenseManager))
 
 	// Initialize File Server
-	app.file = file.NewServer(_Config, app.model)
+	app.file = file.NewServer(app.model)
 
 	// Root Handlers (Deprecated)
 	app.iris.Get("/", app.httpOnConnection)
@@ -179,15 +180,15 @@ func NewAPP() *APP {
 // This is a blocking function which will run the Iris server
 func (gw *APP) Run() {
 	// Run Server
-	if _Config.GetString("TLS_KEY_FILE") != "" && _Config.GetString("TLS_CERT_FILE") != "" {
+	if config.GetString(config.TlsKeyFile) != "" && config.GetString(config.TlsCertFile) != "" {
 		_ = gw.iris.Run(iris.TLS(
-			_Config.GetString("BIND_ADDRESS"),
-			_Config.GetString("TLS_CERT_FILE"),
-			_Config.GetString("TLS_KEY_FILE"),
+			config.GetString(config.BindAddress),
+			config.GetString(config.TlsCertFile),
+			config.GetString(config.TlsKeyFile),
 		))
 	} else {
 		_ = gw.iris.Run(iris.Addr(
-			_Config.GetString("BIND_ADDRESS"),
+			config.GetString(config.BindAddress),
 		))
 	}
 }
@@ -302,6 +303,6 @@ func (gw *APP) websocketOnConnection(c websocket.Connection) {
 
 	// websocket Disconnect Handler
 	c.OnDisconnect(func() {
-		_ = gw.api.Worker().Pusher().UnregisterWebsocket(c.ID(), _BundleID)
+		_ = gw.api.Worker().Pusher().UnregisterWebsocket(c.ID(), config.GetString(config.BundleID))
 	})
 }

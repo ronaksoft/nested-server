@@ -23,7 +23,7 @@ type AccountContact struct {
 	Emails    []string `json:"emails" bson:"emails"`
 }
 
-func NewPhoneManager() *PhoneManager {
+func newPhoneManager() *PhoneManager {
 	return new(PhoneManager)
 }
 

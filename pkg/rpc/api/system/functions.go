@@ -2,6 +2,7 @@ package nestedServiceSystem
 
 import (
 	"encoding/json"
+	"git.ronaksoft.com/nested/server/pkg/config"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/rpc"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
@@ -122,7 +123,7 @@ func (s *SystemService) getSystemStats(requester *nested.Account, request *rpc.R
 // @Input:	mon_access_token				string		*
 func (s *SystemService) monitorActivity(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	if v, ok := request.Data["mon_access_token"].(string); ok {
-		if v != s.Worker().Config().GetString("MONITOR_ACCESS_TOKEN") {
+		if v != config.GetString(config.MonitorAccessToken) {
 			response.Error(global.ErrInvalid, []string{"mon_access_token"})
 			return
 		}

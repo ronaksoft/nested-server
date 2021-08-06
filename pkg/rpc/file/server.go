@@ -2,10 +2,10 @@ package file
 
 import (
 	"git.ronaksoft.com/nested/server/nested"
+	"git.ronaksoft.com/nested/server/pkg/config"
 	"git.ronaksoft.com/nested/server/pkg/log"
 	"git.ronaksoft.com/nested/server/pkg/rpc/file/convert"
 	"go.uber.org/zap"
-	"gopkg.in/fzerorubigd/onion.v3"
 )
 
 var (
@@ -18,9 +18,9 @@ type Server struct {
 	compressed bool
 }
 
-func NewServer(config *onion.Onion, model *nested.Manager) *Server {
+func NewServer(model *nested.Manager) *Server {
 	s := new(Server)
-	s.apiKey = config.GetString("FILE_SYSTEM_KEY")
+	s.apiKey = config.GetString(config.FileSystemKey)
 	s.compressed = false
 	_NestedModel = model
 

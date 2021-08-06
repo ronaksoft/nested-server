@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
+	"git.ronaksoft.com/nested/server/pkg/config"
 	"html/template"
 	"log"
 	"path"
@@ -41,7 +42,6 @@ type AttachmentTemplate struct {
 	HumanSize    string
 }
 
-
 // Mailer
 // "Url":          fmt.Sprintf("%s/file/download/%s", ew.jh.conf.GetString("CYRUS_URL"), attachment.Token),
 // "Group":        fileGroup(*attachment.FileInfo),
@@ -65,12 +65,12 @@ type Mailer struct {
 func NewMailer(worker *Worker) *Mailer {
 	m := new(Mailer)
 	m.worker = worker
-	m.domain = worker.Config().GetString("SENDER_DOMAIN")
-	m.defaultSMTPHost = worker.Config().GetString("SMTP_HOST")
-	m.defaultSMTPPort = worker.Config().GetInt("SMTP_PORT")
-	m.defaultSMTPUser = worker.Config().GetString("SMTP_USER")
-	m.defaultSMTPPass = worker.Config().GetString("SMTP_PASS")
-	m.cyrusUrl = worker.Config().GetString("CYRUS_URL")
+	m.domain = config.GetString(config.SenderDomain)
+	m.defaultSMTPHost = config.GetString(config.SmtpHost)
+	m.defaultSMTPPort = config.GetInt(config.SmtpPort)
+	m.defaultSMTPUser = config.GetString(config.SmtpUser)
+	m.defaultSMTPPass = config.GetString(config.SmtpPass)
+	m.cyrusUrl = config.GetString(config.CyrusURL)
 	m.chRequests = make(chan MailRequest, 1000)
 	if tpl, err := template.ParseFiles("/ronak/templates/post_email.html"); err != nil {
 		log.Println(err.Error())

@@ -29,8 +29,11 @@ type MessageTemplate struct {
 	Body    string `bson:"body" json:"body"`
 }
 
-func NewSystemManager() *SystemManager {
-	return new(SystemManager)
+func newSystemManager() *SystemManager {
+	m := &SystemManager{}
+	m.LoadIntegerConstants()
+	m.LoadStringConstants()
+	return m
 }
 
 // GetIntegerConstants returns a map with integer values

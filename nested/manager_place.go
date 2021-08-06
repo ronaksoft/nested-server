@@ -77,7 +77,7 @@ type DefaultPlace struct {
 
 type PlaceManager struct{}
 
-func NewPlaceManager() *PlaceManager {
+func newPlaceManager() *PlaceManager {
 	return new(PlaceManager)
 }
 

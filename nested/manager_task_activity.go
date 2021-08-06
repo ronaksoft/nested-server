@@ -11,7 +11,7 @@ import (
 
 type TaskActivityManager struct{}
 
-func NewTaskActivityManager() *TaskActivityManager {
+func newTaskActivityManager() *TaskActivityManager {
 	return new(TaskActivityManager)
 }
 

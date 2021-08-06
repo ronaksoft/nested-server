@@ -86,7 +86,7 @@ type NotificationData struct {
 
 type NotificationManager struct{}
 
-func NewNotificationManager() *NotificationManager {
+func newNotificationManager() *NotificationManager {
 	return new(NotificationManager)
 }
 

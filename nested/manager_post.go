@@ -38,7 +38,7 @@ const (
 
 type PostManager struct{}
 
-func NewPostManager() *PostManager {
+func newPostManager() *PostManager {
 	return new(PostManager)
 }
 

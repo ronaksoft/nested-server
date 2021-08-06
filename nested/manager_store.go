@@ -95,7 +95,7 @@ type StoreManager struct {
 	m *Manager
 }
 
-func NewStoreManager() *StoreManager {
+func newStoreManager() *StoreManager {
 	return new(StoreManager)
 }
 

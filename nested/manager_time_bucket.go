@@ -19,7 +19,7 @@ type TimeBucket struct {
 
 type TimeBucketManager struct{}
 
-func NewTimeBucketManager() *TimeBucketManager {
+func newTimeBucketManager() *TimeBucketManager {
 	return new(TimeBucketManager)
 }
 

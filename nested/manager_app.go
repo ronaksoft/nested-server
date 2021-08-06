@@ -30,7 +30,7 @@ var (
 	}
 )
 
-func NewAppManager() *AppManager {
+func newAppManager() *AppManager {
 	return new(AppManager)
 }
 

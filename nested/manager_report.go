@@ -54,7 +54,7 @@ type TimeSeriesSingleValueHourly struct {
 
 type ReportManager struct{}
 
-func NewReportManager() *ReportManager {
+func newReportManager() *ReportManager {
 	return new(ReportManager)
 }
 

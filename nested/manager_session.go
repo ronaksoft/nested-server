@@ -35,7 +35,7 @@ type SessionSecurity struct {
 
 type SessionManager struct{}
 
-func NewSessionManager() *SessionManager {
+func newSessionManager() *SessionManager {
 	return new(SessionManager)
 }
 

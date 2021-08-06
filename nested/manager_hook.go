@@ -111,7 +111,7 @@ type HookManager struct {
 	chEvents chan HookEvent
 }
 
-func NewHookManager() *HookManager {
+func newHookManager() *HookManager {
 	hm := new(HookManager)
 	hm.chLimit = make(chan bool, 10)
 	hm.chEvents = make(chan HookEvent, 1000)

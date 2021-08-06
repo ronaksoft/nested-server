@@ -66,7 +66,7 @@ type LabelRequest struct {
 	LastUpdate  uint64        `bson:"last_update" json:"last_update"`
 }
 
-func NewLabelManager() *LabelManager {
+func newLabelManager() *LabelManager {
 	return new(LabelManager)
 }
 

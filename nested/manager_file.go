@@ -70,7 +70,7 @@ type DownloadToken struct {
 
 type FileManager struct{}
 
-func NewFileManager() *FileManager {
+func newFileManager() *FileManager {
 	return new(FileManager)
 }
 

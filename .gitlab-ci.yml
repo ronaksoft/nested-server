@@ -4,20 +4,18 @@ stages:
   - deploy
 
 variables:
-  GATEWAY_VER:  "5.0"
-  MTA_VER: "2.0"
+  NESTED_VER: "1.0"
   DOCKER_TLS_CERTDIR: ""
 
 build:compile:
   stage: build
   image: golang:latest
   script:
-    - mkdir -p $CI_PROJECT_DIR/cmd/server-gateway/_build
-    - mkdir -p $CI_PROJECT_DIR/cmd/server-mta/_build
-    - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -mod=vendor -a -ldflags '-s' -o $CI_PROJECT_DIR/cmd/server-gateway/_build/server-gateway ./cmd/server-gateway
-    - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -mod=vendor -a -ldflags '-s' -o $CI_PROJECT_DIR/cmd/server-mta/_build/mail-store-cli ./cmd/server-mta/mail-store-cli
-    - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -mod=vendor -a -ldflags '-s' -o $CI_PROJECT_DIR/cmd/server-mta/_build/mail-map ./cmd/server-mta/mail-map
-    - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -mod=vendor -a -ldflags '-s' -o $CI_PROJECT_DIR/cmd/server-mta/_build/mail-instances ./cmd/server-mta/mail-instances
+    - mkdir -p $CI_PROJECT_DIR/cmd/_build
+    - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -mod=vendor -a -ldflags '-s' -o $CI_PROJECT_DIR/cmd/_build/cli-api ./cmd/cli-api
+    - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -mod=vendor -a -ldflags '-s' -o $CI_PROJECT_DIR/cmd/_build/cli-admin ./cmd/cli-admin
+    - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -mod=vendor -a -ldflags '-s' -o $CI_PROJECT_DIR/cmd/_build/cli-ctl ./cmd/cli-ctl
+
   artifacts:
     untracked: true
     expire_in: 1 hour
@@ -32,34 +30,20 @@ deploy:production:
     - docker:dind
   when: manual
   script:
-    - cd ./cmd
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
-    - cd ./server-gateway
-    - docker build --pull -t $CI_REGISTRY_IMAGE/gateway:$GATEWAY_VER .
-    - docker push $CI_REGISTRY_IMAGE/gateway:$GATEWAY_VER
-    - cd ../server-mta
-    - docker build --pull -t $CI_REGISTRY_IMAGE/mta:$MTA_VER .
-    - docker push $CI_REGISTRY_IMAGE/mta:$MTA_VER
+    - docker build --pull -t $CI_REGISTRY_IMAGE/server:$NESTED_VER .
+    - docker push $CI_REGISTRY_IMAGE/server:$NESTED_VER
   dependencies:
     - build:compile
 
 deploy:staging:
   stage: deploy
-  only:
-    - bugFix
-    - feature/multiDomain
   image: docker:latest
   services:
     - docker:dind
   script:
-    - cd ./cmd
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
-    - cd ./server-gateway
-    - docker build --pull -t $CI_REGISTRY_IMAGE/gateway:MULTI_DOMAIN .
-    - docker push $CI_REGISTRY_IMAGE/gateway:MULTI_DOMAIN
-    - cd ../server-mta
-    - docker build --pull -t $CI_REGISTRY_IMAGE/mta:MULTI_DOMAIN .
-    - docker push $CI_REGISTRY_IMAGE/mta:MULTI_DOMAIN
+    - docker build --pull -t $CI_REGISTRY_IMAGE/server:dev .
+    - docker push $CI_REGISTRY_IMAGE/server:dev
   dependencies:
     - build:compile
-
