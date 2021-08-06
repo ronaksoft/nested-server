@@ -11,11 +11,12 @@ require (
 	github.com/aymerick/raymond v2.0.2+incompatible // indirect
 	github.com/cloudflare/cloudflare-go v0.8.5
 	github.com/docker/distribution v2.7.1+incompatible // indirect
-	github.com/docker/docker v1.13.1
+	github.com/docker/docker v1.13.1 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dustin/go-humanize v1.0.0
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 // indirect
+	github.com/emersion/go-smtp v0.15.0
 	github.com/fatih/structs v1.1.0
 	github.com/flosch/pongo2 v0.0.0-20200529170236-5abacdfa4915 // indirect
 	github.com/gavv/monotime v0.0.0-20190418164738-30dba4353424 // indirect
@@ -43,7 +44,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/nats-io/gnatsd v1.4.1 // indirect
-	github.com/nats-io/go-nats v1.7.2
+	github.com/nats-io/go-nats v1.7.2 // indirect
 	github.com/nats-io/nkeys v0.0.2 // indirect
 	github.com/nats-io/nuid v1.0.0 // indirect
 	github.com/onsi/ginkgo v1.14.0 // indirect
@@ -70,7 +71,7 @@ require (
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/fzerorubigd/onion.v3 v3.0.0-20181013165022-7b9c1b5d62cd
 	gopkg.in/mail.v2 v2.3.1
-	gopkg.in/op/go-logging.v1 v1.0.0-20160211212156-b2cb9fa56473
+	gopkg.in/op/go-logging.v1 v1.0.0-20160211212156-b2cb9fa56473 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 	moul.io/http2curl v1.0.0 // indirect
 )

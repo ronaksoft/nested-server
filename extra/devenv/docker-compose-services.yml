@@ -30,9 +30,7 @@ services:
       - ./_hdd/mongo:/data/db:rw
       - ./mongo-config.yml:/ronak/config.yml
     networks:
-      test-nested:
-        aliases:
-          - docker
+      - test-nested
 
 networks:
   test-nested:

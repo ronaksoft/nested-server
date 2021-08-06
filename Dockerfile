@@ -11,11 +11,16 @@ RUN groupadd --gid 237400 nested-mail
 RUN useradd --uid 237400 -g nested-mail nested-mail
 
 # Prepare Postfix Configs
-RUN postconf -e virtual_mailbox_maps=tcp:localhost:237401
+RUN postconf -e mydomain=localhost
+RUN postconf -e myhostname=NESTED
+RUN postconf -e mydestination=localhost
+RUN postconf -e virtual_mailbox_maps=tcp:localhost:23741
 RUN postconf -e virtual_uid_maps=static:237400
 RUN postconf -e virtual_gid_maps=static:237400
-RUN postconf -e virtual_transport=nested_transport
+RUN postconf -e virtual_transport=lmtp:unix:/ronak/nested-mail.sock
 RUN postconf -e message_size_limit=50000000
+RUN postconf -e smtp_tls_security_level=may
+
 
 # Import executable binaries
 ADD ./cmd/_build/ /ronak/bin
@@ -29,4 +34,4 @@ RUN chmod +x /ronak/entryPoint.sh
 
 WORKDIR /ronak
 
-ENTRYPOINT ["/bin/bash", "/ronak/entryPoint"]
+ENTRYPOINT ["/bin/bash", "/ronak/entryPoint.sh"]

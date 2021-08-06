@@ -15,6 +15,10 @@ import (
    Copyright Ronak Software Group 2020
 */
 
+type (
+	Level = zapcore.Level
+)
+
 var (
 	_Log      *zap.Logger
 	_LogLevel zap.AtomicLevel
@@ -37,7 +41,7 @@ func init() {
 	}
 }
 
-func SetLevel(lvl zapcore.Level) {
+func SetLevel(lvl Level) {
 	_LogLevel.SetLevel(lvl)
 }
 

@@ -35,7 +35,10 @@ var (
 )
 
 func main() {
-	listener, err := net.Listen("tcp", ":237401")
+	// Set Log Level
+	log.SetLevel(log.Level(config.GetInt(config.LogLevel)))
+
+	listener, err := net.Listen("tcp", ":23741")
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -45,7 +48,7 @@ func main() {
 		config.GetString(config.InstanceID),
 		config.GetString(config.MongoDSN),
 		config.GetString(config.RedisDSN),
-		config.GetInt(config.DebugLevel),
+		config.GetInt(config.LogLevel),
 	)
 	if err != nil {
 		os.Exit(1)
@@ -84,7 +87,7 @@ func handleConn(conn net.Conn) {
 		return
 	}
 
-	log.Debug("MailMap:: Request Received", zap.Strings("Records", record))
+	log.Info("MailMap:: Request Received", zap.Strings("Records", record))
 	switch cmd {
 	case ReqGet:
 		Get(conn, strings.ToLower(email.Address))
@@ -101,7 +104,6 @@ func Get(conn net.Conn, email string) {
 		return
 	}
 	placeID := emailParts[0]
-
 
 	place := _Nested.Place.GetByID(placeID, nil)
 	if place == nil || place.Privacy.Receptive != nested.PlaceReceptiveExternal {

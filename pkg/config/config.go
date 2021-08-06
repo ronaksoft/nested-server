@@ -17,7 +17,7 @@ const (
 	ConfMongoTls       = "MONGO_TLS"
 	MongoDSN           = "MONGO_DSN"
 	RedisDSN           = "REDIS_DSN"
-	DebugLevel         = "DEBUG_LEVEL"
+	LogLevel           = "LOG_LEVEL"
 	ADPMessageUrl      = "ADP_MESSAGE_URL"
 	ADPUsername        = "ADP_USERNAME"
 	ADPPassword        = "ADP_PASSWORD"
@@ -30,6 +30,7 @@ const (
 	InstanceID         = "INSTANCE_ID"
 	WebAppBaseURL      = "WEBAPP_BASE_URL"
 	NestedDir          = "NESTED_DIR"
+	MailStoreSock      = "MAIL_STORE_SOCK"
 )
 
 var (
@@ -38,6 +39,7 @@ var (
 
 func init() {
 	dl := onion.NewDefaultLayer()
+	_ = dl.SetDefault(MailStoreSock, "/ronak/nested-mail.sock")
 
 	_ = dl.SetDefault(NestedDir, "/ronak/nested")
 	_ = dl.SetDefault(Domains, "nested.me") // comma separated
@@ -59,7 +61,7 @@ func init() {
 	_ = dl.SetDefault(RedisDSN, "localhost:6379")
 
 	// Debugging
-	_ = dl.SetDefault(DebugLevel, 2)
+	_ = dl.SetDefault(LogLevel, 2)
 
 	// ADP Configs
 	_ = dl.SetDefault(ADPUsername, "ronak")

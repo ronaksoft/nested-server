@@ -1,8 +1,8 @@
 /ronak/bin/cli-mail-map &
-/ronak/bin/cli-api &
 
-postconf -e myhostname=${NST_MTA_HOSTNAME}
-postconf -e mydomain=${NST_MTA_DOMAIN}
+printenv
+postconf -e virtual_mailbox_domains=${NST_DOMAINS}
 service postfix start
 service postfix status
-/bin/sh
+
+/ronak/bin/cli-api

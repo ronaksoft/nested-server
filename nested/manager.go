@@ -10,7 +10,6 @@ import (
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"net"
 	"time"
 )
@@ -111,10 +110,6 @@ func NewManager(instanceID, mongoDSN, redisDSN string, logLevel int) (*Manager, 
 		Token:         newTokenManager(),
 		Verification:  newVerificationManager(),
 	}
-
-	// Set Log Level
-	log.SetLevel(zapcore.Level(logLevel))
-
 	return _Manager, nil
 }
 func initMongoDB(mongoDSN, instanceID string) error {

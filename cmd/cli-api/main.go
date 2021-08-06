@@ -1,7 +1,15 @@
 package main
 
+import (
+	"git.ronaksoft.com/nested/server/pkg/config"
+	"git.ronaksoft.com/nested/server/pkg/log"
+)
+
 func main() {
-	server := NewAPP()
-	server.Run()
-	server.Shutdown()
+	// Set Log Level
+	log.SetLevel(log.Level(config.GetInt(config.LogLevel)))
+
+	app := NewAPP()
+	app.Run()
+	app.Shutdown()
 }

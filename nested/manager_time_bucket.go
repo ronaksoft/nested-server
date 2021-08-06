@@ -40,7 +40,7 @@ func (bm *TimeBucketManager) GetBucketsBefore(timestamp uint64) []TimeBucket {
 	if err := db.C(global.CollectionTimeBuckets).Find(
 		bson.M{"_id": bson.M{"$lt": bucketID}},
 	).All(&buckets); err != nil {
-		log.Warn("Got error", zap.Error(err))
+		log.Warn("got error on GetBucketsBefore", zap.Error(err))
 	}
 	return buckets
 }

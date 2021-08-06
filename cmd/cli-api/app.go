@@ -6,6 +6,7 @@ import (
 	"git.ronaksoft.com/nested/server/pkg/config"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
+	"git.ronaksoft.com/nested/server/pkg/mail/lmtp"
 	"git.ronaksoft.com/nested/server/pkg/pusher"
 	"git.ronaksoft.com/nested/server/pkg/rpc"
 	"git.ronaksoft.com/nested/server/pkg/rpc/api"
@@ -28,6 +29,7 @@ import (
 	"git.ronaksoft.com/nested/server/pkg/rpc/api/task"
 	"git.ronaksoft.com/nested/server/pkg/rpc/file"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
+	"github.com/emersion/go-smtp"
 	"github.com/iris-contrib/middleware/cors"
 	"github.com/kataras/iris"
 	"github.com/kataras/iris/websocket"
@@ -44,12 +46,13 @@ var (
 )
 
 type APP struct {
-	wg    *sync.WaitGroup
-	ws    *websocket.Server
-	iris  *iris.Application
-	model *nested.Manager
-	file  *file.Server
-	api   *api.Server
+	wg        *sync.WaitGroup
+	ws        *websocket.Server
+	iris      *iris.Application
+	model     *nested.Manager
+	file      *file.Server
+	api       *api.Server
+	mailStore *smtp.Server
 }
 
 func NewAPP() *APP {
@@ -70,7 +73,7 @@ func NewAPP() *APP {
 		config.GetString(config.InstanceID),
 		config.GetString(config.MongoDSN),
 		config.GetString(config.RedisDSN),
-		config.GetInt(config.DebugLevel),
+		config.GetInt(config.LogLevel),
 	); err != nil {
 		os.Exit(1)
 	} else {
@@ -104,7 +107,7 @@ func NewAPP() *APP {
 
 	app.wg = new(sync.WaitGroup)
 
-	// Initialize Server Server
+	// Initialize API Server
 	app.api = api.NewServer(app.wg, app.model,
 		func(push pusher.WebsocketPush) bool {
 			if app.ws.IsConnected(push.WebsocketID) {
@@ -145,6 +148,9 @@ func NewAPP() *APP {
 	// Initialize File Server
 	app.file = file.NewServer(app.model)
 
+	// Initialize Mail Store (LMTP)
+	app.mailStore = lmtp.New(config.GetString(config.MailStoreSock))
+
 	// Root Handlers (Deprecated)
 	app.iris.Get("/", app.httpOnConnection)
 	app.iris.Post("/", app.httpOnConnection)
@@ -179,6 +185,13 @@ func NewAPP() *APP {
 // Run
 // This is a blocking function which will run the Iris server
 func (gw *APP) Run() {
+	go func() {
+		err := gw.mailStore.ListenAndServe()
+		if err != nil {
+			panic(err)
+		}
+	}()
+
 	// Run Server
 	if config.GetString(config.TlsKeyFile) != "" && config.GetString(config.TlsCertFile) != "" {
 		_ = gw.iris.Run(iris.TLS(
@@ -191,10 +204,12 @@ func (gw *APP) Run() {
 			config.GetString(config.BindAddress),
 		))
 	}
+
 }
 
 // Shutdown clean up services before exiting
 func (gw *APP) Shutdown() {
+	_ = gw.mailStore.Close()
 	gw.model.Shutdown()
 }
 

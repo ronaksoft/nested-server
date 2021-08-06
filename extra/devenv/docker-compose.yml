@@ -11,15 +11,14 @@ services:
     environment:
       - NST_INSTANCE_ID=TEST_INSTANCE
       - NST_MONGO_DSN=mongodb://mongodb:27001/nested
-      - NST_REDIS_DSN=cache:637
-      - NST_DEBUG_LEVEL=-1
+      - NST_REDIS_DSN=cache:6379
+      - NST_LOG_LEVEL=-1
       - NST_RUN_MODE=DEVELOPMENT
       - NST_DOMAINS=nested.local
       - NST_SENDER_DOMAIN=nested.local
     networks:
-      test-nested:
-        aliases:
-          - "test-edge-01"
+      - test-nested
+
 
 networks:
   test-nested:
