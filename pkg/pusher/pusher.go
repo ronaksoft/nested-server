@@ -1,15 +1,20 @@
 package pusher
 
 import (
+	"context"
 	"encoding/json"
+	firebase "firebase.google.com/go/v4"
+	"firebase.google.com/go/v4/messaging"
 	"fmt"
 	"git.ronaksoft.com/nested/server/nested"
+	"git.ronaksoft.com/nested/server/pkg/config"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
 	"git.ronaksoft.com/nested/server/pkg/session"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"github.com/globalsign/mgo/bson"
 	"go.uber.org/zap"
+	"google.golang.org/api/option"
 	"regexp"
 	"strconv"
 	"strings"
@@ -39,6 +44,7 @@ type Pusher struct {
 	dev      *session.DeviceManager
 	model    *nested.Manager
 	pushCB   func(push WebsocketPush) bool
+	fcm      *messaging.Client
 }
 
 func New(model *nested.Manager, bundleID, domain string, pushCB func(push WebsocketPush) bool) *Pusher {
@@ -54,6 +60,23 @@ func New(model *nested.Manager, bundleID, domain string, pushCB func(push Websoc
 	if p.pushCB == nil {
 		p.pushCB = func(push WebsocketPush) bool {
 			return true
+		}
+	}
+
+	// Initialize FCM Client
+	fcmCredPath := config.GetString(config.FirebaseCredPath)
+	if fcmCredPath != "" {
+		if c, err := firebase.NewApp(
+			context.Background(),
+			nil,
+			option.WithCredentialsFile("/ronak/certs/firebase-cred.json"),
+		); err != nil {
+			log.Fatal("could not create FCM app", zap.String("CredPath", fcmCredPath), zap.Error(err))
+		} else {
+			p.fcm, err = c.Messaging(context.Background())
+			if err != nil {
+				log.Fatal("could not create FCM messaging client", zap.Error(err))
+			}
 		}
 	}
 
@@ -327,16 +350,16 @@ func (p *Pusher) externalPush(targets []string, data map[string]string) {
 		zap.Any("Data", req.Data),
 	)
 
-	// for _, uid := range req.Targets {
-	// 	go func(uid string) {
-	// 		p.dev.IncrementBadge(uid)
-	// 		devices := p.dev.GetByAccountID(uid)
-	// 		for _, d := range devices {
-	// 			FCM(d, req)
-	// 		}
-	// 	}(uid)
-	//
-	// }
+	for _, uid := range req.Targets {
+		go func(uid string) {
+			p.dev.IncrementBadge(uid)
+			devices := p.dev.GetByAccountID(uid)
+			for _, d := range devices {
+				p.sendFCM(d, req)
+			}
+		}(uid)
+
+	}
 	return
 }
 

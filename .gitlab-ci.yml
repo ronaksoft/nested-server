@@ -39,6 +39,8 @@ deploy:production:
 deploy:staging:
   stage: deploy
   image: docker:latest
+  except:
+    - master
   services:
     - docker:dind
   script:

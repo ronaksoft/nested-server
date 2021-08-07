@@ -35,6 +35,7 @@ const (
 	MailStoreSock      = "MAIL_STORE_SOCK"
 	MailUploadBaseURL  = "MAIL_UPLOAD_BASE_URL"
 	MailerDaemon       = "MAILER_DAEMON"
+	FirebaseCredPath   = "FIREBASE_CRED_PATH"
 )
 
 var (

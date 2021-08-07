@@ -3,6 +3,7 @@ module git.ronaksoft.com/nested/server
 go 1.15
 
 require (
+	firebase.google.com/go/v4 v4.6.0
 	github.com/Joker/jade v1.0.0 // indirect
 	github.com/PuerkitoBio/goquery v1.5.0
 	github.com/Shopify/goreferrer v0.0.0-20181106222321-ec9c9a553398 // indirect
@@ -55,8 +56,7 @@ require (
 	github.com/yudai/pp v2.0.1+incompatible // indirect
 	go.uber.org/multierr v1.5.0 // indirect
 	go.uber.org/zap v1.9.1
-	golang.org/x/crypto v0.0.0-20190530122614-20be4c3c3ed5
-	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/fzerorubigd/onion.v3 v3.0.0-20181013165022-7b9c1b5d62cd
 	gopkg.in/mail.v2 v2.3.1

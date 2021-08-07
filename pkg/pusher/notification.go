@@ -1,7 +1,10 @@
 package pusher
 
 import (
+	"context"
+	"firebase.google.com/go/v4/messaging"
 	"git.ronaksoft.com/nested/server/nested"
+	"git.ronaksoft.com/nested/server/pkg/session"
 )
 
 /*
@@ -48,4 +51,39 @@ func init() {
 		nested.NotificationTypeTaskAddToEditors:     "Added to Task's Editors",
 	}
 
+}
+
+func (p *Pusher) sendFCM(d session.Device, req CMDPushExternal) {
+	if p.fcm == nil {
+		return
+	}
+
+	message := messaging.Message{
+		Data:  req.Data,
+		Token: d.Token,
+		Android: &messaging.AndroidConfig{
+			Priority: "high",
+			Data:     req.Data,
+		},
+		APNS: &messaging.APNSConfig{
+			Payload: &messaging.APNSPayload{
+				Aps: &messaging.Aps{
+					Alert: &messaging.ApsAlert{
+						Title: req.Data["title"],
+						Body:  req.Data["msg"],
+					},
+					Badge:      &d.Badge,
+					CustomData: make(map[string]interface{}),
+				},
+			},
+		},
+	}
+	for k, v := range req.Data {
+		message.APNS.Payload.Aps.CustomData[k] = v
+	}
+
+	ctx := context.Background()
+	if _, err := p.fcm.Send(ctx, &message); err != nil {
+		p.dev.Remove(d.ID)
+	}
 }
