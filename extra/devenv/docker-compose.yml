@@ -7,7 +7,7 @@ services:
     container_name: nested-server
     ports:
       - "6061:6060"
-      - "80:8080"
+      - "8080:8080"
     environment:
       - NST_INSTANCE_ID=TEST_INSTANCE
       - NST_MONGO_DSN=mongodb://mongodb:27001/nested
@@ -17,7 +17,7 @@ services:
       - NST_DOMAINS=nested.local
       - NST_SENDER_DOMAIN=nested.local
       - NST_MAIL_STORE_SOCK=private/nested-mail
-      - NST_FILE_SYSTEM_KEY=###SECUREKEY!!!
+      - NST_SYSTEM_API_KEY=###SECUREKEY!!!
       - NST_SMTP_USER=smtpUser
       - NST_SMTP_PASS=smtpPass
     volumes:
@@ -26,6 +26,21 @@ services:
     networks:
       - test-nested
 
+  webapp:
+    restart: always
+    image: registry.ronaksoft.com/nested/legacy/web-app:v4.10.25
+    container_name: nested-webapp
+    ports:
+      - "80:80"
+    networks:
+      - test-nested
+    environment:
+      - NST_HTTP_CYRUS_URL=http://localhost
+      - NST_WS_CYRUS_URL=ws://localhost
+      - NST_UPLOAD_SIZE_LIMIT=104857600
+      - NST_DOMAIN=nested.local
+      - SHOW_FOOTER=true
+      - DEFAULT_LOCALE=fa
 
 networks:
   test-nested:
