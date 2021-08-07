@@ -66,7 +66,6 @@ func (p *thumbGenerator) Process(r io.Reader) error {
 		filename,
 		p.Uploader,
 		nested.FileTypeThumbnail,
-		nil,
 		nested.MetaImage{
 			Width:  metaPreview.Width,
 			Height: metaPreview.Height,
@@ -145,7 +144,6 @@ func (p *previewGenerator) Process(r io.Reader) error {
 		filename,
 		p.Uploader,
 		nested.FileTypeThumbnail,
-		nil,
 		nested.MetaImage{
 			Width:  metaPreview.Width,
 			Height: metaPreview.Height,

@@ -251,22 +251,24 @@ func (fs *Server) UploadSystem(ctx iris.Context) {
 }
 
 func (fs *Server) UploadUser(ctx iris.Context) {
-	var session *nested.Session
-	var multipartReader *multipart.Reader
+	var (
+		session         *nested.Session
+		multipartReader *multipart.Reader
+	)
 	uploadType := strings.ToUpper(ctx.Params().Get("uploadType"))
 	sessionID := ctx.Params().Get("sessionID")
 	resp := new(rpc.Response)
 	if !bson.IsObjectIdHex(sessionID) {
 		ctx.StatusCode(http.StatusUnauthorized)
 		resp.Error(global.ErrAccess, []string{})
-		ctx.JSON(resp)
+		_, _ = ctx.JSON(resp)
 		return
 	} else {
 		session = _NestedModel.Session.GetByID(bson.ObjectIdHex(sessionID))
 		if session == nil {
 			ctx.StatusCode(http.StatusUnauthorized)
 			resp.Error(global.ErrAccess, []string{})
-			ctx.JSON(resp)
+			_, _ = ctx.JSON(resp)
 			return
 		}
 	}
@@ -442,10 +444,8 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 	if len(filename) == 0 {
 		filename = "BLOB-File"
 	}
-	extension := path.Ext(filename)
-	basename := filename[:len(filename)-len(extension)]
 
-	storedFileInfo := nested.GenerateFileInfo(filename, uploader, "", nil, nil)
+	storedFileInfo := nested.GenerateFileInfo(filename, uploader, "", nil)
 
 	// Setup Nested file info
 	fileInfo := nested.FileInfo{
@@ -459,15 +459,219 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 		MimeType:        nested.GetMimeTypeByFilename(filename),
 	}
 
-	// Save Pre-Processor
-	var savePreprocessor pipe
+	wgMetaData := &sync.WaitGroup{}
+	metaData := &nested.MetaData{
+		Thumbnails: make(nested.Thumbnails),
+	}
+	metaDataLock := &sync.Mutex{}
+	savePreprocessor, processList, err := createProcesses(
+		filename, uploadType, uploader, storedFileInfo, &fileInfo, wgMetaData,
+		metaData, metaDataLock,
+	)
+	if err != nil {
+		return nil, err
+	}
 
-	// File Process
-	var processList []Processor
-	metaData := new(nested.MetaData)
-	metaData.Thumbnails = make(nested.Thumbnails)
-	metaDataLock := new(sync.Mutex)
-	wgMetaData := new(sync.WaitGroup)
+	// Piped Reader/Writers
+	rs := make([]*io.PipeReader, len(processList)+1)
+	ws := make([]io.Writer, len(processList)+1)
+
+	// Wait groups
+	wgMain := sync.WaitGroup{}
+	wgProcess := sync.WaitGroup{}
+
+	// Failure indicator
+	chErr := make(chan error, 2)
+
+	for k := range rs {
+		if 0 == k && savePreprocessor != nil {
+			var ir *io.PipeReader
+			var iw *io.PipeWriter
+
+			ir, ws[k] = io.Pipe()
+			rs[k], iw = io.Pipe()
+
+			go func(w *io.PipeWriter, r *io.PipeReader) {
+				if n, err := savePreprocessor(w, r); err != nil {
+					log.Warn(err.Error())
+					_ = r.CloseWithError(err) // Occur error on multi-writer write
+					_ = w.CloseWithError(err) // Occur error on save read
+				} else if 0 == n {
+					log.Warn("Save Pre-Processor returned empty")
+					err := global.NewInvalidError([]string{"input"}, nil)
+					chErr <- err
+					_ = r.CloseWithError(err) // Occur error on multi-writer write
+					_ = w.CloseWithError(err) // Occur error on save read
+				} else {
+					_ = w.Close()
+				}
+			}(iw, ir)
+		} else {
+			rs[k], ws[k] = io.Pipe()
+		}
+	}
+
+	// Save File in Xerxes & Nested Database
+	wgMain.Add(1)
+	go func(r io.Reader) {
+		defer wgMain.Done()
+
+		if info := _NestedModel.Store.Save(r, storedFileInfo); info == nil {
+			err := errors.New("file insertion in storage database failed")
+			log.Warn(err.Error())
+			_ = r.(*io.PipeReader).CloseWithError(err)
+		} else {
+			fileInfo.Size = info.Size
+			if !_NestedModel.File.AddFile(fileInfo) {
+				err := errors.New("file submit fail")
+				log.Warn(err.Error())
+				_ = r.(*io.PipeReader).CloseWithError(err)
+			}
+		}
+	}(rs[0])
+
+	// Process File
+	for k, v := range processList {
+		wgProcess.Add(1)
+		go func(r io.Reader, process Processor) {
+			defer wgProcess.Done()
+
+			if err := process.Process(r); err != nil {
+				log.Warn("We got error on process file", zap.Error(err))
+			}
+
+			// Let's read the remaining
+			_, _ = io.Copy(ioutil.Discard, r)
+		}(rs[k+1], v)
+	}
+
+	// Meta Data Collector
+	wgProcess.Add(1)
+	go func() {
+		defer wgProcess.Done()
+
+		wgMetaData.Wait()
+		wgMain.Wait()
+
+		storedFileInfo.Metadata = *metaData
+		if storedFileInfo.Metadata.Meta != nil {
+			// Update Files Model
+			if err := _NestedModel.Store.SetMeta(storedFileInfo.ID, storedFileInfo.Metadata); err != nil {
+				log.Warn(err.Error())
+				// TODO: Retry
+			}
+
+			if nil != storedFileInfo.Metadata.Meta {
+				_NestedModel.File.SetMetadata(fileInfo.ID, storedFileInfo.Metadata.Meta) // TODO: Check the result
+			}
+
+			switch m := storedFileInfo.Metadata.Meta.(type) {
+			case nested.MetaImage:
+				fileInfo.Width = m.OriginalWidth
+				fileInfo.Height = m.OriginalHeight
+			case nested.MetaVideo:
+				fileInfo.Width = m.Width
+				fileInfo.Height = m.Height
+			case nested.MetaPdf:
+				fileInfo.Width = int64(m.Width)
+				fileInfo.Height = int64(m.Height)
+			case nested.MetaGif:
+				fileInfo.Width = int64(m.Width)
+				fileInfo.Height = int64(m.Height)
+			}
+
+			if _NestedModel.File.SetDimension(fileInfo.ID, fileInfo.Width, fileInfo.Height) != true {
+				log.Warn("file dimension update failed")
+				// TODO: Retry
+			}
+		}
+
+		if len(metaData.Thumbnails) > 0 {
+			// Update Files Model
+			if err := _NestedModel.Store.SetThumbnails(storedFileInfo.ID, metaData.Thumbnails); err != nil {
+				log.Warn(err.Error())
+				// TODO: Retry
+			}
+
+			fileInfo.Thumbnails = nested.Picture{
+				Original: nested.UniversalID(storedFileInfo.ID),
+			}
+
+			for k, v := range metaData.Thumbnails {
+				switch k {
+				case Thumbnail32:
+					fileInfo.Thumbnails.X32 = nested.UniversalID(v.ID)
+				case Thumbnail64:
+					fileInfo.Thumbnails.X64 = nested.UniversalID(v.ID)
+				case Thumbnail128:
+					fileInfo.Thumbnails.X128 = nested.UniversalID(v.ID)
+				case ThumbnailPreview:
+					fileInfo.Thumbnails.Preview = nested.UniversalID(v.ID)
+				}
+			}
+
+			// Update FileInfo Thumbnails in Nested DB
+			if _NestedModel.File.SetThumbnails(fileInfo.ID, fileInfo.Thumbnails) != true {
+				log.Warn("File thumbnail update failed for")
+				// TODO: Retry
+				return
+			}
+		}
+	}()
+
+	mw := io.MultiWriter(ws...)
+
+	// FIXME: Obey BW shaping
+	rateLimit := int64(10 * 1024 * 1024)
+	chTick := time.NewTicker(time.Second)
+	defer chTick.Stop()
+upload:
+	for {
+		select {
+		case <-chTick.C:
+			if n, err := io.CopyN(mw, p, rateLimit); 0 == n || err != nil {
+				switch err {
+				case io.EOF:
+				default:
+					log.Warn(err.Error())
+					select {
+					case chErr <- err:
+					default:
+					}
+				}
+				break upload
+			}
+		}
+	}
+
+	for _, w := range ws {
+		w.(*io.PipeWriter).Close()
+	}
+
+	wgMain.Wait()
+
+	// Block client connection if request is not early-responded until all thumbs are created
+	if !earlyResponse {
+		wgProcess.Wait()
+	}
+
+	select {
+	case err := <-chErr:
+		return nil, err
+	default:
+	}
+
+	return &fileInfo, nil
+}
+
+func createProcesses(
+	filename string, uploadType, uploader string, storedFileInfo nested.StoredFileInfo, fileInfo *nested.FileInfo,
+	wgMetaData *sync.WaitGroup, metaData *nested.MetaData, metaDataLock *sync.Mutex,
+) (savePreprocessor pipe, processList []Processor, err error) {
+	var (
+		extension = path.Ext(filename)
+		basename  = filename[:len(filename)-len(extension)]
+	)
 
 	switch uploadType {
 	case nested.UploadTypeFile:
@@ -551,12 +755,10 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 			})
 		}
 
-		wgMetaData.Add(len(processList))
-
 	case nested.UploadTypePlacePicture, nested.UploadTypeProfilePicture:
 		if nested.FileTypeImage != storedFileInfo.Metadata.Type {
 			log.Warn("Invalid file uploaded as place/profile picture")
-			return nil, global.NewInvalidError([]string{"mime_type"}, nil)
+			return nil, nil, global.NewInvalidError([]string{"mime_type"}, nil)
 
 		}
 
@@ -568,13 +770,10 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 			&thumbGenerator{MaxDimension: DefaultThumbnailSizes[Thumbnail64], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: Thumbnail64, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
 			&thumbGenerator{MaxDimension: DefaultThumbnailSizes[Thumbnail128], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: Thumbnail128, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
 		}
-
-		wgMetaData.Add(len(processList))
-
 	case nested.UploadTypeVideo:
 		if nested.FileTypeVideo != storedFileInfo.Metadata.Type {
 			log.Warn("Invalid file uploaded as Video")
-			return nil, global.NewInvalidError([]string{"mime_type"}, nil)
+			return nil, nil, global.NewInvalidError([]string{"mime_type"}, nil)
 
 		}
 
@@ -599,12 +798,10 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 			&thumbGenerator{MaxDimension: DefaultThumbnailSizes[Thumbnail128], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: Thumbnail128, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
 		}
 
-		wgMetaData.Add(len(processList))
-
 	case nested.UploadTypeAudio:
 		if nested.FileTypeAudio != storedFileInfo.Metadata.Type {
 			log.Warn("Invalid file uploaded as Audio")
-			return nil, global.NewInvalidError([]string{"mime_type"}, nil)
+			return nil, nil, global.NewInvalidError([]string{"mime_type"}, nil)
 		}
 
 		savePreprocessor = func(w io.Writer, r io.Reader) (int64, error) {
@@ -628,13 +825,10 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 			&thumbGenerator{MaxDimension: DefaultThumbnailSizes[Thumbnail128], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: Thumbnail128, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
 		}
 
-		wgMetaData.Add(len(processList))
-
 	case nested.UploadTypeVoice:
 		if nested.FileTypeAudio != storedFileInfo.Metadata.Type {
 			log.Warn("Invalid file uploaded as Voice")
-			return nil, global.NewInvalidError([]string{"mime_type"}, nil)
-
+			return nil, nil, global.NewInvalidError([]string{"mime_type"}, nil)
 		}
 
 		savePreprocessor = func(w io.Writer, r io.Reader) (int64, error) {
@@ -645,8 +839,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 			}
 		}
 
-		// TODO:: GenerateFileInfo does not support FileTypeVoice ?!?!?!
-		storedFileInfo = nested.GenerateFileInfo(filename, uploader, nested.FileTypeVoice, nil, nil)
+		storedFileInfo = nested.GenerateFileInfo(filename, uploader, nested.FileTypeVoice, nil)
 		storedFileInfo.Metadata.Type = nested.FileTypeVoice
 
 		fileInfo.ID = nested.UniversalID(storedFileInfo.ID)
@@ -664,8 +857,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 	case nested.UploadTypeImage:
 		if nested.FileTypeImage != storedFileInfo.Metadata.Type {
 			log.Warn("Invalid file uploaded as Image")
-			return nil, global.NewInvalidError([]string{"mime_type"}, nil)
-
+			return nil, nil, global.NewInvalidError([]string{"mime_type"}, nil)
 		}
 
 		savePreprocessor = func(w io.Writer, r io.Reader) (int64, error) {
@@ -695,8 +887,7 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 	case nested.UploadTypeGif:
 		if nested.FileTypeGif != storedFileInfo.Metadata.Type {
 			log.Warn("Invalid file uploaded as Gif")
-			return nil, global.NewInvalidError([]string{"mime_type"}, nil)
-
+			return nil, nil, global.NewInvalidError([]string{"mime_type"}, nil)
 		}
 
 		savePreprocessor = func(w io.Writer, r io.Reader) (int64, error) {
@@ -724,199 +915,5 @@ func uploadFile(p *multipart.Part, uploadType, uploader string, earlyResponse bo
 		wgMetaData.Add(len(processList))
 	}
 
-	// Piped Reader/Writers
-	rs := make([]*io.PipeReader, len(processList)+1)
-	ws := make([]io.Writer, len(processList)+1)
-
-	// Wait groups
-	wgMain := sync.WaitGroup{}
-	wgProcess := sync.WaitGroup{}
-
-	// Failure indicator
-	chErr := make(chan error, 2)
-
-	for k := range rs {
-		if 0 == k && savePreprocessor != nil {
-			var ir *io.PipeReader
-			var iw *io.PipeWriter
-
-			ir, ws[k] = io.Pipe()
-			rs[k], iw = io.Pipe()
-
-			go func(w *io.PipeWriter, r *io.PipeReader) {
-				if n, err := savePreprocessor(w, r); err != nil {
-					log.Warn(err.Error())
-					r.CloseWithError(err) // Occur error on multi-writer write
-					w.CloseWithError(err) // Occur error on save read
-				} else if 0 == n {
-					log.Warn("Save Pre-Processor returned empty")
-					err := global.NewInvalidError([]string{"input"}, nil)
-					chErr <- err
-					r.CloseWithError(err) // Occur error on multi-writer write
-					w.CloseWithError(err) // Occur error on save read
-				} else {
-					w.Close()
-				}
-			}(iw, ir)
-		} else {
-			rs[k], ws[k] = io.Pipe()
-		}
-	}
-
-	// Save File in Xerxes & Nested Database
-	wgMain.Add(1)
-	go func(r io.Reader) {
-		defer wgMain.Done()
-
-		if info := _NestedModel.Store.Save(r, storedFileInfo); info == nil {
-			err := errors.New("file insertion in storage database failed")
-			log.Warn(err.Error())
-			r.(*io.PipeReader).CloseWithError(err)
-		} else {
-			fileInfo.Size = int64(info.Size)
-			if !_NestedModel.File.AddFile(fileInfo) {
-				err := errors.New("file submit fail")
-				log.Warn(err.Error())
-				r.(*io.PipeReader).CloseWithError(err)
-			}
-		}
-	}(rs[0])
-
-	// Process File
-	for k, v := range processList {
-		wgProcess.Add(1)
-		go func(r io.Reader, process Processor) {
-			defer wgProcess.Done()
-
-			if err := process.Process(r); err != nil {
-				log.Warn("We got error on process file", zap.Error(err))
-			}
-
-			// Let's read the remaining
-			_, _ = io.Copy(ioutil.Discard, r)
-		}(rs[k+1], v)
-	}
-
-	// Meta Data Collector
-	wgProcess.Add(1)
-	go func() {
-		defer wgProcess.Done()
-
-		wgMetaData.Wait()
-		wgMain.Wait()
-
-		storedFileInfo.Metadata = *metaData
-		if storedFileInfo.Metadata.Meta != nil {
-			// Update Files Model
-			if err := _NestedModel.Store.SetMeta(storedFileInfo.ID, storedFileInfo.Metadata); err != nil {
-				log.Warn(err.Error())
-				// TODO: Retry
-			}
-
-			if nil != storedFileInfo.Metadata.Meta {
-				_NestedModel.File.SetMetadata(fileInfo.ID, storedFileInfo.Metadata.Meta) // TODO: Check the result
-			}
-
-			switch m := storedFileInfo.Metadata.Meta.(type) {
-			case nested.MetaImage:
-				fileInfo.Width = m.OriginalWidth
-				fileInfo.Height = m.OriginalHeight
-			case nested.MetaVideo:
-				fileInfo.Width = m.Width
-				fileInfo.Height = m.Height
-			case nested.MetaPdf:
-				fileInfo.Width = int64(m.Width)
-				fileInfo.Height = int64(m.Height)
-			case nested.MetaGif:
-				fileInfo.Width = int64(m.Width)
-				fileInfo.Height = int64(m.Height)
-			}
-
-			if _NestedModel.File.SetDimension(fileInfo.ID, fileInfo.Width, fileInfo.Height) != true {
-				log.Warn("file dimension update failed")
-				// TODO: Retry
-			}
-		}
-
-		if len(metaData.Thumbnails) > 0 {
-			// Update Files Model
-			if err := _NestedModel.Store.SetThumbnails(storedFileInfo.ID, metaData.Thumbnails); err != nil {
-				log.Warn(err.Error())
-				// TODO: Retry
-			}
-
-			fileInfo.Thumbnails = nested.Picture{
-				Original: nested.UniversalID(storedFileInfo.ID),
-			}
-
-			for k, v := range metaData.Thumbnails {
-				switch k {
-				case Thumbnail32:
-					fileInfo.Thumbnails.X32 = nested.UniversalID(v.ID)
-
-				case Thumbnail64:
-					fileInfo.Thumbnails.X64 = nested.UniversalID(v.ID)
-
-				case Thumbnail128:
-					fileInfo.Thumbnails.X128 = nested.UniversalID(v.ID)
-
-				case ThumbnailPreview:
-					fileInfo.Thumbnails.Preview = nested.UniversalID(v.ID)
-				}
-			}
-
-			// Update FileInfo Thumbnails in Nested DB
-			if _NestedModel.File.SetThumbnails(fileInfo.ID, fileInfo.Thumbnails) != true {
-				log.Warn("File thumbnail update failed for")
-				// TODO: Retry
-				return
-
-			}
-		}
-	}()
-
-	mw := io.MultiWriter(ws...)
-
-	// FIXME: Obey BW shaping
-	rateLimit := int64(10 * 1024 * 1024)
-	chTick := time.NewTicker(time.Second)
-	defer chTick.Stop()
-upload:
-	for {
-		select {
-		case <-chTick.C:
-			if n, err := io.CopyN(mw, p, rateLimit); 0 == n || err != nil {
-				switch err {
-				case io.EOF:
-				default:
-					log.Warn(err.Error())
-					select {
-					case chErr <- err:
-					default:
-					}
-				}
-				break upload
-			}
-		}
-	}
-
-	for _, w := range ws {
-		w.(*io.PipeWriter).Close()
-	}
-
-	wgMain.Wait()
-
-	// Block client connection if request is not early-responded until all thumbs are created
-	if !earlyResponse {
-		wgProcess.Wait()
-	}
-
-	select {
-	case err := <-chErr:
-		return nil, err
-
-	default:
-	}
-
-	return &fileInfo, nil
+	return
 }

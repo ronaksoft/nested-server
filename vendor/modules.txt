@@ -19,6 +19,8 @@ github.com/aymerick/raymond
 github.com/aymerick/raymond/ast
 github.com/aymerick/raymond/lexer
 github.com/aymerick/raymond/parser
+# github.com/cention-sany/utf7 v0.0.0-20170124080048-26cad61bd60a
+github.com/cention-sany/utf7
 # github.com/cloudflare/cloudflare-go v0.8.5
 ## explicit
 github.com/cloudflare/cloudflare-go
@@ -49,6 +51,8 @@ github.com/globalsign/mgo/bson
 github.com/globalsign/mgo/internal/json
 github.com/globalsign/mgo/internal/sasl
 github.com/globalsign/mgo/internal/scram
+# github.com/gogs/chardet v0.0.0-20191104214054-4b6791f73a28
+github.com/gogs/chardet
 # github.com/gomodule/redigo v2.0.0+incompatible
 ## explicit
 github.com/gomodule/redigo/internal
@@ -79,9 +83,14 @@ github.com/iris-contrib/go.uuid
 # github.com/iris-contrib/middleware v0.0.0-20181021162728-8bd5d51b3c2e
 ## explicit
 github.com/iris-contrib/middleware/cors
-# github.com/jaytaylor/html2text v0.0.0-20190311042500-a93a6c6ea053
+# github.com/jaytaylor/html2text v0.0.0-20200412013138-3577fbdbcff7
 ## explicit
 github.com/jaytaylor/html2text
+# github.com/jhillyerd/enmime v0.9.1
+## explicit
+github.com/jhillyerd/enmime
+github.com/jhillyerd/enmime/internal/coding
+github.com/jhillyerd/enmime/internal/stringutil
 # github.com/json-iterator/go v1.1.6
 ## explicit
 github.com/json-iterator/go
@@ -133,8 +142,7 @@ github.com/kr/pretty
 github.com/kr/text
 # github.com/mattn/go-colorable v0.1.7
 ## explicit
-# github.com/mattn/go-runewidth v0.0.3
-## explicit
+# github.com/mattn/go-runewidth v0.0.12
 github.com/mattn/go-runewidth
 # github.com/microcosm-cc/bluemonday v1.0.2
 ## explicit
@@ -145,14 +153,14 @@ github.com/modern-go/concurrent
 # github.com/modern-go/reflect2 v1.0.1
 ## explicit
 github.com/modern-go/reflect2
-# github.com/olekukonko/tablewriter v0.0.0-20180912035003-be2c049b30cc
-## explicit
+# github.com/olekukonko/tablewriter v0.0.5
 github.com/olekukonko/tablewriter
 # github.com/onsi/ginkgo v1.14.0
 ## explicit
-# github.com/pkg/errors v0.8.1
-## explicit
+# github.com/pkg/errors v0.9.1
 github.com/pkg/errors
+# github.com/rivo/uniseg v0.2.0
+github.com/rivo/uniseg
 # github.com/ryanuber/columnize v2.1.0+incompatible
 ## explicit
 github.com/ryanuber/columnize
@@ -214,16 +222,26 @@ golang.org/x/crypto/acme
 golang.org/x/crypto/acme/autocert
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
-# golang.org/x/net v0.0.0-20200602114024-627f9648deb9
+# golang.org/x/net v0.0.0-20210501142056-aec3718b3fa0
 golang.org/x/net/html
 golang.org/x/net/html/atom
 golang.org/x/net/idna
 golang.org/x/net/publicsuffix
-# golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980
+# golang.org/x/sys v0.0.0-20210423082822-04245dca01da
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
-# golang.org/x/text v0.3.3
-## explicit
+# golang.org/x/text v0.3.6
+golang.org/x/text/encoding
+golang.org/x/text/encoding/charmap
+golang.org/x/text/encoding/internal
+golang.org/x/text/encoding/internal/identifier
+golang.org/x/text/encoding/japanese
+golang.org/x/text/encoding/korean
+golang.org/x/text/encoding/simplifiedchinese
+golang.org/x/text/encoding/traditionalchinese
+golang.org/x/text/encoding/unicode
+golang.org/x/text/internal/utf8internal
+golang.org/x/text/runes
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi

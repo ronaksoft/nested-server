@@ -2,19 +2,14 @@ package convert
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"path"
 	"reflect"
 	"strings"
-
-	"go.uber.org/zap"
 )
 
 var (
 	_Commands ExecPath
-	_Log      *zap.Logger
-	_LogLevel zap.AtomicLevel
 )
 
 type FileConverter struct {
@@ -64,24 +59,9 @@ func (ep *ExecPath) init() error {
 }
 
 func NewFileConverter() (*FileConverter, error) {
-	if nil == _Log {
-		_LogLevel = zap.NewAtomicLevelAt(zap.InfoLevel)
-		zap.NewProductionConfig()
-		config := zap.NewProductionConfig()
-		config.Encoding = "console"
-		config.Level = _LogLevel
-		if v, err := config.Build(); err != nil {
-			os.Exit(1)
-		} else {
-			_Log = v
-		}
-	}
-
 	if err := _Commands.init(); err != nil {
 		return nil, err
 	}
 
-	fcnv := &FileConverter{}
-
-	return fcnv, nil
+	return &FileConverter{}, nil
 }

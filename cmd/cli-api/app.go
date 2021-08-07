@@ -151,7 +151,7 @@ func NewAPP() *APP {
 	app.file = file.NewServer(app.model)
 
 	// Initialize Mail Store (LMTP)
-	app.mailStore = lmtp.New(filepath.Join(config.GetString(config.PostfixCHRoot), config.GetString(config.MailStoreSock)))
+	app.mailStore = lmtp.New(app.model, filepath.Join(config.GetString(config.PostfixCHRoot), config.GetString(config.MailStoreSock)))
 
 	// Initialize Mail Map (TCP)
 	app.mailMap = mailmap.New(app.model)

@@ -19,7 +19,7 @@ type MetaData struct {
 	Thumbnails Thumbnails  `json:"thumbnails" bson:"thumbnails"`
 }
 
-// Database file's information which is stored/read to/from database
+// StoredFileInfo Database file's information which is stored/read to/from database
 type StoredFileInfo struct {
 	ID         UniversalID `json:"id" bson:"_id"`
 	Hash       string      `json:"hash" bson:"md5"`
@@ -30,7 +30,7 @@ type StoredFileInfo struct {
 	UploadDate time.Time   `json:"upload_date" bson:"uploadDate"`
 }
 
-// File's meta data which is used when file type is FileTypeImage
+// MetaImage File's metadata which is used when file type is FileTypeImage
 type MetaImage struct {
 	Width          int64 `json:"width" bson:"width"`
 	Height         int64 `json:"height" bson:"height"`
@@ -39,7 +39,7 @@ type MetaImage struct {
 	Orientation    int   `json:"orientation"`
 }
 
-// File's meta data which is used when file type is FileTypeVideo
+// MetaVideo File's metadata which is used when file type is FileTypeVideo
 type MetaVideo struct {
 	Width      int64         `json:"width" bson:"width"`
 	Height     int64         `json:"height" bson:"height"`
@@ -48,32 +48,32 @@ type MetaVideo struct {
 	AudioCodec string        `json:"audio_codec" bson:"audio_codec"`
 }
 
-// File's meta data which is used when file type is FileTypeAudio
+// MetaAudio File's metadata which is used when file type is FileTypeAudio
 type MetaAudio struct {
 	Duration   time.Duration `json:"duration" bson:"duration"`
 	AudioCodec string        `json:"audio_codec" bson:"audio_codec"`
 }
 
-// File's meta data which is used when file type is FileTypeGif
+// MetaGif File's metadata which is used when file type is FileTypeGif
 type MetaGif struct {
 	Width  int64 `json:"width" bson:"width"`
 	Height int64 `json:"height" bson:"height"`
 	Frames uint  `json:"frames" bson:"frames"`
 }
 
-// File's meta data which is used when file type is FileTypeVoice
+// MetaVoice File's metadata which is used when file type is FileTypeVoice
 type MetaVoice struct {
 	Samples    []uint8       `json:"samples" bson:"samples"`
 	Duration   time.Duration `json:"duration" bson:"duration"`
 	SampleRate uint8         `json:"sample_rate" bson:"sample_rate"`
 }
 
-// File's meta data which is used when file type is FileTypeDocument
+// MetaDocument File's metadata which is used when file type is FileTypeDocument
 type MetaDocument struct {
 	PageCount int `json:"page_count" bson:"page_count"`
 }
 
-// File's meta data which is used when file type is FileTypeDocument and document is pdf
+// MetaPdf File's metadata which is used when file type is FileTypeDocument and document is pdf
 type MetaPdf struct {
 	Width     float32 `json:"width" bson:"width"`
 	Height    float32 `json:"height" bson:"height"`
@@ -100,7 +100,7 @@ func newStoreManager() *StoreManager {
 }
 
 // GenerateFileInfo returns a FileInfo structure based on input parameters
-func GenerateFileInfo(filename, uploader string, fileType string, thumbnails Thumbnails, meta interface{}) StoredFileInfo {
+func GenerateFileInfo(filename, uploader string, fileType string, meta interface{}) StoredFileInfo {
 	return StoredFileInfo{
 		ID:       GenerateUniversalID(filename, fileType),
 		Name:     filename,
@@ -114,15 +114,13 @@ func GenerateFileInfo(filename, uploader string, fileType string, thumbnails Thu
 }
 
 // Save inserts file into database
-func (fm *StoreManager) Save(r io.Reader, info StoredFileInfo) *StoredFileInfo {
+func (fm *StoreManager) Save(r io.Reader, fileInfo StoredFileInfo) *StoredFileInfo {
 	dbSession := _MongoSession.Copy()
 	store := dbSession.DB(global.StoreName).GridFS("fs")
 	defer dbSession.Close()
 
-	finfo := info
-
 	var gFile *mgo.GridFile
-	if gf, err := store.Create(finfo.Name); err != nil {
+	if gf, err := store.Create(fileInfo.Name); err != nil {
 		log.Warn("Got error", zap.Error(err))
 		return nil
 	} else {
@@ -130,25 +128,25 @@ func (fm *StoreManager) Save(r io.Reader, info StoredFileInfo) *StoredFileInfo {
 		defer gFile.Close()
 	}
 
-	gFile.SetId(finfo.ID)
-	gFile.SetMeta(finfo.Metadata)
-	gFile.SetContentType(finfo.MimeType)
+	gFile.SetId(fileInfo.ID)
+	gFile.SetMeta(fileInfo.Metadata)
+	gFile.SetContentType(fileInfo.MimeType)
 
 	if n, err := io.Copy(gFile, r); err != nil {
 		log.Warn("Got error", zap.Error(err))
 		gFile.Abort()
 		return nil
 	} else if 0 == n {
-		log.Warn(fmt.Sprintf("save empty file %s", info.ID))
+		log.Warn(fmt.Sprintf("save empty file %s", fileInfo.ID))
 		gFile.Abort()
 		return nil
 	} else {
-		finfo.Size = n
-		finfo.UploadDate = gFile.UploadDate()
-		finfo.Hash = gFile.MD5()
+		fileInfo.Size = n
+		fileInfo.UploadDate = gFile.UploadDate()
+		fileInfo.Hash = gFile.MD5()
 	}
 
-	return &finfo
+	return &fileInfo
 }
 
 // SetThumbnails sets a file's thumbnails map in file info
