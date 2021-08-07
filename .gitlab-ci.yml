@@ -31,8 +31,8 @@ deploy:production:
   when: manual
   script:
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
-    - docker build --pull -t $CI_REGISTRY_IMAGE/server:$NESTED_VER .
-    - docker push $CI_REGISTRY_IMAGE/server:$NESTED_VER
+    - docker build --pull -t $CI_REGISTRY_IMAGE:$NESTED_VER .
+    - docker push $CI_REGISTRY_IMAGE:$NESTED_VER
   dependencies:
     - build:compile
 
@@ -43,7 +43,7 @@ deploy:staging:
     - docker:dind
   script:
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
-    - docker build --pull -t $CI_REGISTRY_IMAGE/server:dev .
-    - docker push $CI_REGISTRY_IMAGE/server:dev
+    - docker build --pull -t $CI_REGISTRY_IMAGE:dev .
+    - docker push $CI_REGISTRY_IMAGE:dev
   dependencies:
     - build:compile
