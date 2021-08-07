@@ -21,8 +21,8 @@ services:
       - NST_SMTP_USER=smtpUser
       - NST_SMTP_PASS=smtpPass
     volumes:
-      - ./postfix/certs/:/etc/postfix/certs
-      - ./postfix/domainkeys/:/etc/opendkim/domainkeys
+      - ./postfix/certs/:/etc/postfix/certs:rw
+      - ./postfix/domainkeys/:/etc/opendkim/domainkeys:rw
     networks:
       - test-nested
 

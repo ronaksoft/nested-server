@@ -34,7 +34,6 @@ func init() {
 	GenCmd.AddCommand(GenDKIMCmd, GenRandomKey)
 }
 
-
 var GenCmd = &cobra.Command{
 	Use:   "gen",
 	Short: "generator for certificate, dkim etc.",
