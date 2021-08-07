@@ -14,7 +14,6 @@ build:compile:
     - mkdir -p $CI_PROJECT_DIR/cmd/_build
     - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -mod=vendor -a -ldflags '-s' -o $CI_PROJECT_DIR/cmd/_build/cli-api ./cmd/cli-api
     - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -mod=vendor -a -ldflags '-s' -o $CI_PROJECT_DIR/cmd/_build/cli-admin ./cmd/cli-admin
-    - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -mod=vendor -a -ldflags '-s' -o $CI_PROJECT_DIR/cmd/_build/cli-ctl ./cmd/cli-ctl
 
   artifacts:
     untracked: true
