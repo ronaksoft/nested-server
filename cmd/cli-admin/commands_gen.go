@@ -8,9 +8,8 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
-	"gopkg.in/yaml.v2"
+	"github.com/spf13/cobra"
 	"io"
-	"io/ioutil"
 	"log"
 	"math/big"
 	mrand "math/rand"
@@ -18,85 +17,51 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"text/template"
 	"time"
 )
 
-func LoadNestedConfig() *Config {
-	cnf := new(Config)
-	if yml, err := ioutil.ReadFile(pathConfigFile); err != nil {
-		log.Println("Reading YAML file error: ", err.Error())
-		return nil
-	} else {
-		if err := yaml.Unmarshal(yml, cnf); err != nil {
-			log.Println("ReadConfig::Error::", err.Error())
-			return nil
-		}
-	}
-	return cnf
+/*
+   Creation Time: 2021 - Aug - 07
+   Created by:  (ehsan)
+   Maintainers:
+      1.  Ehsan N. Moosa (E2)
+   Auditor: Ehsan N. Moosa (E2)
+   Copyright Ronak Software Group 2020
+*/
+
+func init() {
+	RootCmd.AddCommand(GenCmd)
+	GenCmd.AddCommand(GenDKIMCmd, GenRandomKey)
 }
 
-func UpdateYamlFiles(c *Config) bool {
-	if c.EnabledServices.Mongo {
-		serviceName := "mongo"
-		ExecuteTemplate(serviceName, c)
-		os.MkdirAll(fmt.Sprintf("%s/%s/.vol", pathYMLsDir, serviceName), os.ModeDir|os.ModePerm)
-		CopyFile(fmt.Sprintf("%s/mongo.config.yml", pathTemplatesDir), fmt.Sprintf("%s/%s/config.yml", pathYMLsDir, serviceName))
-		CopyFile(fmt.Sprintf("%s/%s.pem", pathCertsDir, serviceName), fmt.Sprintf("%s/%s/certs/%s.pem", pathYMLsDir, serviceName, serviceName))
-	}
-	if c.EnabledServices.Redis {
-		serviceName := "redis"
-		ExecuteTemplate(serviceName, c)
-		os.MkdirAll(fmt.Sprintf("%s/%s/.vol", pathYMLsDir, serviceName), os.ModeDir|os.ModePerm)
-		CopyFile(fmt.Sprintf("%s/%s.crt", pathCertsDir, serviceName), fmt.Sprintf("%s/%s/certs/%s.crt", pathYMLsDir, serviceName, serviceName))
-		CopyFile(fmt.Sprintf("%s/%s.key", pathCertsDir, serviceName), fmt.Sprintf("%s/%s/certs/%s.key", pathYMLsDir, serviceName, serviceName))
-	}
-	if c.EnabledServices.Arsaces {
-		serviceName := "arsaces"
-		ExecuteTemplate(serviceName, c)
-	}
-	if c.EnabledServices.Cyrus {
-		serviceName := "cyrus"
-		ExecuteTemplate(serviceName, c)
-		CopyFile(fmt.Sprintf("%s/%s.crt", pathCertsDir, serviceName), fmt.Sprintf("%s/%s/certs/%s.crt", pathYMLsDir, serviceName, serviceName))
-		CopyFile(fmt.Sprintf("%s/%s.key", pathCertsDir, serviceName), fmt.Sprintf("%s/%s/certs/%s.key", pathYMLsDir, serviceName, serviceName))
-		if _, err := os.Stat(fmt.Sprintf("%s/%s/domainkeys/dkim.private", pathYMLsDir, serviceName)); os.IsNotExist(err) {
-			key, text := CreateDKIMKeys()
-			fmt.Println("DKIM DNS:")
-			fmt.Println(text)
-			ioutil.WriteFile(
-				fmt.Sprintf("%s/%s/domainkeys/dkim.private", pathYMLsDir, serviceName),
-				[]byte(key),
-				0644,
-			)
-		}
-	}
-	if c.EnabledServices.Web {
-		serviceName := "web"
-		ExecuteTemplate(serviceName, c)
-		CopyFile(fmt.Sprintf("%s/%s.crt", pathCertsDir, serviceName), fmt.Sprintf("%s/%s/certs/%s.crt", pathYMLsDir, serviceName, serviceName))
-		CopyFile(fmt.Sprintf("%s/%s.key", pathCertsDir, serviceName), fmt.Sprintf("%s/%s/certs/%s.key", pathYMLsDir, serviceName, serviceName))
-	}
-	return true
+
+var GenCmd = &cobra.Command{
+	Use:   "gen",
+	Short: "generator for certificate, dkim etc.",
+	Run:   func(cmd *cobra.Command, args []string) {},
 }
 
-func ExecuteTemplate(serviceName string, c *Config) bool {
-	os.MkdirAll(fmt.Sprintf("%s/%s", pathYMLsDir, serviceName), os.ModeDir|os.ModePerm)
-	b, _ := ioutil.ReadFile(fmt.Sprintf("%s/%s.yml", pathTemplatesDir, serviceName))
-	t, _ := template.New(serviceName).Parse(string(b))
-	if f, err := os.OpenFile(fmt.Sprintf("%s/%s/docker-compose.yml", pathYMLsDir, serviceName), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0750); err != nil {
-		f.Close()
-		log.Println("UpdateYamlFiles::Error 1::", err.Error())
-		return false
-	} else if err = t.Execute(f, c); err != nil {
-		f.Close()
-		log.Println(err.Error())
-		CopyFile(fmt.Sprintf("%s/%s.yml", pathTemplatesDir, serviceName), fmt.Sprintf("%s/%s/docker-compose.yml", pathYMLsDir, serviceName))
-	}
-	os.MkdirAll(fmt.Sprintf("%s/%s/certs", pathYMLsDir, serviceName), os.ModeDir|os.ModePerm)
-	CopyFile(fmt.Sprintf("%s/%s.crt", pathCertsDir, serviceName), fmt.Sprintf("%s/%s/certs/", pathYMLsDir, serviceName))
-	CopyFile(fmt.Sprintf("%s/%s.key", pathCertsDir, serviceName), fmt.Sprintf("%s/%s/certs/", pathYMLsDir, serviceName))
-	return true
+// GenDKIMCmd Generates DKIM key-pairs
+var GenDKIMCmd = &cobra.Command{
+	Use:   "dkim",
+	Short: "generate dkim public and private key",
+	Run: func(cmd *cobra.Command, args []string) {
+		priv, pub := CreateDKIMKeys()
+		fmt.Println("DKIM Private Key:\r\n", priv)
+		fmt.Println("DNS TEXT:\r\n", pub)
+	},
+}
+
+// GenRandomKey Generate random key:
+//	--length
+var GenRandomKey = &cobra.Command{
+	Use:   "key",
+	Short: "generate random key",
+	Run: func(cmd *cobra.Command, args []string) {
+		length, _ := strconv.Atoi(cmd.Flag("length").Value.String())
+		key := RandomID(length)
+		fmt.Println(key)
+	},
 }
 
 // CreateDKIMKeys produces a pair of public and private keys
@@ -241,4 +206,11 @@ func copyFileContents(src, dst string) (err error) {
 	}
 	err = out.Sync()
 	return
+}
+
+type SSLCertificate struct {
+	CommonName          string   `bson:"cn" json:"cn"`
+	OrganizationalUnits []string `bson:"ou" json:"ou"`
+	Key                 []byte   `bson:"key" json:"key"`
+	Certificate         []byte   `bson:"cert" json:"cert"`
 }

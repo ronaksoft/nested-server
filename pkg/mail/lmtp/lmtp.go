@@ -36,11 +36,11 @@ func New(model *nested.Manager, addr string) *Server {
 		s.uploader = uploader
 	}
 
-	ss := smtp.NewServer(s)
-	ss.Addr = addr
-	ss.LMTP = true
-	ss.ReadTimeout = time.Second * 30
-	ss.WriteTimeout = time.Second * 30
+	s.s = smtp.NewServer(s)
+	s.s.Addr = addr
+	s.s.LMTP = true
+	s.s.ReadTimeout = time.Second * 30
+	s.s.WriteTimeout = time.Second * 30
 	return s
 }
 
@@ -60,7 +60,7 @@ func (s *Server) Close() {
 }
 
 func (s *Server) Addr() string {
-	return s.s.Addr
+	return s.addr
 }
 
 func (s *Server) Login(state *smtp.ConnectionState, username, password string) (smtp.Session, error) {

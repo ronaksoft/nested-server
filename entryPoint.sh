@@ -1,21 +1,28 @@
+#!/bin/bash
 
 ############
 # SASL SUPPORT FOR CLIENTS
 # The following options set parameters needed by Postfix to enable
 # Cyrus-SASL support for authentication of mail clients.
 ############
+echo "== Enable SASL Support for postfix"
+
+
 # /etc/postfix/main.cf
+echo "== Update Postfix Configs for SASL"
 postconf -e smtpd_sasl_auth_enable=yes
 postconf -e broken_sasl_auth_clients=yes
 postconf -e smtpd_relay_restrictions=permit_mynetworks,permit_sasl_authenticated,defer_unauth_destination
-# smtpd.conf
+
+# create smtpd.conf
+echo "== Create SMTPD Config File for SASL"
 cat >> /etc/postfix/sasl/smtpd.conf <<EOF
 pwcheck_method: auxprop
 auxprop_plugin: sasldb
 mech_list: PLAIN LOGIN CRAM-MD5 DIGEST-MD5 NTLM
 EOF
 # sasldb2
-echo ${NST_SMTP_CRED} | tr , \\n > /tmp/passwd
+echo ${NST_SMTP_USER}:${NST_SMTP_PASS} | tr , \\n > /tmp/passwd
 while IFS=':' read -r _user _pwd; do
   echo $_pwd | saslpasswd2 -p -c -u ${NST_SENDER_DOMAIN} $_user
 done < /tmp/passwd
@@ -25,6 +32,7 @@ chown postfix.sasl /etc/sasldb2
 ############
 # Enable TLS
 ############
+echo "== Enable TLS Support for postfix"
 if [[ -n "$(find /etc/postfix/certs -iname *.crt)" && -n "$(find /etc/postfix/certs -iname *.key)" ]]; then
   # /etc/postfix/main.cf
   postconf -e smtpd_tls_cert_file=$(find /etc/postfix/certs -iname *.crt)
@@ -42,15 +50,18 @@ fi
 #############
 #  OpenDKIM
 #############
+echo "== Setup OpenDKIM for postfix"
 if [[ -z "$(find /etc/opendkim/domainkeys -iname *.private)" ]]; then
   exit 0
 fi
 
+echo "== Update Postfix Configs for OpenDKIM"
 postconf -e milter_protocol=2
 postconf -e milter_default_action=accept
 postconf -e smtpd_milters=inet:localhost:12301
 postconf -e non_smtpd_milters=inet:localhost:12301
 
+echo "== Create Config File for OpenDKIM"
 cat >> /etc/opendkim.conf <<EOF
 AutoRestart             Yes
 AutoRestartRate         10/1h
@@ -78,6 +89,7 @@ cat >> /etc/default/opendkim <<EOF
 SOCKET="inet:12301@localhost"
 EOF
 
+echo "== Update Permissions for OpenDKIM"
 chown opendkim:opendkim $(find /etc/opendkim/domainkeys -iname *.private)
 chmod 400 $(find /etc/opendkim/domainkeys -iname *.private)
 
@@ -85,6 +97,7 @@ chmod 400 $(find /etc/opendkim/domainkeys -iname *.private)
 #############
 ## Nested Delivery and Postfix Startup
 #############
+echo "== Setup Nested Delivery"
 postconf -e virtual_mailbox_domains=${NST_DOMAINS}
 postconf -e virtual_transport=lmtp:unix:${NST_MAIL_STORE_SOCK}
 service postfix start

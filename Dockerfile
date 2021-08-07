@@ -33,4 +33,5 @@ RUN chmod +x /ronak/entryPoint.sh
 
 WORKDIR /ronak
 
+#ENTRYPOINT ["/ronak/bin/cli-api"]
 ENTRYPOINT ["/bin/bash", "/ronak/entryPoint.sh"]

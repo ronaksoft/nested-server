@@ -18,6 +18,11 @@ services:
       - NST_SENDER_DOMAIN=nested.local
       - NST_MAIL_STORE_SOCK=private/nested-mail
       - NST_FILE_SYSTEM_KEY=###SECUREKEY!!!
+      - NST_SMTP_USER=smtpUser
+      - NST_SMTP_PASS=smtpPass
+    volumes:
+      - ./postfix/certs/:/etc/postfix/certs
+      - ./postfix/domainkeys/:/etc/opendkim/domainkeys
     networks:
       - test-nested
 
