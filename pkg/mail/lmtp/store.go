@@ -3,9 +3,11 @@ package lmtp
 import (
 	"bytes"
 	"crypto/md5"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"git.ronaksoft.com/nested/server/nested"
+	"git.ronaksoft.com/nested/server/pkg/config"
 	"git.ronaksoft.com/nested/server/pkg/log"
 	"github.com/emersion/go-smtp"
 	"github.com/jhillyerd/enmime"
@@ -14,6 +16,7 @@ import (
 	"net/http"
 	"net/mail"
 	"strings"
+	"sync"
 )
 
 /*
@@ -32,6 +35,7 @@ type Session struct {
 	rcpts      []string
 	opts       smtp.MailOptions
 	model      *nested.Manager
+	uploader   *uploadClient
 }
 
 func (s *Session) Reset() {
@@ -67,12 +71,18 @@ func (s *Session) Rcpt(to string) error {
 func (s *Session) Data(r io.Reader) (err error) {
 	var (
 		envelope   *enmime.Envelope
-		nestedMail = &NestedMail{}
+		nestedMail = &NestedMail{
+			Attachments:       map[string]nested.FileInfo{},
+			InlineAttachments: map[string]string{},
+		}
 	)
 	if envelope, err = enmime.ReadEnvelope(r); err != nil {
 		return
 	}
 	if err = s.extractSender(nestedMail, envelope); err != nil {
+		return
+	}
+	if err = s.extractHeader(nestedMail, envelope); err != nil {
 		return
 	}
 	if err = s.storeMail(nestedMail, envelope); err != nil {
@@ -81,15 +91,33 @@ func (s *Session) Data(r io.Reader) (err error) {
 	if err = s.extractGravatar(nestedMail, envelope); err != nil {
 		return
 	}
-	// if err = s.extractInlineAttachments(nestedMail, envelope); err != nil {
-	// 	return
-	// }
+	if err = s.extractInlineAttachments(nestedMail, envelope); err != nil {
+		return
+	}
 
-	// return s.store(envelope)
+	return s.store(nestedMail, envelope)
+}
+func (s *Session) extractSender(nm *NestedMail, mailEnvelope *enmime.Envelope) error {
+	from := mailEnvelope.GetHeader("From")
+	if addr, err := mail.ParseAddress(s.from); err != nil {
+		log.Error("got error on parsing sender address", zap.String("Sender", s.from), zap.Error(err))
+		nm.SenderID = s.from
+	} else {
+		nm.SenderID = addr.Address
+		nm.SenderName = addr.Name
+	}
+
+	if addr, err := mail.ParseAddress(from); err != nil {
+		log.Error("got error on parsing FROM header", zap.Error(err), zap.String("FROM", from))
+	} else {
+		if addr.Address == nm.SenderID && nm.SenderName == "" {
+			nm.SenderName = addr.Name
+		}
+	}
 	return nil
 }
-func (s *Session) extractSender(nm *NestedMail, envelope *enmime.Envelope) error {
-	nm.SenderID, nm.SenderName = s.parseSender(envelope)
+
+func (s *Session) extractHeader(nm *NestedMail, envelope *enmime.Envelope) error {
 	replyToHeader := strings.TrimSpace(envelope.GetHeader("Reply-To"))
 	if len(replyToHeader) >= 0 {
 		// No Reply-To has been set
@@ -133,22 +161,18 @@ func (s *Session) storeMail(nm *NestedMail, envelope *enmime.Envelope) (err erro
 		return
 	}
 
-	fileInfo := s.model.Store.Save(buff,
-		nested.GenerateFileInfo(
-			fmt.Sprintf("%s-%s.eml", envelope.GetHeader("MessageID"), envelope.GetHeader("Subject")),
-			nm.SenderID,
-			nested.FileTypeOther,
-			nil,
-		),
+	uploadedFile, err := s.uploader.uploadFile(
+		fmt.Sprintf("%s-%s.eml", envelope.GetHeader("MessageID"), envelope.GetHeader("Subject")),
+		nm.SenderID,
+		nested.FileStatusAttached, nm.AttachOwners, buff,
 	)
-	if fileInfo == nil {
-		return
+	if err != nil {
+		return err
 	}
-	s.model.File.SetStatus(fileInfo.ID, nested.FileStatusAttached)
-	nm.RawUniversalID = fileInfo.ID
+	nm.RawUniversalID = uploadedFile.UniversalID
 	return
 }
-func (s *Session) extractGravatar(nm *NestedMail, envelope *enmime.Envelope) error {
+func (s *Session) extractGravatar(nm *NestedMail, _ *enmime.Envelope) error {
 	encoder := md5.New()
 	encoder.Write([]byte(nm.SenderID))
 	senderIdHash := hex.EncodeToString(encoder.Sum(nil))
@@ -165,307 +189,224 @@ func (s *Session) extractGravatar(nm *NestedMail, envelope *enmime.Envelope) err
 		return nil
 	}
 
-	fileInfo := s.model.Store.Save(res.Body,
-		nested.GenerateFileInfo(
-			fmt.Sprintf("%s.jpg", senderIdHash),
-			nm.SenderID,
-			nested.FileTypeImage,
-			nil,
-		),
-	)
-	if fileInfo == nil {
-		return nil
+	uploadedFile, err := s.uploader.uploadFile(fmt.Sprintf("%s.jpg", senderIdHash), nm.SenderID, nested.FileStatusPublic, []string{}, res.Body)
+	if err != nil {
+		return err
 	}
-	s.model.File.SetStatus(fileInfo.ID, nested.FileStatusPublic)
-	// TODO:: nm.SenderPic
-
+	nm.SenderPic = uploadedFile.Thumbs
 	_ = res.Body.Close()
 	return nil
 }
+func (s *Session) extractInlineAttachments(nm *NestedMail, envelope *enmime.Envelope) error {
+	chInlineAttachments := make(chan MultipartFile, len(envelope.Inlines))
+	wg := sync.WaitGroup{}
+	for k, att := range envelope.Inlines {
+		wg.Add(1)
+		go func(att *enmime.Part, index int) {
+			defer wg.Done()
 
-// func (s *Session) extractInlineAttachments(nm *NestedMail, envelope *enmime.Envelope) error {
-// 	chInlineAttachments := make(chan multipartAttachment, len(mailEnvelope.Inlines))
-// 	wg := sync.WaitGroup{}
-// 	for k, att := range envelope.Inlines {
-// 		wg.Add(1)
-// 		go func(att *enmime.Part, index int) {
-// 			defer wg.Done()
-//
-// 			// Upload File
-// 			var cid string
-// 			if c := att.Header.Get("Content-Id"); len(c) > 0 {
-// 				cid = c[1 : len(c)-1]
-// 				log.Info("CID: ", zap.String("", c), zap.String("", cid))
-// 			}
-//
-// 			filename := att.FileName
-// 			if 0 == len(filename) {
-// 				filename = fmt.Sprintf("inline_attachment_%d", index)
-// 			}
-//
-// 			fileInfo := s.model.Store.Save(bytes.NewReader(att.Content), nested.GenerateFileInfo(
-// 				filename, nm.SenderID, att.ContentType,
-// 			))
-// 			if fileInfo != nil {
-// 				return
-// 			}
-// 			s.model.File.SetStatus(fileInfo.ID, nested.FileStatusAttached)
-//
-// 			if finfo, err := uploadFile(filename, senderID, nested.FileStatusAttached, attachmentOwners, bytes.NewReader(att.Content), m.Storage); err != nil {
-// 				log.Error("ERROR::::::Error adding inline attachment:", zap.Error(err))
-// 			} else {
-// 				log.Info("Gonna create file token for %s", zap.Any("", finfo.UniversalId))
-// 				if tk, err := m.CreateFileToken(finfo.UniversalId, "", ""); err != nil {
-// 					log.Error("ERROR::::::Error creating file token for inline attachment: ", zap.Error(err))
-// 					benc := make([]byte, base64.StdEncoding.EncodedLen(len(att.Content)))
-// 					base64.StdEncoding.Encode(benc, att.Content)
-//
-// 					chInlineAttachments <- multipartAttachment{
-// 						contentId: cid,
-// 						content:   fmt.Sprintf("data:image/png;base64, %s", string(benc)),
-// 						finfo:     *finfo,
-// 					}
-// 				} else {
-// 					chInlineAttachments <- multipartAttachment{
-// 						contentId: cid,
-// 						content:   fmt.Sprintf("%s/file/view/%s", m.CyrusURL, tk),
-// 						finfo:     *finfo,
-// 					}
-// 				}
-// 				log.Info("Uploaded Inline:", zap.Any("", filename))
-// 			}
-// 		}(att, k)
-// 	}
-// 	wg.Wait()
-// }
-// func (s *Session) store(mailEnvelope *enmime.Envelope) error {
-// 	var (
-// 		bodyHtml  = mailEnvelope.HTML
-// 		bodyPlain = mailEnvelope.Text
-// 		messageID = mailEnvelope.GetHeader("Message-ID")
-// 		inReplyTo = mailEnvelope.GetHeader("In-Reply-To")
-// 		subject   = mailEnvelope.GetHeader("Subject")
-// 	)
-//
-// 	// --Save Attachments
-// 	wg := sync.WaitGroup{}
-//
-// 	type multipartAttachment struct {
-// 		finfo     client_storage.UploadedFile
-// 		content   string
-// 		contentId string
-// 	}
-//
-// 	// --Inline Attachments
-// 	log.Info("Going to save inline attachments")
-//
-// 	// --/Inline Attachments
-//
-// 	// --Attachments
-// 	log.Info("Going to save attachments")
-// 	chAttachments := make(chan multipartAttachment, len(mailEnvelope.Attachments))
-// 	for k, att := range mailEnvelope.Attachments {
-// 		wg.Add(1)
-// 		go func(att *enmime.Part, index int) {
-// 			defer wg.Done()
-//
-// 			// Upload File
-// 			var cid string
-// 			if c := att.Header.Get("Content-Id"); len(c) > 0 {
-// 				cid = c[1 : len(c)-1]
-// 			}
-//
-// 			filename := att.FileName
-// 			if 0 == len(filename) {
-// 				filename = fmt.Sprintf("attachment_%d", index)
-// 			}
-// 			log.Info("Uploading Inline: ",
-// 				zap.Any("", att.ContentType),
-// 				zap.String("", filename),
-// 				zap.String("", cid),
-// 				zap.Any("", att.Header),
-// 			)
-//
-// 			if finfo, err := uploadFile(att.FileName, senderID, nested.FileStatusAttached, attachmentOwners, bytes.NewReader(att.Content), m.Storage); err != nil {
-// 				log.Error("ERROR::::::Error adding inline attachment:", zap.Error(err))
-// 			} else {
-// 				log.Info("Gonna create file token for %s", zap.Any("", finfo.UniversalId))
-// 				if tk, err := m.CreateFileToken(finfo.UniversalId, "", ""); err != nil {
-// 					log.Error("ERROR::::::Error creating file token for inline attachment: ", zap.Error(err))
-// 					benc := make([]byte, base64.StdEncoding.EncodedLen(len(att.Content)))
-// 					base64.StdEncoding.Encode(benc, att.Content)
-//
-// 					chAttachments <- multipartAttachment{
-// 						contentId: cid,
-// 						content:   fmt.Sprintf("data:image/png;base64, %s", string(benc)),
-// 						finfo:     *finfo,
-// 					}
-// 				} else {
-// 					chAttachments <- multipartAttachment{
-// 						contentId: cid,
-// 						content:   fmt.Sprintf("%s/file/view/%s", m.CyrusURL, tk),
-// 						finfo:     *finfo,
-// 					}
-// 				}
-// 				log.Info("Uploaded Inline:", zap.String("", filename))
-// 			}
-// 		}(att, k)
-// 	}
-//
-// 	// Wait for files to be saved
-// 	wg.Wait()
-// 	log.Info("All attachments jobs have been done")
-// 	close(chAttachments)
-// 	close(chInlineAttachments)
-//
-// 	inlineAttachments := make(map[string]string, len(mailEnvelope.Attachments)+len(mailEnvelope.Inlines))
-// 	attachments := make(map[string]nested.FileInfo, len(mailEnvelope.Attachments)+len(mailEnvelope.Inlines))
-// 	for att := range chInlineAttachments {
-// 		if len(att.contentId) > 0 && strings.Count(bodyHtml, att.contentId)+strings.Count(bodyPlain, att.contentId) > 0 {
-// 			inlineAttachments[att.contentId] = att.content
-// 		} else {
-// 			log.Info("Not found %s in body", zap.String("", att.contentId))
-// 			if att.finfo.Size > 0 {
-// 				attachments[string(att.finfo.UniversalId)] = nested.FileInfo{
-// 					Size:     att.finfo.Size,
-// 					Filename: att.finfo.Name,
-// 				}
-// 			}
-// 		}
-// 	}
-// 	for att := range chAttachments {
-// 		if len(att.contentId) > 0 && strings.Count(bodyHtml, att.contentId)+strings.Count(bodyPlain, att.contentId) > 0 {
-// 			inlineAttachments[att.contentId] = att.content
-// 		} else {
-// 			log.Info("Not found %s in body", zap.String("", att.contentId))
-// 		}
-//
-// 		if att.finfo.Size > 0 {
-// 			attachments[string(att.finfo.UniversalId)] = nested.FileInfo{
-// 				Size:     att.finfo.Size,
-// 				Filename: att.finfo.Name,
-// 			}
-// 		}
-// 	}
-// 	// --/Attachments
-// 	// --/Save Attachments
-//
-// 	// --Prepare Body
-// 	for k, v := range inlineAttachments {
-// 		bodyHtml = strings.Replace(bodyHtml, fmt.Sprintf("\"cid:%s\"", k), fmt.Sprintf("\"%s\"", v), -1)
-// 		bodyPlain = strings.Replace(bodyPlain, fmt.Sprintf("\"cid:%s\"", k), fmt.Sprintf("\"%s\"", v), -1)
-// 	}
-// 	// --/Prepare Body
-//
-// 	postCreate := func(targets []string) error {
-// 		postCreateReq := nested.PostCreateRequest{
-// 			SenderID: senderID,
-// 			Subject:  subject,
-// 			EmailMetadata: nested.EmailMetadata{
-// 				Name:           senderName,
-// 				RawMessageFile: rawMsgFileID,
-// 				MessageID:      messageID,
-// 				InReplyTo:      inReplyTo,
-// 				ReplyTo:        replyTo,
-// 				Picture:        senderPicture,
-// 			},
-// 			PlaceIDs:   []string{},
-// 			Recipients: []string{},
-// 		}
-// 		postAttachmentIDs := make([]nested.UniversalID, 0, len(attachments))
-// 		postAttachmentSizes := make([]int64, 0, len(attachments))
-// 		for attachID, inf := range attachments {
-// 			postAttachmentIDs = append(postAttachmentIDs, nested.UniversalID(attachID))
-// 			postAttachmentSizes = append(postAttachmentSizes, int64(inf.Size))
-// 		}
-// 		postCreateReq.AttachmentIDs = postAttachmentIDs
-// 		postCreateReq.AttachmentSizes = postAttachmentSizes
-// 		if len(bodyHtml) > 0 {
-// 			postCreateReq.ContentType = nested.ContentTypeTextHtml
-// 			postCreateReq.Body = bodyHtml
-// 		} else {
-// 			postCreateReq.ContentType = nested.ContentTypeTextPlain
-// 			postCreateReq.Body = bodyPlain
-// 		}
-// 		// Validate Targets and Separate places and emails
-// 		mapPlaceIDs := make(map[string]bool)
-// 		mapEmails := make(map[string]bool)
-// 		log.Debug("targets:", zap.Any("", targets))
-// 		log.Debug("domain:", zap.Any("", domain))
-// 		for _, v := range targets {
-// 			if idx := strings.Index(v, "@"); idx != -1 {
-// 				log.Debug("fmt.Sprintf(@%s, domain)", zap.String("", fmt.Sprintf("@%s", domain)))
-//
-// 				if strings.HasSuffix(strings.ToLower(v), fmt.Sprintf("@%s", domain)) && !m.IsBlocked(v[:idx], senderID) {
-// 					log.Debug("", zap.String("", fmt.Sprintf("%s", v[:idx])))
-// 					mapPlaceIDs[v[:idx]] = true
-// 				} else {
-// 					mapEmails[v] = true
-// 				}
-// 			} else if m.PlaceExist(v) && !m.IsBlocked(v, senderID) {
-// 				mapPlaceIDs[v] = true
-// 			}
-// 		}
-// 		for placeID := range mapPlaceIDs {
-// 			postCreateReq.PlaceIDs = append(postCreateReq.PlaceIDs, placeID)
-// 		}
-// 		for recipient := range mapEmails {
-// 			postCreateReq.Recipients = append(postCreateReq.Recipients, recipient)
-// 		}
-// 		log.Debug("postCreateReq", zap.Any("AttachmentIDs", postCreateReq.AttachmentIDs))
-// 		if post := m.AddPost(postCreateReq); post == nil {
-// 			log.Error("ERROR::::::Post add error:")
-// 			return fmt.Errorf("could not create post")
-// 		} else {
-// 			log.Debug("Post added to nested instance", zap.String("post.SenderID", post.SenderID))
-// 			log.Debug("Post added to nested instance", zap.String("post.Subject", post.Subject))
-// 			log.Debug("Post added to nested instance", zap.Strings("post.Places", post.PlaceIDs))
-//
-// 			m.ExternalPushPlaceActivityPostAdded(post)
-// 			for _, pid := range post.PlaceIDs {
-// 				// Internal
-// 				place := s.model.Place.GetByID(pid)
-// 				memberIDs := place.GetMemberIDs()
-// 				m.InternalPlaceActivitySyncPush(memberIDs, pid, nested.PlaceActivityActionPostAdd)
-// 			}
-// 		}
-// 		return nil
-// 	}
-//
-// 	// Create one post for CCs
-// 	log.Debug("Gonna add post to:", zap.Any("nonBlindTargets", nonBlindTargets))
-// 	if err := postCreate(nonBlindTargets); err != nil {
-// 		log.Error("ERROR::::::Post add error:", zap.Error(err))
-// 		return err
-// 	}
-//
-// 	// Create Individual Posts for BCCs
-// 	for _, recipient := range blindPlaceIDs {
-// 		log.Debug("Gonna add post to:", zap.String("recipient", recipient))
-// 		if err := postCreate([]string{recipient}); err != nil {
-// 			log.Error("ERROR::::::Post add error:", zap.Error(err))
-// 			return err
-// 		}
-// 	}
-// 	return nil
-// }
+			// Upload File
+			var cid string
+			if c := att.Header.Get("Content-Id"); len(c) > 0 {
+				cid = c[1 : len(c)-1]
+				log.Info("CID: ", zap.String("", c), zap.String("", cid))
+			}
 
-func (s *Session) parseSender(mailEnvelope *enmime.Envelope) (senderID, senderName string) {
-	from := mailEnvelope.GetHeader("From")
-	if addr, err := mail.ParseAddress(s.from); err != nil {
-		log.Error("ERROR::Parse sender address error:", zap.String("Sender", s.from), zap.Error(err))
-		senderID = s.from
-	} else {
-		senderID = addr.Address
-		senderName = addr.Name
+			filename := att.FileName
+			if 0 == len(filename) {
+				filename = fmt.Sprintf("inline_attachment_%d", index)
+			}
+
+			uploadedFile, err := s.uploader.uploadFile(filename, nm.SenderID, nested.FileStatusAttached, nm.AttachOwners, bytes.NewReader(att.Content))
+			if err != nil {
+				log.Error("got error on uploading inline attachments (upload)", zap.Error(err), zap.String("Sender", nm.SenderName))
+				return
+			}
+			tk, err := s.model.Token.CreateFileToken(uploadedFile.UniversalID, "", "")
+			if err != nil {
+				benc := make([]byte, base64.StdEncoding.EncodedLen(len(att.Content)))
+				base64.StdEncoding.Encode(benc, att.Content)
+				chInlineAttachments <- MultipartFile{
+					contentID: cid,
+					content:   fmt.Sprintf("data:image/png;base64, %s", string(benc)),
+					file:      *uploadedFile,
+				}
+			} else {
+				chInlineAttachments <- MultipartFile{
+					contentID: cid,
+					content:   fmt.Sprintf("%s/file/view/%s", config.GetString(config.CyrusURL), tk),
+					file:      *uploadedFile,
+				}
+			}
+		}(att, k)
 	}
+	wg.Wait()
+	close(chInlineAttachments)
 
-	if addr, err := mail.ParseAddress(from); err != nil {
-		log.Error("ERROR::::::Parse from address error:", zap.Error(err))
-	} else {
-		if addr.Address == senderID && senderName == "" {
-			senderName = addr.Name
+	for att := range chInlineAttachments {
+		if len(att.contentID) > 0 && strings.Count(envelope.HTML, att.contentID)+strings.Count(envelope.Text, att.contentID) > 0 {
+			nm.InlineAttachments[att.contentID] = att.content
+		} else {
+			if att.file.Size > 0 {
+				nm.Attachments[string(att.file.UniversalID)] = nested.FileInfo{
+					Size:     att.file.Size,
+					Filename: att.file.Name,
+				}
+			}
 		}
 	}
-	return
+	return nil
+}
+func (s *Session) extractAttachments(nm *NestedMail, envelope *enmime.Envelope) error {
+	chAttachments := make(chan MultipartFile, len(envelope.Attachments))
+	wg := sync.WaitGroup{}
+	for k, att := range envelope.Attachments {
+		wg.Add(1)
+		go func(att *enmime.Part, index int) {
+			defer wg.Done()
+
+			// Upload File
+			var cid string
+			if c := att.Header.Get("Content-Id"); len(c) > 0 {
+				cid = c[1 : len(c)-1]
+			}
+
+			filename := att.FileName
+			if 0 == len(filename) {
+				filename = fmt.Sprintf("attachment_%d", index)
+			}
+			uploadedFile, err := s.uploader.uploadFile(att.FileName, nm.SenderID, nested.FileStatusAttached, nm.AttachOwners, bytes.NewReader(att.Content))
+			if err != nil {
+				log.Error("got error on uploading attachments (upload)", zap.Error(err), zap.String("Sender", nm.SenderName))
+				return
+			}
+			tk, err := s.model.Token.CreateFileToken(uploadedFile.UniversalID, "", "")
+			if err != nil {
+				benc := make([]byte, base64.StdEncoding.EncodedLen(len(att.Content)))
+				base64.StdEncoding.Encode(benc, att.Content)
+
+				chAttachments <- MultipartFile{
+					contentID: cid,
+					content:   fmt.Sprintf("data:image/png;base64, %s", string(benc)),
+					file:      *uploadedFile,
+				}
+			} else {
+				chAttachments <- MultipartFile{
+					contentID: cid,
+					content:   fmt.Sprintf("%s/file/view/%s", config.GetString(config.CyrusURL), tk),
+					file:      *uploadedFile,
+				}
+			}
+		}(att, k)
+	}
+	wg.Wait()
+	close(chAttachments)
+	for att := range chAttachments {
+		if len(att.contentID) > 0 && strings.Count(envelope.HTML, att.contentID)+strings.Count(envelope.Text, att.contentID) > 0 {
+			nm.InlineAttachments[att.contentID] = att.content
+		}
+
+		if att.file.Size > 0 {
+			nm.Attachments[string(att.file.UniversalID)] = nested.FileInfo{
+				Size:     att.file.Size,
+				Filename: att.file.Name,
+			}
+		}
+	}
+	return nil
+}
+func (s *Session) store(nm *NestedMail, mailEnvelope *enmime.Envelope) error {
+	var (
+		bodyHtml  = mailEnvelope.HTML
+		bodyPlain = mailEnvelope.Text
+		messageID = mailEnvelope.GetHeader("Message-ID")
+		inReplyTo = mailEnvelope.GetHeader("In-Reply-To")
+		subject   = mailEnvelope.GetHeader("Subject")
+	)
+
+	for k, v := range nm.InlineAttachments {
+		bodyHtml = strings.Replace(bodyHtml, fmt.Sprintf("\"cid:%s\"", k), fmt.Sprintf("\"%s\"", v), -1)
+		bodyPlain = strings.Replace(bodyPlain, fmt.Sprintf("\"cid:%s\"", k), fmt.Sprintf("\"%s\"", v), -1)
+	}
+
+	postCreate := func(targets []string) error {
+		postCreateReq := nested.PostCreateRequest{
+			SenderID: nm.SenderID,
+			Subject:  subject,
+			EmailMetadata: nested.EmailMetadata{
+				Name:           nm.SenderName,
+				RawMessageFile: nm.RawUniversalID,
+				MessageID:      messageID,
+				InReplyTo:      inReplyTo,
+				ReplyTo:        nm.ReplyTo,
+				Picture:        nm.SenderPic,
+			},
+			PlaceIDs:   []string{},
+			Recipients: []string{},
+		}
+		postAttachmentIDs := make([]nested.UniversalID, 0, len(nm.Attachments))
+		postAttachmentSizes := make([]int64, 0, len(nm.Attachments))
+		for attachID, inf := range nm.Attachments {
+			postAttachmentIDs = append(postAttachmentIDs, nested.UniversalID(attachID))
+			postAttachmentSizes = append(postAttachmentSizes, inf.Size)
+		}
+		postCreateReq.AttachmentIDs = postAttachmentIDs
+		postCreateReq.AttachmentSizes = postAttachmentSizes
+		if len(bodyHtml) > 0 {
+			postCreateReq.ContentType = nested.ContentTypeTextHtml
+			postCreateReq.Body = bodyHtml
+		} else {
+			postCreateReq.ContentType = nested.ContentTypeTextPlain
+			postCreateReq.Body = bodyPlain
+		}
+		// Validate Targets and Separate places and emails
+		mapPlaceIDs := make(map[string]bool)
+		mapEmails := make(map[string]bool)
+		for _, targetAddr := range targets {
+			if idx := strings.Index(targetAddr, "@"); idx != -1 {
+				if strings.HasSuffix(strings.ToLower(targetAddr), fmt.Sprintf("@%s", strings.ToLower(config.GetString(config.SenderDomain)))) {
+					mapPlaceIDs[targetAddr[:idx]] = true
+				} else {
+					mapEmails[targetAddr] = true
+				}
+			} else if s.model.Place.Exists(targetAddr) && !s.model.Place.IsBlocked(targetAddr, nm.SenderID) {
+				mapPlaceIDs[targetAddr] = true
+			}
+		}
+		for placeID := range mapPlaceIDs {
+			postCreateReq.PlaceIDs = append(postCreateReq.PlaceIDs, placeID)
+		}
+		for recipient := range mapEmails {
+			postCreateReq.Recipients = append(postCreateReq.Recipients, recipient)
+		}
+		log.Debug("postCreateReq", zap.Any("AttachmentIDs", postCreateReq.AttachmentIDs))
+		post := s.model.Post.AddPost(postCreateReq)
+		if post == nil {
+			return fmt.Errorf("could not create post")
+		}
+
+		// TODO:: internal sync push must be handled here
+		// for _, pid := range post.PlaceIDs {
+		// Internal
+		// place := s.model.Place.GetByID(pid, nil)
+		// memberIDs := place.GetMemberIDs()
+
+		// m.InternalPlaceActivitySyncPush(memberIDs, pid, nested.PlaceActivityActionPostAdd)
+		// }
+
+		return nil
+	}
+
+	// Create one post for CCs
+	if err := postCreate(nm.NonBlindTargets); err != nil {
+		return err
+	}
+
+	// Create Individual Posts for BCCs
+	for _, recipient := range nm.BlindPlaceIDs {
+		if err := postCreate([]string{recipient}); err != nil {
+			return err
+		}
+	}
+	return nil
 }

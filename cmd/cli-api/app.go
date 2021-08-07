@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"git.ronaksoft.com/nested/server/nested"
 	"git.ronaksoft.com/nested/server/pkg/config"
 	"git.ronaksoft.com/nested/server/pkg/global"
@@ -199,15 +200,16 @@ func (gw *APP) Run() {
 	}()
 
 	// Run Server
+	addr := fmt.Sprintf("%s:%d", config.GetString(config.BindIP), config.GetInt(config.BindPort))
 	if config.GetString(config.TlsKeyFile) != "" && config.GetString(config.TlsCertFile) != "" {
 		_ = gw.iris.Run(iris.TLS(
-			config.GetString(config.BindAddress),
+			addr,
 			config.GetString(config.TlsCertFile),
 			config.GetString(config.TlsKeyFile),
 		))
 	} else {
 		_ = gw.iris.Run(iris.Addr(
-			config.GetString(config.BindAddress),
+			addr,
 		))
 	}
 

@@ -89,7 +89,7 @@ func (tm *TokenManager) CreateFileToken(uniID UniversalID, issuerID, receiverEma
 		Receiver: receiverEmail,
 	}
 	if err := db.C(global.CollectionTokensFiles).Insert(ft); err != nil {
-		log.Warn("Got error", zap.Error(err))
+		log.Warn("got error on creating file token", zap.Error(err))
 		return "", err
 	}
 	return ft.ID, nil

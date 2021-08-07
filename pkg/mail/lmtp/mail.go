@@ -14,13 +14,15 @@ import (
 */
 
 type NestedMail struct {
-	SenderID         string
-	SenderName       string
-	SenderPic        nested.Picture
-	ReplyTo          string
-	RawUniversalID   nested.UniversalID
-	NonBlindPlaceIDs []string
-	NonBlindTargets  []string
-	BlindPlaceIDs    []string
-	AttachOwners     []string
+	SenderID          string
+	SenderName        string
+	SenderPic         nested.Picture
+	ReplyTo           string
+	RawUniversalID    nested.UniversalID
+	NonBlindPlaceIDs  []string
+	NonBlindTargets   []string
+	BlindPlaceIDs     []string
+	AttachOwners      []string
+	InlineAttachments map[string]string
+	Attachments       map[string]nested.FileInfo
 }

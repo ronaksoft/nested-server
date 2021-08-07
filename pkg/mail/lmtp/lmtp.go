@@ -1,7 +1,9 @@
 package lmtp
 
 import (
+	"fmt"
 	"git.ronaksoft.com/nested/server/nested"
+	"git.ronaksoft.com/nested/server/pkg/config"
 	"github.com/emersion/go-smtp"
 	"os"
 	"time"
@@ -17,9 +19,10 @@ import (
 */
 
 type Server struct {
-	model *nested.Manager
-	s     *smtp.Server
-	addr  string
+	model    *nested.Manager
+	uploader *uploadClient
+	s        *smtp.Server
+	addr     string
 }
 
 func New(model *nested.Manager, addr string) *Server {
@@ -27,6 +30,12 @@ func New(model *nested.Manager, addr string) *Server {
 		model: model,
 		addr:  addr,
 	}
+	if uploader, err := newUploadClient(config.GetString(config.MailUploadBaseURL), config.GetString(config.FileSystemKey), true); err != nil {
+		panic(fmt.Sprintf("could not create uploader client: %v", err))
+	} else {
+		s.uploader = uploader
+	}
+
 	ss := smtp.NewServer(s)
 	ss.Addr = addr
 	ss.LMTP = true
@@ -63,5 +72,6 @@ func (s *Server) AnonymousLogin(state *smtp.ConnectionState) (smtp.Session, erro
 		hostname:   state.Hostname,
 		remoteAddr: state.RemoteAddr.String(),
 		model:      s.model,
+		uploader:   s.uploader,
 	}, nil
 }

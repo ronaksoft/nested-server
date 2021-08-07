@@ -17,6 +17,7 @@ services:
       - NST_DOMAINS=nested.local
       - NST_SENDER_DOMAIN=nested.local
       - NST_MAIL_STORE_SOCK=private/nested-mail
+      - NST_FILE_SYSTEM_KEY=###SECUREKEY!!!
     networks:
       - test-nested
 
