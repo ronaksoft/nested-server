@@ -106,20 +106,6 @@ func (fs *Server) ServePrivateFiles(ctx iris.Context) {
 	ctx.Next()
 }
 
-func (fs *Server) ServerFileBySystem(ctx iris.Context) {
-	apiKey := ctx.Params().Get("apiKey")
-	resp := new(rpc.Response)
-	if apiKey != fs.apiKey {
-		ctx.StatusCode(http.StatusUnauthorized)
-		resp.Error(global.ErrAccess, []string{})
-		ctx.JSON(resp)
-		return
-	}
-
-	// Go to next handler
-	ctx.Next()
-}
-
 func (fs *Server) Download(ctx iris.Context) {
 	var fileInfo *nested.FileInfo
 	var file *mgo.GridFile
@@ -167,15 +153,9 @@ func (fs *Server) Download(ctx iris.Context) {
 
 func (fs *Server) UploadSystem(ctx iris.Context) {
 	var multipartReader *multipart.Reader
-	apiKey := ctx.Params().Get("apiKey")
-	resp := new(rpc.Response)
-	if apiKey != fs.apiKey {
-		ctx.StatusCode(http.StatusUnauthorized)
-		resp.Error(global.ErrAccess, []string{})
-		ctx.JSON(resp)
-	}
 
-	uploaderID := apiKey
+	resp := new(rpc.Response)
+	uploaderID := "NestedSystemKey"
 	uploadType := strings.ToUpper(ctx.Params().Get("uploadType"))
 	if r, err := ctx.Request().MultipartReader(); err != nil {
 		ctx.StatusCode(http.StatusBadRequest)

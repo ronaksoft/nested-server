@@ -2,7 +2,6 @@ package file
 
 import (
 	"git.ronaksoft.com/nested/server/nested"
-	"git.ronaksoft.com/nested/server/pkg/config"
 	"git.ronaksoft.com/nested/server/pkg/log"
 	"git.ronaksoft.com/nested/server/pkg/rpc/file/convert"
 	"go.uber.org/zap"
@@ -14,13 +13,11 @@ var (
 )
 
 type Server struct {
-	apiKey     string
 	compressed bool
 }
 
 func NewServer(model *nested.Manager) *Server {
 	s := new(Server)
-	s.apiKey = config.GetString(config.FileSystemKey)
 	s.compressed = false
 	_NestedModel = model
 

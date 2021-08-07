@@ -89,7 +89,7 @@ func (p *Pusher) Websocket() *session.WebsocketManager {
 }
 
 func (p *Pusher) RegisterDevice(id, token, os, userID string) error {
-	req := CMDRegisterDevice{
+	req := cmdRegisterDevice{
 		DeviceID:    id,
 		DeviceToken: token,
 		DeviceOS:    os,
@@ -111,7 +111,7 @@ func (p *Pusher) RegisterDevice(id, token, os, userID string) error {
 }
 
 func (p *Pusher) UnregisterDevice(id, token, uid string) error {
-	req := CMDUnRegisterDevice{
+	req := cmdUnRegisterDevice{
 		DeviceID:    id,
 		DeviceToken: token,
 		UserID:      uid,
@@ -124,7 +124,7 @@ func (p *Pusher) UnregisterDevice(id, token, uid string) error {
 }
 
 func (p *Pusher) RegisterWebsocket(userID, deviceID, bundleID, websocketID string) error {
-	req := CMDRegisterWebsocket{
+	req := cmdRegisterWebsocket{
 		DeviceID:    deviceID,
 		UserID:      userID,
 		BundleID:    bundleID,
@@ -139,7 +139,7 @@ func (p *Pusher) RegisterWebsocket(userID, deviceID, bundleID, websocketID strin
 }
 
 func (p *Pusher) UnregisterWebsocket(websocketID, bundleID string) error {
-	req := CMDUnRegisterWebsocket{
+	req := cmdUnRegisterWebsocket{
 		WebsocketID: websocketID,
 		BundleID:    bundleID,
 	}
@@ -153,7 +153,7 @@ func (p *Pusher) UnregisterWebsocket(websocketID, bundleID string) error {
 }
 
 func (p *Pusher) internalPush(targets []string, msg string, localOnly bool) error {
-	req := CMDPushInternal{
+	req := cmdPushInternal{
 		Targets:   targets,
 		Message:   msg,
 		LocalOnly: localOnly,
@@ -339,7 +339,7 @@ func (p *Pusher) InternalNotificationSyncPush(targets []string, notificationType
 }
 
 func (p *Pusher) externalPush(targets []string, data map[string]string) {
-	req := CMDPushExternal{
+	req := cmdPushExternal{
 		Targets: targets,
 		Data:    data,
 	}

@@ -46,6 +46,18 @@ var GenDKIMCmd = &cobra.Command{
 	Short: "generate dkim public and private key",
 	Run: func(cmd *cobra.Command, args []string) {
 		priv, pub := CreateDKIMKeys()
+		f, err := os.Create("./default.private")
+		if err != nil {
+			panic(err)
+		}
+		_, _ = f.WriteString(priv)
+		_ = f.Close()
+		f, err = os.Create("./default.txt")
+		if err != nil {
+			panic(err)
+		}
+		_, _ = f.WriteString(pub)
+		_ = f.Close()
 		fmt.Println("DKIM Private Key:\r\n", priv)
 		fmt.Println("DNS TEXT:\r\n", pub)
 	},
@@ -65,7 +77,7 @@ var GenRandomKey = &cobra.Command{
 
 // CreateDKIMKeys produces a pair of public and private keys
 func CreateDKIMKeys() (priv, pub string) {
-	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+	privateKey, _ := rsa.GenerateKey(rand.Reader, 1024)
 	publicKey := &privateKey.PublicKey
 	priv = string(pem.EncodeToMemory(
 		&pem.Block{

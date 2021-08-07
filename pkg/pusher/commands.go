@@ -9,38 +9,38 @@ package pusher
    Copyright Ronak Software Group 2020
 */
 
-type CMDRegisterWebsocket struct {
+type cmdRegisterWebsocket struct {
 	UserID      string `json:"uid"`
 	WebsocketID string `json:"ws_id"`
 	BundleID    string `json:"bundle_id"`
 	DeviceID    string `json:"_did"`
 }
 
-type CMDRegisterDevice struct {
+type cmdRegisterDevice struct {
 	DeviceID    string `json:"_did"`
 	UserID      string `json:"uid"`
 	DeviceToken string `json:"_dt"`
 	DeviceOS    string `json:"_os"`
 }
 
-type CMDUnRegisterDevice struct {
+type cmdUnRegisterDevice struct {
 	DeviceID    string `json:"_did"`
 	DeviceToken string `json:"_dt"`
 	UserID      string `json:"uid"`
 }
 
-type CMDUnRegisterWebsocket struct {
+type cmdUnRegisterWebsocket struct {
 	WebsocketID string `json:"ws_id"`
 	BundleID    string `json:"bundle_id"`
 }
 
-type CMDPushInternal struct {
+type cmdPushInternal struct {
 	Targets   []string `json:"targets"`
 	LocalOnly bool     `json:"local_only"`
 	Message   string   `json:"msg"`
 }
 
-type CMDPushExternal struct {
+type cmdPushExternal struct {
 	Targets []string          `json:"targets"`
 	Data    map[string]string `json:"data"`
 }

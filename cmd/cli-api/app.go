@@ -48,6 +48,7 @@ var (
 )
 
 type APP struct {
+	systemKey string
 	wg        *sync.WaitGroup
 	ws        *websocket.Server
 	iris      *iris.Application
@@ -56,10 +57,13 @@ type APP struct {
 	api       *api.Server
 	mailStore *lmtp.Server
 	mailMap   *mailmap.Server
+	pusher    *pusher.Pusher
 }
 
 func NewAPP() *APP {
-	app := new(APP)
+	app := &APP{
+		systemKey: config.GetString(config.SystemAPIKey),
+	}
 
 	// Set Welcome Message to send to clients when they connect
 	_WelcomeMsg := tools.M{
@@ -95,6 +99,19 @@ func NewAPP() *APP {
 	})
 	app.ws.OnConnection(app.websocketOnConnection)
 
+	// Initialize Pusher
+	app.pusher = pusher.New(
+		app.model,
+		config.GetString(config.BundleID), config.GetString(config.SenderDomain),
+		func(push pusher.WebsocketPush) bool {
+			if app.ws.IsConnected(push.WebsocketID) {
+				conn := app.ws.GetConnection(push.WebsocketID)
+				_ = conn.EmitMessage([]byte(push.Payload))
+				return true
+			}
+			return false
+		},
+	)
 	// Initialize IRIS Framework
 	app.iris = iris.New()
 	app.iris.Use(
@@ -111,16 +128,7 @@ func NewAPP() *APP {
 	app.wg = new(sync.WaitGroup)
 
 	// Initialize API Server
-	app.api = api.NewServer(app.wg, app.model,
-		func(push pusher.WebsocketPush) bool {
-			if app.ws.IsConnected(push.WebsocketID) {
-				conn := app.ws.GetConnection(push.WebsocketID)
-				_ = conn.EmitMessage([]byte(push.Payload))
-				return true
-			}
-			return false
-		},
-	)
+	app.api = api.NewServer(app.wg, app.model, app.pusher)
 
 	// Register all the available services in the server worker
 	app.api.Worker().RegisterService(
@@ -182,9 +190,9 @@ func NewAPP() *APP {
 
 	// System Handlers
 	systemParty := app.iris.Party("/system")
-	systemParty.Get("/download/{apiKey:string}/{universalID:string}", app.file.ServerFileBySystem, app.file.Download)
-	systemParty.Post("/upload/{uploadType:string}/{apiKey:string}", app.file.UploadSystem)
-
+	systemParty.Get("/download/{apiKey:string}/{universalID:string}", app.CheckSystemKey, app.file.Download)
+	systemParty.Post("/upload/{uploadType:string}/{apiKey:string}", app.CheckSystemKey, app.file.UploadSystem)
+	systemParty.Get("/pusher/place_activity/{apiKey:string}/{placeID:string}/{placeActivity:int}", app.CheckSystemKey, app.PushPlaceActivity)
 	return app
 }
 
@@ -328,4 +336,30 @@ func (gw *APP) websocketOnConnection(c websocket.Connection) {
 	c.OnDisconnect(func() {
 		_ = gw.api.Worker().Pusher().UnregisterWebsocket(c.ID(), config.GetString(config.BundleID))
 	})
+}
+
+func (gw *APP) CheckSystemKey(ctx iris.Context) {
+	apiKey := ctx.Params().Get("apiKey")
+	resp := new(rpc.Response)
+	if apiKey != gw.systemKey {
+		ctx.StatusCode(http.StatusUnauthorized)
+		resp.Error(global.ErrAccess, []string{})
+		ctx.JSON(resp)
+		return
+	}
+
+	// Go to next handler
+	ctx.Next()
+}
+
+func (gw *APP) PushPlaceActivity(ctx iris.Context) {
+	placeID := ctx.Params().Get("placeID")
+	activity := ctx.Params().GetIntDefault("placeActivity", 0)
+	switch activity {
+	case nested.PlaceActivityActionPostAdd:
+		place := gw.model.Place.GetByID(placeID, nil)
+		if place != nil {
+			gw.pusher.InternalPlaceActivitySyncPush(place.GetMemberIDs(), placeID, activity)
+		}
+	}
 }

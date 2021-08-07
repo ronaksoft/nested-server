@@ -55,10 +55,12 @@ type Flags struct {
 	LicenseSlowMode    int
 }
 
-func NewServer(wg *sync.WaitGroup, model *nested.Manager, pushFunc pusher.PushFunc) *Server {
-	s := new(Server)
-	s.wg = wg
-	s.model = model
+func NewServer(wg *sync.WaitGroup, model *nested.Manager, pusher *pusher.Pusher) *Server {
+	s := &Server{
+		pusher: pusher,
+		model:  model,
+		wg:     wg,
+	}
 
 	// Run Model Checkups
 	nested.StartupCheckups()
@@ -66,12 +68,6 @@ func NewServer(wg *sync.WaitGroup, model *nested.Manager, pushFunc pusher.PushFu
 	// Register Bundle
 	s.model.RegisterBundle(config.GetString(config.BundleID))
 
-	// Initialize Pusher
-	s.pusher = pusher.New(
-		s.model,
-		config.GetString(config.BundleID), config.GetString(config.SenderDomain),
-		pushFunc,
-	)
 	// Instantiate Worker
 	s.requestWorker = NewWorker(s)
 

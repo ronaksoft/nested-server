@@ -36,6 +36,7 @@ type Session struct {
 	opts       smtp.MailOptions
 	model      *nested.Manager
 	uploader   *uploadClient
+	pusher     *pusherClient
 }
 
 func (s *Session) Reset() {
@@ -385,14 +386,9 @@ func (s *Session) store(nm *NestedMail, mailEnvelope *enmime.Envelope) error {
 			return fmt.Errorf("could not create post")
 		}
 
-		// TODO:: internal sync push must be handled here
-		// for _, pid := range post.PlaceIDs {
-		// Internal
-		// place := s.model.Place.GetByID(pid, nil)
-		// memberIDs := place.GetMemberIDs()
-
-		// m.InternalPlaceActivitySyncPush(memberIDs, pid, nested.PlaceActivityActionPostAdd)
-		// }
+		for _, pid := range post.PlaceIDs {
+			s.pusher.PlaceActivity(pid, nested.PlaceActivityActionPostAdd)
+		}
 
 		return nil
 	}

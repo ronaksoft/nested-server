@@ -21,6 +21,7 @@ import (
 type Server struct {
 	model    *nested.Manager
 	uploader *uploadClient
+	pusher   *pusherClient
 	s        *smtp.Server
 	addr     string
 }
@@ -30,10 +31,16 @@ func New(model *nested.Manager, addr string) *Server {
 		model: model,
 		addr:  addr,
 	}
-	if uploader, err := newUploadClient(config.GetString(config.MailUploadBaseURL), config.GetString(config.FileSystemKey), true); err != nil {
+	if uploader, err := newUploadClient(config.GetString(config.MailUploadBaseURL), config.GetString(config.SystemAPIKey), true); err != nil {
 		panic(fmt.Sprintf("could not create uploader client: %v", err))
 	} else {
 		s.uploader = uploader
+	}
+
+	if pusher, err := newPusherClient(config.GetString(config.MailUploadBaseURL), config.GetString(config.SystemAPIKey), true); err != nil {
+		panic(fmt.Sprintf("could not create pusher client: %v", err))
+	} else {
+		s.pusher = pusher
 	}
 
 	s.s = smtp.NewServer(s)
@@ -73,5 +80,6 @@ func (s *Server) AnonymousLogin(state *smtp.ConnectionState) (smtp.Session, erro
 		remoteAddr: state.RemoteAddr.String(),
 		model:      s.model,
 		uploader:   s.uploader,
+		pusher:     s.pusher,
 	}, nil
 }

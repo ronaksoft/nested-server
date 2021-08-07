@@ -23,7 +23,7 @@ const (
 	ADPUsername        = "ADP_USERNAME"
 	ADPPassword        = "ADP_PASSWORD"
 	MonitorAccessToken = "MONITOR_ACCESS_TOKEN"
-	FileSystemKey      = "FILE_SYSTEM_KEY"
+	SystemAPIKey       = "SYSTEM_API_KEY"
 	SmtpUser           = "SMTP_USER"
 	SmtpPass           = "SMTP_PASS"
 	SmtpHost           = "SMTP_HOST"
@@ -85,7 +85,7 @@ func init() {
 
 	// Extra Configs
 	_ = dl.SetDefault(MonitorAccessToken, "!@NES##monitor##TED@!")
-	_ = dl.SetDefault(FileSystemKey, "testKey")
+	_ = dl.SetDefault(SystemAPIKey, "testKey")
 
 	_Onion = onion.New()
 	_ = _Onion.AddLayer(dl)

@@ -53,7 +53,7 @@ func init() {
 
 }
 
-func (p *Pusher) sendFCM(d session.Device, req CMDPushExternal) {
+func (p *Pusher) sendFCM(d session.Device, req cmdPushExternal) {
 	if p.fcm == nil {
 		return
 	}
