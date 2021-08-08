@@ -378,6 +378,7 @@ func (s *Session) store(nm *NestedMail, mailEnvelope *enmime.Envelope) error {
 			postCreateReq.ContentType = nested.ContentTypeTextPlain
 			postCreateReq.Body = bodyPlain
 		}
+		log.Debug("organizing targets", zap.Strings("Targets", targets))
 		// Validate Targets and Separate places and emails
 		mapPlaceIDs := make(map[string]bool)
 		mapEmails := make(map[string]bool)
@@ -398,7 +399,12 @@ func (s *Session) store(nm *NestedMail, mailEnvelope *enmime.Envelope) error {
 		for recipient := range mapEmails {
 			postCreateReq.Recipients = append(postCreateReq.Recipients, recipient)
 		}
-		log.Debug("postCreateReq", zap.Any("AttachmentIDs", postCreateReq.AttachmentIDs))
+		log.Debug("we are creating post",
+			zap.Any("AttachmentIDs", postCreateReq.AttachmentIDs),
+			zap.Strings("PlaceIDs", postCreateReq.PlaceIDs),
+			zap.Strings("Recipients", postCreateReq.Recipients),
+			zap.Any("SenderID", postCreateReq.SenderID),
+		)
 		post := s.model.Post.AddPost(postCreateReq)
 		if post == nil {
 			return fmt.Errorf("could not create post")
@@ -412,7 +418,10 @@ func (s *Session) store(nm *NestedMail, mailEnvelope *enmime.Envelope) error {
 	}
 
 	// Create one post for CCs
-	if err := postCreate(nm.NonBlindTargets); err != nil {
+	var targets []string
+	targets = append(targets, nm.NonBlindTargets...)
+	targets = append(targets, nm.NonBlindPlaceIDs...)
+	if err := postCreate(targets); err != nil {
 		return err
 	}
 

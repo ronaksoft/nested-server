@@ -595,7 +595,10 @@ func (pm *PlaceManager) IncrementCounter(placeIDs []string, counterName string, 
 			bson.M{"_id": bson.M{"$in": placeIDs}},
 			bson.M{"$inc": bson.M{keyName: c}},
 		); err != nil {
-			log.Warn("Got error", zap.Error(err))
+			log.Warn("got error on incrementing place counter",
+				zap.Error(err), zap.Strings("PlaceIDs", placeIDs),
+				zap.String("counter", counterName),
+			)
 			return false
 		}
 	}

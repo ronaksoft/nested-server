@@ -53,9 +53,9 @@ type MultipartFile struct {
 }
 
 type uploadClient struct {
-	url          string
-	apiKey       string
-	client       *http.Client
+	url    string
+	apiKey string
+	client *http.Client
 }
 
 func newUploadClient(url, apiKey string, skipVerify bool) (*uploadClient, error) {
@@ -116,8 +116,6 @@ func (c *uploadClient) upload(uploadType string, files ...File) (*UploadOutput, 
 		req = r
 		req.Header.Set("Content-Type", fmt.Sprintf("%s; boundary=\"%s\"", "multipart/form-data", frm.Boundary()))
 	}
-
-
 
 	if r, err := c.client.Do(req); err != nil {
 		return nil, err

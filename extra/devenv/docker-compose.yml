@@ -18,8 +18,8 @@ services:
       - NST_DOMAINS=ronaksoftware.com
       - NST_SENDER_DOMAIN=ronaksoftware.com
       - NST_MAIL_STORE_SOCK=private/nested-mail
-      - NST_MAIL_UPLOAD_BASE_URL=http://127.0.0.1
-      - NST_SYSTEM_API_KEY=###SECUREKEY!!!
+      - NST_MAIL_UPLOAD_BASE_URL=http://127.0.0.1:8080
+      - NST_SYSTEM_API_KEY=SOME_SECURE_KEY
       - NST_SMTP_USER=smtpUser
       - NST_SMTP_PASS=smtpPass
     volumes:

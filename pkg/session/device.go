@@ -5,6 +5,7 @@ import (
 	"git.ronaksoft.com/nested/server/pkg/log"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
+	"go.uber.org/zap"
 	"time"
 )
 
@@ -145,7 +146,7 @@ func (dm *DeviceManager) SetAsDisconnected(deviceID string) bool {
 		bson.M{"_id": deviceID},
 		bson.M{"$set": bson.M{"connected": false}},
 	); err != nil {
-		log.Warn(err.Error())
+		log.Warn("got error on set device disconnected", zap.String("DeviceID", deviceID), zap.Error(err))
 		return false
 	}
 	return true

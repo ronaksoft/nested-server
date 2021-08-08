@@ -200,8 +200,8 @@ func NewAPP() *APP {
 // This is a blocking function which will run the Iris server
 func (gw *APP) Run() {
 	log.Info("MailStore Server started",
-		zap.String("Unix", gw.mailStore.Addr()),
 		zap.String("UploadBaseURL", config.GetString(config.MailUploadBaseURL)),
+		zap.String("Unix", gw.mailStore.Addr()),
 	)
 	gw.mailStore.Run()
 
