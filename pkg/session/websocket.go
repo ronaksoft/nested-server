@@ -126,8 +126,6 @@ func (wm *WebsocketManager) GetAccountsByBundleID(bundleID string) []string {
 }
 
 func (wm *WebsocketManager) Remove(websocketID, bundleID string) *Websocket {
-	//
-
 	c := wm.c.Pool.Get()
 	defer c.Close()
 	if c == nil {

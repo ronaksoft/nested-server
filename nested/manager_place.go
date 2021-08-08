@@ -88,7 +88,7 @@ func (pm *PlaceManager) readFromCache(placeID string) *Place {
 	keyID := fmt.Sprintf("place:gob:%s", placeID)
 	if gobPlace, err := redis.Bytes(c.Do("GET", keyID)); err != nil {
 		if err := _MongoDB.C(global.CollectionPlaces).FindId(placeID).One(place); err != nil {
-			log.Warn("Got error", zap.Error(err))
+			log.Warn("got error on finding place by id", zap.Error(err), zap.String("PlaceID", placeID))
 			return nil
 		}
 		gobPlace := new(bytes.Buffer)

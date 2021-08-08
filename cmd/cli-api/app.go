@@ -190,16 +190,19 @@ func NewAPP() *APP {
 
 	// System Handlers
 	systemParty := app.iris.Party("/system")
-	systemParty.Get("/download/{apiKey:string}/{universalID:string}", app.CheckSystemKey, app.file.Download)
-	systemParty.Post("/upload/{uploadType:string}/{apiKey:string}", app.CheckSystemKey, app.file.UploadSystem)
-	systemParty.Get("/pusher/place_activity/{apiKey:string}/{placeID:string}/{placeActivity:int}", app.CheckSystemKey, app.PushPlaceActivity)
+	systemParty.Get("/download/{apiKey:string}/{universalID:string}", app.checkSystemKey, app.file.Download)
+	systemParty.Post("/upload/{uploadType:string}/{apiKey:string}", app.checkSystemKey, app.file.UploadSystem)
+	systemParty.Get("/pusher/place_activity/{apiKey:string}/{placeID:string}/{placeActivity:int}", app.checkSystemKey, app.PushPlaceActivity)
 	return app
 }
 
 // Run
 // This is a blocking function which will run the Iris server
 func (gw *APP) Run() {
-	log.Info("MailStore Server started", zap.String("Unix", gw.mailStore.Addr()))
+	log.Info("MailStore Server started",
+		zap.String("Unix", gw.mailStore.Addr()),
+		zap.String("UploadBaseURL", config.GetString(config.MailUploadBaseURL)),
+	)
 	gw.mailStore.Run()
 
 	log.Info("MailMap Server started", zap.String("TCP", gw.mailMap.Addr()))
@@ -209,6 +212,7 @@ func (gw *APP) Run() {
 
 	// Run Server
 	addr := fmt.Sprintf("%s:%d", config.GetString(config.BindIP), config.GetInt(config.BindPort))
+
 	if config.GetString(config.TlsKeyFile) != "" && config.GetString(config.TlsCertFile) != "" {
 		_ = gw.iris.Run(iris.TLS(
 			addr,
@@ -338,7 +342,7 @@ func (gw *APP) websocketOnConnection(c websocket.Connection) {
 	})
 }
 
-func (gw *APP) CheckSystemKey(ctx iris.Context) {
+func (gw *APP) checkSystemKey(ctx iris.Context) {
 	apiKey := ctx.Params().Get("apiKey")
 	resp := new(rpc.Response)
 	if apiKey != gw.systemKey {

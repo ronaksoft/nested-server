@@ -7,12 +7,11 @@ import (
 	"fmt"
 	"git.ronaksoft.com/nested/server/nested"
 	"git.ronaksoft.com/nested/server/pkg/global"
-	"git.ronaksoft.com/nested/server/pkg/log"
-	"go.uber.org/zap"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -54,16 +53,24 @@ type MultipartFile struct {
 }
 
 type uploadClient struct {
-	url         string
-	apiKey      string
-	insecureTls bool
+	url          string
+	apiKey       string
+	client       *http.Client
 }
 
-func newUploadClient(url, apiKey string, insecure bool) (*uploadClient, error) {
+func newUploadClient(url, apiKey string, skipVerify bool) (*uploadClient, error) {
 	c := &uploadClient{
-		url:         url,
-		apiKey:      apiKey,
-		insecureTls: insecure,
+		url:    url,
+		apiKey: apiKey,
+	}
+	if strings.HasPrefix(url, "https://") {
+		c.client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: skipVerify},
+			},
+		}
+	} else {
+		c.client = http.DefaultClient
 	}
 	return c, nil
 }
@@ -103,7 +110,6 @@ func (c *uploadClient) upload(uploadType string, files ...File) (*UploadOutput, 
 	}()
 
 	if r, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/system/upload/%s/%s", c.url, uploadType, c.apiKey), pr); err != nil {
-		fmt.Println(err.Error())
 		return nil, err
 
 	} else {
@@ -111,24 +117,11 @@ func (c *uploadClient) upload(uploadType string, files ...File) (*UploadOutput, 
 		req.Header.Set("Content-Type", fmt.Sprintf("%s; boundary=\"%s\"", "multipart/form-data", frm.Boundary()))
 	}
 
-	var client *http.Client
-	if c.insecureTls {
-		client = &http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-			},
-		}
-	} else {
-		client = http.DefaultClient
-	}
 
-	if r, err := client.Do(req); err != nil {
-		fmt.Println(err.Error())
 
+	if r, err := c.client.Do(req); err != nil {
 		return nil, err
 	} else if http.StatusOK != r.StatusCode {
-		fmt.Println("Upload request response error")
-
 		sErr := global.Error{}
 		decoder := json.NewDecoder(r.Body)
 		if err := decoder.Decode(&sErr); err != nil {
@@ -161,8 +154,6 @@ func (c *uploadClient) uploadFile(filename, uploaderId, status string, ownerIds 
 		status:   status,
 		owners:   ownerIds,
 	}
-
-	log.Info("Uploading file %s...", zap.String("filename", filename))
 
 	if res, err := c.upload(nested.UploadTypeFile, f); err != nil {
 		return nil, err

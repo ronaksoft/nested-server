@@ -30,7 +30,6 @@ const (
 	SmtpPort           = "SMTP_PORT"
 	InstanceID         = "INSTANCE_ID"
 	WebAppBaseURL      = "WEBAPP_BASE_URL"
-	NestedDir          = "NESTED_DIR"
 	PostfixCHRoot      = "POSTFIX_CHROOT"
 	MailStoreSock      = "MAIL_STORE_SOCK"
 	MailUploadBaseURL  = "MAIL_UPLOAD_BASE_URL"
@@ -48,10 +47,9 @@ func init() {
 	_ = dl.SetDefault(MailStoreSock, "private/nested-mail")
 	_ = dl.SetDefault(MailerDaemon, "MAILER_DAEMON")
 	_ = dl.SetDefault(MailUploadBaseURL, "http://127.0.0.1:8080")
-
-	_ = dl.SetDefault(NestedDir, "/ronak/nested")
+	_ = dl.SetDefault(CyrusURL, "http://cyrus.nested.local")
 	_ = dl.SetDefault(Domains, "nested.me") // comma separated
-	_ = dl.SetDefault(SenderDomain, "nested.me")
+	_ = dl.SetDefault(SenderDomain, "nested.local")
 	_ = dl.SetDefault(BundleID, "CYRUS.001")
 	_ = dl.SetDefault(BindIP, "0.0.0.0")
 	_ = dl.SetDefault(BindPort, 8080)

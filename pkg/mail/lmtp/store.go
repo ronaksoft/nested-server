@@ -78,25 +78,43 @@ func (s *Session) Data(r io.Reader) (err error) {
 		}
 	)
 	if envelope, err = enmime.ReadEnvelope(r); err != nil {
+		log.Warn("got error on read envelope", zap.Error(err))
 		return
 	}
 	if err = s.extractSender(nestedMail, envelope); err != nil {
+		log.Warn("got error on extract sender", zap.Error(err))
 		return
 	}
 	if err = s.extractHeader(nestedMail, envelope); err != nil {
+		log.Warn("got error on extract header", zap.Error(err))
 		return
 	}
 	if err = s.storeMail(nestedMail, envelope); err != nil {
+		log.Warn("got error on store mail", zap.Error(err))
 		return
 	}
 	if err = s.extractGravatar(nestedMail, envelope); err != nil {
+		log.Warn("got error on extract gravatar", zap.Error(err))
 		return
 	}
 	if err = s.extractInlineAttachments(nestedMail, envelope); err != nil {
+		log.Warn("got error on extract inline attachments", zap.Error(err))
+		return
+	}
+	if err = s.extractInlineAttachments(nestedMail, envelope); err != nil {
+		log.Warn("got error on extract inline attachments", zap.Error(err))
+		return
+	}
+	if err = s.extractAttachments(nestedMail, envelope); err != nil {
+		log.Warn("got error on extract attachments", zap.Error(err))
+		return
+	}
+	if err = s.store(nestedMail, envelope); err != nil {
+		log.Warn("got error on store", zap.Error(err))
 		return
 	}
 
-	return s.store(nestedMail, envelope)
+	return
 }
 func (s *Session) extractSender(nm *NestedMail, mailEnvelope *enmime.Envelope) error {
 	from := mailEnvelope.GetHeader("From")
@@ -120,8 +138,8 @@ func (s *Session) extractSender(nm *NestedMail, mailEnvelope *enmime.Envelope) e
 
 func (s *Session) extractHeader(nm *NestedMail, envelope *enmime.Envelope) error {
 	replyToHeader := strings.TrimSpace(envelope.GetHeader("Reply-To"))
-	if len(replyToHeader) >= 0 {
-		// No Reply-To has been set
+	if len(replyToHeader) > 0 {
+		// Reply-To has been set
 		addr, err := mail.ParseAddress(replyToHeader)
 		if err != nil {
 			log.Error("ERROR::Reply-to address is invalid:", zap.Any("replyToHeader", replyToHeader))
