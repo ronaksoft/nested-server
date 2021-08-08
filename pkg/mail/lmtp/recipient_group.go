@@ -95,15 +95,16 @@ func (r *RecipientGroup) GetAllNonBlindByDomain(domain string) []string {
 	return myRecipients
 }
 
-func NewRecipientGroup(mime *enmime.Envelope) *RecipientGroup {
-	toAddrs, _ := mime.AddressList("To")
-	ccAddrs, _ := mime.AddressList("Cc")
-	bccAddrs, _ := mime.AddressList("Bcc")
+func NewRecipientGroup(envelope *enmime.Envelope) *RecipientGroup {
+	toAddrs, _ := envelope.AddressList("To")
+	ccAddrs, _ := envelope.AddressList("Cc")
+	bccAddrs, _ := envelope.AddressList("Bcc")
 
-	recipients := new(RecipientGroup)
-	recipients.ToMap = make(map[string]string)
-	recipients.CcMap = make(map[string]string)
-	recipients.BccMap = make(map[string]string)
+	recipients := &RecipientGroup{
+		ToMap:  make(map[string]string),
+		CcMap:  make(map[string]string),
+		BccMap: make(map[string]string),
+	}
 
 	for _, addr := range toAddrs {
 		recipients.To = append(recipients.To, strings.ToLower(addr.Address))

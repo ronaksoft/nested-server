@@ -89,6 +89,10 @@ func (s *Session) Data(r io.Reader) (err error) {
 		log.Warn("got error on extract header", zap.Error(err))
 		return
 	}
+	if err = s.extractRecipients(nestedMail, envelope); err != nil {
+		log.Warn("got error on extract recipients", zap.Error(err))
+		return
+	}
 	if err = s.storeMail(nestedMail, envelope); err != nil {
 		log.Warn("got error on store mail", zap.Error(err))
 		return
@@ -417,11 +421,8 @@ func (s *Session) store(nm *NestedMail, mailEnvelope *enmime.Envelope) error {
 		return nil
 	}
 
-	// Create one post for CCs
-	var targets []string
-	targets = append(targets, nm.NonBlindTargets...)
-	targets = append(targets, nm.NonBlindPlaceIDs...)
-	if err := postCreate(targets); err != nil {
+	// Create one post for TOs and CCs
+	if err := postCreate(nm.NonBlindTargets); err != nil {
 		return err
 	}
 
