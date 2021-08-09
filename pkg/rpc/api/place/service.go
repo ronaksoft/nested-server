@@ -24,10 +24,10 @@ const (
 	CmdGetPosts            = "place/get_posts"
 	CmdGetFiles            = "place/get_files"
 	GetUnreadPosts         = "place/get_unread_posts"
-	CmdGetKeyholders       = "place/get_key_holders"
+	CmdGetKeyHolders       = "place/get_key_holders"
 	CmdGetCreators         = "place/get_creators"
 	CmdGetMembers          = "place/get_members"
-	CmdGetSubplaces        = "place/get_sub_places"
+	CmdGetSubPlaces        = "place/get_sub_places"
 	CmdGetMutualPlaces     = "place/get_mutual_places"
 	CmdGetNotification     = "place/get_notification"
 	CmdGetActivities       = "place/get_activities"
@@ -39,6 +39,7 @@ const (
 	CmdRemovePicture       = "place/remove_picture"
 	CmdRemoveFavorite      = "place/remove_favorite"
 	CmdRemoveFromBlacklist = "place/remove_from_blacklist"
+	CmdRemoveAllPosts      = "place/remove_all_posts"
 	CmdSetPicture          = "place/set_picture"
 	CmdSetNotification     = "place/set_notification"
 	CmdPromoteMember       = "place/promote_member"
@@ -59,43 +60,44 @@ func NewPlaceService(worker *api.Worker) *PlaceService {
 	s.worker = worker
 
 	s.serviceCommands = api.ServiceCommands{
-		CmdAvailable:           {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.placeIDAvailable},
-		CmdAddLockedPlace:      {MinAuthLevel: api.AuthLevelUser, Execute: s.createLockedPlace},
-		CmdAddUnlockedPlace:    {MinAuthLevel: api.AuthLevelUser, Execute: s.createUnlockedPlace},
-		CmdAddGrandPlace:       {MinAuthLevel: api.AuthLevelUser, Execute: s.createGrandPlace},
 		CmdAddFavorite:         {MinAuthLevel: api.AuthLevelUser, Execute: s.setPlaceAsFavorite},
+		CmdAddGrandPlace:       {MinAuthLevel: api.AuthLevelUser, Execute: s.createGrandPlace},
+		CmdAddLockedPlace:      {MinAuthLevel: api.AuthLevelUser, Execute: s.createLockedPlace},
 		CmdAddMember:           {MinAuthLevel: api.AuthLevelUser, Execute: s.addPlaceMember},
+		CmdAddToBlacklist:      {MinAuthLevel: api.AuthLevelUser, Execute: s.addToBlackList},
+		CmdAddUnlockedPlace:    {MinAuthLevel: api.AuthLevelUser, Execute: s.createUnlockedPlace},
+		CmdAvailable:           {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.placeIDAvailable},
 		CmdCountUnreadPosts:    {MinAuthLevel: api.AuthLevelUser, Execute: s.countPlaceUnreadPosts},
 		CmdDemoteMember:        {MinAuthLevel: api.AuthLevelUser, Execute: s.demoteMember},
 		CmdGet:                 {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getPlaceInfo},
-		CmdGetMany:             {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getManyPlacesInfo},
 		CmdGetAccess:           {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getPlaceAccess},
-		CmdGetFiles:            {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getPlaceFiles},
-		CmdGetCreators:         {MinAuthLevel: api.AuthLevelUser, Execute: s.getPlaceCreators},
-		CmdGetKeyholders:       {MinAuthLevel: api.AuthLevelUser, Execute: s.getPlaceKeyholders},
-		CmdGetMembers:          {MinAuthLevel: api.AuthLevelUser, Execute: s.getPlaceMembers},
-		CmdGetSubplaces:        {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getSubPlaces},
-		CmdGetPosts:            {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getPlacePosts},
 		CmdGetActivities:       {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getPlaceActivities},
-		GetUnreadPosts:         {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getPlaceUnreadPosts},
+		CmdGetBlockedAddresses: {MinAuthLevel: api.AuthLevelUser, Execute: s.getBlockedAddresses},
+		CmdGetCreators:         {MinAuthLevel: api.AuthLevelUser, Execute: s.getPlaceCreators},
+		CmdGetFiles:            {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getPlaceFiles},
+		CmdGetKeyHolders:       {MinAuthLevel: api.AuthLevelUser, Execute: s.getPlaceKeyholders},
+		CmdGetMany:             {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getManyPlacesInfo},
+		CmdGetMembers:          {MinAuthLevel: api.AuthLevelUser, Execute: s.getPlaceMembers},
 		CmdGetMutualPlaces:     {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getMutualPlaces},
 		CmdGetNotification:     {MinAuthLevel: api.AuthLevelUser, Execute: s.getPlaceNotification},
-		CmdGetBlockedAddresses: {MinAuthLevel: api.AuthLevelUser, Execute: s.getBlockedAddresses},
+		CmdGetPosts:            {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getPlacePosts},
+		CmdGetSubPlaces:        {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getSubPlaces},
 		CmdInviteMember:        {MinAuthLevel: api.AuthLevelUser, Execute: s.invitePlaceMember},
+		CmdLeave:               {MinAuthLevel: api.AuthLevelUser, Execute: s.leavePlace},
 		CmdMarkAllRead:         {MinAuthLevel: api.AuthLevelAppL3, Execute: s.markAllPostsAsRead},
+		CmdPinPost:             {MinAuthLevel: api.AuthLevelAppL3, Execute: s.pinPost},
 		CmdPromoteMember:       {MinAuthLevel: api.AuthLevelUser, Execute: s.promoteMember},
 		CmdRemove:              {MinAuthLevel: api.AuthLevelUser, Execute: s.remove},
-		CmdRemoveMember:        {MinAuthLevel: api.AuthLevelUser, Execute: s.removeMember},
-		CmdLeave:               {MinAuthLevel: api.AuthLevelUser, Execute: s.leavePlace},
+		CmdRemoveAllPosts:      {MinAuthLevel: api.AuthLevelUser, Execute: s.removeAllPosts},
 		CmdRemoveFavorite:      {MinAuthLevel: api.AuthLevelUser, Execute: s.removePlaceFromFavorites},
-		CmdRemovePicture:       {MinAuthLevel: api.AuthLevelUser, Execute: s.removePicture},
-		CmdSetPicture:          {MinAuthLevel: api.AuthLevelAppL3, Execute: s.setPicture},
-		CmdSetNotification:     {MinAuthLevel: api.AuthLevelAppL3, Execute: s.setPlaceNotification},
-		CmdUpdate:              {MinAuthLevel: api.AuthLevelUser, Execute: s.update},
-		CmdPinPost:             {MinAuthLevel: api.AuthLevelAppL3, Execute: s.pinPost},
-		CmdUnpinPost:           {MinAuthLevel: api.AuthLevelAppL3, Execute: s.unpinPost},
-		CmdAddToBlacklist:      {MinAuthLevel: api.AuthLevelUser, Execute: s.addToBlackList},
 		CmdRemoveFromBlacklist: {MinAuthLevel: api.AuthLevelUser, Execute: s.removeFromBlacklist},
+		CmdRemoveMember:        {MinAuthLevel: api.AuthLevelUser, Execute: s.removeMember},
+		CmdRemovePicture:       {MinAuthLevel: api.AuthLevelUser, Execute: s.removePicture},
+		CmdSetNotification:     {MinAuthLevel: api.AuthLevelAppL3, Execute: s.setPlaceNotification},
+		CmdSetPicture:          {MinAuthLevel: api.AuthLevelAppL3, Execute: s.setPicture},
+		CmdUnpinPost:           {MinAuthLevel: api.AuthLevelAppL3, Execute: s.unpinPost},
+		CmdUpdate:              {MinAuthLevel: api.AuthLevelUser, Execute: s.update},
+		GetUnreadPosts:         {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getPlaceUnreadPosts},
 	}
 
 	return s

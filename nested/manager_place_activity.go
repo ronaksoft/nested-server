@@ -9,13 +9,14 @@ import (
 )
 
 const (
-	PlaceActivityActionMemberRemove = 0x002
-	PlaceActivityActionMemberJoin   = 0x008
-	PlaceActivityActionPlaceAdd     = 0x010
-	PlaceActivityActionPostAdd      = 0x100
-	PlaceActivityActionPostRemove   = 0x105
-	PlaceActivityActionPostMoveTo   = 0x206
-	PlaceActivityActionPostMoveFrom = 0x207
+	PlaceActivityActionMemberRemove  = 0x002
+	PlaceActivityActionMemberJoin    = 0x008
+	PlaceActivityActionPlaceAdd      = 0x010
+	PlaceActivityActionPostAdd       = 0x100
+	PlaceActivityActionPostRemove    = 0x105
+	PlaceActivityActionPostRemoveAll = 0x106
+	PlaceActivityActionPostMoveTo    = 0x206
+	PlaceActivityActionPostMoveFrom  = 0x207
 )
 
 type PlaceActivityManager struct{}
@@ -159,7 +160,28 @@ func (tm *PlaceActivityManager) PostRemove(actorID, placeID string, postID bson.
 		Timestamp: ts,
 		Action:    PlaceActivityActionPostRemove,
 		Actor:     actorID,
+		PlaceID:   placeID,
 		PostID:    postID,
+	}
+	if err := db.C(global.CollectionPlacesActivities).Insert(v); err != nil {
+		log.Warn("Got error", zap.Error(err))
+	}
+
+	return
+}
+
+func (tm *PlaceActivityManager) PostRemoveAll(actorID, placeID string) {
+	dbSession := _MongoSession.Clone()
+	db := dbSession.DB(global.DbName)
+	defer dbSession.Close()
+
+	ts := Timestamp()
+	v := PlaceActivity{
+		ID:        bson.NewObjectId(),
+		Timestamp: ts,
+		Action:    PlaceActivityActionPostRemoveAll,
+		Actor:     actorID,
+		PlaceID:   placeID,
 	}
 	if err := db.C(global.CollectionPlacesActivities).Insert(v); err != nil {
 		log.Warn("Got error", zap.Error(err))

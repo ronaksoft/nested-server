@@ -1187,6 +1187,24 @@ func (s *PlaceService) remove(requester *nested.Account, request *rpc.Request, r
 
 }
 
+// @Command: place/remove_all_posts
+// @Input: place_id			string *
+func (s *PlaceService) removeAllPosts(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
+	var place *nested.Place
+	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
+		return
+	}
+
+	access := place.GetAccess(requester.ID)
+	if access[nested.PlaceAccessRemovePost] || requester.Authority.Admin {
+		s.Worker().Model().Post.RemoveByPlaceID(requester.ID, place.ID)
+		response.Ok()
+	} else {
+		response.Error(global.ErrAccess, []string{})
+	}
+	return
+}
+
 // @Command:	place/remove_favorite
 // @Input:	place_id		string	*
 func (s *PlaceService) removePlaceFromFavorites(requester *nested.Account, request *rpc.Request, response *rpc.Response) {

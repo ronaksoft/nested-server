@@ -605,6 +605,37 @@ func (pm *PlaceManager) IncrementCounter(placeIDs []string, counterName string, 
 	return true
 }
 
+//	SetCounter set place counters supported counters are
+//	1. PlaceCounterChildren
+//	2. PlaceCounterUnlockedChildren
+//	3. PlaceCounterCreators
+//	4. PlaceCounterKeyHolders
+//	5. PlaceCounterPosts
+//	6. PlaceCounterQuota
+func (pm *PlaceManager) SetCounter(placeIDs []string, counterName string, c int) bool {
+	dbSession := _MongoSession.Clone()
+	db := dbSession.DB(global.DbName)
+	defer dbSession.Close()
+
+	switch counterName {
+	case PlaceCounterChildren, PlaceCounterUnlockedChildren,
+		PlaceCounterCreators, PlaceCounterKeyHolders,
+		PlaceCounterPosts, PlaceCounterQuota:
+		keyName := fmt.Sprintf("counters.%s", counterName)
+		if err := db.C(global.CollectionPlaces).Update(
+			bson.M{"_id": bson.M{"$in": placeIDs}},
+			bson.M{"$set": bson.M{keyName: c}},
+		); err != nil {
+			log.Warn("got error on incrementing place counter",
+				zap.Error(err), zap.Strings("PlaceIDs", placeIDs),
+				zap.String("counter", counterName),
+			)
+			return false
+		}
+	}
+	return true
+}
+
 //	IsSubPlace returns TRUE if subPlaceID is a sub-place of placeID. It will returns TRUE even if
 //	subPlaceID is not a direct child of the placeID.
 func (pm *PlaceManager) IsSubPlace(placeID, subPlaceID string) bool {

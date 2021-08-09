@@ -125,7 +125,7 @@ func newHookManager() *HookManager {
 // AddHook registers a new hook in database.
 // HookType can be:
 //      HookEventTypePlaceNewPost         = 0x101
-//      HookEventTypePlaceNewPostComment = 0x102
+//      HookEventTypePlaceNewPostComment  = 0x102
 //      HookEventTypePlaceNewMember       = 0x103
 //      HookEventTypeAccountTaskAssigned  = 0x201
 // AnchorID:
@@ -180,7 +180,7 @@ func (m *HookManager) GetHooksBySetterID(setterID string, pg Pagination) []Hook 
 }
 
 // hooker will be run in background and listens to chEvents channel and run the appropriate function
-// according with the incoming hook event it receives from the channel
+// according to the incoming hook event it receives from the channel
 func (m *HookManager) hooker() {
 	for event := range m.chEvents {
 		m.chLimit <- true

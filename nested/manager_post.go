@@ -428,23 +428,13 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 		}
 
 		// Update unread counters
-		if place.Privacy.Locked {
-			db.C(global.CollectionPostsReadsCounters).UpdateAll(
-				bson.M{
-					"account_id": bson.M{"$ne": post.SenderID},
-					"place_id":   placeID,
-				},
-				bson.M{"$inc": bson.M{"no_unreads": 1}},
-			)
-		} else {
-			db.C(global.CollectionPostsReadsCounters).UpdateAll(
-				bson.M{
-					"account_id": bson.M{"$ne": post.SenderID},
-					"place_id":   placeID,
-				},
-				bson.M{"$inc": bson.M{"no_unreads": 1}},
-			)
-		}
+		_, _ = db.C(global.CollectionPostsReadsCounters).UpdateAll(
+			bson.M{
+				"account_id": bson.M{"$ne": post.SenderID},
+				"place_id":   placeID,
+			},
+			bson.M{"$inc": bson.M{"no_unreads": 1}},
+		)
 
 		// Create the hook event and send it to the hooker
 		_Manager.Hook.chEvents <- NewPostEvent{
@@ -1192,6 +1182,43 @@ func (pm *PostManager) Remove(accountID string, postID bson.ObjectId, placeID st
 
 	// Update timeline items
 	_Manager.PlaceActivity.PostRemove(accountID, placeID, postID)
+
+	return true
+}
+
+// Remove removes the postID from the placeID.
+// if placeID is the last place that postID are in, then removes the comments of the postID too.
+func (pm *PostManager) RemoveByPlaceID(accountID string, placeID string) bool {
+	defer _Manager.Place.removeCache(placeID)
+
+	dbSession := _MongoSession.Copy()
+	db := dbSession.DB(global.DbName)
+	defer dbSession.Close()
+
+	_, err := db.C(global.CollectionPosts).UpdateAll(
+		bson.M{"places": placeID},
+		bson.M{
+			"$pull":     bson.M{"places": placeID},
+			"$addToSet": bson.M{"removed_places": placeID},
+		},
+	)
+	if err != nil {
+		return false
+	}
+
+	// Update place counter
+	_Manager.Place.SetCounter([]string{placeID}, PlaceCounterPosts, 0)
+
+	_, _ = db.C(global.CollectionPostsReadsCounters).UpdateAll(
+		bson.M{
+			"place_id":   placeID,
+			"no_unreads": bson.M{"$gt": 0},
+		},
+		bson.M{"$set": bson.M{"no_unreads": -1}},
+	)
+
+	// Update timeline items
+	_Manager.PlaceActivity.PostRemoveAll(accountID, placeID)
 
 	return true
 }

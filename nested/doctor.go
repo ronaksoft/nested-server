@@ -28,7 +28,6 @@ const (
 	CheckupCleanupTempFiles               = "CLEANUP_TEMP_FILES"
 	CheckupFixReferredTempFiles           = "FIX_REFERRED_TEMP_FILES"
 	CheckupFixCollectionSearchIndexPlaces = "FIX_COLLECTION_SEARCH_INDEX_PLACES"
-	CheckupAddContentToPost               = "CHECKUP_ADD_CONTENT_TO_POST"
 )
 
 var (
@@ -42,7 +41,6 @@ var (
 		CheckupCleanupPosts:                   CleanupPosts,
 		CheckupCleanupSessions:                CleanupSessions,
 		CheckupCleanupTasks:                   CleanupTasks,
-		CheckupAddContentToPost:               AddContentToPost,
 		CheckupFixReferredTempFiles:           FixReferredTmpFiles,
 		CheckupFixCollectionSearchIndexPlaces: FixSearchIndexPlacesCollection,
 	}

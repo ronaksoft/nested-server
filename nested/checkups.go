@@ -37,7 +37,6 @@ func StartupCheckups() {
 	_ = _MongoDB.C(global.CollectionPosts).EnsureIndex(mgo.Index{Key: []string{"places", "-last_update"}, Background: true})
 	_ = _MongoDB.C(global.CollectionPosts).EnsureIndex(mgo.Index{Key: []string{"recipients", "-timestamp"}, Background: true})
 	_ = _MongoDB.C(global.CollectionPosts).EnsureIndex(mgo.Index{Key: []string{"sender", "-timestamp"}, Background: true})
-
 	_ = _MongoDB.C(global.CollectionPosts).EnsureIndex(mgo.Index{
 		Key: []string{"$text:content", "$text:subject"},
 		Weights: map[string]int{
@@ -115,7 +114,7 @@ func StartupCheckups() {
 		_Manager.Account.CreateUser(
 			"nested",
 			hex.EncodeToString(md5Hash.Sum(nil)),
-			"48222195888",
+			"989121228718",
 			"IR",
 			"Nested",
 			"Mail",

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
-	"github.com/PuerkitoBio/goquery"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 	"go.uber.org/zap"
@@ -251,27 +250,27 @@ func CleanupTasks() {
 	defer iter.Close()
 	task := new(Task)
 	for iter.Next(task) {
-		_MongoDB.C(global.CollectionTasksActivities).RemoveAll(
+		_, _ = _MongoDB.C(global.CollectionTasksActivities).RemoveAll(
 			bson.M{"task_id": task.ID},
 		)
 
 	}
-	_MongoDB.C(global.CollectionTasks).RemoveAll(bson.M{"_removed": true})
+	_, _ = _MongoDB.C(global.CollectionTasks).RemoveAll(bson.M{"_removed": true})
 }
 
 func CleanupPosts() {
 	iter := _MongoDB.C(global.CollectionPosts).Find(bson.M{"_removed": true}).Iter()
 	defer iter.Close()
-	task := new(Task)
-	for iter.Next(task) {
-		_MongoDB.C(global.CollectionPostsActivities).RemoveAll(
-			bson.M{"post_id": task.ID},
+	post := new(Post)
+	for iter.Next(post) {
+		_, _ = _MongoDB.C(global.CollectionPostsActivities).RemoveAll(
+			bson.M{"post_id": post.ID},
 		)
-		_MongoDB.C(global.CollectionPostsComments).RemoveAll(
-			bson.M{"post_id": task.ID},
+		_, _ = _MongoDB.C(global.CollectionPostsComments).RemoveAll(
+			bson.M{"post_id": post.ID},
 		)
 	}
-	_MongoDB.C(global.CollectionPosts).RemoveAll(bson.M{"_removed": true})
+	_, _ = _MongoDB.C(global.CollectionPosts).RemoveAll(bson.M{"_removed": true})
 }
 
 // CleanupTempFiles
@@ -299,7 +298,7 @@ func FixReferredTmpFiles() {
 	file := new(FileInfo)
 	for iter.Next(file) {
 		if file.Status == FileStatusTemp {
-			_MongoDB.C(global.CollectionFiles).Update(
+			_ = _MongoDB.C(global.CollectionFiles).Update(
 				bson.M{"_id": file.ID},
 				bson.M{"$set": bson.M{"status": FileStatusAttached}},
 			)
@@ -322,61 +321,5 @@ func FixSearchIndexPlacesCollection() {
 			}
 		}
 	}
-	iter.Close()
-}
-
-func AddContentToPost() {
-	err := _MongoDB.C(global.CollectionTasks).DropIndexName("title_text_description_text_todos_text")
-	if err != nil {
-		log.Warn("Got error", zap.Error(err))
-		fmt.Println("DropIndexName", err)
-	}
-	_ = _MongoDB.C(global.CollectionTasks).EnsureIndex(mgo.Index{
-		Key: []string{"$text:title", "$text:description", "$text:todos.txt"},
-		Weights: map[string]int{
-			"title":       5,
-			"description": 1,
-			"todos.txt":   1,
-		},
-		Background: true,
-	})
-
-	err = _MongoDB.C(global.CollectionPosts).DropIndexName("body_text_subject_text")
-	if err != nil {
-		log.Warn("Got error", zap.Error(err))
-		fmt.Println("DropIndexName", err)
-	}
-	_ = _MongoDB.C(global.CollectionPosts).EnsureIndex(mgo.Index{
-		Key: []string{"$text:content", "$text:subject"},
-		Weights: map[string]int{
-			"subject": 5,
-			"content": 1,
-		},
-		Background: true,
-	})
-
-	iter := _MongoDB.C(global.CollectionPosts).Find(bson.M{}).Iter()
-	defer iter.Close()
-	p := new(Post)
-
-	for iter.Next(p) {
-		var postContent string
-		switch p.ContentType {
-		case ContentTypeTextPlain:
-			postContent = p.Body
-		case ContentTypeTextHtml:
-			reader := strings.NewReader(p.Body)
-			doc, _ := goquery.NewDocumentFromReader(reader)
-			doc.Find("").Each(func(i int, el *goquery.Selection) {
-				el.Remove()
-			})
-			postContent = doc.Text()
-		default:
-			continue
-		}
-		err := _MongoDB.C(global.CollectionPosts).UpdateId(p.ID, bson.M{"$set": bson.M{"content": postContent}})
-		if err != nil {
-			log.Warn("Got error", zap.Error(err))
-		}
-	}
+	_ = iter.Close()
 }
