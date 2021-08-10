@@ -287,6 +287,8 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 	post.ForwardFrom = pcr.ForwardFrom
 	post.ContentType = pcr.ContentType
 
+	// TODO:: check spam score, move to spam collection
+
 	// Returns nil if targets are more than DefaultPostMaxTargets
 	if len(pcr.PlaceIDs)+len(pcr.Recipients) > global.DefaultPostMaxTargets {
 		return nil
@@ -315,19 +317,19 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 	post.Timestamp = ts
 	post.LastUpdate = ts
 
-	var attach_size int64
+	var attachSize int64
 	for _, uniID := range pcr.AttachmentIDs {
 		_Manager.File.AddPostAsOwner(uniID, post.ID)
 		_Manager.File.SetStatus(uniID, FileStatusAttached)
 		f := _Manager.File.GetByID(uniID, nil)
-		attach_size += f.Size
+		attachSize += f.Size
 	}
-	post.Counters.Size = attach_size
+	post.Counters.Size = attachSize
 
 	// Increment Counters
 	_Manager.Report.CountPostAdd()
 	_Manager.Report.CountPostAttachCount(len(pcr.AttachmentIDs))
-	_Manager.Report.CountPostAttachSize(attach_size)
+	_Manager.Report.CountPostAttachSize(attachSize)
 	_Manager.Report.CountPostPerPlace(pcr.PlaceIDs)
 
 	// fill email data
@@ -1186,7 +1188,7 @@ func (pm *PostManager) Remove(accountID string, postID bson.ObjectId, placeID st
 	return true
 }
 
-// Remove removes the postID from the placeID.
+// RemoveByPlaceID removes all the posts from the placeID.
 // if placeID is the last place that postID are in, then removes the comments of the postID too.
 func (pm *PostManager) RemoveByPlaceID(accountID string, placeID string) bool {
 	defer _Manager.Place.removeCache(placeID)
@@ -1371,6 +1373,7 @@ type PostCreateRequest struct {
 	AttachmentSizes []int64        `json:"attaches_size"`
 	EmailMetadata   EmailMetadata  `json:"email_meta"`
 	SystemData      PostSystemData `json:"system_data"`
+	SpamScore       float64        `json:"spam_score"`
 }
 type Post struct {
 	ID              bson.ObjectId   `json:"_id" bson:"_id"`
