@@ -146,7 +146,7 @@ func (dm *DeviceManager) SetAsDisconnected(deviceID string) bool {
 		bson.M{"_id": deviceID},
 		bson.M{"$set": bson.M{"connected": false}},
 	); err != nil {
-		log.Warn("got error on set device disconnected", zap.String("DeviceID", deviceID), zap.Error(err))
+		log.Debug("got error on set device disconnected", zap.String("DeviceID", deviceID), zap.Error(err))
 		return false
 	}
 	return true

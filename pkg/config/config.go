@@ -76,8 +76,8 @@ func init() {
 	_ = dl.SetDefault(ADPMessageUrl, "https://ws.adpdigital.com/url/send")
 
 	// SMTP
-	_ = dl.SetDefault(SmtpHost, "localhost")
-	_ = dl.SetDefault(SmtpPort, 25)
+	_ = dl.SetDefault(SmtpHost, "127.0.0.1")
+	_ = dl.SetDefault(SmtpPort, 587)
 	_ = dl.SetDefault(SmtpUser, "user")
 	_ = dl.SetDefault(SmtpPass, "pa$$word")
 

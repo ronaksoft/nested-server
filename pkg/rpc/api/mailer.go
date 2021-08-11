@@ -4,18 +4,18 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
-	"git.ronaksoft.com/nested/server/pkg/config"
-	"html/template"
-	"log"
-	"path"
-	"strings"
-	"time"
-
 	"git.ronaksoft.com/nested/server/nested"
+	"git.ronaksoft.com/nested/server/pkg/config"
+	"git.ronaksoft.com/nested/server/pkg/log"
 	"github.com/dustin/go-humanize"
 	"github.com/globalsign/mgo/bson"
 	"github.com/jaytaylor/html2text"
+	"go.uber.org/zap"
 	"gopkg.in/mail.v2"
+	"html/template"
+	"path"
+	"strings"
+	"time"
 )
 
 type MailRequest struct {
@@ -73,7 +73,7 @@ func NewMailer(worker *Worker) *Mailer {
 	m.cyrusUrl = config.GetString(config.CyrusURL)
 	m.chRequests = make(chan MailRequest, 1000)
 	if tpl, err := template.ParseFiles("/ronak/templates/post_email.html"); err != nil {
-		log.Println(err.Error())
+		log.Warn("got error on parsing email template", zap.Error(err))
 	} else {
 		m.template = tpl
 	}
@@ -95,15 +95,18 @@ func (m *Mailer) Run() {
 		}
 
 		d := mail.NewDialer(req.Host, req.Port, req.Username, req.Password)
-		d.StartTLSPolicy = mail.MandatoryStartTLS
+		d.StartTLSPolicy = mail.OpportunisticStartTLS
 		d.TLSConfig = &tls.Config{
 			InsecureSkipVerify: true,
-			ServerName:         req.Host,
+			ServerName:         config.GetString(config.SenderDomain),
 		}
 
 		if msg := m.createMessage(req.PostID); msg != nil {
 			if err := d.DialAndSend(msg); err != nil {
-				log.Println("Mailer::Run", err.Error(), req.Host, req.Port, req.Username, req.Password)
+				log.Warn("failed to send email",
+					zap.Error(err),
+					zap.String("HostPort", fmt.Sprintf("%s:%d", req.Host, req.Port)),
+				)
 			}
 		}
 	}
@@ -197,7 +200,7 @@ func (m *Mailer) createMessage(postID bson.ObjectId) *mail.Message {
 	// Set Body
 	body := new(bytes.Buffer)
 	if err := m.template.Execute(body, mailTemplate); err != nil {
-		log.Println("Template Execute Error:", err.Error())
+		log.Warn("got error on executing mail template", zap.Error(err))
 	}
 	bodyHtml := body.String()
 	bodyText := ""
