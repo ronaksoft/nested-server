@@ -25,51 +25,6 @@ if [[ -n "$(find /etc/postfix/certs -iname *.crt)" && -n "$(find /etc/postfix/ce
   chmod 400 /etc/postfix/certs/*.*
 fi
 
-##############
-##  OpenDKIM
-##############
-#if [[ -z "$(find /etc/opendkim/domainkeys -iname *.private)" ]]; then
-#  exit 0
-#fi
-#echo "== Setup OpenDKIM for postfix"
-#echo "== Update Postfix Configs for OpenDKIM"
-#postconf -e milter_protocol=2
-#postconf -e milter_default_action=accept
-#postconf -e smtpd_milters=inet:localhost:12301
-#postconf -e non_smtpd_milters=inet:localhost:12301
-#
-#echo "== Create Config File for OpenDKIM"
-#cat >> /etc/opendkim.conf <<EOF
-#AutoRestart             Yes
-#AutoRestartRate         10/1h
-#UMask                   002
-#Syslog                  yes
-#SyslogSuccess           Yes
-#LogWhy                  Yes
-#
-#Canonicalization        relaxed/simple
-#
-#ExternalIgnoreList      refile:/etc/opendkim/TrustedHosts
-#InternalHosts           refile:/etc/opendkim/TrustedHosts
-#KeyTable                refile:/etc/opendkim/KeyTable
-#SigningTable            refile:/etc/opendkim/SigningTable
-#
-#Mode                    sv
-#PidFile                 /var/run/opendkim/opendkim.pid
-#SignatureAlgorithm      rsa-sha256
-#
-#UserID                  opendkim:opendkim
-#
-#Socket                  inet:12301@localhost
-#EOF
-#cat >> /etc/default/opendkim <<EOF
-#SOCKET="inet:12301@localhost"
-#EOF
-#
-#echo "== Update Permissions for OpenDKIM"
-#chown opendkim:opendkim $(find /etc/opendkim/domainkeys -iname *.private)
-#chmod 400 $(find /etc/opendkim/domainkeys -iname *.private)
-
 
 #############
 ## Nested Delivery and Postfix Startup
@@ -80,6 +35,16 @@ postconf -e mydomain=${NST_SENDER_DOMAIN}
 postconf -e virtual_mailbox_domains=${NST_DOMAINS}
 postconf -e virtual_transport=lmtp:unix:${NST_MAIL_STORE_SOCK}
 postconf -e smtpd_sasl_local_domain=${NST_SENDER_DOMAIN}
+
+# Run and Check Rsyslog
+service rsyslog start
+service rsyslog status
+# Run and Check SpamAssassin
+service spamassassin start
+service spamassassin status
+# Run and Check Postfix
 service postfix start
 service postfix status
+
+
 /ronak/bin/cli-api

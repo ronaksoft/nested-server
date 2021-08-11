@@ -151,6 +151,10 @@ func (s *Session) extractHeader(nm *NestedMail, envelope *enmime.Envelope) error
 		}
 		nm.ReplyTo = addr.Address
 	}
+
+	for _, hdr := range envelope.GetHeaderKeys() {
+		log.Debug("Header", zap.String("K", hdr), zap.Strings("V", envelope.GetHeaderValues(hdr)))
+	}
 	return nil
 }
 func (s *Session) extractRecipients(nm *NestedMail, envelope *enmime.Envelope) error {
