@@ -25,6 +25,26 @@ if [[ -n "$(find /etc/postfix/certs -iname *.crt)" && -n "$(find /etc/postfix/ce
   chmod 400 /etc/postfix/certs/*.*
 fi
 
+###########
+# Setup OpenDKIM
+###########
+cat > /etc/opendkim/signing.table <<EOF
+*@${NST_SENDER_DOMAIN}  default._domainkey.${NST_SENDER_DOMAIN}
+EOF
+
+cat > /etc/opendkim/key.table <<EOF
+default._domainkey.${NST_SENDER_DOMAIN}   ${NST_SENDER_DOMAIN}:default:/etc/opendkim/keys/${NST_SENDER_DOMAIN}/default.private
+EOF
+
+cat > /etc/opendkim/trusted.hosts << EOF
+127.0.0.1
+localhost
+*.${NST_SENDER_DOMAIN}
+EOF
+
+chown opendkim:opendkim $(find /etc/opendkim/keys -iname *.private)
+chmod 400 $(find /etc/opendkim/keys -iname *.private)
+
 
 #############
 ## Nested Delivery and Postfix Startup
@@ -42,6 +62,9 @@ service rsyslog status
 # Run and Check SpamAssassin
 service spamassassin start
 service spamassassin status
+# Run and check OpenDKIM
+service opendkim start
+service opendkim status
 # Run and Check Postfix
 service postfix start
 service postfix status

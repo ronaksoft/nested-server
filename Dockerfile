@@ -6,6 +6,7 @@ RUN apt update
 RUN apt -y install ffmpeg imagemagick poppler-utils postfix opendkim opendkim-tools
 RUN apt -y install telnet spamassassin spamc net-tools
 RUN apt -y install rsyslog
+RUN apt -y install postfix-policyd-spf-python
 
 
 # Create Mailer Account
@@ -37,16 +38,27 @@ RUN postconf -P "submission/inet/smtpd_relay_restrictions=permit_mynetworks,defe
 # Prepare SpamAssasin
 RUN update-rc.d spamassassin enable
 RUN postconf -M spamassassin/unix="spamassassin unix - n    n    -    - pipe  flags=R user=spamd argv=/usr/bin/spamc -f -e /usr/sbin/sendmail -oi -f \${sender} \${recipient}"
-RUN postconf -e milter_default_action=accept
-RUN postconf -e milter_protocol=6
-
 RUN groupadd --gid 237401 spamd
 RUN useradd --uid 237401 --gid 237401 -s /bin/false -d /var/log/spamd spamd
 RUN mkdir -p /var/log/spamd
 RUN chown spamd:spamd /var/log/spamd
 RUN update-rc.d spamassassin enable
 
-
+# Prepare OpenDKIM and SPF
+RUN postconf -M policyd-spf/unix="policyd-spf  unix  -       n       n       -       0       spawn  user=policyd-spf argv=/usr/bin/policyd-spf"
+RUN postconf -e policy-spf_time_limit=3600s
+RUN postconf -e smtpd_recipient_restrictions=permit_mynetworks,reject_unauth_destination,check_policy_service\ unix:private/policyd-spf
+RUN usermod -a -G opendkim postfix
+RUN mkdir -p /etc/opendkim/keys
+RUN chown -R opendkim:opendkim /etc/opendkim
+RUN chmod go-rw /etc/opendkim/keys
+RUN mkdir -p /var/spool/postfix/opendkim
+RUN chown opendkim:postfix /var/spool/postfix/opendkim
+COPY ./docker/opendkim.conf /etc/opendkim.conf
+RUN postconf -e milter_default_action=accept
+RUN postconf -e milter_protocol=6
+RUN postconf -e smtpd_milters=local:opendkim/opendkim.sock
+RUN postconf -e non_smtpd_milters=\$smtpd_milters
 
 # Prepare Postfix Log
 RUN postconf -M postlog/unix-dgram="postlog   unix-dgram n  -       n       -       1       postlogd"
