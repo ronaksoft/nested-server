@@ -59,6 +59,10 @@ func StartupCheckups() {
 	_ = _MongoDB.C(global.CollectionPostsComments).EnsureIndex(mgo.Index{Key: []string{"$text:text"}, Background: true})
 	_ = _MongoDB.C(global.CollectionPostsFiles).EnsureIndex(mgo.Index{Key: []string{"post_id", "universal_id"}, Background: true, Unique: true})
 
+	_ = _MongoDB.C(global.CollectionPostsSpams).EnsureIndex(mgo.Index{Key: []string{"places", "-timestamp"}, Background: true})
+	_ = _MongoDB.C(global.CollectionPostsSpams).EnsureIndex(mgo.Index{Key: []string{"recipients", "-timestamp"}, Background: true})
+	_ = _MongoDB.C(global.CollectionPostsSpams).EnsureIndex(mgo.Index{Key: []string{"sender", "-timestamp"}, Background: true})
+
 	// Tasks
 	_ = _MongoDB.C(global.CollectionTasks).EnsureIndex(mgo.Index{Key: []string{"members"}, Background: true})
 	_ = _MongoDB.C(global.CollectionTasks).EnsureIndex(mgo.Index{Key: []string{"due_date"}, Background: true})

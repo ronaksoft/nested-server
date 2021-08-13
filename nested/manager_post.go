@@ -375,10 +375,25 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 		}
 	}
 
-	if err := db.C(global.CollectionPosts).Insert(post); err != nil {
-		log.Warn("Got error", zap.Error(err))
-		return nil
+	if post.SpamScore > global.DefaultSpamScore {
+		if err := db.C(global.CollectionPostsSpams).Insert(post); err != nil {
+			log.Warn("got error inserting into spam collection", zap.Error(err))
+			return nil
+		}
+	} else {
+		if err := db.C(global.CollectionPosts).Insert(post); err != nil {
+			log.Warn("got error inserting into posts collection", zap.Error(err))
+			return nil
+		}
+		pm.postProcess(ts, pcr, &post)
 	}
+
+	return &post
+}
+func (pm *PostManager) postProcess(ts uint64, pcr PostCreateRequest, post *Post) {
+	dbSession := _MongoSession.Copy()
+	db := dbSession.DB(global.DbName)
+	defer dbSession.Close()
 
 	// Update counters of the grand places
 	grandParentIDs := _Manager.Place.GetGrandParentIDs(pcr.PlaceIDs)
@@ -457,7 +472,6 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 	// Add the timeline activity to the database
 	_Manager.PlaceActivity.PostAdd(post.SenderID, post.PlaceIDs, post.ID)
 
-	return &post
 }
 
 // AddAccountToWatcherList adds accountID to postID's watcher list of placeID
@@ -1395,7 +1409,8 @@ type Post struct {
 	IFrameUrl       string          `json:"iframe_url,omitempty" bson:"iframe_url,omitempty"`
 	Timestamp       uint64          `json:"timestamp" bson:"timestamp"`
 	LastUpdate      uint64          `json:"last_update" bson:"last_update"`
-	Spam            float64         `json:"spam" bson:"spam"`
+	SpamScore       float64         `json:"spam_score" bson:"spam_score"`
+	Spam            bool            `json:"spam" bson:"spam"`
 	Internal        bool            `json:"internal" bson:"internal"`
 	Ellipsis        bool            `json:"ellipsis" bson:"ellipsis"`
 	Counters        PostCounters    `json:"counters" bson:"counters"`

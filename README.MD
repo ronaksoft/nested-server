@@ -1,5 +1,7 @@
 ## Nested
-Nested is an email based team communication platform. 
+Nested is an email based team communication platform. You have shared
+mailboxes and comment on your received posts/emails. Implement your workflow
+with labels.
 
 ## Docker Images
 This project will create docker image in `registry.ronaksoft.com`:
@@ -39,3 +41,12 @@ docker pull registry.ronaksoft.com/nested/server:1.0
 | FIREBASE_CRED_PATH | |
 
 
+## TODOs
+[ ] Improve documents
+[ ] Handle spam management, delete all, mark as spam, ...
+[x] Delete all messages in place
+[ ] Change send from address.
+[ ] Installing and handling popular dns servers. i.e. Cloudflare, ...
+[ ] TLS cert generation using Lets Encrypt
+[ ] Workflows. i.e. using labels and users interactions.
+[ ] Workflow - create / edit / delete / list / trigger / status / events / hooks 
