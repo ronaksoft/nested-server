@@ -70,7 +70,7 @@ func (s *Server) Addr() string {
 	return s.addr
 }
 
-func (s *Server) Login(state *smtp.ConnectionState, username, password string) (smtp.Session, error) {
+func (s *Server) Login(state *smtp.ConnectionState, _, _ string) (smtp.Session, error) {
 	return s.AnonymousLogin(state)
 }
 

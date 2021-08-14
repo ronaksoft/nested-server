@@ -17,6 +17,7 @@ type NestedMail struct {
 	SenderID          string
 	SenderName        string
 	SenderPic         nested.Picture
+	SpamScore         float64
 	ReplyTo           string
 	RawUniversalID    nested.UniversalID
 	NonBlindPlaceIDs  []string

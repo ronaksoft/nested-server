@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"git.ronaksoft.com/nested/server/nested"
 	"git.ronaksoft.com/nested/server/pkg/config"
+	"git.ronaksoft.com/nested/server/pkg/global"
 	"git.ronaksoft.com/nested/server/pkg/log"
 	"github.com/emersion/go-smtp"
 	"github.com/jhillyerd/enmime"
@@ -15,6 +16,7 @@ import (
 	"io"
 	"net/http"
 	"net/mail"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -150,6 +152,13 @@ func (s *Session) extractHeader(nm *NestedMail, envelope *enmime.Envelope) error
 			return err
 		}
 		nm.ReplyTo = addr.Address
+	}
+
+	spamLevel, _ := strconv.ParseFloat(envelope.GetHeader("X-Spam-Level"), 64)
+	if items := global.RegEXSpamScore.FindAllString(envelope.GetHeader("X-Spam-Status"), 1); len(items) > 0 {
+		nm.SpamScore, _ = strconv.ParseFloat(strings.TrimPrefix(strings.TrimSpace(items[0]), "score="), 64)
+		log.Debug("Score Extracted", zap.Any("Items", items), zap.Any("Score", nm.SpamScore), zap.Any("Level", spamLevel),
+		)
 	}
 
 	for _, hdr := range envelope.GetHeaderKeys() {
@@ -370,6 +379,7 @@ func (s *Session) store(nm *NestedMail, mailEnvelope *enmime.Envelope) error {
 			},
 			PlaceIDs:   []string{},
 			Recipients: []string{},
+			SpamScore:  nm.SpamScore,
 		}
 		postAttachmentIDs := make([]nested.UniversalID, 0, len(nm.Attachments))
 		postAttachmentSizes := make([]int64, 0, len(nm.Attachments))
@@ -418,8 +428,10 @@ func (s *Session) store(nm *NestedMail, mailEnvelope *enmime.Envelope) error {
 			return fmt.Errorf("could not create post")
 		}
 
-		for _, pid := range post.PlaceIDs {
-			s.pusher.PlaceActivity(pid, nested.PlaceActivityActionPostAdd)
+		if !post.Spam {
+			for _, pid := range post.PlaceIDs {
+				s.pusher.PlaceActivity(pid, nested.PlaceActivityActionPostAdd)
+			}
 		}
 
 		return nil
