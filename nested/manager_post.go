@@ -286,6 +286,10 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 	post.ReplyTo = pcr.ReplyTo
 	post.ForwardFrom = pcr.ForwardFrom
 	post.ContentType = pcr.ContentType
+	post.SpamScore = pcr.SpamScore
+	if post.SpamScore > global.DefaultSpamScore {
+		post.Spam = true
+	}
 
 	// TODO:: check spam score, move to spam collection
 
@@ -375,7 +379,7 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 		}
 	}
 
-	if post.SpamScore > global.DefaultSpamScore {
+	if post.Spam {
 		if err := db.C(global.CollectionPostsSpams).Insert(post); err != nil {
 			log.Warn("got error inserting into spam collection", zap.Error(err))
 			return nil
@@ -385,32 +389,32 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 			log.Warn("got error inserting into posts collection", zap.Error(err))
 			return nil
 		}
-		pm.postProcess(ts, pcr, &post)
+		pm.postProcess(&post)
 	}
 
 	return &post
 }
-func (pm *PostManager) postProcess(ts uint64, pcr PostCreateRequest, post *Post) {
+func (pm *PostManager) postProcess(post *Post) {
 	dbSession := _MongoSession.Copy()
 	db := dbSession.DB(global.DbName)
 	defer dbSession.Close()
 
 	// Update counters of the grand places
-	grandParentIDs := _Manager.Place.GetGrandParentIDs(pcr.PlaceIDs)
+	grandParentIDs := _Manager.Place.GetGrandParentIDs(post.PlaceIDs)
 	_Manager.Place.IncrementCounter(grandParentIDs, PlaceCounterQuota, int(post.Counters.Size))
 
 	// Update counters of the places
-	_Manager.Place.IncrementCounter(pcr.PlaceIDs, PlaceCounterPosts, 1)
+	_Manager.Place.IncrementCounter(post.PlaceIDs, PlaceCounterPosts, 1)
 
 	// Update user contacts list
 	if post.Internal {
-		_Manager.Account.UpdatePlaceConnection(pcr.SenderID, pcr.PlaceIDs, 1)
-		_Manager.Account.UpdateRecipientConnection(pcr.SenderID, pcr.Recipients, 1)
-		_Manager.Report.CountPostPerAccount(pcr.SenderID)
+		_Manager.Account.UpdatePlaceConnection(post.SenderID, post.PlaceIDs, 1)
+		_Manager.Account.UpdateRecipientConnection(post.SenderID, post.Recipients, 1)
+		_Manager.Report.CountPostPerAccount(post.SenderID)
 	}
 
 	// Create PostRead items per each user of each place
-	for _, placeID := range pcr.PlaceIDs {
+	for _, placeID := range post.PlaceIDs {
 		// Remove place from cache
 		_Manager.Place.removeCache(placeID)
 
@@ -437,7 +441,7 @@ func (pm *PostManager) postProcess(ts uint64, pcr PostCreateRequest, post *Post)
 				AccountID: cid,
 				PlaceID:   placeID,
 				PostID:    post.ID,
-				Timestamp: ts,
+				Timestamp: post.Timestamp,
 			})
 		}
 		if _, err := bulk.Run(); err != nil {
@@ -472,6 +476,22 @@ func (pm *PostManager) postProcess(ts uint64, pcr PostCreateRequest, post *Post)
 	// Add the timeline activity to the database
 	_Manager.PlaceActivity.PostAdd(post.SenderID, post.PlaceIDs, post.ID)
 
+}
+
+// NotSpam remove the spam flag of the post and move it to the post collection.
+func (pm *PostManager) NotSpam(postID bson.ObjectId) {
+	post := pm.GetSpamPostByID(postID)
+	if post == nil {
+		return
+	}
+
+	dbSession := _MongoSession.Clone()
+	db := dbSession.DB(global.DbName)
+	defer dbSession.Close()
+
+	post.Spam = false
+	_ = db.C(global.CollectionPostsSpams).RemoveId(postID)
+	_ = db.C(global.CollectionPosts).Insert(post)
 }
 
 // AddAccountToWatcherList adds accountID to postID's watcher list of placeID
@@ -603,6 +623,16 @@ func (pm *PostManager) Exists(postID bson.ObjectId) bool {
 // GetPostByID returns Post by postID, if postID does not exist it returns nil
 func (pm *PostManager) GetPostByID(postID bson.ObjectId) *Post {
 	return _Manager.Post.readFromCache(postID)
+}
+
+// GetSpamPostByID returns Post by postID, if postID does not exist it returns nil
+func (pm *PostManager) GetSpamPostByID(postID bson.ObjectId) *Post {
+	post := &Post{}
+	if err := _MongoDB.C(global.CollectionPosts).FindId(postID).One(post); err != nil {
+		log.Warn("Got error", zap.Error(err))
+		return nil
+	}
+	return post
 }
 
 // GetPostsByIDs returns an array of posts identified by postIDs, it returns an empty slice if nothing was found
