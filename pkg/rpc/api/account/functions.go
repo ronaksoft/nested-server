@@ -249,6 +249,24 @@ func (s *AccountService) getAccountFavoritePosts(requester *nested.Account, requ
 	return
 }
 
+// @Command: account/get_spam_posts
+// @Pagination
+func (s *AccountService) getAccountSpamPosts(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
+
+	pg := s.Worker().Argument().GetPagination(request)
+	posts := _Model.Post.GetSpamPostsOfPlaces(append(requester.BookmarkedPlaceIDs, "*"), pg)
+	r := make([]tools.M, 0, len(posts))
+	for _, post := range posts {
+		r = append(r, s.Worker().Map().Post(requester, post, true))
+	}
+	response.OkWithData(tools.M{
+		"skip":  pg.GetSkip(),
+		"limit": pg.GetLimit(),
+		"posts": r,
+	})
+	return
+}
+
 // @Command: account/get_sent_posts
 // @Pagination
 func (s *AccountService) getAccountSentPosts(requester *nested.Account, request *rpc.Request, response *rpc.Response) {

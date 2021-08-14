@@ -726,6 +726,25 @@ func (pm *PostManager) GetPostsOfPlaces(places []string, sortItem string, pg Pag
 	return posts
 }
 
+// GetSpamPostsOfPlaces returns an array of Posts that are in any of the places
+// sortItem could have any of these values:
+//		PostSortLastUpdate
+//		PostSortTimestamp
+func (pm *PostManager) GetSpamPostsOfPlaces(places []string, pg Pagination) []Post {
+	dbSession := _MongoSession.Copy()
+	db := dbSession.DB(global.DbName)
+	defer dbSession.Close()
+
+	posts := make([]Post, 0, pg.GetLimit())
+	q := bson.M{
+		"places": bson.M{"$in": places},
+	}
+
+	Q := db.C(global.CollectionPosts).Find(q).Skip(pg.GetSkip()).Limit(pg.GetLimit())
+	_ = Q.All(&posts)
+	return posts
+}
+
 // GetPostWatchers returns an array of accountIDs who listen to post notifications
 func (pm *PostManager) GetPostWatchers(postID bson.ObjectId) []string {
 	dbSession := _MongoSession.Copy()

@@ -15,8 +15,11 @@ const (
 	CmdAddLabel            = "post/add_label"
 	CmdAttachPlace         = "post/attach_place"
 	CmdGet                 = "post/get"
+	CmdGetSpam             = "post/get_spam"
+	CmdNotSpam             = "post/not_spam"
 	CmdGetCounters         = "post/get_counters"
 	CmdGetMany             = "post/get_many"
+	CmdGetManySpam         = "post/get_many_spam"
 	CmdGetChain            = "post/get_chain"
 	CmdGetCommentsByPost   = "post/get_comments"
 	CmdGetComment          = "post/get_comment"
@@ -55,6 +58,8 @@ func NewPostService(worker *api.Worker) *PostService {
 		CmdAddComment:          {MinAuthLevel: api.AuthLevelAppL3, Execute: s.addComment},
 		CmdAddLabel:            {MinAuthLevel: api.AuthLevelAppL3, Execute: s.addLabelToPost},
 		CmdGet:                 {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getPost},
+		CmdGetSpam:             {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getSpamPost},
+		CmdNotSpam:             {MinAuthLevel: api.AuthLevelAppL3, Execute: s.notSpam},
 		CmdGetMany:             {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getManyPosts},
 		CmdGetCommentsByPost:   {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getCommentsByPost},
 		CmdGetComment:          {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getCommentByID},

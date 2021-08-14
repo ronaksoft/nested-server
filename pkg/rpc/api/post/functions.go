@@ -424,6 +424,48 @@ func (s *PostService) getPost(requester *nested.Account, request *rpc.Request, r
 	response.OkWithData(s.Worker().Map().Post(requester, *post, false))
 }
 
+// @Command:	post/get_spam
+// @Input:	post_id			string	*
+func (s *PostService) getSpamPost(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
+	var post *nested.Post
+
+	if postID, ok := request.Data["post_id"].(string); ok {
+		post = s.Worker().Model().Post.GetSpamPostByID(bson.ObjectIdHex(postID))
+	}
+	if !post.HasAccess(requester.ID) {
+		response.Error(global.ErrAccess, []string{})
+		return
+	}
+
+	response.OkWithData(s.Worker().Map().Post(requester, *post, false))
+}
+
+// @Command:	post/not_spam
+// @Input:	post_id			string	*
+func (s *PostService) notSpam(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
+	var post *nested.Post
+
+	postID, ok := request.Data["post_id"].(string)
+	if !ok {
+		response.Error(global.ErrInvalid, []string{"post_id"})
+		return
+	}
+
+	post = s.Worker().Model().Post.GetSpamPostByID(bson.ObjectIdHex(postID))
+	if post == nil {
+		response.Error(global.ErrUnavailable, []string{"post_id"})
+		return
+	}
+	if !post.HasAccess(requester.ID) {
+		response.Error(global.ErrAccess, []string{})
+		return
+	}
+
+	s.Worker().Model().Post.NotSpam(bson.ObjectIdHex(postID))
+
+	response.OkWithData(s.Worker().Map().Post(requester, *post, false))
+}
+
 // @Command: post/edit
 // @Input: post_id          string *
 // @Input: subject          string *
@@ -526,7 +568,7 @@ func (s *PostService) getPostChain(requester *nested.Account, request *rpc.Reque
 
 // @Command:	post/get_counters
 // @Input:	post_id			string	*
-func (s *PostService) getPostCounters(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
+func (s *PostService) getPostCounters(_ *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var post *nested.Post
 	if post = s.Worker().Argument().GetPost(request, response); post == nil {
 		return
@@ -597,7 +639,7 @@ func (s *PostService) getCommentsByPost(requester *nested.Account, request *rpc.
 // @Command:	post/get_comment
 // @Input:	post_id			string	*
 // @Input:	comment_id		string	*
-func (s *PostService) getCommentByID(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
+func (s *PostService) getCommentByID(_ *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var post *nested.Post
 	var comment *nested.Comment
 	if post = s.Worker().Argument().GetPost(request, response); post == nil {

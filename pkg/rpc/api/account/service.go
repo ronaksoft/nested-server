@@ -10,28 +10,29 @@ const (
 	SERVICE_PREFIX = "account"
 )
 const (
-	CMD_AVAILABLE             = "account/available"
-	CMD_CHANGE_PHONE          = "account/change_phone"
-	CMD_GET                   = "account/get"
-	CMD_GET_BY_TOKEN          = "account/get_by_token"
-	CMD_GET_MANY              = "account/get_many"
-	CMD_GET_ALL_PLACES        = "account/get_all_places"
-	CMD_GET_FAVORITE_PLACES   = "account/get_favorite_places"
-	CMD_GET_POSTS             = "account/get_posts"
-	CMD_GET_FAVORITE_POSTS    = "account/get_favorite_posts"
-	CMD_GET_SENT_POSTS        = "account/get_sent_posts"
-	CMD_GET_PINNED_POSTS      = "account/get_pinned_posts"
-	CMD_REGISTER_DEVICE       = "account/register_device"
-	CMD_REMOVE_PICTURE        = "account/remove_picture"
-	CMD_SET_PICTURE           = "account/set_picture"
-	CMD_SET_PASSWORD          = "account/set_password"
-	CMD_SET_PASSWORD_BY_TOKEN = "account/set_password_by_token"
-	CMD_TRUST_EMAIL           = "account/trust_email"
-	CMD_UNREGISTER_DEVICE     = "account/unregister_device"
-	CMD_UN_TRUST_EMAIL        = "account/untrust_email"
-	CMD_UPDATE                = "account/update"
-	CMD_UPDATE_EMAIL          = "account/update_email"
-	CMD_REMOVE_EMAIL          = "account/remove_email"
+	CmdAvailable          = "account/available"
+	CmdChangePhone        = "account/change_phone"
+	CmdGet                = "account/get"
+	CmdGetByToken         = "account/get_by_token"
+	CmdGetMany            = "account/get_many"
+	CmdGetAllPlaces       = "account/get_all_places"
+	CmdGetFavoritePlaces  = "account/get_favorite_places"
+	CmdGetPosts           = "account/get_posts"
+	CmdGetSpamPosts       = "account/get_spam_posts"
+	CmdGetFavoritePosts   = "account/get_favorite_posts"
+	CmdGetSentPosts       = "account/get_sent_posts"
+	CmdGetPinnedPosts     = "account/get_pinned_posts"
+	CmdRegisterDevice     = "account/register_device"
+	CmdRemovePicture      = "account/remove_picture"
+	CmdSetPicture         = "account/set_picture"
+	CmdSetPassword        = "account/set_password"
+	CmdSetPasswordByToken = "account/set_password_by_token"
+	CmdTrustEmail         = "account/trust_email"
+	CmdUnregisterDevice   = "account/unregister_device"
+	CmdUnTrustEmail       = "account/untrust_email"
+	CmdUpdate             = "account/update"
+	CmdUpdateEmail        = "account/update_email"
+	CmdRemoveEmail        = "account/remove_email"
 )
 
 var (
@@ -48,28 +49,29 @@ func NewAccountService(worker *api.Worker) *AccountService {
 	s.worker = worker
 
 	s.serviceCommands = api.ServiceCommands{
-		CMD_UPDATE_EMAIL:          {MinAuthLevel: api.AuthLevelAppL1, Execute: s.updateEmail},
-		CMD_REMOVE_EMAIL:          {MinAuthLevel: api.AuthLevelAppL1, Execute: s.removeEmail},
-		CMD_GET_ALL_PLACES:        {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getAccountAllPlaces},
-		CMD_GET_FAVORITE_PLACES:   {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getAccountFavoritePlaces},
-		CMD_GET_POSTS:             {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getAccountFavoritePosts},
-		CMD_GET_FAVORITE_POSTS:    {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getAccountFavoritePosts},
-		CMD_GET_SENT_POSTS:        {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getAccountSentPosts},
-		CMD_GET_PINNED_POSTS:      {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getAccountPinnedPosts},
-		CMD_CHANGE_PHONE:          {MinAuthLevel: api.AuthLevelUser, Execute: s.changePhone},
-		CMD_GET:                   {MinAuthLevel: api.AuthLevelUser, Execute: s.getAccountInfo},
-		CMD_GET_MANY:              {MinAuthLevel: api.AuthLevelUser, Execute: s.getManyAccountsInfo},
-		CMD_SET_PICTURE:           {MinAuthLevel: api.AuthLevelUser, Execute: s.setAccountPicture},
-		CMD_TRUST_EMAIL:           {MinAuthLevel: api.AuthLevelUser, Execute: s.addToTrustList},
-		CMD_REMOVE_PICTURE:        {MinAuthLevel: api.AuthLevelUser, Execute: s.removeAccountPicture},
-		CMD_REGISTER_DEVICE:       {MinAuthLevel: api.AuthLevelUser, Execute: s.registerDevice},
-		CMD_UNREGISTER_DEVICE:     {MinAuthLevel: api.AuthLevelUser, Execute: s.unregisterDevice},
-		CMD_UN_TRUST_EMAIL:        {MinAuthLevel: api.AuthLevelUser, Execute: s.removeFromTrustList},
-		CMD_UPDATE:                {MinAuthLevel: api.AuthLevelUser, Execute: s.updateAccount},
-		CMD_AVAILABLE:             {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.accountIDAvailable},
-		CMD_GET_BY_TOKEN:          {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.getAccountInfoByToken},
-		CMD_SET_PASSWORD:          {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.setAccountPassword},
-		CMD_SET_PASSWORD_BY_TOKEN: {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.setAccountPasswordByLoginToken},
+		CmdUpdateEmail:        {MinAuthLevel: api.AuthLevelAppL1, Execute: s.updateEmail},
+		CmdRemoveEmail:        {MinAuthLevel: api.AuthLevelAppL1, Execute: s.removeEmail},
+		CmdGetAllPlaces:       {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getAccountAllPlaces},
+		CmdGetFavoritePlaces:  {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getAccountFavoritePlaces},
+		CmdGetPosts:           {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getAccountFavoritePosts},
+		CmdGetSpamPosts:       {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getAccountSpamPosts},
+		CmdGetFavoritePosts:   {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getAccountFavoritePosts},
+		CmdGetSentPosts:       {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getAccountSentPosts},
+		CmdGetPinnedPosts:     {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getAccountPinnedPosts},
+		CmdChangePhone:        {MinAuthLevel: api.AuthLevelUser, Execute: s.changePhone},
+		CmdGet:                {MinAuthLevel: api.AuthLevelUser, Execute: s.getAccountInfo},
+		CmdGetMany:            {MinAuthLevel: api.AuthLevelUser, Execute: s.getManyAccountsInfo},
+		CmdSetPicture:         {MinAuthLevel: api.AuthLevelUser, Execute: s.setAccountPicture},
+		CmdTrustEmail:         {MinAuthLevel: api.AuthLevelUser, Execute: s.addToTrustList},
+		CmdRemovePicture:      {MinAuthLevel: api.AuthLevelUser, Execute: s.removeAccountPicture},
+		CmdRegisterDevice:     {MinAuthLevel: api.AuthLevelUser, Execute: s.registerDevice},
+		CmdUnregisterDevice:   {MinAuthLevel: api.AuthLevelUser, Execute: s.unregisterDevice},
+		CmdUnTrustEmail:       {MinAuthLevel: api.AuthLevelUser, Execute: s.removeFromTrustList},
+		CmdUpdate:             {MinAuthLevel: api.AuthLevelUser, Execute: s.updateAccount},
+		CmdAvailable:          {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.accountIDAvailable},
+		CmdGetByToken:         {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.getAccountInfoByToken},
+		CmdSetPassword:        {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.setAccountPassword},
+		CmdSetPasswordByToken: {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.setAccountPasswordByLoginToken},
 	}
 
 	_Model = s.worker.Model()
