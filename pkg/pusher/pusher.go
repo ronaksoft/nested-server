@@ -15,7 +15,6 @@ import (
 	"github.com/globalsign/mgo/bson"
 	"go.uber.org/zap"
 	"google.golang.org/api/option"
-	"regexp"
 	"strconv"
 	"strings"
 )
@@ -723,9 +722,7 @@ func (p *Pusher) PostAttached(post *nested.Post, attachedPlaceIDs []string) {
 	}
 }
 func (p *Pusher) PostCommentAdded(post *nested.Post, comment *nested.Comment) {
-	// find mentioned ids and External Notifications
-	regx, _ := regexp.Compile(`@([a-zA-Z0-9-]*)(\s|$)`)
-	matches := regx.FindAllString(comment.Body, 100)
+	matches := global.RegExMention.FindAllString(comment.Body, 100)
 	mentionedIDs := tools.MB{}
 	for _, m := range matches {
 		mentionedID := strings.Trim(string(m[1:]), " ") // remove @ from the mentioned id
@@ -926,9 +923,7 @@ func (p *Pusher) TaskInProgress(task *nested.Task, actorID string) {
 	p.InternalTaskActivitySyncPush(accountIDs.KeysToArray(), task.ID, global.TaskActivityStatusChanged)
 }
 func (p *Pusher) TaskCommentAdded(task *nested.Task, actorID string, activityID bson.ObjectId, commentText string) {
-	// find mentioned ids and External Notifications
-	regx, _ := regexp.Compile(`@([a-zA-Z0-9-]*)(\s|$)`)
-	matches := regx.FindAllString(commentText, 100)
+	matches := global.RegExMention.FindAllString(commentText, 100)
 	mentionedIDs := tools.MB{}
 	for _, m := range matches {
 		mentionedID := strings.Trim(string(m[1:]), " ") // remove @ from the mentioned id

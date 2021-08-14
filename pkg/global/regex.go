@@ -14,5 +14,6 @@ import (
 */
 
 var (
-	RegEXSpamScore, _ = regexp.Compile(`\sscore=[0-9.]*\s`)
+	RegExSpamScore, _ = regexp.Compile(`\sscore=[0-9.]*\s`)
+	RegExMention, _   = regexp.Compile(`@([a-zA-Z0-9-]*)(\s|$)`)
 )
