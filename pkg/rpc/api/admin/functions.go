@@ -506,11 +506,7 @@ func (s *AdminService) createPlace(requester *nested.Account, request *rpc.Reque
 		} else {
 			localPlaceID := string(pcr.ID[pos+1:])
 			// check if place id is a valid place id
-			if matched, err := regexp.MatchString(global.DefaultRegexPlaceID, localPlaceID); err != nil {
-				log.Println(err.Error())
-				response.Error(global.ErrUnknown, []string{})
-				return
-			} else if !matched {
+			if !global.RegExPlaceID.MatchString(localPlaceID) {
 				response.Error(global.ErrInvalid, []string{"place_id"})
 				return
 			}

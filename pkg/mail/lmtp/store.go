@@ -157,8 +157,7 @@ func (s *Session) extractHeader(nm *NestedMail, envelope *enmime.Envelope) error
 	spamLevel, _ := strconv.ParseFloat(envelope.GetHeader("X-Spam-Level"), 64)
 	if items := global.RegExSpamScore.FindAllString(envelope.GetHeader("X-Spam-Status"), 1); len(items) > 0 {
 		nm.SpamScore, _ = strconv.ParseFloat(strings.TrimPrefix(strings.TrimSpace(items[0]), "score="), 64)
-		log.Debug("Score Extracted", zap.Any("Items", items), zap.Any("Score", nm.SpamScore), zap.Any("Level", spamLevel),
-		)
+		log.Debug("Score Extracted", zap.Any("Items", items), zap.Any("Score", nm.SpamScore), zap.Any("Level", spamLevel))
 	}
 
 	for _, hdr := range envelope.GetHeaderKeys() {

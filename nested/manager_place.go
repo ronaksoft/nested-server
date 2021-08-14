@@ -233,7 +233,7 @@ func (pm *PlaceManager) Available(placeID string) bool {
 		}
 	} else {
 		localPlaceID := string(placeID[dotPosition+1:])
-		if matched, err := regexp.MatchString(global.DefaultRegexPlaceID, localPlaceID); err != nil || !matched {
+		if !global.RegExPlaceID.MatchString(localPlaceID) {
 			return false
 		}
 	}
