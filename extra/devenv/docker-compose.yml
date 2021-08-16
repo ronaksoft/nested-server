@@ -13,7 +13,7 @@ services:
       - NST_INSTANCE_ID=TEST_INSTANCE
       - NST_MONGO_DSN=mongodb://mongodb:27001/nested
       - NST_REDIS_DSN=cache:6379
-      - NST_LOG_LEVEL=-1
+      - NST_LOG_LEVEL=0
       - NST_RUN_MODE=DEVELOPMENT
       - NST_DOMAINS=ronaksoftware.com
       - NST_SENDER_DOMAIN=ronaksoftware.com

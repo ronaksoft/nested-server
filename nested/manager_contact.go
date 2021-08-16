@@ -155,7 +155,7 @@ func (cm *ContactManager) GetContacts(accountID string) Contacts {
 
 	c := Contacts{}
 	if err := db.C(global.CollectionContacts).FindId(accountID).One(&c); err != nil {
-		log.Warn("Got error", zap.Error(err))
+		log.Warn("got error on finding contact", zap.Error(err), zap.String("AccountID", accountID))
 	}
 	return c
 }

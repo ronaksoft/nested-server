@@ -99,7 +99,7 @@ func (am *AccountManager) readFromCache(accountID string) *Account {
 	keyID := fmt.Sprintf("account:gob:%s", accountID)
 	if gobAccount, err := redis.Bytes(c.Do("GET", keyID)); err != nil {
 		if err := _MongoDB.C(global.CollectionAccounts).FindId(accountID).One(account); err != nil {
-			log.Sugar().Info("Model::AccountManager::readFromCache::Error 1::", err.Error(), accountID)
+			log.Warn("did not find account in db", zap.Error(err), zap.String("AccountID", accountID))
 			return nil
 		}
 		gobAccount := new(bytes.Buffer)
@@ -143,10 +143,9 @@ func (am *AccountManager) readKeyFromCache(keyID string) string {
 	defer c.Close()
 	if keyValue, err := redis.String(c.Do("GET", fmt.Sprintf("account-key:json:%s", keyID))); err != nil {
 		if err := _MongoDB.C(global.CollectionAccountsData).FindId(keyID).One(&doc); err != nil {
-			log.Sugar().Info("Model::AccountManager::readKeyFromCache::Error 1::", err.Error())
 			return ""
 		}
-		c.Do("SETEX", keyID, global.CacheLifetime, doc["value"].(string))
+		_, _ = c.Do("SETEX", keyID, global.CacheLifetime, doc["value"].(string))
 		return doc["value"].(string)
 	} else {
 		return keyValue

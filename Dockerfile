@@ -46,7 +46,6 @@ RUN update-rc.d spamassassin enable
 
 # Prepare OpenDKIM and SPF
 RUN postconf -M policyd-spf/unix="policyd-spf  unix  -       n       n       -       0       spawn  user=policyd-spf argv=/usr/bin/policyd-spf"
-RUN postconf -e policy-spf_time_limit=3600s
 RUN postconf -e smtpd_recipient_restrictions=permit_mynetworks,reject_unauth_destination,check_policy_service\ unix:private/policyd-spf
 RUN usermod -a -G opendkim postfix
 RUN mkdir -p /etc/opendkim/keys
