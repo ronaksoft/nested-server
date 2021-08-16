@@ -3,7 +3,7 @@
 server=localhost
 port=25
 from=ehsan@nested.me
-to=ehsan@ronaksoftware.com
+to=new@ronaksoftware.com
 
 # create message
 function mail_input {

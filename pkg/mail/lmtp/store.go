@@ -45,11 +45,11 @@ func (s *Session) Reset() {
 	s.opts = smtp.MailOptions{}
 	s.from = ""
 	s.rcpts = s.rcpts[:0]
-	log.Info("Session Reset", zap.String("H", s.hostname), zap.String("Remote", s.remoteAddr))
+	log.Debug("Session Reset", zap.String("H", s.hostname), zap.String("Remote", s.remoteAddr))
 }
 
 func (s *Session) Logout() error {
-	log.Info("Session Logout", zap.String("H", s.hostname), zap.String("Remote", s.remoteAddr))
+	log.Debug("Session Logout", zap.String("H", s.hostname), zap.String("Remote", s.remoteAddr))
 	return nil
 }
 
@@ -160,9 +160,6 @@ func (s *Session) extractHeader(nm *NestedMail, envelope *enmime.Envelope) error
 		log.Debug("Score Extracted", zap.Any("Items", items), zap.Any("Score", nm.SpamScore), zap.Any("Level", spamLevel))
 	}
 
-	for _, hdr := range envelope.GetHeaderKeys() {
-		log.Debug("Header", zap.String("K", hdr), zap.Strings("V", envelope.GetHeaderValues(hdr)))
-	}
 	return nil
 }
 func (s *Session) extractRecipients(nm *NestedMail, envelope *enmime.Envelope) error {

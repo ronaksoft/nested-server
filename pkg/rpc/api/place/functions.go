@@ -932,16 +932,16 @@ func (s *PlaceService) getMutualPlaces(requester *nested.Account, request *rpc.R
 // @Input:	place_id		string	*
 // @Input:	by_update	bool		+
 func (s *PlaceService) getPlacePosts(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
-	var sort_item string
+	var sortItem string
 	var place *nested.Place
 	var posts []nested.Post
 	if place = s.Worker().Argument().GetPlace(request, response); place == nil {
 		return
 	}
-	sort_item = nested.PostSortTimestamp
+	sortItem = nested.PostSortTimestamp
 	if v, ok := request.Data["by_update"].(bool); ok {
 		if v {
-			sort_item = nested.PostSortLastUpdate
+			sortItem = nested.PostSortLastUpdate
 		}
 	}
 
@@ -953,9 +953,9 @@ func (s *PlaceService) getPlacePosts(requester *nested.Account, request *rpc.Req
 
 	pg := s.Worker().Argument().GetPagination(request)
 	if place.ID == requester.ID {
-		posts = s.Worker().Model().Post.GetPostsOfPlaces([]string{place.ID, "*"}, sort_item, pg)
+		posts = s.Worker().Model().Post.GetPostsOfPlaces([]string{place.ID, "*"}, sortItem, pg)
 	} else {
-		posts = s.Worker().Model().Post.GetPostsByPlace(place.ID, sort_item, pg)
+		posts = s.Worker().Model().Post.GetPostsByPlace(place.ID, sortItem, pg)
 	}
 	r := make([]tools.M, 0, len(posts))
 

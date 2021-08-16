@@ -12,7 +12,7 @@ const (
 	DefaultMaxPlaceID              = 128
 	DefaultMaxLabelTitle           = 32
 	DefaultModelVersion            = 17
-	DefaultSpamScore               = 0.5
+	DefaultSpamScore               = 5.0
 
 	DefaultRegexPlaceID      = "^[a-zA-Z][a-zA-Z0-9-_]{0,30}[a-zA-Z0-9]$"
 	DefaultRegexGrandPlaceID = "^[a-zA-Z][a-zA-Z0-9-_]{1,30}[a-zA-Z0-9]$"

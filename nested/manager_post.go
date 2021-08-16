@@ -49,7 +49,7 @@ func (pm *PostManager) readFromCache(postID bson.ObjectId) *Post {
 	keyID := fmt.Sprintf("post:gob:%s", postID.Hex())
 	if gobPost, err := redis.Bytes(c.Do("GET", keyID)); err != nil {
 		if err := _MongoDB.C(global.CollectionPosts).FindId(postID).One(post); err != nil {
-			log.Warn("Got error", zap.Error(err))
+			log.Warn("got error reading post from db", zap.Error(err))
 			return nil
 		}
 		gobPost := new(bytes.Buffer)
@@ -291,7 +291,6 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 		post.Spam = true
 	}
 
-	// TODO:: check spam score, move to spam collection
 
 	// Returns nil if targets are more than DefaultPostMaxTargets
 	if len(pcr.PlaceIDs)+len(pcr.Recipients) > global.DefaultPostMaxTargets {
@@ -628,7 +627,7 @@ func (pm *PostManager) GetPostByID(postID bson.ObjectId) *Post {
 // GetSpamPostByID returns Post by postID, if postID does not exist it returns nil
 func (pm *PostManager) GetSpamPostByID(postID bson.ObjectId) *Post {
 	post := &Post{}
-	if err := _MongoDB.C(global.CollectionPosts).FindId(postID).One(post); err != nil {
+	if err := _MongoDB.C(global.CollectionPostsSpams).FindId(postID).One(post); err != nil {
 		log.Warn("Got error", zap.Error(err))
 		return nil
 	}

@@ -320,7 +320,7 @@ func (am *AccountManager) EmailExists(email string) bool {
 	return n > 0
 }
 
-// Enables make the accountID enabled
+// Enable make the accountID enabled
 func (am *AccountManager) Enable(accountID string) bool {
 	defer _Manager.Account.removeCache(accountID)
 	if err := _MongoDB.C(global.CollectionAccounts).Update(
