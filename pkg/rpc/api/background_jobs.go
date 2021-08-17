@@ -10,16 +10,16 @@ import (
 // BackgroundJob are runnable structures handler background workers
 type BackgroundJob struct {
 	chShutdown chan bool
-	server     *Server
+	worker     *Worker
 	period     time.Duration
 	job        func(worker *BackgroundJob)
 }
 
-func NewBackgroundJob(server *Server, d time.Duration, f func(w *BackgroundJob)) *BackgroundJob {
+func NewBackgroundJob(worker *Worker, d time.Duration, f func(w *BackgroundJob)) *BackgroundJob {
 	bg := &BackgroundJob{
 		period:     d,
 		job:        f,
-		server:     server,
+		worker:     worker,
 		chShutdown: make(chan bool),
 	}
 
@@ -44,7 +44,7 @@ func (bw *BackgroundJob) Shutdown() {
 }
 
 func (bw *BackgroundJob) Model() *nested.Manager {
-	return bw.server.model
+	return bw.worker.model
 }
 
 // JobReporter
@@ -80,14 +80,14 @@ func JobOverdueTasks(b *BackgroundJob) {
 			// Notify Assignor of the task
 			if len(task.AssigneeID) > 0 {
 				n1 := b.Model().Notification.TaskOverdue(task.AssignorID, &overdueTasks[i])
-				b.server.pusher.ExternalPushNotification(n1)
-				b.server.pusher.InternalNotificationSyncPush([]string{task.AssigneeID}, nested.NotificationTypeTaskOverDue)
+				b.worker.pusher.ExternalPushNotification(n1)
+				b.worker.pusher.InternalNotificationSyncPush([]string{task.AssigneeID}, nested.NotificationTypeTaskOverDue)
 			}
 			// Notify Assignee of the task
 			if len(task.AssignorID) > 0 && task.AssignorID != task.AssigneeID {
 				n2 := b.Model().Notification.TaskOverdue(task.AssigneeID, &overdueTasks[i])
-				b.server.pusher.ExternalPushNotification(n2)
-				b.server.pusher.InternalNotificationSyncPush([]string{task.AssignorID}, nested.NotificationTypeTaskOverDue)
+				b.worker.pusher.ExternalPushNotification(n2)
+				b.worker.pusher.InternalNotificationSyncPush([]string{task.AssignorID}, nested.NotificationTypeTaskOverDue)
 			}
 
 		}
@@ -102,15 +102,15 @@ func JobLicenseManager(b *BackgroundJob) {
 	hours := time.Now().Sub(licenseTime).Hours()
 
 	if b.Model().License.IsExpired() {
-		b.server.flags.LicenseExpired = true
+		b.worker.flags.LicenseExpired = true
 		if hours > 1440 { // More than 2 Months
-			b.server.flags.LicenseSlowMode = 2
+			b.worker.flags.LicenseSlowMode = 2
 		} else if hours > 720 { // More than 1 Months
-			b.server.flags.LicenseSlowMode = 1
+			b.worker.flags.LicenseSlowMode = 1
 		} else {
-			b.server.flags.LicenseSlowMode = 0
+			b.worker.flags.LicenseSlowMode = 0
 		}
 	} else {
-		b.server.flags.LicenseExpired = false
+		b.worker.flags.LicenseExpired = false
 	}
 }

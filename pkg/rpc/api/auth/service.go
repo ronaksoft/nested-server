@@ -25,7 +25,7 @@ type AuthService struct {
 	serviceCommands api.ServiceCommands
 }
 
-func NewAuthService(worker *api.Worker) *AuthService {
+func NewAuthService(worker *api.Worker) api.Service {
 	s := new(AuthService)
 	s.worker = worker
 

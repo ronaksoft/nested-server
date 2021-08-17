@@ -23,7 +23,7 @@ type SessionService struct {
 	serviceCommands api.ServiceCommands
 }
 
-func NewSessionService(worker *api.Worker) *SessionService {
+func NewSessionService(worker *api.Worker) api.Service {
 	s := new(SessionService)
 	s.worker = worker
 

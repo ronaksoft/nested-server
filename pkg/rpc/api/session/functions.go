@@ -123,7 +123,7 @@ func (s *SessionService) recall(requester *nested.Account, request *rpc.Request,
 		"_sk":              sk,
 		"_ss":              ss,
 		"server_timestamp": nested.Timestamp(),
-		"license_expired":  s.Worker().Server().GetFlags().LicenseExpired,
+		"license_expired":  s.Worker().GetFlags().LicenseExpired,
 		"account":          s.Worker().Map().Account(*account, true),
 	}
 	switch os {
@@ -237,7 +237,7 @@ func (s *SessionService) register(requester *nested.Account, request *rpc.Reques
 		"_sk":              sk,
 		"_ss":              ss,
 		"server_timestamp": nested.Timestamp(),
-		"license_expired":  s.Worker().Server().GetFlags().LicenseExpired,
+		"license_expired":  s.Worker().GetFlags().LicenseExpired,
 		"account":          s.Worker().Map().Account(*account, true),
 	}
 	switch os {

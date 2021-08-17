@@ -21,7 +21,7 @@ type HookService struct {
 	serviceCommands api.ServiceCommands
 }
 
-func NewHookService(worker *api.Worker) *HookService {
+func NewHookService(worker *api.Worker) api.Service {
 	s := new(HookService)
 	s.worker = worker
 

@@ -79,7 +79,7 @@ func (s *AdminService) checkSystemHealth(requester *nested.Account, request *rpc
 	if v, ok := request.Data["check_state"].(bool); ok {
 		checkState = v
 	}
-	HealthCheckRunning := s.Worker().Server().GetFlags().HealthCheckRunning
+	HealthCheckRunning := s.Worker().GetFlags().HealthCheckRunning
 	if checkState {
 		response.OkWithData(tools.M{"running_health_check": HealthCheckRunning})
 		return
@@ -87,9 +87,9 @@ func (s *AdminService) checkSystemHealth(requester *nested.Account, request *rpc
 
 	if !HealthCheckRunning {
 		go func() {
-			s.Worker().Server().SetHealthCheckState(true)
+			s.Worker().SetHealthCheckState(true)
 			s.Worker().Model().ModelCheckHealth()
-			s.Worker().Server().SetHealthCheckState(false)
+			s.Worker().SetHealthCheckState(false)
 		}()
 		response.Ok()
 	} else {

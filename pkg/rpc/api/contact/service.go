@@ -27,7 +27,7 @@ type ContactService struct {
 	serviceCommands api.ServiceCommands
 }
 
-func NewContactService(worker *api.Worker) *ContactService {
+func NewContactService(worker *api.Worker) api.Service {
 	s := new(ContactService)
 	s.worker = worker
 

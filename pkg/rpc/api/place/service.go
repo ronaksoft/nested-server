@@ -55,7 +55,7 @@ type PlaceService struct {
 	serviceCommands api.ServiceCommands
 }
 
-func NewPlaceService(worker *api.Worker) *PlaceService {
+func NewPlaceService(worker *api.Worker) api.Service {
 	s := new(PlaceService)
 	s.worker = worker
 

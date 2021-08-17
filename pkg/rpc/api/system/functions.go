@@ -170,7 +170,7 @@ func (s *SystemService) setLicense(requester *nested.Account, request *rpc.Reque
 	if s.Worker().Model().License.IsExpired() {
 		response.Error(global.ErrInvalid, []string{"license_key"})
 	} else {
-		s.Worker().Server().ResetLicense()
+		s.Worker().ResetLicense()
 		response.Ok()
 	}
 }

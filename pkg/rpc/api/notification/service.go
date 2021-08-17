@@ -28,7 +28,7 @@ type NotificationService struct {
 	serviceCommands api.ServiceCommands
 }
 
-func NewNotificationService(worker *api.Worker) *NotificationService {
+func NewNotificationService(worker *api.Worker) api.Service {
 	s := new(NotificationService)
 	s.worker = worker
 

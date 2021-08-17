@@ -26,7 +26,7 @@ type FileService struct {
 	serviceCommands api.ServiceCommands
 }
 
-func NewFileService(worker *api.Worker) *FileService {
+func NewFileService(worker *api.Worker) api.Service {
 	s := new(FileService)
 	s.worker = worker
 

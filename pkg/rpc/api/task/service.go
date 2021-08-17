@@ -44,7 +44,7 @@ type TaskService struct {
 	serviceCommands api.ServiceCommands
 }
 
-func NewTaskService(worker *api.Worker) *TaskService {
+func NewTaskService(worker *api.Worker) api.Service {
 	s := new(TaskService)
 	s.worker = worker
 

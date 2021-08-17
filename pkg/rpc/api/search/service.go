@@ -32,7 +32,7 @@ type SearchService struct {
 	serviceCommands api.ServiceCommands
 }
 
-func NewSearchService(worker *api.Worker) *SearchService {
+func NewSearchService(worker *api.Worker) api.Service {
 	s := new(SearchService)
 	s.worker = worker
 

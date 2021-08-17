@@ -251,7 +251,7 @@ func (s *AccountService) getAccountFavoritePosts(requester *nested.Account, requ
 
 // @Command: account/get_spam_posts
 // @Pagination
-func (s *AccountService) getAccountSpamPosts(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
+func (s *AccountService) getAccountGetSpamPosts(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 
 	pg := s.Worker().Argument().GetPagination(request)
 	posts := _Model.Post.GetSpamPostsOfPlaces(append(requester.BookmarkedPlaceIDs, "*"), pg)

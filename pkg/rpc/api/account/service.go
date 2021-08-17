@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	SERVICE_PREFIX = "account"
+	ServicePrefix = "account"
 )
 const (
 	CmdAvailable          = "account/available"
@@ -44,7 +44,7 @@ type AccountService struct {
 	serviceCommands api.ServiceCommands
 }
 
-func NewAccountService(worker *api.Worker) *AccountService {
+func NewAccountService(worker *api.Worker) api.Service {
 	s := new(AccountService)
 	s.worker = worker
 
@@ -54,7 +54,7 @@ func NewAccountService(worker *api.Worker) *AccountService {
 		CmdGetAllPlaces:       {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getAccountAllPlaces},
 		CmdGetFavoritePlaces:  {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getAccountFavoritePlaces},
 		CmdGetPosts:           {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getAccountFavoritePosts},
-		CmdGetSpamPosts:       {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getAccountSpamPosts},
+		CmdGetSpamPosts:       {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getAccountGetSpamPosts},
 		CmdGetFavoritePosts:   {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getAccountFavoritePosts},
 		CmdGetSentPosts:       {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getAccountSentPosts},
 		CmdGetPinnedPosts:     {MinAuthLevel: api.AuthLevelAppL3, Execute: s.getAccountPinnedPosts},
@@ -79,7 +79,7 @@ func NewAccountService(worker *api.Worker) *AccountService {
 }
 
 func (s *AccountService) GetServicePrefix() string {
-	return SERVICE_PREFIX
+	return ServicePrefix
 }
 
 func (s *AccountService) ExecuteCommand(authLevel api.AuthLevel, requester *nested.Account, request *rpc.Request, response *rpc.Response) {

@@ -27,7 +27,7 @@ type ClientService struct {
 	serviceCommands api.ServiceCommands
 }
 
-func NewClientService(worker *api.Worker) *ClientService {
+func NewClientService(worker *api.Worker) api.Service {
 	s := new(ClientService)
 	s.worker = worker
 

@@ -29,7 +29,7 @@ type SystemService struct {
 	serviceCommands api.ServiceCommands
 }
 
-func NewSystemService(worker *api.Worker) *SystemService {
+func NewSystemService(worker *api.Worker) api.Service {
 	s := new(SystemService)
 	s.worker = worker
 	s.serviceCommands = api.ServiceCommands{

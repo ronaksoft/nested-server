@@ -49,7 +49,7 @@ type PostService struct {
 	serviceCommands api.ServiceCommands
 }
 
-func NewPostService(worker *api.Worker) *PostService {
+func NewPostService(worker *api.Worker) api.Service {
 	s := new(PostService)
 	s.worker = worker
 

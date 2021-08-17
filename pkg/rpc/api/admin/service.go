@@ -50,7 +50,7 @@ type AdminService struct {
 	serviceCommands api.ServiceCommands
 }
 
-func NewAdminService(worker *api.Worker) *AdminService {
+func NewAdminService(worker *api.Worker) api.Service {
 	s := new(AdminService)
 	s.worker = worker
 

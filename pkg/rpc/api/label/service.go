@@ -32,7 +32,7 @@ type LabelService struct {
 	serviceCommands api.ServiceCommands
 }
 
-func NewLabelService(worker *api.Worker) *LabelService {
+func NewLabelService(worker *api.Worker) api.Service {
 	s := new(LabelService)
 	s.worker = worker
 

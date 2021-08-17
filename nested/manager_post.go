@@ -291,7 +291,6 @@ func (pm *PostManager) AddPost(pcr PostCreateRequest) *Post {
 		post.Spam = true
 	}
 
-
 	// Returns nil if targets are more than DefaultPostMaxTargets
 	if len(pcr.PlaceIDs)+len(pcr.Recipients) > global.DefaultPostMaxTargets {
 		return nil

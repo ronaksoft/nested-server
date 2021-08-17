@@ -54,7 +54,7 @@ type APP struct {
 	iris      *iris.Application
 	model     *nested.Manager
 	file      *file.Server
-	api       *api.Server
+	api       *api.Worker
 	mailStore *lmtp.Server
 	mailMap   *mailmap.Server
 	pusher    *pusher.Pusher
@@ -127,28 +127,33 @@ func NewAPP() *APP {
 
 	app.wg = new(sync.WaitGroup)
 
-	// Initialize API Server
-	app.api = api.NewServer(app.wg, app.model, app.pusher)
+	// Run Model Checkups
+	nested.StartupCheckups()
+
+	// Register Bundle
+	app.model.RegisterBundle(config.GetString(config.BundleID))
+
+	app.api = api.NewWorker(app.model, app.pusher)
 
 	// Register all the available services in the server worker
-	app.api.Worker().RegisterService(
-		nestedServiceAccount.NewAccountService(app.api.Worker()),
-		nestedServiceApp.NewAppService(app.api.Worker()),
-		nestedServiceAdmin.NewAdminService(app.api.Worker()),
-		nestedServiceAuth.NewAuthService(app.api.Worker()),
-		nestedServiceHook.NewHookService(app.api.Worker()),
-		nestedServiceClient.NewClientService(app.api.Worker()),
-		nestedServiceContact.NewContactService(app.api.Worker()),
-		nestedServiceFile.NewFileService(app.api.Worker()),
-		nestedServiceLabel.NewLabelService(app.api.Worker()),
-		nestedServiceNotification.NewNotificationService(app.api.Worker()),
-		nestedServicePlace.NewPlaceService(app.api.Worker()),
-		nestedServicePost.NewPostService(app.api.Worker()),
-		nestedServiceReport.NewReportService(app.api.Worker()),
-		nestedServiceSearch.NewSearchService(app.api.Worker()),
-		nestedServiceSession.NewSessionService(app.api.Worker()),
-		nestedServiceSystem.NewSystemService(app.api.Worker()),
-		nestedServiceTask.NewTaskService(app.api.Worker()),
+	app.api.RegisterService(
+		nestedServiceAccount.NewAccountService,
+		nestedServiceApp.NewAppService,
+		nestedServiceAdmin.NewAdminService,
+		nestedServiceAuth.NewAuthService,
+		nestedServiceHook.NewHookService,
+		nestedServiceClient.NewClientService,
+		nestedServiceContact.NewContactService,
+		nestedServiceFile.NewFileService,
+		nestedServiceLabel.NewLabelService,
+		nestedServiceNotification.NewNotificationService,
+		nestedServicePlace.NewPlaceService,
+		nestedServicePost.NewPostService,
+		nestedServiceReport.NewReportService,
+		nestedServiceSearch.NewSearchService,
+		nestedServiceSession.NewSessionService,
+		nestedServiceSystem.NewSystemService,
+		nestedServiceTask.NewTaskService,
 	)
 
 	// Register and run BackgroundWorkers
@@ -264,7 +269,7 @@ func (gw *APP) httpOnConnection(ctx iris.Context) {
 
 	// Send to Server
 	userResponse := new(rpc.Response)
-	gw.api.Worker().Execute(userRequest, userResponse)
+	gw.api.Execute(userRequest, userResponse)
 
 	log.Debug("HTTP Request Received",
 		zap.String("AppID", userRequest.AppID),
@@ -323,7 +328,7 @@ func (gw *APP) websocketOnConnection(c websocket.Connection) {
 
 			// Send to Server
 			userResponse := &rpc.Response{}
-			gw.api.Worker().Execute(userRequest, userResponse)
+			gw.api.Execute(userRequest, userResponse)
 			log.Debug("Websocket Request Received",
 				zap.String("AppID", userRequest.AppID),
 				zap.String("Cmd", userRequest.Command),
@@ -338,7 +343,7 @@ func (gw *APP) websocketOnConnection(c websocket.Connection) {
 
 	// websocket Disconnect Handler
 	c.OnDisconnect(func() {
-		_ = gw.api.Worker().Pusher().UnregisterWebsocket(c.ID(), config.GetString(config.BundleID))
+		_ = gw.api.Pusher().UnregisterWebsocket(c.ID(), config.GetString(config.BundleID))
 	})
 }
 

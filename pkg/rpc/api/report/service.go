@@ -22,7 +22,7 @@ type ReportService struct {
 	serviceCommands api.ServiceCommands
 }
 
-func NewReportService(worker *api.Worker) *ReportService {
+func NewReportService(worker *api.Worker) api.Service {
 	s := new(ReportService)
 	s.worker = worker
 

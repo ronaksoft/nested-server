@@ -71,24 +71,8 @@ func (fs *Server) ServePublicFiles(ctx iris.Context) {
 
 func (fs *Server) ServePrivateFiles(ctx iris.Context) {
 	universalID := nested.UniversalID(ctx.Params().Get("universalID"))
-	// sessionID := ctx.Params().Get("sessionID")
 	downloadToken := ctx.Params().Get("downloadToken")
 	resp := new(rpc.Response)
-
-	// if !bson.IsObjectIdHex(sessionID) {
-	//    ctx.StatusCode(http.StatusUnauthorized)
-	//    resp.Error(global.ErrAccess, []string{})
-	//    ctx.JSON(resp)
-	//    return
-	// } else {
-	//    session := _NestedModel.Session.GetByID(bson.ObjectIdHex(sessionID))
-	//    if session == nil {
-	//        ctx.StatusCode(http.StatusUnauthorized)
-	//        resp.Error(global.ErrAccess, []string{})
-	//        ctx.JSON(resp)
-	//        return
-	//    }
-	// }
 
 	if valid, uniID := nested.UseDownloadToken(downloadToken); !valid {
 		ctx.StatusCode(http.StatusUnauthorized)
@@ -160,7 +144,7 @@ func (fs *Server) UploadSystem(ctx iris.Context) {
 	if r, err := ctx.Request().MultipartReader(); err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		resp.Error(global.ErrInvalid, []string{"request"})
-		ctx.JSON(resp)
+		_, _ = ctx.JSON(resp)
 		return
 	} else {
 		multipartReader = r
@@ -173,7 +157,7 @@ func (fs *Server) UploadSystem(ctx iris.Context) {
 			if fileInfo, err := uploadFile(part, uploadType, uploaderID, false); err != nil {
 				resp.Error(global.ErrUnknown, []string{})
 				ctx.StatusCode(http.StatusExpectationFailed)
-				ctx.JSON(resp)
+				_, _ = ctx.JSON(resp)
 				return
 
 			} else {
@@ -750,6 +734,7 @@ func createProcesses(
 			&thumbGenerator{MaxDimension: DefaultThumbnailSizes[Thumbnail64], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: Thumbnail64, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
 			&thumbGenerator{MaxDimension: DefaultThumbnailSizes[Thumbnail128], Uploader: storedFileInfo.Metadata.Uploader, Filename: storedFileInfo.Name, MimeType: storedFileInfo.MimeType, ThumbName: Thumbnail128, MetaData: metaData, Lock: metaDataLock, WaitGroup: wgMetaData},
 		}
+
 	case nested.UploadTypeVideo:
 		if nested.FileTypeVideo != storedFileInfo.Metadata.Type {
 			log.Warn("Invalid file uploaded as Video")
