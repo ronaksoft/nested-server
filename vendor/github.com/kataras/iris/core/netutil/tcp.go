@@ -1,13 +1,15 @@
 package netutil
 
 import (
+	"context"
 	"crypto/tls"
+	"errors"
+	"fmt"
 	"net"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/kataras/iris/core/errors"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -22,35 +24,32 @@ type tcpKeepAliveListener struct {
 }
 
 // Accept accepts tcp connections aka clients.
-func (l tcpKeepAliveListener) Accept() (c net.Conn, err error) {
+func (l tcpKeepAliveListener) Accept() (net.Conn, error) {
 	tc, err := l.AcceptTCP()
 	if err != nil {
-		return
+		return tc, err
 	}
-	tc.SetKeepAlive(true)
-	tc.SetKeepAlivePeriod(3 * time.Minute)
+	if err = tc.SetKeepAlive(true); err != nil {
+		return tc, err
+	}
+	if err = tc.SetKeepAlivePeriod(3 * time.Minute); err != nil {
+		return tc, err
+	}
 	return tc, nil
 }
 
-var (
-	errPortAlreadyUsed = errors.New("port is already used")
-	errRemoveUnix      = errors.New("unexpected error when trying to remove unix socket file. Addr: %s | Trace: %s")
-	errChmod           = errors.New("cannot chmod %#o for %q: %s")
-	errCertKeyMissing  = errors.New("you should provide certFile and keyFile for TLS/SSL")
-	errParseTLS        = errors.New("couldn't load TLS, certFile=%q, keyFile=%q. Trace: %s")
-)
-
 // TCP returns a new tcp(ipv6 if supported by network) and an error on failure.
-func TCP(addr string) (net.Listener, error) {
-	l, err := net.Listen("tcp", addr)
-	if err != nil {
-		return nil, err
+func TCP(addr string, reuse bool) (net.Listener, error) {
+	var cfg net.ListenConfig
+	if reuse {
+		cfg.Control = control
 	}
-	return l, nil
+
+	return cfg.Listen(context.Background(), "tcp", addr)
 }
 
 // TCPKeepAlive returns a new tcp keep alive Listener and an error on failure.
-func TCPKeepAlive(addr string) (ln net.Listener, err error) {
+func TCPKeepAlive(addr string, reuse bool) (ln net.Listener, err error) {
 	// if strings.HasPrefix(addr, "127.0.0.1") {
 	// 	// it's ipv4, use ipv4 tcp listener instead of the default ipv6. Don't.
 	// 	ln, err = net.Listen("tcp4", addr)
@@ -58,7 +57,7 @@ func TCPKeepAlive(addr string) (ln net.Listener, err error) {
 	// 	ln, err = TCP(addr)
 	// }
 
-	ln, err = TCP(addr)
+	ln, err = TCP(addr, reuse)
 	if err != nil {
 		return nil, err
 	}
@@ -68,16 +67,16 @@ func TCPKeepAlive(addr string) (ln net.Listener, err error) {
 // UNIX returns a new unix(file) Listener.
 func UNIX(socketFile string, mode os.FileMode) (net.Listener, error) {
 	if errOs := os.Remove(socketFile); errOs != nil && !os.IsNotExist(errOs) {
-		return nil, errRemoveUnix.Format(socketFile, errOs.Error())
+		return nil, fmt.Errorf("%s: %w", socketFile, errOs)
 	}
 
 	l, err := net.Listen("unix", socketFile)
 	if err != nil {
-		return nil, errPortAlreadyUsed.AppendErr(err)
+		return nil, fmt.Errorf("port already in use: %w", err)
 	}
 
 	if err = os.Chmod(socketFile, mode); err != nil {
-		return nil, errChmod.Format(mode, socketFile, err.Error())
+		return nil, fmt.Errorf("cannot chmod %#o for %q: %w", mode, socketFile, err)
 	}
 
 	return l, nil
@@ -85,14 +84,13 @@ func UNIX(socketFile string, mode os.FileMode) (net.Listener, error) {
 
 // TLS returns a new TLS Listener and an error on failure.
 func TLS(addr, certFile, keyFile string) (net.Listener, error) {
-
 	if certFile == "" || keyFile == "" {
-		return nil, errCertKeyMissing
+		return nil, errors.New("empty certFile or KeyFile")
 	}
 
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
-		return nil, errParseTLS.Format(certFile, keyFile, err)
+		return nil, err
 	}
 
 	return CERT(addr, cert)
@@ -114,19 +112,20 @@ func CERT(addr string, cert tls.Certificate) (net.Listener, error) {
 // LETSENCRYPT returns a new Automatic TLS Listener using letsencrypt.org service
 // receives three parameters,
 // the first is the host of the server,
-// second can be the server name(domain) or empty if skip verification is the expected behavior (not recommended)
-// and the third is optionally, the cache directory, if you skip it then the cache directory is "./certcache"
+// second one should declare if the underline tcp listener can be binded more than once,
+// third can be the server name(domain) or empty if skip verification is the expected behavior (not recommended),
+// and the forth is optionally, the cache directory, if you skip it then the cache directory is "./certcache"
 // if you want to disable cache directory then simple give it a value of empty string ""
 //
 // does NOT supports localhost domains for testing.
 //
 // this is the recommended function to use when you're ready for production state.
-func LETSENCRYPT(addr string, serverName string, cacheDirOptional ...string) (net.Listener, error) {
+func LETSENCRYPT(addr string, reuse bool, serverName string, cacheDirOptional ...string) (net.Listener, error) {
 	if portIdx := strings.IndexByte(addr, ':'); portIdx == -1 {
 		addr += ":443"
 	}
 
-	l, err := TCP(addr)
+	l, err := TCP(addr, reuse)
 	if err != nil {
 		return nil, err
 	}

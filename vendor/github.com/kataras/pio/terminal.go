@@ -2,70 +2,46 @@ package pio
 
 import (
 	"io"
-	"os/exec"
 	"runtime"
-	"strconv"
-	"strings"
 
 	"github.com/kataras/pio/terminal"
 )
 
-func isTerminal(output io.Writer) bool {
-	isTerminal := !IsNop(output) || terminal.IsTerminal(output)
+// outputWriter just caches the "supportColors"
+// in order to reduce syscalls for known printers.
+type outputWriter struct {
+	io.Writer
+	supportColors bool
+}
 
-	// if it's not a terminal and the os is not a windows one,
-	// then return whatever already found.
-	if !isTerminal || runtime.GOOS != "windows" {
-		return isTerminal
+func wrapWriters(output ...io.Writer) []*outputWriter {
+	outs := make([]*outputWriter, 0, len(output))
+	for _, w := range output {
+		outs = append(outs, &outputWriter{
+			Writer:        w,
+			supportColors: SupportColors(w),
+		})
 	}
 
-	// check specific for windows operating system
-	// versions, after windows 10 microsoft
-	// gave suppprt for 256-color console.
+	return outs
+}
 
-	cmd := exec.Command("cmd", "ver")
-
-	b, err := cmd.Output()
-	if err != nil {
-		return false
-	}
-	/*
-		Microsoft Windows [Version 10.0.15063]
-		(c) 2017 Microsoft Corporation. All rights reserved.
-	*/
-	lines := string(b)
-	if lines == "" {
+// SupportColors reports whether the "w" io.Writer is not a file and it does support colors.
+func SupportColors(w io.Writer) bool {
+	if w == nil {
 		return false
 	}
 
-	start := strings.IndexByte(lines, '[')
-	end := strings.IndexByte(lines, ']')
-
-	winLine := lines[start+1 : end]
-	if len(winLine) < 10 {
-		return false
-	}
-	// Version 10.0.15063
-	versionsLine := winLine[strings.IndexByte(winLine, ' ')+1:]
-	// 10.0.15063
-	versionSems := strings.Split(versionsLine, ".")
-	// 10
-	// 0
-	// 15063
-	if len(versionSems) < 3 {
-		return false
+	if sc, ok := w.(*outputWriter); ok {
+		return sc.supportColors
 	}
 
-	// ok, we need to check if it's windows version 10
-	if versionSems[0] != "10" {
-		return false
+	isTerminal := !IsNop(w) && terminal.IsTerminal(w)
+	if isTerminal && runtime.GOOS == "windows" {
+		// if on windows then return true only when it does support 256-bit colors,
+		// this is why we initially do that terminal check for the "w" writer.
+		return terminal.SupportColors
 	}
 
-	buildNumber, err := strconv.Atoi(versionSems[2])
-	// and the build number is equal or greater than 10586
-	if err != nil {
-		return false
-	}
-
-	return buildNumber >= 10586
+	return isTerminal
 }

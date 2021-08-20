@@ -100,9 +100,26 @@ func goodParamFuncName(name string) bool {
 // the convertBuilderFunc return value is generating at boot time.
 // convertFunc converts an interface to a valid full param function.
 func convertBuilderFunc(fn interface{}) ParamFuncBuilder {
-
 	typFn := reflect.TypeOf(fn)
 	if !goodParamFunc(typFn) {
+		// it's not a function which returns a function,
+		// it's not a a func(compileArgs) func(requestDynamicParamValue) bool
+		// but it's a func(requestDynamicParamValue) bool, such as regexp.Compile.MatchString
+		if typFn.NumIn() == 1 && typFn.In(0).Kind() == reflect.String && typFn.NumOut() == 1 && typFn.Out(0).Kind() == reflect.Bool {
+			fnV := reflect.ValueOf(fn)
+			// let's convert it to a ParamFuncBuilder which its combile route arguments are empty and not used at all.
+			// the below return function runs on each route that this param type function is used in order to validate the function,
+			// if that param type function is used wrongly it will be panic like the rest,
+			// indeed the only check is the len of arguments not > 0, no types of values or conversions,
+			// so we return it as soon as possible.
+			return func(args []string) reflect.Value {
+				if n := len(args); n > 0 {
+					panic(fmt.Sprintf("%T does not allow any input arguments from route but got [len=%d,values=%s]", fn, n, strings.Join(args, ", ")))
+				}
+				return fnV
+			}
+		}
+
 		return nil
 	}
 
@@ -111,7 +128,7 @@ func convertBuilderFunc(fn interface{}) ParamFuncBuilder {
 	return func(args []string) reflect.Value {
 		if len(args) != numFields {
 			// no variadics support, for now.
-			panic("args should be the same len as numFields")
+			panic(fmt.Sprintf("args(len=%d) should be the same len as numFields(%d) for: %s", len(args), numFields, typFn))
 		}
 		var argValues []reflect.Value
 		for i := 0; i < numFields; i++ {
@@ -122,7 +139,7 @@ func convertBuilderFunc(fn interface{}) ParamFuncBuilder {
 			var (
 				val interface{}
 
-				panicIfErr = func(err error) {
+				panicIfErr = func(i int, err error) {
 					if err != nil {
 						panic(fmt.Sprintf("on field index: %d: %v", i, err))
 					}
@@ -133,55 +150,55 @@ func convertBuilderFunc(fn interface{}) ParamFuncBuilder {
 			switch field.Kind() {
 			case reflect.Int:
 				v, err := strconv.Atoi(arg)
-				panicIfErr(err)
+				panicIfErr(i, err)
 				val = v
 			case reflect.Int8:
 				v, err := strconv.ParseInt(arg, 10, 8)
-				panicIfErr(err)
+				panicIfErr(i, err)
 				val = int8(v)
 			case reflect.Int16:
 				v, err := strconv.ParseInt(arg, 10, 16)
-				panicIfErr(err)
+				panicIfErr(i, err)
 				val = int16(v)
 			case reflect.Int32:
 				v, err := strconv.ParseInt(arg, 10, 32)
-				panicIfErr(err)
+				panicIfErr(i, err)
 				val = int32(v)
 			case reflect.Int64:
 				v, err := strconv.ParseInt(arg, 10, 64)
-				panicIfErr(err)
+				panicIfErr(i, err)
 				val = v
 			case reflect.Uint:
 				v, err := strconv.ParseUint(arg, 10, strconv.IntSize)
-				panicIfErr(err)
+				panicIfErr(i, err)
 				val = uint(v)
 			case reflect.Uint8:
 				v, err := strconv.ParseUint(arg, 10, 8)
-				panicIfErr(err)
+				panicIfErr(i, err)
 				val = uint8(v)
 			case reflect.Uint16:
 				v, err := strconv.ParseUint(arg, 10, 16)
-				panicIfErr(err)
+				panicIfErr(i, err)
 				val = uint16(v)
 			case reflect.Uint32:
 				v, err := strconv.ParseUint(arg, 10, 32)
-				panicIfErr(err)
+				panicIfErr(i, err)
 				val = uint32(v)
 			case reflect.Uint64:
 				v, err := strconv.ParseUint(arg, 10, 64)
-				panicIfErr(err)
+				panicIfErr(i, err)
 				val = v
 			case reflect.Float32:
 				v, err := strconv.ParseFloat(arg, 32)
-				panicIfErr(err)
+				panicIfErr(i, err)
 				val = float32(v)
 			case reflect.Float64:
 				v, err := strconv.ParseFloat(arg, 64)
-				panicIfErr(err)
+				panicIfErr(i, err)
 				val = v
 			case reflect.Bool:
 				v, err := strconv.ParseBool(arg)
-				panicIfErr(err)
+				panicIfErr(i, err)
 				val = v
 			case reflect.Slice:
 				if len(arg) > 1 {
@@ -308,7 +325,11 @@ func (m *Macro) Trailing() bool {
 // i.e RegisterFunc("min", func(minValue int) func(paramValue string) bool){})
 func (m *Macro) RegisterFunc(funcName string, fn interface{}) *Macro {
 	fullFn := convertBuilderFunc(fn)
-	m.registerFunc(funcName, fullFn)
+
+	// if it's not valid then not register it at all.
+	if fullFn != nil {
+		m.registerFunc(funcName, fullFn)
+	}
 
 	return m
 }

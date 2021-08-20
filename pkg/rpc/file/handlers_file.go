@@ -10,7 +10,7 @@ import (
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
-	"github.com/kataras/iris"
+	"github.com/kataras/iris/v12"
 	"go.uber.org/zap"
 	"io"
 	"io/ioutil"

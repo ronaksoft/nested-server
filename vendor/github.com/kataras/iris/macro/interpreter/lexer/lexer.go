@@ -69,7 +69,6 @@ func resolveTokenType(ch byte) token.Type {
 	default:
 		return token.IDENT //
 	}
-
 }
 
 // NextToken returns the next token in the series of characters.
@@ -88,7 +87,7 @@ func (l *Lexer) NextToken() (t token.Token) {
 		if isLetter(l.ch) {
 			// letters
 			lit := l.readIdentifier()
-			typ := token.LookupIdent(lit)
+			typ = token.LookupIdent(lit)
 			t = l.newToken(typ, lit)
 			return
 		}
