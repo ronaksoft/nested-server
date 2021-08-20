@@ -74,7 +74,7 @@ func (s *AdminService) removeMessageTemplates(requester *nested.Account, request
 
 // @Command: admin/health_check
 // @Input:	check_state		bool		+
-func (s *AdminService) checkSystemHealth(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
+func (s *AdminService) checkSystemHealth(_ *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var checkState bool
 	if v, ok := request.Data["check_state"].(bool); ok {
 		checkState = v

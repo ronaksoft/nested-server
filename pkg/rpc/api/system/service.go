@@ -7,21 +7,21 @@ import (
 )
 
 const (
-	SERVICE_PREFIX = "system"
+	ServicePrefix = "system"
 )
 const (
-	CMD_GET_COUNTERS         = "system/get_counters"
-	CMD_GET_INT_CONSTANTS    = "system/get_int_constants"
-	CMD_GET_STRING_CONSTANTS = "system/get_string_constants"
-	CMD_SET_INT_CONSTANTS    = "system/set_int_constants"
-	CMD_SET_STRING_CONSTANTS = "system/set_string_constants"
-	CMD_MONITOR_STATS        = "system/stats"
-	CMD_MONITOR_ONLINE_USERS = "system/online_users"
-	CMD_MONITOR_ENABLE       = "system/mon_enable"
-	CMD_MONITOR_DISABLE      = "system/mon_disable"
-	CMD_MONITOR_ACTIVITY     = "system/mon_activity"
-	CMD_LICENSE_SET          = "system/set_license"
-	CMD_LICENSE_GET          = "system/get_license"
+	CmdGetCounters        = "system/get_counters"
+	CmdGetIntConstants    = "system/get_int_constants"
+	CmdGetStringConstants = "system/get_string_constants"
+	CmdSetIntConstants    = "system/set_int_constants"
+	CmdSetStringConstants = "system/set_string_constants"
+	CmdMonitorStats       = "system/stats"
+	CmdMonitorOnlineUsers = "system/online_users"
+	CmdMonitorEnable      = "system/mon_enable"
+	CmdMonitorDisable     = "system/mon_disable"
+	CmdMonitorActivity    = "system/mon_activity"
+	CmdLicenseSet         = "system/set_license"
+	CmdLicenseGet         = "system/get_license"
 )
 
 type SystemService struct {
@@ -33,24 +33,24 @@ func NewSystemService(worker *api.Worker) api.Service {
 	s := new(SystemService)
 	s.worker = worker
 	s.serviceCommands = api.ServiceCommands{
-		CMD_GET_INT_CONSTANTS:    {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.getSystemIntegerConstants},
-		CMD_GET_STRING_CONSTANTS: {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.getSystemStringConstants},
-		CMD_SET_INT_CONSTANTS:    {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.setSystemIntegerConstants},
-		CMD_SET_STRING_CONSTANTS: {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.setSystemStringConstants},
-		CMD_GET_COUNTERS:         {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.getSystemCounters},
-		CMD_MONITOR_ENABLE:       {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.enableMonitor},
-		CMD_MONITOR_DISABLE:      {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.disableMonitor},
-		CMD_MONITOR_STATS:        {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.getSystemStats},
-		CMD_MONITOR_ONLINE_USERS: {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.onlineUsers},
-		CMD_MONITOR_ACTIVITY:     {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.monitorActivity},
-		CMD_LICENSE_SET:          {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.setLicense},
-		CMD_LICENSE_GET:          {MinAuthLevel: api.AuthLevelUser, Execute: s.getLicense},
+		CmdGetIntConstants:    {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.getSystemIntegerConstants},
+		CmdGetStringConstants: {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.getSystemStringConstants},
+		CmdSetIntConstants:    {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.setSystemIntegerConstants},
+		CmdSetStringConstants: {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.setSystemStringConstants},
+		CmdGetCounters:        {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.getSystemCounters},
+		CmdMonitorEnable:      {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.enableMonitor},
+		CmdMonitorDisable:     {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.disableMonitor},
+		CmdMonitorStats:       {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.getSystemStats},
+		CmdMonitorOnlineUsers: {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.onlineUsers},
+		CmdMonitorActivity:    {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.monitorActivity},
+		CmdLicenseSet:         {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.setLicense},
+		CmdLicenseGet:         {MinAuthLevel: api.AuthLevelUser, Execute: s.getLicense},
 	}
 	return s
 }
 
 func (s *SystemService) GetServicePrefix() string {
-	return SERVICE_PREFIX
+	return ServicePrefix
 }
 
 func (s *SystemService) ExecuteCommand(authLevel api.AuthLevel, requester *nested.Account, request *rpc.Request, response *rpc.Response) {

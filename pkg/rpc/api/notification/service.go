@@ -7,20 +7,16 @@ import (
 )
 
 const (
-	SERVICE_PREFIX string = "notification"
+	ServicePrefix string = "notification"
 )
 const (
-	CMD_GET                  = "notification/get"
-	CMD_GET_ALL              = "notification/get_all"
-	CMD_MARK_AS_READ         = "notification/mark_as_read"
-	CMD_MARK_AS_READ_BY_POST = "notification/mark_as_read_by_post"
-	CMD_REMOVE               = "notification/remove"
-	CMD_RESET_COUNTER        = "notification/reset_counter"
-	CMD_GET_COUNTER          = "notification/get_counter"
-)
-
-var (
-	_Model *nested.Manager
+	CmdGet              = "notification/get"
+	CmdGetAll           = "notification/get_all"
+	CmdMarkAsRead       = "notification/mark_as_read"
+	CmdMarkAsReadByPost = "notification/mark_as_read_by_post"
+	CmdRemove           = "notification/remove"
+	CmdResetCounter     = "notification/reset_counter"
+	CmdGetCounter       = "notification/get_counter"
 )
 
 type NotificationService struct {
@@ -33,21 +29,20 @@ func NewNotificationService(worker *api.Worker) api.Service {
 	s.worker = worker
 
 	s.serviceCommands = api.ServiceCommands{
-		CMD_GET:                  {MinAuthLevel: api.AuthLevelUser, Execute: s.getNotificationByID},
-		CMD_GET_ALL:              {MinAuthLevel: api.AuthLevelUser, Execute: s.getNotificationsByAccountID},
-		CMD_MARK_AS_READ:         {MinAuthLevel: api.AuthLevelUser, Execute: s.markNotificationAsRead},
-		CMD_MARK_AS_READ_BY_POST: {MinAuthLevel: api.AuthLevelUser, Execute: s.markNotificationAsReadByPost},
-		CMD_REMOVE:               {MinAuthLevel: api.AuthLevelUser, Execute: s.removeNotification},
-		CMD_RESET_COUNTER:        {MinAuthLevel: api.AuthLevelUser, Execute: s.resetNotificationCounter},
-		CMD_GET_COUNTER:          {MinAuthLevel: api.AuthLevelUser, Execute: s.getNotificationCounter},
+		CmdGet:              {MinAuthLevel: api.AuthLevelUser, Execute: s.getNotificationByID},
+		CmdGetAll:           {MinAuthLevel: api.AuthLevelUser, Execute: s.getNotificationsByAccountID},
+		CmdMarkAsRead:       {MinAuthLevel: api.AuthLevelUser, Execute: s.markNotificationAsRead},
+		CmdMarkAsReadByPost: {MinAuthLevel: api.AuthLevelUser, Execute: s.markNotificationAsReadByPost},
+		CmdRemove:           {MinAuthLevel: api.AuthLevelUser, Execute: s.removeNotification},
+		CmdResetCounter:     {MinAuthLevel: api.AuthLevelUser, Execute: s.resetNotificationCounter},
+		CmdGetCounter:       {MinAuthLevel: api.AuthLevelUser, Execute: s.getNotificationCounter},
 	}
 
-	_Model = s.worker.Model()
 	return s
 }
 
 func (s *NotificationService) GetServicePrefix() string {
-	return SERVICE_PREFIX
+	return ServicePrefix
 }
 
 func (s *NotificationService) ExecuteCommand(authLevel api.AuthLevel, requester *nested.Account, request *rpc.Request, response *rpc.Response) {

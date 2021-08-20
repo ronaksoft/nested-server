@@ -18,10 +18,6 @@ const (
 	CmdGetAll         string = "contact/get_all"
 )
 
-var (
-	_Model *nested.Manager
-)
-
 type ContactService struct {
 	worker          *api.Worker
 	serviceCommands api.ServiceCommands
@@ -40,7 +36,6 @@ func NewContactService(worker *api.Worker) api.Service {
 		CmdRemoveFavorite: {MinAuthLevel: api.AuthLevelUser, Execute: s.removeContactFromFavorite},
 	}
 
-	_Model = s.worker.Model()
 	return s
 }
 

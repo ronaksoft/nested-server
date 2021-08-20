@@ -36,13 +36,13 @@ func (s *LabelService) addMemberToLabel(requester *nested.Account, request *rpc.
 
 	var availableAccountIDs, notAvailableAccountIDs []string
 	for _, accountID := range accountIDs {
-		if _Model.Account.IsEnabled(accountID) {
+		if s.Worker().Model().Account.IsEnabled(accountID) {
 			availableAccountIDs = append(availableAccountIDs, accountID)
 		} else {
 			notAvailableAccountIDs = append(notAvailableAccountIDs, accountID)
 		}
 	}
-	if !_Model.Label.AddMembers(label.ID, availableAccountIDs) {
+	if !s.Worker().Model().Label.AddMembers(label.ID, availableAccountIDs) {
 		response.Error(global.ErrUnknown, []string{""})
 		return
 	}
@@ -76,7 +76,7 @@ func (s *LabelService) createLabel(requester *nested.Account, request *rpc.Reque
 	if v, ok := request.Data["is_public"].(bool); ok {
 		isPublic = v
 	}
-	labelCode = _Model.Label.SanitizeLabelCode(labelCode)
+	labelCode = s.Worker().Model().Label.SanitizeLabelCode(labelCode)
 	labelID := bson.NewObjectId().Hex()
 
 	// If user is not LabelEditor then he/she cannot add member to the label
@@ -85,17 +85,17 @@ func (s *LabelService) createLabel(requester *nested.Account, request *rpc.Reque
 		return
 	}
 
-	if _Model.Label.TitleExists(title) {
+	if s.Worker().Model().Label.TitleExists(title) {
 		response.Error(global.ErrDuplicate, []string{"title"})
 		return
 	}
 	if isPublic {
-		if !_Model.Label.CreatePublic(labelID, title, labelCode, requester.ID) {
+		if !s.Worker().Model().Label.CreatePublic(labelID, title, labelCode, requester.ID) {
 			response.Error(global.ErrUnknown, []string{})
 			return
 		}
 	} else {
-		if !_Model.Label.CreatePrivate(labelID, title, labelCode, requester.ID) {
+		if !s.Worker().Model().Label.CreatePrivate(labelID, title, labelCode, requester.ID) {
 			response.Error(global.ErrUnknown, []string{""})
 			return
 		}
@@ -124,7 +124,7 @@ func (s *LabelService) createLabelRequest(requester *nested.Account, request *rp
 		labelTitle = v
 	}
 	if v, ok := request.Data["code"].(string); ok {
-		labelCode = _Model.Label.SanitizeLabelCode(v)
+		labelCode = s.Worker().Model().Label.SanitizeLabelCode(v)
 	}
 
 	if requester.Authority.LabelEditor {
@@ -140,9 +140,9 @@ func (s *LabelService) createLabelRequest(requester *nested.Account, request *rp
 	}
 
 	if label == nil {
-		_Model.Label.CreateRequest(requester.ID, "", labelTitle, labelCode)
+		s.Worker().Model().Label.CreateRequest(requester.ID, "", labelTitle, labelCode)
 	} else {
-		_Model.Label.CreateRequest(requester.ID, label.ID, labelTitle, labelCode)
+		s.Worker().Model().Label.CreateRequest(requester.ID, label.ID, labelTitle, labelCode)
 	}
 	response.Ok()
 }
@@ -161,7 +161,7 @@ func (s *LabelService) getLabelMembers(requester *nested.Account, request *rpc.R
 		response.Error(global.ErrAccess, []string{"not_label_editor"})
 		return
 	}
-	labelMembers := _Model.Account.GetAccountsByIDs(label.Members)
+	labelMembers := s.Worker().Model().Account.GetAccountsByIDs(label.Members)
 	var r []tools.M
 	for _, member := range labelMembers {
 		r = append(r, s.Worker().Map().Account(member, false))
@@ -175,7 +175,7 @@ func (s *LabelService) getManyLabels(requester *nested.Account, request *rpc.Req
 	var labels []nested.Label
 	if v, ok := request.Data["label_id"].(string); ok {
 		labelIDs := strings.Split(v, ",")
-		labels = _Model.Label.GetByIDs(labelIDs)
+		labels = s.Worker().Model().Label.GetByIDs(labelIDs)
 		if len(labels) == 0 {
 			response.OkWithData(tools.M{"labels": []tools.M{}})
 			return
@@ -200,9 +200,9 @@ func (s *LabelService) getManyLabels(requester *nested.Account, request *rpc.Req
 func (s *LabelService) listLabelRequests(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	labelRequests := make([]nested.LabelRequest, 0)
 	if requester.Authority.LabelEditor {
-		labelRequests = _Model.Label.GetRequests(nested.LabelRequestStatusPending, s.Worker().Argument().GetPagination(request))
+		labelRequests = s.Worker().Model().Label.GetRequests(nested.LabelRequestStatusPending, s.Worker().Argument().GetPagination(request))
 	} else {
-		labelRequests = _Model.Label.GetRequestsByAccountID(requester.ID, s.Worker().Argument().GetPagination(request))
+		labelRequests = s.Worker().Model().Label.GetRequestsByAccountID(requester.ID, s.Worker().Argument().GetPagination(request))
 	}
 	r := make([]tools.M, 0)
 	for _, labelRequest := range labelRequests {
@@ -219,7 +219,7 @@ func (s *LabelService) removeLabelRequest(requester *nested.Account, request *rp
 		return
 	}
 	if labelRequest.RequesterID == requester.ID {
-		if _Model.Label.UpdateRequestStatus(requester.ID, labelRequest.ID, nested.LabelRequestStatusCanceled) {
+		if s.Worker().Model().Label.UpdateRequestStatus(requester.ID, labelRequest.ID, nested.LabelRequestStatusCanceled) {
 			response.Ok()
 		} else {
 			response.Error(global.ErrUnknown, []string{})
@@ -241,7 +241,7 @@ func (s *LabelService) removeLabel(requester *nested.Account, request *rpc.Reque
 		return
 	}
 
-	if _Model.Label.Remove(label.ID) {
+	if s.Worker().Model().Label.Remove(label.ID) {
 		response.Ok()
 	} else {
 		response.Error(global.ErrUnknown, []string{""})
@@ -267,7 +267,7 @@ func (s *LabelService) removeMemberFromLabel(requester *nested.Account, request 
 		return
 	}
 
-	if _Model.Label.RemoveMember(label.ID, account.ID) {
+	if s.Worker().Model().Label.RemoveMember(label.ID, account.ID) {
 		response.Ok()
 	} else {
 		response.Error(global.ErrUnknown, []string{""})
@@ -298,7 +298,7 @@ func (s *LabelService) updateLabel(requester *nested.Account, request *rpc.Reque
 	if v, ok := request.Data["code"].(string); ok {
 		labelCode = v
 	}
-	labelCode = _Model.Label.SanitizeLabelCode(labelCode)
+	labelCode = s.Worker().Model().Label.SanitizeLabelCode(labelCode)
 
 	// If user is not LabelEditor then he/she cannot add member to the label
 	if !requester.Authority.LabelEditor {
@@ -306,7 +306,7 @@ func (s *LabelService) updateLabel(requester *nested.Account, request *rpc.Reque
 		return
 	}
 
-	if _Model.Label.Update(label.ID, labelCode, labelTitle) {
+	if s.Worker().Model().Label.Update(label.ID, labelCode, labelTitle) {
 		response.Ok()
 	} else {
 		response.Error(global.ErrUnknown, []string{})
@@ -343,21 +343,21 @@ func (s *LabelService) updateLabelRequest(requester *nested.Account, request *rp
 		// else
 		//	Create new label
 		if len(labelRequest.LabelID) > 0 {
-			if label := _Model.Label.GetByID(labelRequest.LabelID); label == nil {
-				_Model.Label.UpdateRequestStatus(requester.ID, labelRequest.ID, nested.LabelRequestStatusFailed)
+			if label := s.Worker().Model().Label.GetByID(labelRequest.LabelID); label == nil {
+				s.Worker().Model().Label.UpdateRequestStatus(requester.ID, labelRequest.ID, nested.LabelRequestStatusFailed)
 				response.Error(global.ErrUnavailable, []string{"label_not_exists"})
 				return
 			}
 			if len(labelRequest.Title) > 0 {
-				_Model.Label.Update(labelRequest.LabelID, labelRequest.ColourCode, labelRequest.Title)
-				_Model.Label.UpdateRequestStatus(requester.ID, labelRequest.ID, nested.LabelRequestStatusApproved)
+				s.Worker().Model().Label.Update(labelRequest.LabelID, labelRequest.ColourCode, labelRequest.Title)
+				s.Worker().Model().Label.UpdateRequestStatus(requester.ID, labelRequest.ID, nested.LabelRequestStatusApproved)
 
 				// handle push messages (notification)
 				go s.Worker().Pusher().LabelRequestApproved(labelRequest)
 
 			} else {
-				_Model.Label.AddMembers(labelRequest.LabelID, []string{labelRequest.RequesterID})
-				_Model.Label.UpdateRequestStatus(requester.ID, labelRequest.ID, nested.LabelRequestStatusApproved)
+				s.Worker().Model().Label.AddMembers(labelRequest.LabelID, []string{labelRequest.RequesterID})
+				s.Worker().Model().Label.UpdateRequestStatus(requester.ID, labelRequest.ID, nested.LabelRequestStatusApproved)
 
 				// handle push messages (notification)
 				go s.Worker().Pusher().LabelRequestApproved(labelRequest)
@@ -366,9 +366,9 @@ func (s *LabelService) updateLabelRequest(requester *nested.Account, request *rp
 			return
 		} else {
 			labelID := bson.NewObjectId().Hex()
-			if _Model.Label.CreatePrivate(labelID, labelRequest.Title, labelRequest.ColourCode, requester.ID) {
-				_Model.Label.UpdateRequestStatus(requester.ID, labelRequest.ID, nested.LabelRequestStatusApproved)
-				_Model.Label.AddMembers(labelID, []string{labelRequest.RequesterID})
+			if s.Worker().Model().Label.CreatePrivate(labelID, labelRequest.Title, labelRequest.ColourCode, requester.ID) {
+				s.Worker().Model().Label.UpdateRequestStatus(requester.ID, labelRequest.ID, nested.LabelRequestStatusApproved)
+				s.Worker().Model().Label.AddMembers(labelID, []string{labelRequest.RequesterID})
 				labelRequest.LabelID = labelID
 				// handle push messages (notification)
 				go s.Worker().Pusher().LabelRequestApproved(labelRequest)
@@ -376,11 +376,11 @@ func (s *LabelService) updateLabelRequest(requester *nested.Account, request *rp
 				response.OkWithData(tools.M{"label_id": labelID})
 				return
 			} else {
-				_Model.Label.UpdateRequestStatus(requester.ID, labelRequest.ID, nested.LabelRequestStatusFailed)
+				s.Worker().Model().Label.UpdateRequestStatus(requester.ID, labelRequest.ID, nested.LabelRequestStatusFailed)
 			}
 		}
 	case "reject", "deny":
-		_Model.Label.UpdateRequestStatus(requester.ID, labelRequest.ID, nested.LabelRequestStatusRejected)
+		s.Worker().Model().Label.UpdateRequestStatus(requester.ID, labelRequest.ID, nested.LabelRequestStatusRejected)
 
 		// handle push messages (notification)
 		go s.Worker().Pusher().LabelRequestRejected(labelRequest)

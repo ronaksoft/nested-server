@@ -20,7 +20,7 @@ func (s *FileService) getDownloadToken(requester *nested.Account, request *rpc.R
 	var task *nested.Task
 	if v, ok := request.Data["universal_id"].(string); ok {
 		uniID = nested.UniversalID(v)
-		fileInfo = _Model.File.GetByID(uniID, nil)
+		fileInfo = s.Worker().Model().File.GetByID(uniID, nil)
 		if fileInfo == nil {
 			response.Error(global.ErrInvalid, []string{"universal_id"})
 			return
@@ -108,7 +108,7 @@ func (s *FileService) getFileByID(requester *nested.Account, request *rpc.Reques
 	var f *nested.FileInfo
 	if v, ok := request.Data["universal_id"].(string); ok {
 		uniID := nested.UniversalID(v)
-		f = _Model.File.GetByID(uniID, nil)
+		f = s.Worker().Model().File.GetByID(uniID, nil)
 		if f == nil {
 			response.Error(global.ErrInvalid, []string{"universal_id"})
 			return
@@ -123,7 +123,7 @@ func (s *FileService) getFileByID(requester *nested.Account, request *rpc.Reques
 // @Command:	file/get_recent_files
 // @Pagination
 func (s *FileService) getRecentFiles(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
-	files := _Model.File.GetFilesByPlaces(requester.BookmarkedPlaceIDs, s.Worker().Argument().GetPagination(request))
+	files := s.Worker().Model().File.GetFilesByPlaces(requester.BookmarkedPlaceIDs, s.Worker().Argument().GetPagination(request))
 	r := make([]tools.M, 0, len(files))
 	for _, f := range files {
 		r = append(r, s.Worker().Map().FileInfo(f))
@@ -137,7 +137,7 @@ func (s *FileService) getFileByToken(requester *nested.Account, request *rpc.Req
 	var f *nested.FileInfo
 	var uniID nested.UniversalID
 	if v, ok := request.Data["token"].(string); ok {
-		if uID, err := _Model.Token.GetFileByToken(v); err != nil {
+		if uID, err := s.Worker().Model().Token.GetFileByToken(v); err != nil {
 			response.Error(global.ErrInvalid, []string{"token"})
 			return
 		} else {
@@ -147,7 +147,7 @@ func (s *FileService) getFileByToken(requester *nested.Account, request *rpc.Req
 		response.Error(global.ErrIncomplete, []string{"token"})
 		return
 	}
-	if f = _Model.File.GetByID(uniID, nil); f == nil {
+	if f = s.Worker().Model().File.GetByID(uniID, nil); f == nil {
 		response.Error(global.ErrUnknown, []string{})
 	}
 	response.OkWithData(s.Worker().Map().FileInfo(*f))

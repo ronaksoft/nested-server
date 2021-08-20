@@ -7,24 +7,20 @@ import (
 )
 
 const (
-	SERVICE_PREFIX string = "label"
+	ServicePrefix string = "label"
 )
 const (
-	CMD_CREATE         string = "label/create"
-	CMD_REMOVE         string = "label/remove"
-	CMD_GET_MANY       string = "label/get_many"
-	CMD_UPDATE         string = "label/update"
-	CMD_MEMBER_ADD     string = "label/add_member"
-	CMD_MEMBER_REMOVE  string = "label/remove_member"
-	CMD_MEMBER_GET_ALL string = "label/get_members"
-	CMD_REQUEST        string = "label/request"
-	CMD_REQUEST_LIST   string = "label/get_requests"
-	CMD_REQUEST_REMOVE string = "label/remove_request"
-	CMD_REQUEST_UPDATE string = "label/update_request"
-)
-
-var (
-	_Model *nested.Manager
+	CmdCreate        string = "label/create"
+	CmdRemove        string = "label/remove"
+	CmdGetMany       string = "label/get_many"
+	CmdUpdate        string = "label/update"
+	CmdMemberAdd     string = "label/add_member"
+	CmdMemberRemove  string = "label/remove_member"
+	CmdMemberGetAll  string = "label/get_members"
+	CmdRequest       string = "label/request"
+	CmdRequestList   string = "label/get_requests"
+	CmdRequestRemove string = "label/remove_request"
+	CmdRequestUpdate string = "label/update_request"
 )
 
 type LabelService struct {
@@ -37,25 +33,24 @@ func NewLabelService(worker *api.Worker) api.Service {
 	s.worker = worker
 
 	s.serviceCommands = api.ServiceCommands{
-		CMD_CREATE:         {MinAuthLevel: api.AuthLevelUser, Execute: s.createLabel},
-		CMD_GET_MANY:       {MinAuthLevel: api.AuthLevelUser, Execute: s.getManyLabels},
-		CMD_MEMBER_GET_ALL: {MinAuthLevel: api.AuthLevelUser, Execute: s.getLabelMembers},
-		CMD_MEMBER_ADD:     {MinAuthLevel: api.AuthLevelUser, Execute: s.addMemberToLabel},
-		CMD_MEMBER_REMOVE:  {MinAuthLevel: api.AuthLevelUser, Execute: s.removeMemberFromLabel},
-		CMD_REMOVE:         {MinAuthLevel: api.AuthLevelUser, Execute: s.removeLabel},
-		CMD_REQUEST:        {MinAuthLevel: api.AuthLevelUser, Execute: s.createLabelRequest},
-		CMD_REQUEST_UPDATE: {MinAuthLevel: api.AuthLevelUser, Execute: s.updateLabelRequest},
-		CMD_REQUEST_LIST:   {MinAuthLevel: api.AuthLevelUser, Execute: s.listLabelRequests},
-		CMD_REQUEST_REMOVE: {MinAuthLevel: api.AuthLevelUser, Execute: s.removeLabelRequest},
-		CMD_UPDATE:         {MinAuthLevel: api.AuthLevelUser, Execute: s.updateLabel},
+		CmdCreate:        {MinAuthLevel: api.AuthLevelUser, Execute: s.createLabel},
+		CmdGetMany:       {MinAuthLevel: api.AuthLevelUser, Execute: s.getManyLabels},
+		CmdMemberGetAll:  {MinAuthLevel: api.AuthLevelUser, Execute: s.getLabelMembers},
+		CmdMemberAdd:     {MinAuthLevel: api.AuthLevelUser, Execute: s.addMemberToLabel},
+		CmdMemberRemove:  {MinAuthLevel: api.AuthLevelUser, Execute: s.removeMemberFromLabel},
+		CmdRemove:        {MinAuthLevel: api.AuthLevelUser, Execute: s.removeLabel},
+		CmdRequest:       {MinAuthLevel: api.AuthLevelUser, Execute: s.createLabelRequest},
+		CmdRequestUpdate: {MinAuthLevel: api.AuthLevelUser, Execute: s.updateLabelRequest},
+		CmdRequestList:   {MinAuthLevel: api.AuthLevelUser, Execute: s.listLabelRequests},
+		CmdRequestRemove: {MinAuthLevel: api.AuthLevelUser, Execute: s.removeLabelRequest},
+		CmdUpdate:        {MinAuthLevel: api.AuthLevelUser, Execute: s.updateLabel},
 	}
 
-	_Model = s.worker.Model()
 	return s
 }
 
 func (s *LabelService) GetServicePrefix() string {
-	return SERVICE_PREFIX
+	return ServicePrefix
 }
 
 func (s *LabelService) ExecuteCommand(authLevel api.AuthLevel, requester *nested.Account, request *rpc.Request, response *rpc.Response) {

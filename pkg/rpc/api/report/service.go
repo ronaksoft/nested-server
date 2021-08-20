@@ -7,14 +7,10 @@ import (
 )
 
 const (
-	SERVICE_PREFIX string = "report"
+	ServicePrefix string = "report"
 )
 const (
-	CMD_GET_TS_SINGLE_VAL string = "report/get_ts_single_val"
-)
-
-var (
-	_Model *nested.Manager
+	CmdGetTsSingleVal string = "report/get_ts_single_val"
 )
 
 type ReportService struct {
@@ -27,15 +23,14 @@ func NewReportService(worker *api.Worker) api.Service {
 	s.worker = worker
 
 	s.serviceCommands = api.ServiceCommands{
-		CMD_GET_TS_SINGLE_VAL: {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.ReportTimeSeriesSingleValue},
+		CmdGetTsSingleVal: {MinAuthLevel: api.AuthLevelAdminUser, Execute: s.ReportTimeSeriesSingleValue},
 	}
 
-	_Model = s.worker.Model()
 	return s
 }
 
 func (s *ReportService) GetServicePrefix() string {
-	return SERVICE_PREFIX
+	return ServicePrefix
 }
 
 func (s *ReportService) ExecuteCommand(authLevel api.AuthLevel, requester *nested.Account, request *rpc.Request, response *rpc.Response) {

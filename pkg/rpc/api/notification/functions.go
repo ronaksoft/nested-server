@@ -14,7 +14,7 @@ import (
 func (s *NotificationService) getNotificationByID(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var notif *nested.Notification
 	if v, ok := request.Data["notification_id"].(string); ok {
-		notif = _Model.Notification.GetByID(v)
+		notif = s.Worker().Model().Notification.GetByID(v)
 		if notif == nil {
 			response.Error(global.ErrInvalid, []string{"notification_id"})
 			return
@@ -51,7 +51,7 @@ func (s *NotificationService) getNotificationsByAccountID(requester *nested.Acco
 	}
 
 	pg := s.Worker().Argument().GetPagination(request)
-	notifications := _Model.Notification.GetByAccountID(requester.ID, pg, only_unreads, subject)
+	notifications := s.Worker().Model().Notification.GetByAccountID(requester.ID, pg, only_unreads, subject)
 	if details {
 		r := make([]tools.M, 0, pg.GetLimit())
 		for _, n := range notifications {
@@ -84,14 +84,14 @@ func (s *NotificationService) markNotificationAsRead(requester *nested.Account, 
 	if v, ok := request.Data["notification_id"].(string); ok {
 		switch v {
 		case "all":
-			_Model.Notification.MarkAsRead("all", requester.ID)
+			s.Worker().Model().Notification.MarkAsRead("all", requester.ID)
 			go s.Worker().Pusher().ClearNotification(requester, nil)
 		default:
 			ids := strings.SplitN(v, ",", 100)
 			for _, nid := range ids {
-				notification := _Model.Notification.GetByID(nid)
+				notification := s.Worker().Model().Notification.GetByID(nid)
 				if notification != nil && notification.AccountID == requester.ID {
-					_Model.Notification.MarkAsRead(nid, requester.ID)
+					s.Worker().Model().Notification.MarkAsRead(nid, requester.ID)
 					go s.Worker().Pusher().ClearNotification(requester, notification)
 				}
 			}
@@ -112,11 +112,11 @@ func (s *NotificationService) markNotificationAsReadByPost(requester *nested.Acc
 		response.Error(global.ErrInvalid, []string{"post_id"})
 		return
 	}
-	notificationIDs := _Model.Notification.MarkAsReadByPostID(post.ID, requester.ID)
+	notificationIDs := s.Worker().Model().Notification.MarkAsReadByPostID(post.ID, requester.ID)
 	for _, notificationID := range notificationIDs {
-		notification := _Model.Notification.GetByID(notificationID)
+		notification := s.Worker().Model().Notification.GetByID(notificationID)
 		if notification != nil && notification.AccountID == requester.ID {
-			_Model.Notification.MarkAsRead(notificationID, requester.ID)
+			s.Worker().Model().Notification.MarkAsRead(notificationID, requester.ID)
 			go s.Worker().Pusher().ClearNotification(requester, notification)
 		}
 	}
@@ -129,9 +129,9 @@ func (s *NotificationService) removeNotification(requester *nested.Account, requ
 	if v, ok := request.Data["notification_id"].(string); ok {
 		ids := strings.SplitN(v, ",", 100)
 		for _, nid := range ids {
-			notification := _Model.Notification.GetByID(nid)
+			notification := s.Worker().Model().Notification.GetByID(nid)
 			if notification != nil && notification.AccountID == requester.ID {
-				_Model.Notification.Remove(nid)
+				s.Worker().Model().Notification.Remove(nid)
 			}
 		}
 		response.Ok()
@@ -143,13 +143,13 @@ func (s *NotificationService) removeNotification(requester *nested.Account, requ
 
 // @Command:	notification/reset_counter
 func (s *NotificationService) resetNotificationCounter(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
-	_Model.Account.ResetUnreadNotificationCounter(requester.ID)
+	s.Worker().Model().Account.ResetUnreadNotificationCounter(requester.ID)
 	response.Ok()
 }
 
 // @Command:	notification/get_counter
 func (s *NotificationService) getNotificationCounter(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
-	account := _Model.Account.GetByID(requester.ID, tools.M{"counters": 1})
+	account := s.Worker().Model().Account.GetByID(requester.ID, tools.M{"counters": 1})
 	if account != nil {
 		response.OkWithData(tools.M{
 			"unread_notifications": account.Counters.UnreadNotifications,

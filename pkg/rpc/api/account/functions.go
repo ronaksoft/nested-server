@@ -22,7 +22,7 @@ func (s *AccountService) accountIDAvailable(requester *nested.Account, request *
 		response.Error(global.ErrIncomplete, []string{"account_id"})
 		return
 	}
-	if _Model.Account.Available(accountID) {
+	if s.Model().Account.Available(accountID) {
 		response.Ok()
 	} else {
 		response.Error(global.ErrUnavailable, []string{"account_id"})
@@ -51,7 +51,7 @@ func (s *AccountService) addToTrustList(requester *nested.Account, request *rpc.
 			emailAddr = fmt.Sprintf("@%s", emailParts[1])
 		}
 	}
-	_Model.Account.TrustRecipient(requester.ID, []string{emailAddr})
+	s.Model().Account.TrustRecipient(requester.ID, []string{emailAddr})
 	response.Ok()
 }
 
@@ -67,7 +67,7 @@ func (s *AccountService) changePhone(requester *nested.Account, request *rpc.Req
 		return
 	}
 	if v, ok := request.Data["vid"].(string); ok {
-		verification = _Model.Verification.GetByID(v)
+		verification = s.Model().Verification.GetByID(v)
 		if verification == nil {
 			response.Error(global.ErrInvalid, []string{"vid"})
 			return
@@ -83,7 +83,7 @@ func (s *AccountService) changePhone(requester *nested.Account, request *rpc.Req
 	}
 	if v, ok := request.Data["pass"].(string); ok {
 		password = v
-		if !_Model.Account.Verify(requester.ID, password) {
+		if !s.Model().Account.Verify(requester.ID, password) {
 			response.Error(global.ErrInvalid, []string{"pass"})
 			return
 		}
@@ -101,7 +101,7 @@ func (s *AccountService) changePhone(requester *nested.Account, request *rpc.Req
 		response.Error(global.ErrIncomplete, []string{"phone"})
 		return
 	}
-	if _Model.Account.SetPhone(requester.ID, phone) {
+	if s.Model().Account.SetPhone(requester.ID, phone) {
 		response.Ok()
 	} else {
 		response.Error(global.ErrUnknown, []string{})
@@ -115,7 +115,7 @@ func (s *AccountService) getAccountInfo(requester *nested.Account, request *rpc.
 	var details bool
 	var account *nested.Account
 	if id, ok := request.Data["account_id"].(string); ok && id != requester.ID {
-		if acc := _Model.Account.GetByID(id, nil); acc != nil {
+		if acc := s.Model().Account.GetByID(id, nil); acc != nil {
 			account = acc
 		} else {
 			if strings.Index(id, "@") != -1 {
@@ -149,7 +149,7 @@ func (s *AccountService) getManyAccountsInfo(requester *nested.Account, request 
 				accountIDs = append(accountIDs, input)
 			}
 		}
-		accounts = _Model.Account.GetAccountsByIDs(accountIDs)
+		accounts = s.Model().Account.GetAccountsByIDs(accountIDs)
 		if len(accounts) == 0 {
 			response.OkWithData(tools.M{"accounts": []tools.M{}})
 			return
@@ -170,7 +170,7 @@ func (s *AccountService) getManyAccountsInfo(requester *nested.Account, request 
 func (s *AccountService) getAccountInfoByToken(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var account *nested.Account
 	if v, ok := request.Data["token"].(string); ok {
-		account = _Model.Account.GetAccountByLoginToken(v)
+		account = s.Model().Account.GetAccountByLoginToken(v)
 		if account == nil {
 			response.Error(global.ErrInvalid, []string{"token"})
 			return
@@ -193,7 +193,7 @@ func (s *AccountService) getAccountPosts(requester *nested.Account, request *rpc
 		sort_item = nested.PostSortTimestamp
 	}
 	pg := s.Worker().Argument().GetPagination(request)
-	posts := _Model.Post.GetPostsOfPlaces(append(requester.AccessPlaceIDs, "*"), sort_item, pg)
+	posts := s.Model().Post.GetPostsOfPlaces(append(requester.AccessPlaceIDs, "*"), sort_item, pg)
 	r := make([]tools.M, 0, len(posts))
 	for _, post := range posts {
 		r = append(r, s.Worker().Map().Post(requester, post, true))
@@ -210,7 +210,7 @@ func (s *AccountService) getAccountPosts(requester *nested.Account, request *rpc
 // @Pagination
 func (s *AccountService) getAccountPinnedPosts(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	pg := s.Worker().Argument().GetPagination(request)
-	posts := _Model.Post.GetPinnedPosts(requester.ID, pg)
+	posts := s.Model().Post.GetPinnedPosts(requester.ID, pg)
 	r := make([]tools.M, 0, len(posts))
 	for _, post := range posts {
 		r = append(r, s.Worker().Map().Post(requester, post, true))
@@ -236,7 +236,7 @@ func (s *AccountService) getAccountFavoritePosts(requester *nested.Account, requ
 	}
 
 	pg := s.Worker().Argument().GetPagination(request)
-	posts := _Model.Post.GetPostsOfPlaces(append(requester.BookmarkedPlaceIDs, "*"), sort_item, pg)
+	posts := s.Model().Post.GetPostsOfPlaces(append(requester.BookmarkedPlaceIDs, "*"), sort_item, pg)
 	r := make([]tools.M, 0, len(posts))
 	for _, post := range posts {
 		r = append(r, s.Worker().Map().Post(requester, post, true))
@@ -254,7 +254,7 @@ func (s *AccountService) getAccountFavoritePosts(requester *nested.Account, requ
 func (s *AccountService) getAccountGetSpamPosts(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 
 	pg := s.Worker().Argument().GetPagination(request)
-	posts := _Model.Post.GetSpamPostsOfPlaces(append(requester.BookmarkedPlaceIDs, "*"), pg)
+	posts := s.Model().Post.GetSpamPostsOfPlaces(append(requester.BookmarkedPlaceIDs, "*"), pg)
 	r := make([]tools.M, 0, len(posts))
 	for _, post := range posts {
 		r = append(r, s.Worker().Map().Post(requester, post, true))
@@ -271,7 +271,7 @@ func (s *AccountService) getAccountGetSpamPosts(requester *nested.Account, reque
 // @Pagination
 func (s *AccountService) getAccountSentPosts(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	pg := s.Worker().Argument().GetPagination(request)
-	posts := _Model.Post.GetPostsBySender(requester.ID, nested.PostSortTimestamp, pg)
+	posts := s.Model().Post.GetPostsBySender(requester.ID, nested.PostSortTimestamp, pg)
 	r := make([]tools.M, 0, len(posts))
 	for _, post := range posts {
 		r = append(r, s.Worker().Map().Post(requester, post, true))
@@ -301,14 +301,14 @@ func (s *AccountService) getAccountAllPlaces(requester *nested.Account, request 
 	}
 	switch filter {
 	case nested.MemberTypeCreator:
-		places := _Model.Place.GetPlacesByIDs(requester.AccessPlaceIDs)
+		places := s.Model().Place.GetPlacesByIDs(requester.AccessPlaceIDs)
 		for _, place := range places {
 			if place.IsCreator(requester.ID) {
 				d = append(d, s.Worker().Map().Place(requester, place, place.GetAccess(requester.ID)))
 			}
 		}
 	case nested.MemberTypeKeyHolder:
-		places := _Model.Place.GetPlacesByIDs(requester.AccessPlaceIDs)
+		places := s.Model().Place.GetPlacesByIDs(requester.AccessPlaceIDs)
 		for _, place := range places {
 			if place.IsKeyholder(requester.ID) {
 				d = append(d, s.Worker().Map().Place(requester, place, place.GetAccess(requester.ID)))
@@ -317,14 +317,14 @@ func (s *AccountService) getAccountAllPlaces(requester *nested.Account, request 
 	case nested.MemberTypeAll:
 		fallthrough
 	default:
-		places := _Model.Place.GetPlacesByIDs(requester.AccessPlaceIDs)
+		places := s.Model().Place.GetPlacesByIDs(requester.AccessPlaceIDs)
 		for _, place := range places {
 			if !place.IsGrandPlace() && !withChildren {
 				continue
 			}
 			if place.IsGrandPlace() {
 				if withChildren {
-					unlockedPlaces := _Model.Place.GetPlacesByIDs(place.UnlockedChildrenIDs)
+					unlockedPlaces := s.Model().Place.GetPlacesByIDs(place.UnlockedChildrenIDs)
 					for _, unlockedPlace := range unlockedPlaces {
 						if !unlockedPlace.IsMember(requester.ID) {
 							d = append(d, s.Worker().Map().Place(requester, unlockedPlace, unlockedPlace.GetAccess(requester.ID)))
@@ -343,7 +343,7 @@ func (s *AccountService) getAccountAllPlaces(requester *nested.Account, request 
 // @Command: account/get_favorite_places
 func (s *AccountService) getAccountFavoritePlaces(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	r := make([]tools.M, 0)
-	places := _Model.Place.GetPlacesByIDs(requester.BookmarkedPlaceIDs)
+	places := s.Model().Place.GetPlacesByIDs(requester.BookmarkedPlaceIDs)
 	for _, place := range places {
 		r = append(r, s.Worker().Map().Place(requester, place, place.GetAccess(requester.ID)))
 	}
@@ -390,8 +390,8 @@ func (s *AccountService) setAccountPassword(requester *nested.Account, request *
 		}
 	}
 
-	if _Model.Account.Verify(accountID, oldPass) {
-		_Model.Account.SetPassword(accountID, newPass)
+	if s.Model().Account.Verify(accountID, oldPass) {
+		s.Model().Account.SetPassword(accountID, newPass)
 	} else {
 		response.Error(global.ErrInvalid, []string{})
 		return
@@ -407,7 +407,7 @@ func (s *AccountService) setAccountPasswordByLoginToken(requester *nested.Accoun
 	var token, newPass string
 	if v, ok := request.Data["token"].(string); ok {
 		token = v
-		account = _Model.Account.GetAccountByLoginToken(token)
+		account = s.Model().Account.GetAccountByLoginToken(token)
 		if account == nil {
 			response.Error(global.ErrInvalid, []string{"token"})
 			return
@@ -422,9 +422,9 @@ func (s *AccountService) setAccountPasswordByLoginToken(requester *nested.Accoun
 		response.Error(global.ErrIncomplete, []string{"new_pass"})
 		return
 	}
-	if _Model.Account.SetPassword(account.ID, newPass) {
+	if s.Model().Account.SetPassword(account.ID, newPass) {
 		// remove the login token from db, prevent from using it in future
-		_Model.Token.RevokeLoginToken(token)
+		s.Model().Token.RevokeLoginToken(token)
 		response.Ok()
 	} else {
 		response.Error(global.ErrUnknown, []string{})
@@ -442,15 +442,15 @@ func (s *AccountService) setAccountPicture(requester *nested.Account, request *r
 	}
 	if v, ok := request.Data["universal_id"].(string); ok {
 		uni_id = nested.UniversalID(v)
-		if !_Model.File.Exists(uni_id) {
+		if !s.Model().File.Exists(uni_id) {
 			response.Error(global.ErrUnavailable, []string{"universal_id"})
 			return
 		}
 	}
-	f := _Model.File.GetByID(uni_id, nil)
-	_Model.Account.SetPicture(requester.ID, f.Thumbnails)
+	f := s.Model().File.GetByID(uni_id, nil)
+	s.Model().Account.SetPicture(requester.ID, f.Thumbnails)
 	if requester.Privacy.Searchable {
-		_Model.Search.AddPlaceToSearchIndex(requester.ID, fmt.Sprintf("%s %s", requester.FirstName, requester.LastName), f.Thumbnails)
+		s.Model().Search.AddPlaceToSearchIndex(requester.ID, fmt.Sprintf("%s %s", requester.FirstName, requester.LastName), f.Thumbnails)
 	}
 	response.Ok()
 	return
@@ -459,7 +459,7 @@ func (s *AccountService) setAccountPicture(requester *nested.Account, request *r
 // @Command: account/remove_picture
 func (s *AccountService) removeAccountPicture(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
 	pic := nested.Picture{}
-	_Model.Account.SetPicture(requester.ID, pic)
+	s.Model().Account.SetPicture(requester.ID, pic)
 	response.Ok()
 	return
 }
@@ -478,7 +478,7 @@ func (s *AccountService) removeFromTrustList(requester *nested.Account, request 
 		response.Error(global.ErrIncomplete, []string{"email_addr"})
 		return
 	}
-	_Model.Account.UnTrustRecipient(requester.ID, []string{emailAddr})
+	s.Model().Account.UnTrustRecipient(requester.ID, []string{emailAddr})
 	response.Ok()
 }
 
@@ -575,19 +575,19 @@ func (s *AccountService) updateAccount(requester *nested.Account, request *rpc.R
 	}
 	if searchable, ok := request.Data["searchable"].(bool); ok {
 		if searchable {
-			_Model.Search.AddPlaceToSearchIndex(requester.ID, fmt.Sprintf("%s %s", requester.FirstName, requester.LastName), requester.Picture)
+			s.Model().Search.AddPlaceToSearchIndex(requester.ID, fmt.Sprintf("%s %s", requester.FirstName, requester.LastName), requester.Picture)
 			placeUpdateRequest["privacy.search"] = true
 		} else {
-			_Model.Search.RemovePlaceFromSearchIndex(requester.ID)
+			s.Model().Search.RemovePlaceFromSearchIndex(requester.ID)
 			placeUpdateRequest["privacy.search"] = false
 		}
-		_Model.Account.SetPrivacy(requester.ID, "searchable", searchable)
+		s.Model().Account.SetPrivacy(requester.ID, "searchable", searchable)
 	}
-	_Model.Account.Update(requester.ID, aur)
-	_Model.Place.Update(requester.ID, placeUpdateRequest)
+	s.Model().Account.Update(requester.ID, aur)
+	s.Model().Place.Update(requester.ID, placeUpdateRequest)
 
 	if requester.Privacy.Searchable && (aur.FirstName != "" || aur.LastName != "") {
-		_Model.Search.AddPlaceToSearchIndex(requester.ID, fmt.Sprintf("%s %s", requester.FirstName, requester.LastName), requester.Picture)
+		s.Model().Search.AddPlaceToSearchIndex(requester.ID, fmt.Sprintf("%s %s", requester.FirstName, requester.LastName), requester.Picture)
 	}
 
 	response.Ok()
@@ -670,7 +670,7 @@ func (s *AccountService) updateEmail(requester *nested.Account, request *rpc.Req
 		OutgoingSMTPUser: username,
 		OutgoingSMTPPass: password,
 	}
-	if _Model.Account.UpdateEmail(requester.ID, accountMail) {
+	if s.Model().Account.UpdateEmail(requester.ID, accountMail) {
 		response.Ok()
 		return
 	} else {
@@ -687,7 +687,7 @@ func (s *AccountService) removeEmail(requester *nested.Account, request *rpc.Req
 		OutgoingSMTPUser: "",
 		OutgoingSMTPPass: "",
 	}
-	if _Model.Account.UpdateEmail(requester.ID, accountMail) {
+	if s.Model().Account.UpdateEmail(requester.ID, accountMail) {
 		response.Ok()
 		return
 	} else {

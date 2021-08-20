@@ -49,10 +49,10 @@ func (s *ClientService) uploadContacts(requester *nested.Account, request *rpc.R
 			for i, p := range c.Phones {
 				c.Phones[i] = strings.TrimLeft(p, "+0 ")
 				if c.Phones[i] != "" {
-					_Model.Phone.AddContactToPhone(requester.ID, c.Phones[i])
+					s.Worker().Model().Phone.AddContactToPhone(requester.ID, c.Phones[i])
 				}
 			}
-			//_Model.Phone.SaveContact(c)
+			//s.Worker().Model().Phone.SaveContact(c)
 		}
 	} else {
 		response.Error(global.ErrIncomplete, []string{"contacts"})
@@ -87,7 +87,7 @@ func (s *ClientService) saveKey(requester *nested.Account, request *rpc.Request,
 		response.Error(global.ErrLimit, []string{"keys"})
 		return
 	}
-	if _Model.Account.SaveKey(requester.ID, keyName, keyValue) {
+	if s.Worker().Model().Account.SaveKey(requester.ID, keyName, keyValue) {
 		response.Ok()
 	} else {
 		response.Error(global.ErrUnknown, []string{})
@@ -104,7 +104,7 @@ func (s *ClientService) getKey(requester *nested.Account, request *rpc.Request, 
 		response.Error(global.ErrIncomplete, []string{"key_name"})
 		return
 	}
-	keyValue := _Model.Account.GetKey(requester.ID, keyName)
+	keyValue := s.Worker().Model().Account.GetKey(requester.ID, keyName)
 	response.OkWithData(tools.M{"key_value": keyValue})
 }
 
@@ -132,6 +132,6 @@ func (s *ClientService) removeKey(requester *nested.Account, request *rpc.Reques
 		response.Error(global.ErrIncomplete, []string{"key_name"})
 		return
 	}
-	_Model.Account.RemoveKey(requester.ID, keyName)
+	s.Worker().Model().Account.RemoveKey(requester.ID, keyName)
 	response.Ok()
 }

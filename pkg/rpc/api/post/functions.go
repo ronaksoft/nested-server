@@ -99,14 +99,14 @@ func (s *PostService) addComment(requester *nested.Account, request *rpc.Request
 	}
 
 	// create the comment object
-	c := _Model.Post.AddComment(post.ID, requester.ID, txt, attachmentID)
+	c := s.Worker().Model().Post.AddComment(post.ID, requester.ID, txt, attachmentID)
 	if c == nil {
 		response.Error(global.ErrUnknown, []string{"internal_error"})
 	}
 
 	// mark post as read
 	if post.SenderID != requester.ID {
-		_Model.Post.MarkAsRead(post.ID, requester.ID)
+		s.Worker().Model().Post.MarkAsRead(post.ID, requester.ID)
 	}
 
 	// handle push messages (notification and activity)
@@ -152,7 +152,7 @@ func (s *PostService) attachPlace(requester *nested.Account, request *rpc.Reques
 			continue
 		}
 		// User must have at least WRITE ACCESS to the new place
-		place := _Model.Place.GetByID(placeID, nil)
+		place := s.Worker().Model().Place.GetByID(placeID, nil)
 		if place == nil {
 			notAttachedPlaceIDs = append(notAttachedPlaceIDs, placeID)
 			continue
@@ -162,7 +162,7 @@ func (s *PostService) attachPlace(requester *nested.Account, request *rpc.Reques
 			notAttachedPlaceIDs = append(notAttachedPlaceIDs, placeID)
 			continue
 		}
-		if _Model.Post.AttachPlace(post.ID, placeID, requester.ID) {
+		if s.Worker().Model().Post.AttachPlace(post.ID, placeID, requester.ID) {
 			attachedPlaceIDs = append(attachedPlaceIDs, placeID)
 		} else {
 			notAttachedPlaceIDs = append(notAttachedPlaceIDs, placeID)
@@ -207,7 +207,7 @@ func (s *PostService) createPost(requester *nested.Account, request *rpc.Request
 	}
 	if v, ok := request.Data["label_id"].(string); ok {
 		labelIDs := strings.SplitN(v, ",", global.DefaultPostMaxLabels)
-		labels = _Model.Label.GetByIDs(labelIDs)
+		labels = s.Worker().Model().Label.GetByIDs(labelIDs)
 	} else {
 		labels = []nested.Label{}
 	}
@@ -278,7 +278,7 @@ func (s *PostService) createPost(requester *nested.Account, request *rpc.Request
 	noWriteAccessPlaces := make([]string, 0, global.DefaultPostMaxTargets)
 	notValidPlaces := make([]string, 0, global.DefaultPostMaxTargets)
 	for k := range mPlaces {
-		place := _Model.Place.GetByID(k, nil)
+		place := s.Worker().Model().Place.GetByID(k, nil)
 		if place == nil {
 			notValidPlaces = append(notValidPlaces, k)
 			delete(mPlaces, k)
@@ -305,7 +305,7 @@ func (s *PostService) createPost(requester *nested.Account, request *rpc.Request
 		mPlaces[requester.ID] = true
 	}
 	for i, v := range attachments {
-		if v == "" || !_Model.File.Exists(nested.UniversalID(v)) {
+		if v == "" || !s.Worker().Model().File.Exists(nested.UniversalID(v)) {
 			if len(attachments) > 1 {
 				attachments[i] = attachments[len(attachments)-1]
 				attachments = attachments[:len(attachments)-1]
@@ -357,7 +357,7 @@ func (s *PostService) createPost(requester *nested.Account, request *rpc.Request
 		pcr.Subject = subject
 	}
 
-	post := _Model.Post.AddPost(pcr)
+	post := s.Worker().Model().Post.AddPost(pcr)
 	if post == nil {
 		response.Error(global.ErrUnknown, []string{})
 		return
@@ -390,7 +390,7 @@ func (s *PostService) createPost(requester *nested.Account, request *rpc.Request
 
 	// Remove places from connection list if user no longer has access to write to it.
 	if len(noWriteAccessPlaces) != 0 {
-		_Model.Account.RemovePlaceConnection(requester.ID, noWriteAccessPlaces)
+		s.Worker().Model().Account.RemovePlaceConnection(requester.ID, noWriteAccessPlaces)
 	}
 	response.OkWithData(tools.M{
 		"post_id":          post.ID,
@@ -511,7 +511,7 @@ func (s *PostService) getManyPosts(requester *nested.Account, request *rpc.Reque
 		for _, pid := range strings.SplitN(v, ",", global.DefaultMaxResultLimit) {
 			if bson.IsObjectIdHex(pid) {
 				postID := bson.ObjectIdHex(pid)
-				if _Model.Post.HasAccess(postID, requester.ID) {
+				if s.Worker().Model().Post.HasAccess(postID, requester.ID) {
 					postIDs = append(postIDs, postID)
 				} else {
 					noAccessPostIDs = append(noAccessPostIDs, postID)
@@ -522,7 +522,7 @@ func (s *PostService) getManyPosts(requester *nested.Account, request *rpc.Reque
 		response.Error(global.ErrIncomplete, []string{"post_id"})
 		return
 	}
-	posts := _Model.Post.GetPostsByIDs(postIDs)
+	posts := s.Worker().Model().Post.GetPostsByIDs(postIDs)
 	r := make([]tools.M, 0, len(posts))
 	for _, post := range posts {
 		r = append(r, s.Worker().Map().Post(requester, post, false))
@@ -558,7 +558,7 @@ func (s *PostService) getPostChain(requester *nested.Account, request *rpc.Reque
 		} else {
 			break
 		}
-		post = _Model.Post.GetPostByID(postID)
+		post = s.Worker().Model().Post.GetPostByID(postID)
 		limit--
 	}
 	response.OkWithData(tools.M{
@@ -621,7 +621,7 @@ func (s *PostService) getCommentsByPost(requester *nested.Account, request *rpc.
 	// check if user has the right access to comment on the post
 	if post.HasAccess(requester.ID) {
 		pg := s.Worker().Argument().GetPagination(request)
-		comments := _Model.Post.GetCommentsByPostID(post.ID, pg)
+		comments := s.Worker().Model().Post.GetCommentsByPostID(post.ID, pg)
 		r := make([]tools.M, 0, len(comments))
 		for _, c := range comments {
 			r = append(r, s.Worker().Map().Comment(c))
@@ -662,7 +662,7 @@ func (s *PostService) getManyCommentsByIDs(requester *nested.Account, request *r
 		for _, cid := range strings.Split(v, ",") {
 			if bson.IsObjectIdHex(cid) {
 				commentID := bson.ObjectIdHex(cid)
-				if _Model.Post.CommentHasAccess(commentID, requester.ID) {
+				if s.Worker().Model().Post.CommentHasAccess(commentID, requester.ID) {
 					commentIDs = append(commentIDs, commentID)
 				} else {
 					noAccessCommentIDs = append(noAccessCommentIDs, commentID)
@@ -678,7 +678,7 @@ func (s *PostService) getManyCommentsByIDs(requester *nested.Account, request *r
 		return
 	}
 
-	comments := _Model.Post.GetCommentsByIDs(commentIDs)
+	comments := s.Worker().Model().Post.GetCommentsByIDs(commentIDs)
 	r := make([]tools.M, 0, len(comments))
 	for _, comment := range comments {
 		r = append(r, s.Worker().Map().Comment(comment))
@@ -702,11 +702,11 @@ func (s *PostService) markPostAsRead(requester *nested.Account, request *rpc.Req
 		return
 	}
 	post.MarkAsRead(requester.ID)
-	notificationIDs := _Model.Notification.MarkAsReadByPostID(post.ID, requester.ID)
+	notificationIDs := s.Worker().Model().Notification.MarkAsReadByPostID(post.ID, requester.ID)
 	for _, notificationID := range notificationIDs {
-		notification := _Model.Notification.GetByID(notificationID)
+		notification := s.Worker().Model().Notification.GetByID(notificationID)
 		if notification != nil && notification.AccountID == requester.ID {
-			_Model.Notification.MarkAsRead(notificationID, requester.ID)
+			s.Worker().Model().Notification.MarkAsRead(notificationID, requester.ID)
 			go s.Worker().Pusher().ClearNotification(requester, notification)
 		}
 	}
@@ -727,7 +727,7 @@ func (s *PostService) addToBookmarks(requester *nested.Account, request *rpc.Req
 		return
 	}
 
-	_Model.Post.BookmarkPost(requester.ID, post.ID)
+	s.Worker().Model().Post.BookmarkPost(requester.ID, post.ID)
 	response.Ok()
 }
 
@@ -746,20 +746,20 @@ func (s *PostService) removeComment(requester *nested.Account, request *rpc.Requ
 
 	// if user is the sender of the comment he/she can remove in the retract time period
 	if comment.SenderID == requester.ID && comment.Timestamp+global.DefaultPostRetractTime > nested.Timestamp() {
-		_Model.Post.RemoveComment(requester.ID, comment.ID)
+		s.Worker().Model().Post.RemoveComment(requester.ID, comment.ID)
 		s.Worker().Pusher().PostCommentRemoved(post, comment)
 		response.Ok()
 		return
 	}
 	// if user is creator of one of the places the post is attached to
 	for _, placeID := range post.PlaceIDs {
-		place := _Model.Place.GetByID(placeID, nil)
+		place := s.Worker().Model().Place.GetByID(placeID, nil)
 		if place == nil {
 			continue
 		}
 		access := place.GetAccess(requester.ID)
 		if access[nested.PlaceAccessRemovePost] {
-			_Model.Post.HideComment(comment.ID, requester.ID)
+			s.Worker().Model().Post.HideComment(comment.ID, requester.ID)
 			s.Worker().Pusher().PostCommentRemoved(post, comment)
 			response.Ok()
 			return
@@ -787,9 +787,9 @@ func (s *PostService) setPostNotification(requester *nested.Account, request *rp
 	}
 	if v, ok := request.Data["state"].(bool); ok {
 		if v {
-			_Model.Post.AddAccountToWatcherList(post.ID, requester.ID)
+			s.Worker().Model().Post.AddAccountToWatcherList(post.ID, requester.ID)
 		} else {
-			_Model.Post.RemoveAccountFromWatcherList(post.ID, requester.ID)
+			s.Worker().Model().Post.RemoveAccountFromWatcherList(post.ID, requester.ID)
 		}
 	}
 
@@ -812,7 +812,7 @@ func (s *PostService) removePost(requester *nested.Account, request *rpc.Request
 
 	access := place.GetAccess(requester.ID)
 	if access[nested.PlaceAccessRemovePost] || requester.Authority.Admin {
-		_Model.Post.Remove(requester.ID, post.ID, place.ID)
+		s.Worker().Model().Post.Remove(requester.ID, post.ID, place.ID)
 		response.Ok()
 	} else {
 		response.Error(global.ErrAccess, []string{})
@@ -868,7 +868,7 @@ func (s *PostService) movePost(requester *nested.Account, request *rpc.Request, 
 		return
 	}
 	if oldPlaceID, ok := request.Data["old_place_id"].(string); ok {
-		oldPlace = _Model.Place.GetByID(oldPlaceID, nil)
+		oldPlace = s.Worker().Model().Place.GetByID(oldPlaceID, nil)
 		if oldPlace == nil {
 			response.Error(global.ErrInvalid, []string{"old_place_id"})
 			return
@@ -878,7 +878,7 @@ func (s *PostService) movePost(requester *nested.Account, request *rpc.Request, 
 		return
 	}
 	if newPlaceID, ok := request.Data["new_place_id"].(string); ok {
-		newPlace = _Model.Place.GetByID(newPlaceID, nil)
+		newPlace = s.Worker().Model().Place.GetByID(newPlaceID, nil)
 		if newPlace == nil {
 			response.Error(global.ErrInvalid, []string{"new_place_id"})
 			return
@@ -900,7 +900,7 @@ func (s *PostService) movePost(requester *nested.Account, request *rpc.Request, 
 		response.Error(global.ErrAccess, []string{"must_be_creator"})
 		return
 	}
-	if _Model.Post.Move(post.ID, oldPlace.ID, newPlace.ID, requester.ID) {
+	if s.Worker().Model().Post.Move(post.ID, oldPlace.ID, newPlace.ID, requester.ID) {
 		go s.Worker().Pusher().PostMovedTo(post, oldPlace, newPlace)
 		response.Ok()
 	} else {
@@ -919,7 +919,7 @@ func (s *PostService) retractPost(requester *nested.Account, request *rpc.Reques
 	// if user has the right permission to retract message
 	if post.SenderID == requester.ID && nested.Timestamp() < post.Timestamp+global.DefaultPostRetractTime {
 		for _, placeID := range post.PlaceIDs {
-			if !_Model.Post.Remove(requester.ID, post.ID, placeID) {
+			if !s.Worker().Model().Post.Remove(requester.ID, post.ID, placeID) {
 				response.Error(global.ErrUnknown, []string{})
 				return
 			}
@@ -939,7 +939,7 @@ func (s *PostService) removeFromBookmarks(requester *nested.Account, request *rp
 	if post = s.Worker().Argument().GetPost(request, response); post == nil {
 		return
 	}
-	_Model.Post.UnpinPost(requester.ID, post.ID)
+	s.Worker().Model().Post.UnpinPost(requester.ID, post.ID)
 	response.Ok()
 }
 
@@ -956,10 +956,10 @@ func (s *PostService) whoHaveReadThisPost(requester *nested.Account, request *rp
 		return
 	}
 	pg := s.Worker().Argument().GetPagination(request)
-	postReads := _Model.Post.GetAccountsWhoReadThis(post.ID, pg)
+	postReads := s.Worker().Model().Post.GetAccountsWhoReadThis(post.ID, pg)
 	var r []tools.M
 	for _, pr := range postReads {
-		account := _Model.Account.GetByID(pr.AccountID, nil)
+		account := s.Worker().Model().Account.GetByID(pr.AccountID, nil)
 		r = append(r, tools.M{
 			"read_on":  pr.Timestamp,
 			"place_id": pr.PlaceID,

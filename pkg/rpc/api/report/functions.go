@@ -37,6 +37,6 @@ func (s *ReportService) ReportTimeSeriesSingleValue(requester *nested.Account, r
 	if v, ok := request.Data["key"].(string); ok {
 		key = v
 	}
-	result := _Model.Report.GetTimeSeriesSingleValue(from, to, key, res)
+	result := s.Worker().Model().Report.GetTimeSeriesSingleValue(from, to, key, res)
 	response.OkWithData(tools.M{"result": result})
 }

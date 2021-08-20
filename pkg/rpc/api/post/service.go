@@ -40,10 +40,6 @@ const (
 	CmdEdit                = "post/edit"
 )
 
-var (
-	_Model *nested.Manager
-)
-
 type PostService struct {
 	worker          *api.Worker
 	serviceCommands api.ServiceCommands
@@ -83,7 +79,6 @@ func NewPostService(worker *api.Worker) api.Service {
 		CmdEdit:                {MinAuthLevel: api.AuthLevelUser, Execute: s.editPost},
 	}
 
-	_Model = s.worker.Model()
 	return s
 }
 

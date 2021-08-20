@@ -35,10 +35,6 @@ const (
 	CmdRemoveEmail        = "account/remove_email"
 )
 
-var (
-	_Model *nested.Manager
-)
-
 type AccountService struct {
 	worker          *api.Worker
 	serviceCommands api.ServiceCommands
@@ -47,7 +43,6 @@ type AccountService struct {
 func NewAccountService(worker *api.Worker) api.Service {
 	s := new(AccountService)
 	s.worker = worker
-
 	s.serviceCommands = api.ServiceCommands{
 		CmdUpdateEmail:        {MinAuthLevel: api.AuthLevelAppL1, Execute: s.updateEmail},
 		CmdRemoveEmail:        {MinAuthLevel: api.AuthLevelAppL1, Execute: s.removeEmail},
@@ -74,7 +69,6 @@ func NewAccountService(worker *api.Worker) api.Service {
 		CmdSetPasswordByToken: {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.setAccountPasswordByLoginToken},
 	}
 
-	_Model = s.worker.Model()
 	return s
 }
 
@@ -97,4 +91,8 @@ func (s *AccountService) ExecuteCommand(authLevel api.AuthLevel, requester *nest
 
 func (s *AccountService) Worker() *api.Worker {
 	return s.worker
+}
+
+func (s *AccountService) Model() *nested.Manager {
+	return s.worker.Model()
 }

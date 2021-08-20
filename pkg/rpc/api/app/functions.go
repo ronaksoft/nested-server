@@ -11,7 +11,7 @@ import (
 
 // @Command: app/exists
 // @Input:  app_id          string  *
-func (s *AppService) exists(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
+func (s *AppService) exists(_ *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var appID string
 	if v, ok := request.Data["app_id"].(string); ok {
 		appID = strings.TrimSpace(v)
@@ -76,7 +76,7 @@ func (s *AppService) getTokensByAccountID(requester *nested.Account, request *rp
 
 // @Command: app/get_app
 func (s *AppService) getTokenByAppID(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
-
+	// TODO:: implement it
 }
 
 // @Command: app/get_many

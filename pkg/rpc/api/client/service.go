@@ -18,10 +18,6 @@ const (
 	CmdGetAllKeys       = "client/get_all_keys"
 )
 
-var (
-	_Model *nested.Manager
-)
-
 type ClientService struct {
 	worker          *api.Worker
 	serviceCommands api.ServiceCommands
@@ -40,7 +36,6 @@ func NewClientService(worker *api.Worker) api.Service {
 		CmdGetServerDetails: {MinAuthLevel: api.AuthLevelUnauthorized, Execute: s.getServerDetails},
 	}
 
-	_Model = s.worker.Model()
 	return s
 }
 

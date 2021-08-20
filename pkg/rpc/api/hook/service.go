@@ -7,13 +7,13 @@ import (
 )
 
 const (
-	SERVICE_PREFIX = "hook"
+	ServicePrefix = "hook"
 )
 const (
-	CMD_ADD_PLACE_HOOK   = "hook/add_place_hook"
-	CMD_ADD_ACCOUNT_HOOK = "hook/add_account_hook"
-	CMD_REMOVE_HOOK      = "hook/remove"
-	CMD_LIST             = "hook/list"
+	CmdAddPlaceHook   = "hook/add_place_hook"
+	CmdAddAccountHook = "hook/add_account_hook"
+	CmdRemoveHook     = "hook/remove"
+	CmdList           = "hook/list"
 )
 
 type HookService struct {
@@ -26,17 +26,17 @@ func NewHookService(worker *api.Worker) api.Service {
 	s.worker = worker
 
 	s.serviceCommands = api.ServiceCommands{
-		CMD_ADD_PLACE_HOOK:   {MinAuthLevel: api.AuthLevelUser, Execute: s.addPlaceHook},
-		CMD_ADD_ACCOUNT_HOOK: {MinAuthLevel: api.AuthLevelUser, Execute: s.addAccountHook},
-		CMD_REMOVE_HOOK:      {MinAuthLevel: api.AuthLevelUser, Execute: s.removeHook},
-		CMD_LIST:             {MinAuthLevel: api.AuthLevelUser, Execute: s.list},
+		CmdAddPlaceHook:   {MinAuthLevel: api.AuthLevelUser, Execute: s.addPlaceHook},
+		CmdAddAccountHook: {MinAuthLevel: api.AuthLevelUser, Execute: s.addAccountHook},
+		CmdRemoveHook:     {MinAuthLevel: api.AuthLevelUser, Execute: s.removeHook},
+		CmdList:           {MinAuthLevel: api.AuthLevelUser, Execute: s.list},
 	}
 
 	return s
 }
 
 func (s *HookService) GetServicePrefix() string {
-	return SERVICE_PREFIX
+	return ServicePrefix
 }
 
 func (s *HookService) ExecuteCommand(authLevel api.AuthLevel, requester *nested.Account, request *rpc.Request, response *rpc.Response) {
