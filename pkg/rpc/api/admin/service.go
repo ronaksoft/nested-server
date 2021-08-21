@@ -9,6 +9,7 @@ import (
 const (
 	ServicePrefix string = "admin"
 )
+
 const (
 	CmdCreatePost              string = "admin/create_post"
 	CmdAddComment              string = "admin/add_comment"

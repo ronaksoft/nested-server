@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -39,9 +40,16 @@ type Logger struct {
 	// Note that this will not override the time and level prefix,
 	// if you want to customize the log message please read the examples
 	// or navigate to: https://github.com/kataras/golog/issues/3#issuecomment-355895870.
-	NewLine  bool
-	mu       sync.Mutex
-	Printer  *pio.Printer
+	NewLine bool
+	mu      sync.RWMutex // for logger field changes and printing through pio hijacker.
+	Printer *pio.Printer
+	// The per log level raw writers, optionally.
+	LevelOutput map[Level]io.Writer
+
+	formatters     map[string]Formatter // available formatters.
+	formatter      Formatter            // the current formatter for all logs.
+	LevelFormatter map[Level]Formatter  // per level formatter.
+
 	handlers []Handler
 	once     sync.Once
 	logs     sync.Pool
@@ -52,11 +60,16 @@ type Logger struct {
 // and level to `InfoLevel`.
 func New() *Logger {
 	return &Logger{
-		Level:      InfoLevel,
-		TimeFormat: "2006/01/02 15:04",
-		NewLine:    true,
-		Printer:    pio.NewPrinter("", os.Stdout).EnableDirectOutput().Hijack(logHijacker).SetSync(true),
-		children:   newLoggerMap(),
+		Level:       InfoLevel,
+		TimeFormat:  "2006/01/02 15:04",
+		NewLine:     true,
+		Printer:     pio.NewPrinter("", os.Stdout).EnableDirectOutput().Hijack(logHijacker).SetSync(true),
+		LevelOutput: make(map[Level]io.Writer),
+		formatters: map[string]Formatter{ // the available builtin formatters.
+			"json": new(JSONFormatter),
+		},
+		LevelFormatter: make(map[Level]Formatter),
+		children:       newLoggerMap(),
 	}
 }
 
@@ -104,7 +117,17 @@ var logHijacker = func(ctx *pio.Ctx) {
 		return
 	}
 
-	w := ctx.Printer
+	logger := l.Logger
+	logger.mu.Lock()
+	defer logger.mu.Unlock()
+
+	w := logger.getOutput(l.Level)
+	if f := logger.getFormatter(); f != nil {
+		if f.Format(w, l) {
+			ctx.Store(nil, pio.ErrHandled)
+			return
+		}
+	}
 
 	if l.Level != DisableLevel {
 		if level, ok := Levels[l.Level]; ok {
@@ -118,13 +141,13 @@ var logHijacker = func(ctx *pio.Ctx) {
 		w.Write(spaceBytes)
 	}
 
-	if prefix := l.Logger.Prefix; len(prefix) > 0 {
+	if prefix := logger.Prefix; len(prefix) > 0 {
 		fmt.Fprintf(w, prefix)
 	}
 
 	fmt.Fprint(w, l.Message)
 
-	if l.Logger.NewLine {
+	if logger.NewLine {
 		fmt.Fprintln(w)
 	}
 
@@ -200,6 +223,84 @@ func (l *Logger) DisableNewLine() *Logger {
 	l.mu.Unlock()
 
 	return l
+}
+
+// RegisterFormatter registers a Formatter for this logger.
+func (l *Logger) RegisterFormatter(f Formatter) *Logger {
+	l.mu.Lock()
+	l.formatters[f.String()] = f
+	l.mu.Unlock()
+	return l
+}
+
+// SetFormat sets a formatter for all logger's logs.
+func (l *Logger) SetFormat(formatter string, opts ...interface{}) *Logger {
+	l.mu.RLock()
+	f, ok := l.formatters[formatter]
+	l.mu.RUnlock()
+
+	if ok {
+		l.mu.Lock()
+		l.formatter = f.Options(opts...)
+		l.mu.Unlock()
+	}
+
+	return l
+}
+
+// SetLevelFormat changes the output format for the given "levelName".
+func (l *Logger) SetLevelFormat(levelName string, formatter string, opts ...interface{}) *Logger {
+	l.mu.RLock()
+	f, ok := l.formatters[formatter]
+	l.mu.RUnlock()
+
+	if ok {
+		l.mu.Lock()
+		l.LevelFormatter[ParseLevel(levelName)] = f.Options(opts...)
+		l.mu.Unlock()
+	}
+
+	return l
+}
+
+func (l *Logger) getFormatter() Formatter {
+	f, ok := l.LevelFormatter[l.Level]
+	if !ok {
+		f = l.formatter
+	}
+
+	if f == nil {
+		return nil
+	}
+
+	return f
+}
+
+// SetLevelOutput sets a destination log output for the specific "levelName".
+// For multiple writers use the `io.Multiwriter` wrapper.
+func (l *Logger) SetLevelOutput(levelName string, w io.Writer) *Logger {
+	l.mu.Lock()
+	l.LevelOutput[ParseLevel(levelName)] = w
+	l.mu.Unlock()
+	return l
+}
+
+// GetLevelOutput returns the responsible writer for the given "levelName".
+// If not a registered writer is set for that level then it returns
+// the logger's default printer. It does NOT return nil.
+func (l *Logger) GetLevelOutput(levelName string) io.Writer {
+	l.mu.RLock()
+	w := l.getOutput(ParseLevel(levelName))
+	l.mu.RUnlock()
+	return w
+}
+
+func (l *Logger) getOutput(level Level) io.Writer {
+	w, ok := l.LevelOutput[level]
+	if !ok {
+		w = l.Printer
+	}
+	return w
 }
 
 // SetLevel accepts a string representation of
@@ -478,57 +579,135 @@ func (l *Logger) Scan(r io.Reader) (cancel func()) {
 // Clone returns a copy of this "l" Logger.
 // This copy is returned as pointer as well.
 func (l *Logger) Clone() *Logger {
+	// copy level output and format maps.
+	formats := make(map[string]Formatter, len(l.formatters))
+	for k, v := range l.formatters {
+		formats[k] = v
+	}
+	levelFormat := make(map[Level]Formatter, len(l.LevelFormatter))
+	for k, v := range l.LevelFormatter {
+		levelFormat[k] = v
+	}
+	levelOutput := make(map[Level]io.Writer, len(l.LevelOutput))
+	for k, v := range l.LevelOutput {
+		levelOutput[k] = v
+	}
+
 	return &Logger{
-		Prefix:     l.Prefix,
-		Level:      l.Level,
-		TimeFormat: l.TimeFormat,
-		NewLine:    l.NewLine,
-		Printer:    l.Printer,
-		handlers:   l.handlers,
-		children:   newLoggerMap(),
-		mu:         sync.Mutex{},
-		once:       sync.Once{},
+		Prefix:         l.Prefix,
+		Level:          l.Level,
+		TimeFormat:     l.TimeFormat,
+		NewLine:        l.NewLine,
+		Printer:        l.Printer,
+		LevelOutput:    levelOutput,
+		formatter:      l.formatter,
+		formatters:     formats,
+		LevelFormatter: levelFormat,
+		handlers:       l.handlers,
+		children:       newLoggerMap(),
+		mu:             sync.RWMutex{},
+		once:           sync.Once{},
 	}
 }
 
 // Child (creates if not exists and) returns a new child
-// Logger based on the "l"'s fields.
+// Logger based on the current logger's fields.
 //
 // Can be used to separate logs by category.
-func (l *Logger) Child(name string) *Logger {
-	return l.children.getOrAdd(name, l)
+// If the "key" is string then it's used as prefix,
+// which is appended to the current prefix one.
+func (l *Logger) Child(key interface{}) *Logger {
+	return l.children.getOrAdd(key, l)
+}
+
+// SetChildPrefix same as `SetPrefix` but it does NOT
+// override the existing, instead the given "prefix"
+// is appended to the current one. It's useful
+// to chian loggers with their own names/prefixes.
+// It does add the ": " in the end of "prefix" if it's missing.
+// It returns itself.
+func (l *Logger) SetChildPrefix(prefix string) *Logger {
+	if prefix == "" {
+		return l
+	}
+
+	// if prefix doesn't end with a whitespace, then add it here.
+	if !strings.HasSuffix(prefix, ": ") {
+		prefix += ": "
+	}
+
+	l.mu.Lock()
+	if l.Prefix != "" {
+		if !strings.HasSuffix(l.Prefix, " ") {
+			l.Prefix += " "
+		}
+	}
+	l.Prefix += prefix
+	l.mu.Unlock()
+
+	return l
+}
+
+// LastChild returns the last registered child Logger.
+func (l *Logger) LastChild() *Logger {
+	return l.children.getLast()
 }
 
 type loggerMap struct {
-	mu    sync.RWMutex
-	Items map[string]*Logger
+	mu           sync.RWMutex
+	Items        map[interface{}]*Logger
+	itemsOrdered map[int]interface{} // registration order of logger and its key.
 }
 
 func newLoggerMap() *loggerMap {
 	return &loggerMap{
-		Items: make(map[string]*Logger),
+		Items:        make(map[interface{}]*Logger),
+		itemsOrdered: make(map[int]interface{}),
 	}
 }
 
-func (m *loggerMap) getOrAdd(name string, parent *Logger) *Logger {
+func (m *loggerMap) getByIndex(index int) (l *Logger) {
 	m.mu.RLock()
-	logger, ok := m.Items[name]
+	if key, ok := m.itemsOrdered[index]; ok {
+		l = m.Items[key]
+	}
+	m.mu.RUnlock()
+
+	return l
+}
+
+func (m *loggerMap) getLast() *Logger {
+	m.mu.RLock()
+	n := len(m.Items)
+	m.mu.RUnlock()
+	if n == 0 {
+		return nil
+	}
+
+	return m.getByIndex(n - 1)
+}
+
+func (m *loggerMap) getOrAdd(key interface{}, parent *Logger) *Logger {
+	m.mu.RLock()
+	logger, ok := m.Items[key]
 	m.mu.RUnlock()
 	if ok {
 		return logger
 	}
 
 	logger = parent.Clone()
-	prefix := name
-
-	// if prefix doesn't end with a whitespace, then add it here.
-	if lb := name[len(prefix)-1]; lb != ' ' {
-		prefix += ": "
+	childPrefix := ""
+	switch v := key.(type) {
+	case string:
+		childPrefix = v
+	case fmt.Stringer:
+		childPrefix = v.String()
 	}
+	logger.SetChildPrefix(childPrefix)
 
-	logger.SetPrefix(prefix)
 	m.mu.Lock()
-	m.Items[name] = logger
+	m.itemsOrdered[len(m.Items)] = key
+	m.Items[key] = logger
 	m.mu.Unlock()
 
 	return logger

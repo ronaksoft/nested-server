@@ -13,7 +13,7 @@ import (
 
 // @Command:	session/close
 // @CommandInfo:	terminates the current session.
-func (s *SessionService) close(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
+func (s *SessionService) close(_ *nested.Account, request *rpc.Request, response *rpc.Response) {
 	session := s.Worker().Model().Session.GetByID(request.SessionKey)
 	if s == nil {
 		response.Error(global.ErrInvalid, []string{"_sk"})
@@ -40,7 +40,7 @@ func (s *SessionService) close(requester *nested.Account, request *rpc.Request, 
 // @Input:	_did			string		+
 // @Input:	_dt			string		+
 // @Input:	_os			string		+
-func (s *SessionService) recall(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
+func (s *SessionService) recall(_ *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var sk bson.ObjectId
 	var ss, did, dt, os string
 	if v, ok := request.Data["_sk"].(string); ok {
@@ -318,7 +318,7 @@ func (s *SessionService) closeActive(requester *nested.Account, request *rpc.Req
 }
 
 // @Command: session/close_all_actives
-func (s *SessionService) closeAllActives(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
+func (s *SessionService) closeAllActives(_ *nested.Account, request *rpc.Request, response *rpc.Response) {
 	session := s.Worker().Model().Session.GetByID(request.SessionKey)
 	if session == nil {
 		response.Error(global.ErrUnknown, []string{})

@@ -1,3 +1,28 @@
+## Wed 09 Decemember | v0.1.6
+
+Fix `Clone` not inherite the parent's formatters field (fixes `SetLevelFormat` on childs).
+
+## Mo 07 September | v0.1.5
+
+Introduce the [Formatter](https://github.com/kataras/golog/blob/master/formatter.go) interface. [Example](https://github.com/kataras/golog/tree/master/_examples/customize-output).
+
+- Add `Logger.RegisterFormatter(Formatter)` to register a custom `Formatter`.
+- Add `Logger.SetFormat(formatter string, opts ...interface{})` to set the default formatter for all log levels.
+- Add `Logger.SetLevelFormat(levelName string, formatter string, opts ...interface{})` to change the output format for the given "levelName".
+
+## Su 06 September | v0.1.3 and v0.1.4
+
+- Add `Logger.SetLevelOutput(levelName string, w io.Writer)` to customize the writer per level.
+- Add `Logger.GetLevelOutput(levelName string) io.Writer` to get the leveled output or the default one.
+
+## Sa 15 August | v0.1.2
+
+- `Logger.Child` accepts an `interface{}` instead of `string`. This way you can register children for pointers without forcing to naming them. If the key is string or completes the `fmt.Stringer` interface, then it's used as prefix (like always did).
+
+## Fr 14 August 2020 | v0.0.19
+
+- Use locks on hijacker.
+
 ## Tu 09 June 2020 | v0.0.18
 
 - New `SetStacktraceLimit` method. If 0 (default) all debug stacktrace will be logged, if negative the field is disabled.

@@ -3,6 +3,7 @@ package golog
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/kataras/pio"
 )
@@ -17,6 +18,16 @@ func (l Level) MarshalJSON() ([]byte, error) {
 	}
 
 	return nil, fmt.Errorf("unknown level %v", l)
+}
+
+// String implements the fmt.Stringer interface for level.
+// Returns the level's name.
+func (l Level) String() string {
+	if level, ok := Levels[l]; ok {
+		return level.Name
+	}
+
+	return ""
 }
 
 // The available built'n log levels, users can add or modify a level via `Levels` field.
@@ -80,17 +91,20 @@ var Levels = map[Level]*LevelMetadata{
 // Note that all existing log levels (name, prefix and color) can be customized
 // and new one can be added by the package-level `golog.Levels` map variable.
 func ParseLevel(levelName string) Level {
+	levelName = strings.ToLower(levelName)
+
 	for level, meta := range Levels {
-		if meta.Name == levelName {
+		if strings.ToLower(meta.Name) == levelName {
 			return level
 		}
 
 		for _, altName := range meta.AlternativeNames {
-			if altName == levelName {
+			if strings.ToLower(altName) == levelName {
 				return level
 			}
 		}
 	}
+
 	return DisableLevel
 }
 

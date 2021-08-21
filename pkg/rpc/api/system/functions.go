@@ -13,7 +13,7 @@ import (
 )
 
 // @Command: system/get_counters
-func (s *SystemService) getSystemCounters(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
+func (s *SystemService) getSystemCounters(_ *nested.Account, _ *rpc.Request, response *rpc.Response) {
 	counters := s.Worker().Model().System.GetCounters()
 	r := tools.M{}
 	for key, val := range counters {
@@ -23,7 +23,7 @@ func (s *SystemService) getSystemCounters(requester *nested.Account, request *rp
 }
 
 // @Command: system/get_int_constants
-func (s *SystemService) getSystemIntegerConstants(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
+func (s *SystemService) getSystemIntegerConstants(_ *nested.Account, _ *rpc.Request, response *rpc.Response) {
 	m := tools.M{}
 	for k, v := range s.Worker().Model().System.GetIntegerConstants() {
 		m[k] = v
@@ -32,7 +32,7 @@ func (s *SystemService) getSystemIntegerConstants(requester *nested.Account, req
 }
 
 // @Command: system/get_string_constants
-func (s *SystemService) getSystemStringConstants(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
+func (s *SystemService) getSystemStringConstants(_ *nested.Account, _ *rpc.Request, response *rpc.Response) {
 	m := tools.M{}
 	for k, v := range s.Worker().Model().System.GetStringConstants() {
 		m[k] = v
@@ -52,7 +52,7 @@ func (s *SystemService) getSystemStringConstants(requester *nested.Account, requ
 // @Input:  place_max_creators				int		+
 // @Input:  place_max_keyholders				int		+
 // @Input:  register_mode					    int		+	(1: everyone, 2: admin_only)
-func (s *SystemService) setSystemIntegerConstants(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
+func (s *SystemService) setSystemIntegerConstants(_ *nested.Account, request *rpc.Request, response *rpc.Response) {
 	if len(request.Data) > global.DefaultMaxResultLimit {
 		response.Error(global.ErrLimit, []string{"too many parameters"})
 		return
@@ -68,7 +68,7 @@ func (s *SystemService) setSystemIntegerConstants(requester *nested.Account, req
 // @Input:  system_lang                 string     +
 // @Input:  magic_number                string     +
 // @Input:  license_key                 string      +
-func (s *SystemService) setSystemStringConstants(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
+func (s *SystemService) setSystemStringConstants(_ *nested.Account, request *rpc.Request, response *rpc.Response) {
 	if len(request.Data) > global.DefaultMaxResultLimit {
 		response.Error(global.ErrLimit, []string{"too many parameters"})
 		return
@@ -82,21 +82,21 @@ func (s *SystemService) setSystemStringConstants(requester *nested.Account, requ
 }
 
 // @Command: system/mon_enable
-func (s *SystemService) enableMonitor(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
+func (s *SystemService) enableMonitor(_ *nested.Account, _ *rpc.Request, response *rpc.Response) {
 	runtime.SetBlockProfileRate(1000000)
 	runtime.SetCPUProfileRate(10)
 	response.Ok()
 }
 
 // @Command: system/mon_disable
-func (s *SystemService) disableMonitor(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
+func (s *SystemService) disableMonitor(_ *nested.Account, _ *rpc.Request, response *rpc.Response) {
 	runtime.SetBlockProfileRate(0)
 	runtime.SetCPUProfileRate(0)
 	response.Ok()
 }
 
 // @Command: system/stats
-func (s *SystemService) getSystemStats(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
+func (s *SystemService) getSystemStats(_ *nested.Account, _ *rpc.Request, response *rpc.Response) {
 	M := tools.M{
 		nested.SysInfoUserAPI: tools.M{},
 		nested.SysInfoGateway: tools.M{},
@@ -121,7 +121,7 @@ func (s *SystemService) getSystemStats(requester *nested.Account, request *rpc.R
 
 // @Command: system/mon_activity
 // @Input:	mon_access_token				string		*
-func (s *SystemService) monitorActivity(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
+func (s *SystemService) monitorActivity(_ *nested.Account, request *rpc.Request, response *rpc.Response) {
 	if v, ok := request.Data["mon_access_token"].(string); ok {
 		if v != config.GetString(config.MonitorAccessToken) {
 			response.Error(global.ErrInvalid, []string{"mon_access_token"})
@@ -137,15 +137,14 @@ func (s *SystemService) monitorActivity(requester *nested.Account, request *rpc.
 }
 
 // @Command: system/online_users
-func (s *SystemService) onlineUsers(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
+func (s *SystemService) onlineUsers(_ *nested.Account, _ *rpc.Request, response *rpc.Response) {
 	bundleIDs := s.Worker().Model().GetBundles()
 	r := make([]tools.M, 0, len(bundleIDs))
 	for _, bundleID := range bundleIDs {
 		r = append(r, tools.M{
 			"bundle_id": bundleID,
-			"accounts":  s.Worker().Pusher().Websocket().GetAccountsByBundleID(bundleID),
+			"accounts":  s.Worker().Pusher().GetOnlineAccounts(bundleID),
 		})
-
 	}
 	response.OkWithData(tools.M{
 		"online_users": r,
@@ -154,7 +153,7 @@ func (s *SystemService) onlineUsers(requester *nested.Account, request *rpc.Requ
 
 // @Command: system/set_license
 // @Input: license_key      string      *
-func (s *SystemService) setLicense(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
+func (s *SystemService) setLicense(_ *nested.Account, request *rpc.Request, response *rpc.Response) {
 	var licenseKey string
 	if v, ok := request.Data["license_key"].(string); ok {
 		licenseKey = v
@@ -176,7 +175,7 @@ func (s *SystemService) setLicense(requester *nested.Account, request *rpc.Reque
 }
 
 // @Command: system/get_license
-func (s *SystemService) getLicense(requester *nested.Account, request *rpc.Request, response *rpc.Response) {
+func (s *SystemService) getLicense(_ *nested.Account, _ *rpc.Request, response *rpc.Response) {
 	license := s.Worker().Model().License.Get()
 	response.OkWithData(tools.M{"license": license})
 }

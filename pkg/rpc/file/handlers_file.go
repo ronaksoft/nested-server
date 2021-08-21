@@ -131,7 +131,9 @@ func (fs *Server) Download(ctx iris.Context) {
 		} else {
 			ctx.Header("Content-Length", fmt.Sprintf("%d", file.Size()))
 		}
-		ctx.ServeContent(file, fileInfo.Filename, time.Unix(int64(fileInfo.UploadTimestamp/1000), 0), fs.compressed)
+
+		_ = ctx.CompressWriter(fs.compressed)
+		ctx.ServeContent(file, fileInfo.Filename, time.Unix(int64(fileInfo.UploadTimestamp/1000), 0))
 	}
 }
 

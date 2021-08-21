@@ -34,6 +34,7 @@ import (
 	"github.com/iris-contrib/middleware/cors"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/websocket"
+	"github.com/kataras/neffos"
 	"go.uber.org/zap"
 	"net/http"
 	"os"
@@ -50,7 +51,7 @@ var (
 type APP struct {
 	systemKey string
 	wg        *sync.WaitGroup
-	ws        *websocket.Server
+	ws        *neffos.Server
 	iris      *iris.Application
 	model     *nested.Manager
 	file      *file.Server
@@ -88,29 +89,16 @@ func NewAPP() *APP {
 	}
 
 	// Initialize websocket Server
-	app.ws = websocket.New(websocket.Config{
-		ReadBufferSize:    4096,
-		WriteBufferSize:   4096,
-		MaxMessageSize:    1 * 1024 * 1024,
-		EnableCompression: true,
-		HandshakeTimeout:  30 * time.Second,
-		ReadTimeout:       1 * time.Minute,
-		WriteTimeout:      5 * time.Minute,
+	app.ws = websocket.New(websocket.DefaultGobwasUpgrader, websocket.Events{
+		websocket.OnNativeMessage: app.websocketOnMessage,
 	})
-	app.ws.OnConnection(app.websocketOnConnection)
+	app.ws.OnConnect = app.websocketOnConnect
+	app.ws.OnDisconnect = app.websocketOnDisconnect
 
 	// Initialize Pusher
 	app.pusher = pusher.New(
 		app.model,
 		config.GetString(config.BundleID), config.GetString(config.SenderDomain),
-		func(push pusher.WebsocketPush) bool {
-			if app.ws.IsConnected(push.WebsocketID) {
-				conn := app.ws.GetConnection(push.WebsocketID)
-				_ = conn.EmitMessage([]byte(push.Payload))
-				return true
-			}
-			return false
-		},
 	)
 	// Initialize IRIS Framework
 	app.iris = iris.New()
@@ -170,15 +158,10 @@ func NewAPP() *APP {
 	// Initialize Mail Map (TCP)
 	app.mailMap = mailmap.New(app.model)
 
-	// Root Handlers (Deprecated)
-	app.iris.Get("/", app.httpOnConnection)
-	app.iris.Post("/", app.httpOnConnection)
-
 	// Server Handlers
+	app.iris.Get("/ws", websocket.Handler(app.ws))
 	apiParty := app.iris.Party("/api")
 	apiParty.Get("/check_auth", app.httpCheckAuth)
-	apiParty.Get("/", app.httpOnConnection)
-	apiParty.Post("/", app.httpOnConnection)
 
 	// File Handlers
 	fileParty := app.iris.Party("/file")
@@ -243,11 +226,6 @@ func (gw *APP) Shutdown() {
 // then context will be passed to 'websocketOnConnection'
 func (gw *APP) httpOnConnection(ctx iris.Context) {
 	startTime := time.Now()
-	upgrade := ctx.GetHeader("Upgrade")
-	if strings.ToLower(upgrade) == "websocket" {
-		ctx.Do([]iris.Handler{gw.ws.Handler()})
-		return
-	}
 
 	userRequest := new(rpc.Request)
 	if err := ctx.ReadJSON(userRequest); err != nil {
@@ -303,48 +281,57 @@ func (gw *APP) httpCheckAuth(ctx iris.Context) {
 	return
 }
 
-// websocketOnConnection
-// This function will be called once in each websocket connection life-time
-func (gw *APP) websocketOnConnection(c websocket.Connection) {
+func (gw *APP) websocketOnConnect(c *websocket.Conn) error {
 	log.Debug("Websocket Connected",
 		zap.String("ConnID", c.ID()),
-		zap.String("RemoteIP", c.Context().Request().RemoteAddr),
+		zap.String("RemoteIP", c.Socket().Request().RemoteAddr),
 	)
 
-	// Send Welcome Message to the Client
-	_ = c.EmitMessage(_WelcomeMsgBytes)
-
-	// websocket Message Handler
-	c.OnMessage(func(m []byte) {
-		if strings.HasPrefix(string(m), "PING!") {
-			_ = c.EmitMessage([]byte(strings.Replace(string(m), "PING!", "PONG!", 1)))
-		} else {
-			startTime := time.Now()
-			userRequest := &rpc.Request{}
-			_ = json.Unmarshal(m, userRequest)
-			userRequest.ClientIP = c.Context().RemoteAddr()
-			userRequest.UserAgent = c.Context().GetHeader("User-Agent")
-			userRequest.WebsocketID = c.ID()
-
-			// Send to Server
-			userResponse := &rpc.Response{}
-			gw.api.Execute(userRequest, userResponse)
-			log.Debug("Websocket Request Received",
-				zap.String("AppID", userRequest.AppID),
-				zap.String("Cmd", userRequest.Command),
-				zap.String("Status", userResponse.Status),
-				zap.Duration("Duration", time.Now().Sub(startTime)),
-			)
-			bytes, _ := json.Marshal(userResponse)
-			_ = c.EmitMessage(bytes)
-			gw.model.Report.CountDataOut(len(bytes))
-		}
+	c.Write(websocket.Message{
+		IsNative: true,
+		Body:     _WelcomeMsgBytes,
 	})
 
-	// websocket Disconnect Handler
-	c.OnDisconnect(func() {
-		_ = gw.api.Pusher().UnregisterWebsocket(c.ID(), config.GetString(config.BundleID))
-	})
+	return nil
+}
+
+func (gw *APP) websocketOnDisconnect(c *websocket.Conn) {
+	_ = gw.api.Pusher().UnregisterWebsocket(c.ID(), config.GetString(config.BundleID))
+}
+
+func (gw *APP) websocketOnMessage(conn *neffos.NSConn, message neffos.Message) error {
+	if strings.HasPrefix(string(message.Body), "PING!") {
+		conn.Conn.Write(websocket.Message{
+			IsNative: true,
+			Body:     []byte(strings.Replace(string(message.Body), "PING!", "PONG!", 1)),
+		})
+	} else {
+		startTime := time.Now()
+		userRequest := &rpc.Request{}
+		_ = json.Unmarshal(message.Body, userRequest)
+		userRequest.ClientIP = conn.Conn.Socket().Request().RemoteAddr
+		userRequest.UserAgent = conn.Conn.Socket().Request().Header.Get("User-Agent")
+		userRequest.WebsocketID = conn.Conn.ID()
+
+		// Send to Server
+		userResponse := &rpc.Response{}
+		gw.api.Execute(userRequest, userResponse)
+		log.Debug("Websocket Request Received",
+			zap.String("AppID", userRequest.AppID),
+			zap.String("Cmd", userRequest.Command),
+			zap.String("Status", userResponse.Status),
+			zap.Duration("Duration", time.Now().Sub(startTime)),
+		)
+		bytes, _ := json.Marshal(userResponse)
+		conn.Conn.Write(
+			websocket.Message{
+				IsNative: true,
+				Body:     bytes,
+			},
+		)
+		gw.model.Report.CountDataOut(len(bytes))
+	}
+	return nil
 }
 
 func (gw *APP) checkSystemKey(ctx iris.Context) {

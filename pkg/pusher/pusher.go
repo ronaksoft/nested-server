@@ -13,10 +13,12 @@ import (
 	"git.ronaksoft.com/nested/server/pkg/session"
 	tools "git.ronaksoft.com/nested/server/pkg/toolbox"
 	"github.com/globalsign/mgo/bson"
+	"github.com/kataras/iris/v12/websocket"
 	"go.uber.org/zap"
 	"google.golang.org/api/option"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 /*
@@ -37,29 +39,24 @@ type WebsocketPush struct {
 type PushFunc func(push WebsocketPush) bool
 
 type Pusher struct {
-	domain   string
-	bundleID string
-	ws       *session.WebsocketManager
-	dev      *session.DeviceManager
-	model    *nested.Manager
-	pushCB   func(push WebsocketPush) bool
-	fcm      *messaging.Client
+	domain    string
+	bundleID  string
+	ws        *session.WebsocketManager
+	dev       *session.DeviceManager
+	model     *nested.Manager
+	fcm       *messaging.Client
+	wsConnMtx sync.RWMutex
+	wsConns   map[string]*websocket.Conn
 }
 
-func New(model *nested.Manager, bundleID, domain string, pushCB func(push WebsocketPush) bool) *Pusher {
+func New(model *nested.Manager, bundleID, domain string) *Pusher {
 	p := &Pusher{
 		domain:   domain,
 		bundleID: bundleID,
 		ws:       session.NewWebsocketManager(model.Cache()),
 		dev:      session.NewDeviceManager(model.DB()),
 		model:    model,
-		pushCB:   pushCB,
-	}
-
-	if p.pushCB == nil {
-		p.pushCB = func(push WebsocketPush) bool {
-			return true
-		}
+		wsConns:  make(map[string]*websocket.Conn, 128),
 	}
 
 	// Initialize FCM Client
@@ -83,8 +80,8 @@ func New(model *nested.Manager, bundleID, domain string, pushCB func(push Websoc
 	return p
 }
 
-func (p *Pusher) Websocket() *session.WebsocketManager {
-	return p.ws
+func (p *Pusher) GetOnlineAccounts(bundleID string) []string {
+	return p.ws.GetAccountsByBundleID(bundleID)
 }
 
 func (p *Pusher) RegisterDevice(id, token, os, userID string) error {
@@ -151,6 +148,19 @@ func (p *Pusher) UnregisterWebsocket(websocketID, bundleID string) error {
 	return nil
 }
 
+func (p *Pusher) pushCB(push WebsocketPush) bool {
+	p.wsConnMtx.RLock()
+	c := p.wsConns[push.WebsocketID]
+	p.wsConnMtx.RUnlock()
+	if c == nil {
+		return false
+	}
+	c.Write(websocket.Message{
+		IsNative: true,
+		Body:     []byte(push.Payload),
+	})
+	return true
+}
 func (p *Pusher) internalPush(targets []string, msg string, localOnly bool) error {
 	req := cmdPushInternal{
 		Targets:   targets,
