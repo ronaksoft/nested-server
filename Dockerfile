@@ -65,7 +65,7 @@ RUN chown -R opendkim:opendkim /etc/opendkim
 RUN chmod go-rw /etc/opendkim/keys
 RUN mkdir -p /var/spool/postfix/opendkim
 RUN chown opendkim:postfix /var/spool/postfix/opendkim
-COPY ./docker/opendkim.conf /etc/opendkim.conf
+COPY --from=Builder /ronak/src/docker/opendkim.conf /etc/opendkim.conf
 RUN postconf -e milter_default_action=accept
 RUN postconf -e milter_protocol=6
 RUN postconf -e smtpd_milters=local:opendkim/opendkim.sock
@@ -77,11 +77,11 @@ RUN postconf -e maillog_file=/var/log/postfix.log
 RUN postconf -e debug_peer_level=5
 
 # Add Helper Scripts
-COPY ./docker/mail_send.sh /ronak/scripts/mail_send.sh
-COPY ./docker/mail_receive.sh /ronak/scripts/mail_receive.sh
+COPY --from=Builder /ronak/src/docker/mail_send.sh /ronak/scripts/mail_send.sh
+COPY --from=Builder /ronak/src/docker/mail_receive.sh /ronak/scripts/mail_receive.sh
 
 # Import entryPoint.sh and make it executable
-ADD ./docker/entryPoint.sh /ronak/entryPoint.sh
+COPY --from=Builder /ronak/src/docker/entryPoint.sh /ronak/entryPoint.sh
 RUN chmod +x /ronak/entryPoint.sh
 
 WORKDIR /ronak
