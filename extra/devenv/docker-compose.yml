@@ -1,6 +1,5 @@
 version: '2'
 services:
-
   cyrus:
     restart: always
     image: nested-server:1.0

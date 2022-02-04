@@ -1,3 +1,15 @@
+FROM golang:1.17.3 as Builder
+MAINTAINER Ehsan N. Moosa
+WORKDIR /ronak/src
+
+# we copy the root
+COPY ./ ./
+
+# Compile the code
+WORKDIR /ronak/src/cmd/cli-api
+RUN ls -la
+RUN go build -mod=vendor -a -ldflags '-s -w' -o /ronak/bin/cli-api ./
+
 FROM ubuntu:20.04
 MAINTAINER Ehsan N. Moosa
 
@@ -68,16 +80,16 @@ RUN postconf -e debug_peer_level=5
 COPY ./docker/mail_send.sh /ronak/scripts/mail_send.sh
 COPY ./docker/mail_receive.sh /ronak/scripts/mail_receive.sh
 
-# Import executable binaries
-ADD ./cmd/_build/ /ronak/bin
-ADD ./cmd/cli-api/templates/ /ronak/templates
-RUN mkdir -p /ronak/temp/
-
-
 # Import entryPoint.sh and make it executable
 ADD ./docker/entryPoint.sh /ronak/entryPoint.sh
 RUN chmod +x /ronak/entryPoint.sh
 
 WORKDIR /ronak
+
+# Import executable binaries
+COPY --from=Builder /ronak/bin/cli-api ./bin/
+COPY --from=Builder /ronak/src/cmd/cli-api/templates/ /ronak/templates
+RUN mkdir -p /ronak/temp/
+
 
 ENTRYPOINT ["/bin/bash", "/ronak/entryPoint.sh"]
