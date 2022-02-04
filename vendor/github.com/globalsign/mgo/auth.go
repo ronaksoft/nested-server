@@ -29,6 +29,7 @@ package mgo
 import (
 	"crypto/md5"
 	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -277,6 +278,8 @@ func (socket *mongoSocket) loginSASL(cred Credential) error {
 	if cred.Mechanism == "SCRAM-SHA-1" {
 		// SCRAM is handled without external libraries.
 		sasl = saslNewScram(cred)
+	} else if cred.Mechanism == "SCRAM-SHA-256" {
+		sasl = saslNewScram(cred)
 	} else if len(cred.ServiceHost) > 0 {
 		sasl, err = saslNew(cred, cred.ServiceHost)
 	} else {
@@ -357,6 +360,13 @@ func saslNewScram(cred Credential) *saslScram {
 	credsum := md5.New()
 	credsum.Write([]byte(cred.Username + ":mongo:" + cred.Password))
 	client := scram.NewClient(sha1.New, cred.Username, hex.EncodeToString(credsum.Sum(nil)))
+	return &saslScram{cred: cred, client: client}
+}
+
+func saslNewScramSha256(cred Credential) *saslScram {
+	credsum := md5.New()
+	credsum.Write([]byte(cred.Username + ":mongo:" + cred.Password))
+	client := scram.NewClient(sha256.New, cred.Username, hex.EncodeToString(credsum.Sum(nil)))
 	return &saslScram{cred: cred, client: client}
 }
 

@@ -114,8 +114,9 @@ func NewManager(instanceID, mongoDSN, redisDSN string, logLevel int) (*Manager, 
 }
 func initMongoDB(mongoDSN, instanceID string) error {
 	// Initial MongoDB
-	tlsConfig := new(tls.Config)
-	tlsConfig.InsecureSkipVerify = true
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+	}
 	if dialInfo, err := mgo.ParseURL(mongoDSN); err != nil {
 		log.Warn("Got error on parsing MongoDB DSN", zap.Error(err))
 		return err
@@ -129,7 +130,7 @@ func initMongoDB(mongoDSN, instanceID string) error {
 			}
 		}
 		if mongoSession, err := mgo.DialWithInfo(dialInfo); err != nil {
-			log.Warn("Got error on dialing TLS to MongoDB", zap.Error(err))
+			log.Warn("Got error on dialing TLS to MongoDB", zap.Error(err), zap.String("DSN", mongoDSN))
 			if mongoSession, err = mgo.Dial(mongoDSN); err != nil {
 				log.Warn("Got error on dialing plain to MongoDB", zap.Error(err), zap.String("DSN", mongoDSN))
 				return err
