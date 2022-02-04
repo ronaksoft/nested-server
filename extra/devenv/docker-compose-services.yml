@@ -1,24 +1,6 @@
 version: '2'
 
 services:
-
-  # KeyDB Permanent/Counter/Temp Cache
-  cache:
-    restart: always
-    image: redis
-    container_name: nested-redis
-    privileged: true
-    command: redis-server /usr/local/etc/redis/redis.conf
-    networks:
-      - test-nested
-    volumes:
-      - ./redis.conf:/usr/local/etc/redis/redis.conf
-      - ./_hdd/cache/:/data:rw
-#    ports:
-#      - "6379:6379"
-
-
-
   # MONGO DB
   mongodb:
     restart: always

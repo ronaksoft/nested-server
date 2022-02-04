@@ -69,5 +69,8 @@ service opendkim status
 service postfix start
 service postfix status
 
+# Run Redis
+service redis-server start
+service redis-server status
 
 /ronak/bin/cli-api

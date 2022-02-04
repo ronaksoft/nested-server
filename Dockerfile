@@ -6,7 +6,7 @@ RUN apt update
 RUN apt -y install ffmpeg imagemagick poppler-utils postfix opendkim opendkim-tools
 RUN apt -y install telnet spamassassin spamc net-tools
 RUN apt -y install rsyslog
-RUN apt -y install postfix-policyd-spf-python
+RUN apt -y install postfix-policyd-spf-python redis-server
 
 
 # Create Mailer Account
@@ -80,5 +80,4 @@ RUN chmod +x /ronak/entryPoint.sh
 
 WORKDIR /ronak
 
-#ENTRYPOINT ["/ronak/bin/cli-api"]
 ENTRYPOINT ["/bin/bash", "/ronak/entryPoint.sh"]
