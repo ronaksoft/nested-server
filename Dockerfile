@@ -1,4 +1,4 @@
-FROM registry.ronaksoft.com/base/docker/ubuntu:20.04
+FROM ubuntu:20.04
 MAINTAINER Ehsan N. Moosa
 
 # Update and install packages required for Nested server

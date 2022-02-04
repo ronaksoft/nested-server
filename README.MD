@@ -40,7 +40,6 @@ docker pull registry.ronaksoft.com/nested/server:1.0
 | MAILER_DAEMON | |
 | FIREBASE_CRED_PATH | |
 
-
 ## TODOs
 [ ] Improve documents
 [ ] Handle spam management, delete all, mark as spam, ...

@@ -172,9 +172,9 @@ func NewAPP() *APP {
 	fileParty.Get("/download/{sessionID:string}/{universalID:string}", app.file.ForceDownload, app.file.ServePublicFiles, app.file.Download)
 	fileParty.Get("/download/{sessionID:string}/{universalID:string}/{downloadToken:string}", app.file.ForceDownload, app.file.ServePrivateFiles, app.file.Download)
 	fileParty.Post("/upload/{uploadType:string}/{sessionID:string}/{uploadToken:string}", app.file.UploadUser)
-	fileParty.Options("/upload/{uploadType:string}/{sessionID:string}/{uploadToken:string}", nil)
+	//fileParty.Options("/upload/{uploadType:string}/{sessionID:string}/{uploadToken:string}", nil)
 	fileParty.Post("/upload/app/{uploadType:string}/{appToken:string}/{uploadToken:string}", app.file.UploadApp)
-	fileParty.Options("/upload/app/{uploadType:string}/{appToken:string}/{uploadToken:string}", nil)
+	//fileParty.Options("/upload/app/{uploadType:string}/{appToken:string}/{uploadToken:string}", nil)
 
 	// System Handlers
 	systemParty := app.iris.Party("/system")
