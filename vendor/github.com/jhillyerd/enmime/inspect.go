@@ -3,10 +3,10 @@ package enmime
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
-	"net/textproto"
-	"strings"
+
+	"github.com/jhillyerd/enmime/internal/coding"
+	"github.com/jhillyerd/enmime/internal/textproto"
 
 	"github.com/pkg/errors"
 )
@@ -21,12 +21,21 @@ var defaultHeadersList = []string{
 	"Date",
 }
 
+// DecodeRFC2047 decodes the given string according to RFC 2047 and returns the
+// decoded UTF-8 equivalent. If the input is not using RFC 2047 encoding, or the
+// charset is not recognized, it will return the input unmodified.
+func DecodeRFC2047(s string) string {
+	return coding.RFC2047Decode(s)
+}
+
 // DecodeHeaders returns a limited selection of mime headers for use by user agents
 // Default header list:
-//   "Date", "Subject", "Sender", "From", "To", "CC" and "BCC"
+//
+//	"Date", "Subject", "Sender", "From", "To", "CC" and "BCC"
 //
 // Additional headers provided will be formatted canonically:
-//   h, err := enmime.DecodeHeaders(b, "content-type", "user-agent")
+//
+//	h, err := enmime.DecodeHeaders(b, "content-type", "user-agent")
 func DecodeHeaders(b []byte, addtlHeaders ...string) (textproto.MIMEHeader, error) {
 	b = ensureHeaderBoundary(b)
 	tr := textproto.NewReader(bufio.NewReader(bytes.NewReader(b)))
@@ -41,10 +50,10 @@ func DecodeHeaders(b []byte, addtlHeaders ...string) (textproto.MIMEHeader, erro
 	headerList = append(headerList, addtlHeaders...)
 	res := map[string][]string{}
 	for _, header := range headerList {
-		h := textproto.CanonicalMIMEHeaderKey(header)
+		h := textproto.CanonicalEmailMIMEHeaderKey(header)
 		res[h] = make([]string, 0, len(headers[h]))
 		for _, value := range headers[h] {
-			res[h] = append(res[h], rfc2047decode(value))
+			res[h] = append(res[h], DecodeRFC2047(value))
 		}
 	}
 
@@ -72,98 +81,4 @@ func ensureHeaderBoundary(b []byte) []byte {
 	}
 
 	return dest
-}
-
-// rfc2047decode returns a decoded string if the input uses RFC2047 encoding, otherwise it will return the input.
-// RFC2047 Example:
-//     `=?UTF-8?B?bmFtZT0iw7DCn8KUwoo=?=`
-func rfc2047decode(s string) string {
-	s = strings.Map(func(r rune) rune {
-		if r == '\n' || r == '\r' {
-			return ' '
-		}
-		return r
-	}, s)
-	var err error
-	decoded := false
-	for {
-		s, err = rfc2047recurse(s)
-		switch err {
-		case nil:
-			decoded = true
-			continue
-		default:
-			if decoded {
-				keyValuePair := strings.SplitAfter(s, "=")
-				if len(keyValuePair) < 2 {
-					return s
-				}
-				// Add quotes as needed
-				if !strings.HasPrefix(keyValuePair[1], "\"") {
-					keyValuePair[1] = fmt.Sprintf("\"%s", keyValuePair[1])
-				}
-				if !strings.HasSuffix(keyValuePair[1], "\"") {
-					keyValuePair[1] = fmt.Sprintf("%s\"", keyValuePair[1])
-				}
-				return strings.Join(keyValuePair, "")
-			}
-			return s
-		}
-	}
-}
-
-// rfc2047recurse is called for if the value contains content encoded in RFC2047 format and decodes it.
-// RFC2047 Example:
-//     `=?UTF-8?B?bmFtZT0iw7DCn8KUwoo=?=`
-func rfc2047recurse(s string) (string, error) {
-	us := strings.ToUpper(s)
-	if !strings.Contains(us, "?Q?") && !strings.Contains(us, "?B?") {
-		return s, io.EOF
-	}
-
-	var val string
-	if val = decodeHeader(s); val == s {
-		if val = decodeHeader(fixRFC2047String(val)); val == s {
-			return val, io.EOF
-		}
-	}
-
-	return val, nil
-}
-
-// fixRFC2047String removes the following characters from charset and encoding segments of an RFC2047 string:
-//  '\n', '\r' and ' '
-func fixRFC2047String(s string) string {
-	inString := false
-	isWithinTerminatingEqualSigns := false
-	questionMarkCount := 0
-	sb := &strings.Builder{}
-	for _, v := range s {
-		switch v {
-		case '=':
-			if questionMarkCount == 3 {
-				inString = false
-			} else {
-				isWithinTerminatingEqualSigns = true
-			}
-			sb.WriteRune(v)
-		case '?':
-			if isWithinTerminatingEqualSigns {
-				inString = true
-			} else {
-				questionMarkCount++
-			}
-			isWithinTerminatingEqualSigns = false
-			sb.WriteRune(v)
-		case '\n', '\r', ' ':
-			if !inString {
-				sb.WriteRune(v)
-			}
-			isWithinTerminatingEqualSigns = false
-		default:
-			isWithinTerminatingEqualSigns = false
-			sb.WriteRune(v)
-		}
-	}
-	return sb.String()
 }

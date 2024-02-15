@@ -83,9 +83,6 @@ func (l *Lexer) Next() (TokenType, []byte) {
 	prevLineTerminator := l.prevLineTerminator
 	l.prevLineTerminator = false
 
-	prevNumericLiteral := l.prevNumericLiteral
-	l.prevNumericLiteral = false
-
 	// study on 50x jQuery shows:
 	// spaces: 20k
 	// alpha: 16k
@@ -147,7 +144,10 @@ func (l *Lexer) Next() (TokenType, []byte) {
 		l.r.Move(1)
 		return CloseParenToken, l.r.Shift()
 	case '/':
-		if tt := l.consumeCommentToken(); tt != ErrorToken {
+		if tt := l.consumeCommentToken(); tt != ErrorToken || l.err != nil {
+			if l.err != nil {
+				return ErrorToken, nil
+			}
 			return tt, l.r.Shift()
 		} else if tt := l.consumeOperatorToken(); tt != ErrorToken {
 			return tt, l.r.Shift()
@@ -167,9 +167,7 @@ func (l *Lexer) Next() (TokenType, []byte) {
 		l.r.Move(1)
 		return ColonToken, l.r.Shift()
 	case '\'', '"':
-		if l.consumeStringToken() {
-			return StringToken, l.r.Shift()
-		}
+		return l.consumeStringToken(), l.r.Shift()
 	case ']':
 		l.r.Move(1)
 		return CloseBracketToken, l.r.Shift()
@@ -185,13 +183,17 @@ func (l *Lexer) Next() (TokenType, []byte) {
 	case '`':
 		l.templateLevels = append(l.templateLevels, l.level)
 		return l.consumeTemplateToken(), l.r.Shift()
+	case '#':
+		l.r.Move(1)
+		if l.consumeIdentifierToken() {
+			return PrivateIdentifierToken, l.r.Shift()
+		}
 	default:
-		if tt := l.consumeIdentifierToken(); tt != ErrorToken {
-			if prevNumericLiteral {
-				l.err = parse.NewErrorLexer(l.r, "unexpected identifier after number")
-				return ErrorToken, nil
+		if l.consumeIdentifierToken() {
+			if keyword, ok := Keywords[string(l.r.Lexeme())]; ok {
+				return keyword, l.r.Shift()
 			}
-			return tt, l.r.Shift()
+			return IdentifierToken, l.r.Shift()
 		}
 		if 0xC0 <= c {
 			if l.consumeWhitespace() {
@@ -370,7 +372,8 @@ func (l *Lexer) consumeCommentToken() TokenType {
 				l.r.Move(2)
 				break
 			} else if c == 0 && l.r.Err() != nil {
-				break
+				l.err = parse.NewErrorLexer(l.r, "unexpected EOF in comment")
+				return ErrorToken
 			} else if l.consumeLineTerminator() {
 				l.prevLineTerminator = true
 				tt = CommentLineTerminatorToken
@@ -416,12 +419,21 @@ var opEqTokens = map[byte]TokenType{
 }
 
 var opOpTokens = map[byte]TokenType{
+	'<': LtLtToken,
 	'+': IncrToken,
 	'-': DecrToken,
 	'*': ExpToken,
 	'&': AndToken,
 	'|': OrToken,
 	'?': NullishToken,
+}
+
+var opOpEqTokens = map[byte]TokenType{
+	'<': LtLtEqToken,
+	'*': ExpEqToken,
+	'&': AndEqToken,
+	'|': OrEqToken,
+	'?': NullishEqToken,
 }
 
 func (l *Lexer) consumeOperatorToken() TokenType {
@@ -437,11 +449,11 @@ func (l *Lexer) consumeOperatorToken() TokenType {
 			return EqEqEqToken
 		}
 		return opEqTokens[c]
-	} else if l.r.Peek(0) == c && (c == '+' || c == '-' || c == '*' || c == '&' || c == '|' || c == '?') {
+	} else if l.r.Peek(0) == c && (c == '+' || c == '-' || c == '*' || c == '&' || c == '|' || c == '?' || c == '<') {
 		l.r.Move(1)
-		if c == '*' && l.r.Peek(0) == '=' {
+		if l.r.Peek(0) == '=' && c != '+' && c != '-' {
 			l.r.Move(1)
-			return ExpEqToken
+			return opOpEqTokens[c]
 		}
 		return opOpTokens[c]
 	} else if c == '?' && l.r.Peek(0) == '.' && (l.r.Peek(1) < '0' || l.r.Peek(1) > '9') {
@@ -450,13 +462,6 @@ func (l *Lexer) consumeOperatorToken() TokenType {
 	} else if c == '=' && l.r.Peek(0) == '>' {
 		l.r.Move(1)
 		return ArrowToken
-	} else if c == '<' && l.r.Peek(0) == '<' {
-		l.r.Move(1)
-		if l.r.Peek(0) == '=' {
-			l.r.Move(1)
-			return LtLtEqToken
-		}
-		return LtLtToken
 	} else if c == '>' && l.r.Peek(0) == '>' {
 		l.r.Move(1)
 		if l.r.Peek(0) == '>' {
@@ -475,7 +480,7 @@ func (l *Lexer) consumeOperatorToken() TokenType {
 	return opTokens[c]
 }
 
-func (l *Lexer) consumeIdentifierToken() TokenType {
+func (l *Lexer) consumeIdentifierToken() bool {
 	c := l.r.Peek(0)
 	if identifierStartTable[c] {
 		l.r.Move(1)
@@ -483,10 +488,10 @@ func (l *Lexer) consumeIdentifierToken() TokenType {
 		if r, n := l.r.PeekRune(0); unicode.IsOneOf(identifierStart, r) {
 			l.r.Move(n)
 		} else {
-			return ErrorToken
+			return false
 		}
 	} else if !l.consumeUnicodeEscape() {
-		return ErrorToken
+		return false
 	}
 	for {
 		c := l.r.Peek(0)
@@ -498,14 +503,23 @@ func (l *Lexer) consumeIdentifierToken() TokenType {
 			} else {
 				break
 			}
-		} else {
+		} else if !l.consumeUnicodeEscape() {
 			break
 		}
 	}
-	if keyword, ok := Keywords[string(l.r.Lexeme())]; ok {
-		return keyword
+	return true
+}
+
+func (l *Lexer) consumeNumericSeparator(f func() bool) bool {
+	if l.r.Peek(0) != '_' {
+		return false
 	}
-	return IdentifierToken
+	l.r.Move(1)
+	if !f() {
+		l.r.Move(-1)
+		return false
+	}
+	return true
 }
 
 func (l *Lexer) consumeNumericToken() TokenType {
@@ -516,39 +530,48 @@ func (l *Lexer) consumeNumericToken() TokenType {
 		if l.r.Peek(0) == 'x' || l.r.Peek(0) == 'X' {
 			l.r.Move(1)
 			if l.consumeHexDigit() {
-				for l.consumeHexDigit() {
+				for l.consumeHexDigit() || l.consumeNumericSeparator(l.consumeHexDigit) {
+				}
+				if l.r.Peek(0) == 'n' {
+					l.r.Move(1)
 				}
 				return HexadecimalToken
 			}
-			l.err = parse.NewErrorLexer(l.r, "invalid hexadecimal number")
-			return ErrorToken
+			l.r.Move(-1)
+			return IntegerToken
 		} else if l.r.Peek(0) == 'b' || l.r.Peek(0) == 'B' {
 			l.r.Move(1)
 			if l.consumeBinaryDigit() {
-				for l.consumeBinaryDigit() {
+				for l.consumeBinaryDigit() || l.consumeNumericSeparator(l.consumeBinaryDigit) {
+				}
+				if l.r.Peek(0) == 'n' {
+					l.r.Move(1)
 				}
 				return BinaryToken
 			}
-			l.err = parse.NewErrorLexer(l.r, "invalid binary number")
-			return ErrorToken
+			l.r.Move(-1)
+			return IntegerToken
 		} else if l.r.Peek(0) == 'o' || l.r.Peek(0) == 'O' {
 			l.r.Move(1)
 			if l.consumeOctalDigit() {
-				for l.consumeOctalDigit() {
+				for l.consumeOctalDigit() || l.consumeNumericSeparator(l.consumeOctalDigit) {
+				}
+				if l.r.Peek(0) == 'n' {
+					l.r.Move(1)
 				}
 				return OctalToken
 			}
-			l.err = parse.NewErrorLexer(l.r, "invalid octal number")
-			return ErrorToken
+			l.r.Move(-1)
+			return IntegerToken
 		} else if l.r.Peek(0) == 'n' {
 			l.r.Move(1)
-			return BigIntToken
+			return IntegerToken
 		} else if '0' <= l.r.Peek(0) && l.r.Peek(0) <= '9' {
 			l.err = parse.NewErrorLexer(l.r, "legacy octal numbers are not supported")
 			return ErrorToken
 		}
 	} else if first != '.' {
-		for l.consumeDigit() {
+		for l.consumeDigit() || l.consumeNumericSeparator(l.consumeDigit) {
 		}
 	}
 	// we have parsed a 0 or an integer number
@@ -556,7 +579,7 @@ func (l *Lexer) consumeNumericToken() TokenType {
 	if c == '.' {
 		l.r.Move(1)
 		if l.consumeDigit() {
-			for l.consumeDigit() {
+			for l.consumeDigit() || l.consumeNumericSeparator(l.consumeDigit) {
 			}
 			c = l.r.Peek(0)
 		} else if first == '.' {
@@ -568,7 +591,9 @@ func (l *Lexer) consumeNumericToken() TokenType {
 		}
 	} else if c == 'n' {
 		l.r.Move(1)
-		return BigIntToken
+		return IntegerToken
+	} else if c != 'e' && c != 'E' {
+		return IntegerToken
 	}
 	if c == 'e' || c == 'E' {
 		l.r.Move(1)
@@ -580,15 +605,14 @@ func (l *Lexer) consumeNumericToken() TokenType {
 			l.err = parse.NewErrorLexer(l.r, "invalid number")
 			return ErrorToken
 		}
-		for l.consumeDigit() {
+		for l.consumeDigit() || l.consumeNumericSeparator(l.consumeDigit) {
 		}
 	}
 	return DecimalToken
 }
 
-func (l *Lexer) consumeStringToken() bool {
+func (l *Lexer) consumeStringToken() TokenType {
 	// assume to be on ' or "
-	mark := l.r.Pos()
 	delim := l.r.Peek(0)
 	l.r.Move(1)
 	for {
@@ -604,13 +628,13 @@ func (l *Lexer) consumeStringToken() bool {
 				}
 			}
 			continue
-		} else if l.consumeLineTerminator() || c == 0 && l.r.Err() != nil {
-			l.r.Rewind(mark)
-			return false
+		} else if c == '\n' || c == '\r' || c == 0 && l.r.Err() != nil {
+			l.err = parse.NewErrorLexer(l.r, "unterminated string literal")
+			return ErrorToken
 		}
 		l.r.Move(1)
 	}
-	return true
+	return StringToken
 }
 
 func (l *Lexer) consumeRegExpToken() bool {
@@ -681,10 +705,8 @@ func (l *Lexer) consumeTemplateToken() TokenType {
 			}
 			continue
 		} else if c == 0 && l.r.Err() != nil {
-			if continuation {
-				return TemplateEndToken
-			}
-			return TemplateToken
+			l.err = parse.NewErrorLexer(l.r, "unterminated template literal")
+			return ErrorToken
 		}
 		l.r.Move(1)
 	}

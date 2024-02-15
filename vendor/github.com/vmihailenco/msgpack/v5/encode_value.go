@@ -111,6 +111,8 @@ func _getEncoder(typ reflect.Type) encoderFunc {
 			switch typ.Elem() {
 			case stringType:
 				return encodeMapStringStringValue
+			case boolType:
+				return encodeMapStringBoolValue
 			case interfaceType:
 				return encodeMapStringInterfaceValue
 			}
@@ -139,7 +141,7 @@ func encodeCustomValuePtr(e *Encoder, v reflect.Value) error {
 }
 
 func encodeCustomValue(e *Encoder, v reflect.Value) error {
-	if nilable(v) && v.IsNil() {
+	if nilable(v.Kind()) && v.IsNil() {
 		return e.EncodeNil()
 	}
 
@@ -155,7 +157,7 @@ func marshalValuePtr(e *Encoder, v reflect.Value) error {
 }
 
 func marshalValue(e *Encoder, v reflect.Value) error {
-	if nilable(v) && v.IsNil() {
+	if nilable(v.Kind()) && v.IsNil() {
 		return e.EncodeNil()
 	}
 
@@ -190,12 +192,19 @@ func encodeUnsupportedValue(e *Encoder, v reflect.Value) error {
 	return fmt.Errorf("msgpack: Encode(unsupported %s)", v.Type())
 }
 
-func nilable(v reflect.Value) bool {
-	switch v.Kind() {
+func nilable(kind reflect.Kind) bool {
+	switch kind {
 	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
 		return true
 	}
 	return false
+}
+
+func nilableType(t reflect.Type) bool {
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+	return nilable(t.Kind())
 }
 
 //------------------------------------------------------------------------------
@@ -208,7 +217,7 @@ func marshalBinaryValueAddr(e *Encoder, v reflect.Value) error {
 }
 
 func marshalBinaryValue(e *Encoder, v reflect.Value) error {
-	if nilable(v) && v.IsNil() {
+	if nilable(v.Kind()) && v.IsNil() {
 		return e.EncodeNil()
 	}
 
@@ -231,7 +240,7 @@ func marshalTextValueAddr(e *Encoder, v reflect.Value) error {
 }
 
 func marshalTextValue(e *Encoder, v reflect.Value) error {
-	if nilable(v) && v.IsNil() {
+	if nilable(v.Kind()) && v.IsNil() {
 		return e.EncodeNil()
 	}
 

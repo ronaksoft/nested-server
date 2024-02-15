@@ -23,7 +23,15 @@ const (
 	ErrorCharsetDeclaration = "Character Set Declaration Mismatch"
 	// ErrorMissingRecipient name.
 	ErrorMissingRecipient = "no recipients (to, cc, bcc) set"
+	// ErrorMalformedChildPart name.
+	ErrorMalformedChildPart = "Malformed child part"
 )
+
+// MaxPartErrors limits number of part parsing errors, errors after the limit are ignored.
+// 0 means unlimited.
+//
+// Deprecated: This limit may be set via the `MaxStoredPartErrors` Parser option.
+var MaxPartErrors = 0
 
 // Error describes an error encountered while parsing.
 type Error struct {
@@ -48,22 +56,50 @@ func (e *Error) String() string {
 
 // addWarning builds a severe Error and appends to the Part error slice.
 func (p *Part) addError(name string, detailFmt string, args ...interface{}) {
-	p.Errors = append(
-		p.Errors,
-		&Error{
-			name,
-			fmt.Sprintf(detailFmt, args...),
-			true,
-		})
+	p.addProblem(&Error{
+		name,
+		fmt.Sprintf(detailFmt, args...),
+		true,
+	})
 }
 
 // addWarning builds a non-severe Error and appends to the Part error slice.
 func (p *Part) addWarning(name string, detailFmt string, args ...interface{}) {
-	p.Errors = append(
-		p.Errors,
-		&Error{
-			name,
-			fmt.Sprintf(detailFmt, args...),
-			false,
-		})
+	p.addProblem(&Error{
+		name,
+		fmt.Sprintf(detailFmt, args...),
+		false,
+	})
+}
+
+// addProblem adds general *Error to the Part error slice.
+func (p *Part) addProblem(err *Error) {
+	maxErrors := MaxPartErrors
+	if p.parser != nil && p.parser.maxStoredPartErrors != nil {
+		// Override global var.
+		maxErrors = *p.parser.maxStoredPartErrors
+	}
+
+	if (maxErrors == 0) || (len(p.Errors) < maxErrors) {
+		p.Errors = append(p.Errors, err)
+	}
+}
+
+// ErrorCollector is an interface for collecting errors and warnings during
+// parsing.
+type ErrorCollector interface {
+	AddError(name string, detailFmt string, args ...any)
+	AddWarning(name string, detailFmt string, args ...any)
+}
+
+type partErrorCollector struct {
+	part *Part
+}
+
+func (p *partErrorCollector) AddError(name string, detailFmt string, args ...any) {
+	p.part.addError(name, detailFmt, args...)
+}
+
+func (p *partErrorCollector) AddWarning(name string, detailFmt string, args ...any) {
+	p.part.addWarning(name, detailFmt, args...)
 }

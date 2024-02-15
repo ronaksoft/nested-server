@@ -1,10 +1,17 @@
 package macro
 
 import (
+	"errors"
+	"fmt"
+	"net"
+	"net/mail"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/kataras/iris/v12/macro/interpreter/ast"
+
+	"github.com/google/uuid"
 )
 
 var (
@@ -43,21 +50,41 @@ var (
 			return func(paramValue string) bool {
 				return max >= len(paramValue)
 			}
+		}).
+		// checks if param value's matches the given input
+		RegisterFunc("eq", func(s string) func(string) bool {
+			return func(paramValue string) bool {
+				return paramValue == s
+			}
+		}).
+		// checks if param value's matches at least one of the inputs
+		RegisterFunc("eqor", func(texts []string) func(string) bool {
+			if len(texts) == 1 {
+				text := texts[0]
+				return func(paramValue string) bool {
+					return paramValue == text
+				}
+			}
+
+			return func(paramValue string) bool {
+				for _, s := range texts {
+					if paramValue == s {
+						return true
+					}
+				}
+
+				return false
+			}
 		})
 
-	simpleNumberEval = MustRegexp("^-?[0-9]+$")
 	// Int or number type
 	// both positive and negative numbers, actual value can be min-max int64 or min-max int32 depends on the arch.
 	// If x64: -9223372036854775808 to 9223372036854775807.
 	// If x32: -2147483648 to 2147483647 and etc..
 	Int = NewMacro("int", "number", false, false, func(paramValue string) (interface{}, bool) {
-		if !simpleNumberEval(paramValue) {
-			return nil, false
-		}
-
 		v, err := strconv.Atoi(paramValue)
 		if err != nil {
-			return nil, false
+			return err, false
 		}
 
 		return v, true
@@ -87,13 +114,9 @@ var (
 	// Int8 type
 	// -128 to 127.
 	Int8 = NewMacro("int8", "", false, false, func(paramValue string) (interface{}, bool) {
-		if !simpleNumberEval(paramValue) {
-			return nil, false
-		}
-
 		v, err := strconv.ParseInt(paramValue, 10, 8)
 		if err != nil {
-			return nil, false
+			return err, false
 		}
 		return int8(v), true
 	}).
@@ -116,13 +139,9 @@ var (
 	// Int16 type
 	// -32768 to 32767.
 	Int16 = NewMacro("int16", "", false, false, func(paramValue string) (interface{}, bool) {
-		if !simpleNumberEval(paramValue) {
-			return nil, false
-		}
-
 		v, err := strconv.ParseInt(paramValue, 10, 16)
 		if err != nil {
-			return nil, false
+			return err, false
 		}
 		return int16(v), true
 	}).
@@ -145,13 +164,9 @@ var (
 	// Int32 type
 	// -2147483648 to 2147483647.
 	Int32 = NewMacro("int32", "", false, false, func(paramValue string) (interface{}, bool) {
-		if !simpleNumberEval(paramValue) {
-			return nil, false
-		}
-
 		v, err := strconv.ParseInt(paramValue, 10, 32)
 		if err != nil {
-			return nil, false
+			return err, false
 		}
 		return int32(v), true
 	}).
@@ -174,13 +189,9 @@ var (
 	// Int64 as int64 type
 	// -9223372036854775808 to 9223372036854775807.
 	Int64 = NewMacro("int64", "long", false, false, func(paramValue string) (interface{}, bool) {
-		if !simpleNumberEval(paramValue) {
-			return nil, false
-		}
-
 		v, err := strconv.ParseInt(paramValue, 10, 64)
 		if err != nil { // if err == strconv.ErrRange...
-			return nil, false
+			return err, false
 		}
 		return v, true
 	}).
@@ -213,7 +224,7 @@ var (
 	Uint = NewMacro("uint", "", false, false, func(paramValue string) (interface{}, bool) {
 		v, err := strconv.ParseUint(paramValue, 10, strconv.IntSize) // 32,64...
 		if err != nil {
-			return nil, false
+			return err, false
 		}
 		return uint(v), true
 	}).
@@ -239,17 +250,12 @@ var (
 			}
 		})
 
-	uint8Eval = MustRegexp("^([0-9]|[1-8][0-9]|9[0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$")
 	// Uint8 as uint8 type
 	// 0 to 255.
 	Uint8 = NewMacro("uint8", "", false, false, func(paramValue string) (interface{}, bool) {
-		if !uint8Eval(paramValue) {
-			return nil, false
-		}
-
 		v, err := strconv.ParseUint(paramValue, 10, 8)
 		if err != nil {
-			return nil, false
+			return err, false
 		}
 		return uint8(v), true
 	}).
@@ -280,7 +286,7 @@ var (
 	Uint16 = NewMacro("uint16", "", false, false, func(paramValue string) (interface{}, bool) {
 		v, err := strconv.ParseUint(paramValue, 10, 16)
 		if err != nil {
-			return nil, false
+			return err, false
 		}
 		return uint16(v), true
 	}).
@@ -305,7 +311,7 @@ var (
 	Uint32 = NewMacro("uint32", "", false, false, func(paramValue string) (interface{}, bool) {
 		v, err := strconv.ParseUint(paramValue, 10, 32)
 		if err != nil {
-			return nil, false
+			return err, false
 		}
 		return uint32(v), true
 	}).
@@ -330,7 +336,7 @@ var (
 	Uint64 = NewMacro("uint64", "", false, false, func(paramValue string) (interface{}, bool) {
 		v, err := strconv.ParseUint(paramValue, 10, 64)
 		if err != nil {
-			return nil, false
+			return err, false
 		}
 		return v, true
 	}).
@@ -364,22 +370,26 @@ var (
 		// in this case.
 		v, err := strconv.ParseBool(paramValue)
 		if err != nil {
-			return nil, false
+			return err, false
 		}
 		return v, true
 	})
 
-	alphabeticalEval = MustRegexp("^[a-zA-Z ]+$")
+	// ErrParamNotAlphabetical is fired when the parameter value is not an alphabetical text.
+	ErrParamNotAlphabetical = errors.New("parameter is not alphabetical")
+	alphabeticalEval        = MustRegexp("^[a-zA-Z ]+$")
 	// Alphabetical letter type
 	// letters only (upper or lowercase)
 	Alphabetical = NewMacro("alphabetical", "", false, false, func(paramValue string) (interface{}, bool) {
 		if !alphabeticalEval(paramValue) {
-			return nil, false
+			return fmt.Errorf("%s: %w", paramValue, ErrParamNotAlphabetical), false
 		}
 		return paramValue, true
 	})
 
-	fileEval = MustRegexp("^[a-zA-Z0-9_.-]*$")
+	// ErrParamNotFile is fired when the parameter value is not a form of a file.
+	ErrParamNotFile = errors.New("parameter is not a file")
+	fileEval        = MustRegexp("^[a-zA-Z0-9_.-]*$")
 	// File type
 	// letters (upper or lowercase)
 	// numbers (0-9)
@@ -389,7 +399,7 @@ var (
 	// no spaces! or other character
 	File = NewMacro("file", "", false, false, func(paramValue string) (interface{}, bool) {
 		if !fileEval(paramValue) {
-			return nil, false
+			return fmt.Errorf("%s: %w", paramValue, ErrParamNotFile), false
 		}
 		return paramValue, true
 	})
@@ -402,9 +412,108 @@ var (
 	// Should be living in the latest path segment of a route path.
 	Path = NewMacro("path", "", false, true, nil)
 
+	// UUID string type for validating a uuidv4 (and v1) path parameter.
+	// Read more at: https://tools.ietf.org/html/rfc4122.
+	UUID = NewMacro("uuid", "uuidv4", false, false, func(paramValue string) (interface{}, bool) {
+		_, err := uuid.Parse(paramValue) // this is x10+ times faster than regexp.
+		if err != nil {
+			return err, false
+		}
+
+		return paramValue, true
+	})
+
+	// Email string type for validating an e-mail path parameter. It returns the address as string, instead of an *mail.Address.
+	// Read more at go std mail.ParseAddress method. See the ':email' path parameter for a more strictly version of validation.
+	Mail = NewMacro("mail", "", false, false, func(paramValue string) (interface{}, bool) {
+		_, err := mail.ParseAddress(paramValue)
+		if err != nil {
+			return fmt.Errorf("%s: %w", paramValue, err), false
+		}
+
+		return paramValue, true
+	})
+
+	// Email string type for validating an e-mail path parameter. It returns the address as string, instead of an *mail.Address.
+	// It is a combined validation using mail.ParseAddress and net.LookupMX so only valid domains can be passed.
+	// It's a more strictly version of the ':mail' path parameter.
+	Email = NewMacro("email", "", false, false, func(paramValue string) (interface{}, bool) {
+		_, err := mail.ParseAddress(paramValue)
+		if err != nil {
+			return fmt.Errorf("%s: %w", paramValue, err), false
+		}
+
+		domainPart := strings.Split(paramValue, "@")[1]
+
+		mx, err := net.LookupMX(domainPart)
+		if err != nil {
+			return fmt.Errorf("%s: %w", paramValue, err), false
+		}
+
+		if len(mx) == 0 {
+			return fmt.Errorf("%s: mx is empty", paramValue), false
+		}
+
+		return paramValue, true
+	})
+
+	simpleDateLayout = "2006/01/02"
+
+	// Date type.
+	Date = NewMacro("date", "", false, true, func(paramValue string) (interface{}, bool) {
+		tt, err := time.Parse(simpleDateLayout, paramValue)
+		if err != nil {
+			return fmt.Errorf("%s: %w", paramValue, err), false
+		}
+
+		return tt, true
+	})
+
+	// ErrParamNotWeekday is fired when the parameter value is not a form of a time.Weekday.
+	ErrParamNotWeekday = errors.New("parameter is not a valid weekday")
+	longDayNames       = map[string]time.Weekday{
+		"Sunday":    time.Sunday,
+		"Monday":    time.Monday,
+		"Tuesday":   time.Tuesday,
+		"Wednesday": time.Wednesday,
+		"Thursday":  time.Thursday,
+		"Friday":    time.Friday,
+		"Saturday":  time.Saturday,
+		// lowercase.
+		"sunday":    time.Sunday,
+		"monday":    time.Monday,
+		"tuesday":   time.Tuesday,
+		"wednesday": time.Wednesday,
+		"thursday":  time.Thursday,
+		"friday":    time.Friday,
+		"saturday":  time.Saturday,
+	}
+
+	// Weekday type, returns a type of time.Weekday.
+	// Valid values:
+	// 0 to 7 (leading zeros don't matter)  or "Sunday" to "Monday" or "sunday" to "monday".
+	Weekday = NewMacro("weekday", "", false, false, func(paramValue string) (interface{}, bool) {
+		d, ok := longDayNames[paramValue]
+		if !ok {
+			// try parse from integer.
+			n, err := strconv.Atoi(paramValue)
+			if err != nil {
+				return fmt.Errorf("%s: %w", paramValue, err), false
+			}
+
+			if n < 0 || n > 6 {
+				return fmt.Errorf("%s: %w", paramValue, ErrParamNotWeekday), false
+			}
+
+			return time.Weekday(n), true
+		}
+
+		return d, true
+	})
+
 	// Defaults contains the defaults macro and parameters types for the router.
 	//
-	// Read https://github.com/kataras/iris/tree/master/_examples/routing/macros for more details.
+	// Read https://github.com/kataras/iris/tree/main/_examples/routing/macros for more details.
 	Defaults = &Macros{
 		String,
 		Int,
@@ -421,6 +530,11 @@ var (
 		Alphabetical,
 		File,
 		Path,
+		UUID,
+		Mail,
+		Email,
+		Date,
+		Weekday,
 	}
 )
 
@@ -435,7 +549,7 @@ type Macros []*Macro
 // The "evaluator" is the function that is converted to an Iris handler which is executed every time
 // before the main chain of a route's handlers that contains this macro of the specific parameter type.
 //
-// Read https://github.com/kataras/iris/tree/master/_examples/routing/macros for more details.
+// Read https://github.com/kataras/iris/tree/main/_examples/routing/macros for more details.
 func (ms *Macros) Register(indent, alias string, isMaster, isTrailing bool, evaluator ParamEvaluator) *Macro {
 	macro := NewMacro(indent, alias, isMaster, isTrailing, evaluator)
 	if ms.register(macro) {
@@ -548,4 +662,18 @@ func (ms *Macros) GetTrailings() (macros []*Macro) {
 	}
 
 	return
+}
+
+// SetErrorHandler registers a common type path parameter error handler.
+// The "fnHandler" MUST be a type of handler.ParamErrorHandler:
+// func(ctx iris.Context, paramIndex int, err error). It calls
+// the Macro.HandleError method for each of the "ms" entries.
+func (ms *Macros) SetErrorHandler(fnHandler interface{}) {
+	for _, m := range *ms {
+		if m == nil {
+			continue
+		}
+
+		m.HandleError(fnHandler)
+	}
 }

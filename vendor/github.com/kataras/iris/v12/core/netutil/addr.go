@@ -98,6 +98,29 @@ var IsLoopbackHost = func(requestHost string) bool {
 	return valid
 }
 
+/*
+func isLoopbackHostGoVersion(host string) bool {
+	ip := net.ParseIP(host)
+	if ip != nil {
+		return ip.IsLoopback()
+	}
+
+	// Host is not an ip, perform lookup.
+	addrs, err := net.LookupHost(host)
+	if err != nil {
+		return false
+	}
+
+	for _, addr := range addrs {
+		if !net.ParseIP(addr).IsLoopback() {
+			return false
+		}
+	}
+
+	return true
+}
+*/
+
 const (
 	// defaultServerHostname returns the default hostname which is "localhost"
 	defaultServerHostname = "localhost"
@@ -161,8 +184,15 @@ func ResolveVHost(addr string) string {
 	}
 
 	if idx := strings.IndexByte(addr, ':'); idx == 0 {
-		// only port, then return the 0.0.0.0
+		// only port, then return the 0.0.0.0:PORT
 		return /* "0.0.0.0" */ "localhost" + addr[idx:]
+	} else if idx > 0 { // if 0.0.0.0:80 let's just convert it to localhost.
+		if addr[0:idx] == "0.0.0.0" {
+			if addr[idx:] == ":80" {
+				return "localhost"
+			}
+			return "localhost" + addr[idx:]
+		}
 	}
 
 	// with ':' in order to not replace the ipv6 loopback addresses

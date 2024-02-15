@@ -1,6 +1,6 @@
 # View
 
-Iris supports 8 template engines out-of-the-box, developers can still use any external golang template engine,
+Iris supports 7 template engines out-of-the-box, developers can still use any external golang template engine,
 as `Context.ResponseWriter()` is an `io.Writer`.
 
 All template engines share a common API i.e.
@@ -12,16 +12,15 @@ Parse using embedded assets, Layouts and Party-specific layout, Template Funcs, 
 | 2 | Blocks     | [kataras/blocks](https://github.com/kataras/blocks) |
 | 3 | Django     | [flosch/pongo2](https://github.com/flosch/pongo2) |
 | 4 | Pug        | [Joker/jade](https://github.com/Joker/jade) |
-| 5 | Handlebars | [aymerick/raymond](https://github.com/aymerick/raymond) |
-| 6 | Amber      | [eknkc/amber](https://github.com/eknkc/amber) |
-| 7 | Jet        | [CloudyKit/jet](https://github.com/CloudyKit/jet) |
-| 8 | Ace        | [yosssi/ace](https://github.com/yosssi/ace) |
+| 5 | Handlebars | [mailgun/raymond](https://github.com/mailgun/raymond) |
+| 6 | Jet        | [CloudyKit/jet](https://github.com/CloudyKit/jet) |
+| 7 | Ace        | [yosssi/ace](https://github.com/yosssi/ace) |
 
-[List of Examples](https://github.com/kataras/iris/tree/master/_examples/view).
+[List of Examples](https://github.com/kataras/iris/tree/main/_examples/view).
 
-[Benchmarks](https://github.com/kataras/iris/tree/master/_benchmarks/view).
+[Benchmarks](https://github.com/kataras/iris/tree/main/_benchmarks/view).
 
-You can serve [quicktemplate](https://github.com/valyala/quicktemplate) files too, simply by using the `Context.ResponseWriter`, take a look at the [iris/_examples/view/quicktemplate](https://github.com/kataras/iris/tree/master/_examples/view/quicktemplate) example.
+You can serve [quicktemplate](https://github.com/valyala/quicktemplate) files too, simply by using the `Context.ResponseWriter`, take a look at the [iris/_examples/view/quicktemplate](https://github.com/kataras/iris/tree/main/_examples/view/quicktemplate) example.
 
 ## Overview
 
@@ -44,7 +43,10 @@ func main() {
         // Bind: {{.message}} with "Hello world!"
         ctx.ViewData("message", "Hello world!")
         // Render template file: ./views/hello.html
-        ctx.View("hello.html")
+        if err := ctx.View("hello.html"); err != nil {
+		    ctx.HTML("<h3>%s</h3>", err.Error())
+		    return
+	    }
     })
 
     // Method:    GET
@@ -85,10 +87,10 @@ func main() {
     // builtin template funcs are:
     //
     // - {{ urlpath "mynamedroute" "pathParameter_ifneeded" }}
-    // - {{ render "header.html" }}
-    // - {{ render_r "header.html" }} // partial relative path to current page
-    // - {{ yield }}
-    // - {{ current }}
+    // - {{ render "header.html" . }}
+    // - {{ render_r "header.html" . }} // partial relative path to current page
+    // - {{ yield . }}
+    // - {{ current . }}
 
     // register a custom template func.
     tmpl.AddFunc("greet", func(s string) string {
@@ -106,7 +108,10 @@ func main() {
 
 func hi(ctx iris.Context) {
     // render the template file "./templates/hi.html"
-    ctx.View("hi.html")
+    if err := ctx.View("hi.html"); err != nil {
+		ctx.HTML("<h3>%s</h3>", err.Error())
+		return
+	}
 }
 ```
 
@@ -122,9 +127,7 @@ View engine supports bundled(https://github.com/go-bindata/go-bindata) template 
 
 
 ```sh
-$ go get -u github.com/go-bindata/go-bindata/...
-# OR: go get -u github.com/go-bindata/go-bindata/v3/go-bindata
-# to save it to your go.mod file
+$ go install github.com/go-bindata/go-bindata/v3/go-bindata@latest
 $ go-bindata -fs -prefix "templates" ./templates/...
 $ go run .
 ```
@@ -152,11 +155,14 @@ type page struct {
 func hi(ctx iris.Context) {
     //                      {{.Page.Title}} and {{Page.Name}}
     ctx.ViewData("Page", page{Title: "Hi Page", Name: "iris"})
-    ctx.View("hi.html")
+    if err := ctx.View("hi.html"); err != nil {
+		ctx.HTML("<h3>%s</h3>", err.Error())
+		return
+	}
 }
 ```
 
-A real example can be found here: https://github.com/kataras/iris/tree/master/_examples/view/embedding-templates-into-app.
+Examples can be found here: https://github.com/kataras/iris/tree/main/_examples/view/embedding-templates-into-app and  https://github.com/kataras/iris/tree/main/_examples/view/embedding-templates-into-app-bindata.
 
 ## Reload
 

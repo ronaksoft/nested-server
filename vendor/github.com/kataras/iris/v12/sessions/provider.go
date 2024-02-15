@@ -4,6 +4,8 @@ import (
 	"errors"
 	"sync"
 	"time"
+
+	"github.com/kataras/iris/v12/context"
 )
 
 type (
@@ -13,6 +15,7 @@ type (
 		mu               sync.RWMutex
 		sessions         map[string]*Session
 		db               Database
+		dbRequestHandler DatabaseRequestHandler
 		destroyListeners []DestroyListener
 	}
 )
@@ -35,6 +38,9 @@ func (p *provider) RegisterDatabase(db Database) {
 
 	p.mu.Lock() // for any case
 	p.db = db
+	if dbreq, ok := db.(DatabaseRequestHandler); ok {
+		p.dbRequestHandler = dbreq
+	}
 	p.mu.Unlock()
 }
 
@@ -44,7 +50,6 @@ func (p *provider) newSession(man *Sessions, sid string, expires time.Duration) 
 		sid:      sid,
 		Man:      man,
 		provider: p,
-		flashes:  make(map[string]*flashMessage),
 	}
 
 	onExpire := func() {
@@ -84,12 +89,19 @@ func (p *provider) Init(man *Sessions, sid string, expires time.Duration) *Sessi
 	return newSession
 }
 
+func (p *provider) EndRequest(ctx *context.Context, session *Session) {
+	if p.dbRequestHandler != nil {
+		p.dbRequestHandler.EndRequest(ctx, session)
+	}
+}
+
 // ErrNotFound may be returned from `UpdateExpiration` of a non-existing or
 // invalid session entry from memory storage or databases.
 // Usage:
-// if err != nil && err.Is(err, sessions.ErrNotFound) {
-//     [handle error...]
-// }
+//
+//	if err != nil && err.Is(err, sessions.ErrNotFound) {
+//	    [handle error...]
+//	}
 var ErrNotFound = errors.New("session not found")
 
 // UpdateExpiration resets the expiration of a session.
@@ -175,3 +187,23 @@ func (p *provider) deleteSession(sess *Session) {
 	p.db.Release(sid)
 	p.fireDestroy(sid)
 }
+
+/*
+func (p *provider) regenerateID(ctx *context.Context, oldsid string) {
+	p.mu.RLock()
+	sess, ok := p.sessions[oldsid]
+	p.mu.RUnlock()
+
+	if ok {
+		newsid := sess.Man.config.SessionIDGenerator(ctx)
+		sess.mu.Lock()
+		sess.sid = newsid
+		sess.mu.Unlock()
+
+		p.mu.Lock()
+		p.sessions[newsid] = sess
+		delete(p.sessions, oldsid)
+		p.mu.Unlock()
+	}
+}
+*/

@@ -1,10 +1,10 @@
 # ✒️ golog
 
-_golog_ is a zero-dependency simple, fast and easy-to-use level-based logger written in [Go Programming Language](https://golang.org/dl).
+_golog_ is a zero-dependency simple, fast and easy-to-use level-based logger written in [Go Programming Language](https://go.dev).
 
 ![Output from win terminal](screen.png)
 
-[![build status](https://img.shields.io/travis/kataras/golog/master.svg?style=flat-square)](https://travis-ci.org/kataras/golog) [![report card](https://img.shields.io/badge/report%20card-a%2B-ff3333.svg?style=flat-square)](http://goreportcard.com/report/kataras/golog) [![godocs](https://img.shields.io/badge/online-documentation-0366d6.svg?style=flat-square)](https://godoc.org/github.com/kataras/golog) [![github issues](https://img.shields.io/github/issues/kataras/golog.svg?style=flat-square)](https://github.com/kataras/golog/issues?q=is%3Aopen+is%3Aissue)
+[![build status](https://img.shields.io/github/actions/workflow/status/kataras/golog/ci.yml)](https://github.com/kataras/golog/actions) [![report card](https://img.shields.io/badge/report%20card-a%2B-ff3333.svg?style=flat-square)](http://goreportcard.com/report/kataras/golog) [![godocs](https://img.shields.io/badge/online-documentation-0366d6.svg?style=flat-square)](https://pkg.go.dev/github.com/kataras/golog) [![github issues](https://img.shields.io/github/issues/kataras/golog.svg?style=flat-square)](https://github.com/kataras/golog/issues?q=is%3Aopen+is%3Aissue)
 
 <!-- ## 🥇 Features
 
@@ -23,7 +23,7 @@ Navigate through [_examples](_examples/) and [integrations](_examples/integratio
 
 ## 🚀 Installation
 
-The only requirement is the Go Programming Language[*](https://golang.org).
+The only requirement is the Go Programming Language[*](https://go.dev/dl).
 
 <details>
 <summary>Go modules</summary>
@@ -34,13 +34,13 @@ $ go get github.com/kataras/golog@latest
 
 Or edit your project's go.mod file and execute $ go build.
 
-```bash
+```mod
 module your_project_name
 
-go 1.15
+go 1.21
 
 require (
-    github.com/kataras/golog v0.1.4
+    github.com/kataras/golog v0.1.11
 )
 ```
 
@@ -49,7 +49,7 @@ require (
 </details>
 
 ```bash
-$ go get -u github.com/kataras/golog
+$ go get github.com/kataras/golog@latest
 ```
 
 ```go
@@ -79,6 +79,9 @@ func main() {
     golog.Debug("This is a debug message")
     golog.Fatal(`Fatal will exit no matter what,
     but it will also print the log message if logger's Level is >=FatalLevel`)
+
+    // Use any other supported logger through golog, e.g. the new "log/slog":
+    // golog.Install(slog.Default())
 }
 ```
 
@@ -154,11 +157,43 @@ db, err := badger.Open(opts)
 
 ### Level-based and standard Loggers
 
-You can put `golog` in front of your existing loggers using the [Install](https://pkg.go.dev/github.com/kataras/golog?tab=doc#Logger.Install) and [InstallStd](https://pkg.go.dev/github.com/kataras/golog?tab=doc#InstallStd) methods.
+You can put `golog` in front of your existing loggers using the [Install](https://pkg.go.dev/github.com/kataras/golog?tab=doc#Logger.Install) method.
 
-Any level-based Logger that implements the [ExternalLogger](https://pkg.go.dev/github.com/kataras/golog?tab=doc#ExternalLogger) can be adapted.
+Supporte loggers:
 
-E.g. [sirupsen/logrus](https://github.com/sirupsen/logrus):
+- log
+- slog
+- logrus
+
+Example for `log/slog` standard package:
+
+```go
+// Simulate an slog.Logger preparation.
+var myLogger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+    Level: slog.LevelDebug,
+}))
+
+func main() {
+    golog.SetLevel("error")
+    golog.Install(myLogger)
+
+    golog.Error("error message")
+}
+```
+
+Example for `log` standard package:
+
+```go
+// Simulate a log.Logger preparation.
+myLogger := log.New(os.Stdout, "", 0)
+
+golog.SetLevel("error")
+golog.Install(myLogger)
+
+golog.Error("error message")
+```
+
+Example for [sirupsen/logrus](https://github.com/sirupsen/logrus):
 
 ```go
 // Simulate a logrus logger preparation.
@@ -171,20 +206,6 @@ golog.Debug(`this debug message will not be shown,
     because the logrus level is InfoLevel`)
 golog.Error(`this error message will be visible as JSON,
     because of logrus.JSONFormatter`)
-```
-
-Any standard logger (without level capabilities) that implements the [StdLogger](https://pkg.go.dev/github.com/kataras/golog?tab=doc#StdLogger) can be adapted using the [InstallStd](https://pkg.go.dev/github.com/kataras/golog?tab=doc#InstallStd) method.
-
-E.g. `log` standard package:
-
-```go
-// Simulate a log.Logger preparation.
-myLogger := log.New(os.Stdout, "", 0)
-
-golog.SetLevel("error")
-golog.InstallStd(myLogger)
-
-golog.Error("error message")
 ```
 
 ## Output Format

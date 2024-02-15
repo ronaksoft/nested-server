@@ -34,17 +34,37 @@ func RegisterExt(extID int8, value MarshalerUnmarshaler) {
 	})
 }
 
+func UnregisterExt(extID int8) {
+	unregisterExtEncoder(extID)
+	unregisterExtDecoder(extID)
+}
+
 func RegisterExtEncoder(
 	extID int8,
 	value interface{},
 	encoder func(enc *Encoder, v reflect.Value) ([]byte, error),
 ) {
+	unregisterExtEncoder(extID)
+
 	typ := reflect.TypeOf(value)
 	extEncoder := makeExtEncoder(extID, typ, encoder)
-
+	typeEncMap.Store(extID, typ)
 	typeEncMap.Store(typ, extEncoder)
 	if typ.Kind() == reflect.Ptr {
 		typeEncMap.Store(typ.Elem(), makeExtEncoderAddr(extEncoder))
+	}
+}
+
+func unregisterExtEncoder(extID int8) {
+	t, ok := typeEncMap.Load(extID)
+	if !ok {
+		return
+	}
+	typeEncMap.Delete(extID)
+	typ := t.(reflect.Type)
+	typeEncMap.Delete(typ)
+	if typ.Kind() == reflect.Ptr {
+		typeEncMap.Delete(typ.Elem())
 	}
 }
 
@@ -76,7 +96,7 @@ func makeExtEncoder(
 func makeExtEncoderAddr(extEncoder encoderFunc) encoderFunc {
 	return func(e *Encoder, v reflect.Value) error {
 		if !v.CanAddr() {
-			return fmt.Errorf("msgpack: Decode(nonaddressable %T)", v.Interface())
+			return fmt.Errorf("msgpack: EncodeExt(nonaddressable %T)", v.Interface())
 		}
 		return extEncoder(e, v.Addr())
 	}
@@ -87,6 +107,8 @@ func RegisterExtDecoder(
 	value interface{},
 	decoder func(dec *Decoder, v reflect.Value, extLen int) error,
 ) {
+	unregisterExtDecoder(extID)
+
 	typ := reflect.TypeOf(value)
 	extDecoder := makeExtDecoder(extID, typ, decoder)
 	extTypes[extID] = &extInfo{
@@ -94,9 +116,24 @@ func RegisterExtDecoder(
 		Decoder: decoder,
 	}
 
+	typeDecMap.Store(extID, typ)
 	typeDecMap.Store(typ, extDecoder)
 	if typ.Kind() == reflect.Ptr {
 		typeDecMap.Store(typ.Elem(), makeExtDecoderAddr(extDecoder))
+	}
+}
+
+func unregisterExtDecoder(extID int8) {
+	t, ok := typeDecMap.Load(extID)
+	if !ok {
+		return
+	}
+	typeDecMap.Delete(extID)
+	delete(extTypes, extID)
+	typ := t.(reflect.Type)
+	typeDecMap.Delete(typ)
+	if typ.Kind() == reflect.Ptr {
+		typeDecMap.Delete(typ.Elem())
 	}
 }
 
@@ -105,18 +142,7 @@ func makeExtDecoder(
 	typ reflect.Type,
 	decoder func(d *Decoder, v reflect.Value, extLen int) error,
 ) decoderFunc {
-	nilable := typ.Kind() == reflect.Ptr
-
-	return func(d *Decoder, v reflect.Value) error {
-		if d.hasNilCode() {
-			v.Set(reflect.Zero(typ))
-			return d.DecodeNil()
-		}
-
-		if nilable && v.IsNil() {
-			v.Set(reflect.New(typ.Elem()))
-		}
-
+	return nilAwareDecoder(typ, func(d *Decoder, v reflect.Value) error {
 		extID, extLen, err := d.DecodeExtHeader()
 		if err != nil {
 			return err
@@ -125,13 +151,13 @@ func makeExtDecoder(
 			return fmt.Errorf("msgpack: got ext type=%d, wanted %d", extID, wantedExtID)
 		}
 		return decoder(d, v, extLen)
-	}
+	})
 }
 
 func makeExtDecoderAddr(extDecoder decoderFunc) decoderFunc {
 	return func(d *Decoder, v reflect.Value) error {
 		if !v.CanAddr() {
-			return fmt.Errorf("msgpack: Decode(nonaddressable %T)", v.Interface())
+			return fmt.Errorf("msgpack: DecodeExt(nonaddressable %T)", v.Interface())
 		}
 		return extDecoder(d, v.Addr())
 	}
@@ -228,9 +254,9 @@ func (d *Decoder) decodeInterfaceExt(c byte) (interface{}, error) {
 		return nil, fmt.Errorf("msgpack: unknown ext id=%d", extID)
 	}
 
-	v := reflect.New(info.Type).Elem()
-	if nilable(v) && v.IsNil() {
-		v.Set(reflect.New(info.Type.Elem()))
+	v := d.newValue(info.Type).Elem()
+	if nilable(v.Kind()) && v.IsNil() {
+		v.Set(d.newValue(info.Type.Elem()))
 	}
 
 	if err := info.Decoder(d, v, extLen); err != nil {

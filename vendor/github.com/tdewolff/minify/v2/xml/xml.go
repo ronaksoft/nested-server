@@ -17,9 +17,6 @@ var (
 
 ////////////////////////////////////////////////////////////////
 
-// DefaultMinifier is the default minifier.
-var DefaultMinifier = &Minifier{}
-
 // Minifier is an XML minifier.
 type Minifier struct {
 	KeepWhitespace bool
@@ -27,7 +24,7 @@ type Minifier struct {
 
 // Minify minifies XML data, it reads from r and writes to w.
 func Minify(m *minify.M, w io.Writer, r io.Reader, params map[string]string) error {
-	return DefaultMinifier.Minify(m, w, r, params)
+	return (&Minifier{}).Minify(m, w, r, params)
 }
 
 // Minify minifies XML data, it reads from r and writes to w.
@@ -69,7 +66,7 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 				omitSpace = true
 			}
 		case xml.TextToken:
-			t.Data = parse.ReplaceMultipleWhitespaceAndEntities(t.Data, EntitiesMap, nil)
+			t.Data = parse.ReplaceMultipleWhitespaceAndEntities(t.Data, EntitiesMap, TextRevEntitiesMap)
 
 			// whitespace removal; trim left
 			if omitSpace && parse.IsWhitespace(t.Data[0]) {
@@ -127,7 +124,7 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 			w.Write(t.Text)
 			w.Write(isBytes)
 
-			if len(t.AttrVal) < 2 {
+			if len(t.AttrVal) < 2 || t.AttrVal[0] != '"' || t.AttrVal[len(t.AttrVal)-1] != '"' {
 				w.Write(t.AttrVal)
 			} else {
 				val := t.AttrVal[1 : len(t.AttrVal)-1]

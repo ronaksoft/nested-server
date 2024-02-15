@@ -14,14 +14,16 @@ import (
 )
 
 const (
-	looseInterfaceDecodingFlag uint32 = 1 << iota
-	disallowUnknownFieldsFlag
+	bytesAllocLimit = 1 << 20 // 1mb
+	sliceAllocLimit = 1e6     // 1m elements
+	maxMapSize      = 1e6     // 1m elements
 )
 
 const (
-	bytesAllocLimit = 1e6 // 1mb
-	sliceAllocLimit = 1e4
-	maxMapSize      = 1e6
+	looseInterfaceDecodingFlag uint32 = 1 << iota
+	disallowUnknownFieldsFlag
+	usePreallocateValues
+	disableAllocLimitFlag
 )
 
 type bufReader interface {
@@ -53,7 +55,7 @@ func PutDecoder(dec *Decoder) {
 // in the value pointed to by v.
 func Unmarshal(data []byte, v interface{}) error {
 	dec := GetDecoder()
-
+	dec.UsePreallocateValues(true)
 	dec.Reset(bytes.NewReader(data))
 	err := dec.Decode(v)
 
@@ -64,16 +66,14 @@ func Unmarshal(data []byte, v interface{}) error {
 
 // A Decoder reads and decodes MessagePack values from an input stream.
 type Decoder struct {
-	r   io.Reader
-	s   io.ByteScanner
-	buf []byte
-
-	rec []byte // accumulates read data if not nil
-
+	r          io.Reader
+	s          io.ByteScanner
+	mapDecoder func(*Decoder) (interface{}, error)
+	structTag  string
+	buf        []byte
+	rec        []byte
 	dict       []string
 	flags      uint32
-	structTag  string
-	mapDecoder func(*Decoder) (interface{}, error)
 }
 
 // NewDecoder returns a new decoder that reads from r.
@@ -95,22 +95,30 @@ func (d *Decoder) Reset(r io.Reader) {
 
 // ResetDict is like Reset, but also resets the dict.
 func (d *Decoder) ResetDict(r io.Reader, dict []string) {
-	d.resetReader(r)
+	d.ResetReader(r)
 	d.flags = 0
 	d.structTag = ""
-	d.mapDecoder = nil
-
-	if len(dict) > 0 {
-		d.dict = dict
-	} else {
-		d.dict = d.dict[:0]
-	}
+	d.dict = dict
 }
 
-func (d *Decoder) resetReader(r io.Reader) {
+func (d *Decoder) WithDict(dict []string, fn func(*Decoder) error) error {
+	oldDict := d.dict
+	d.dict = dict
+	err := fn(d)
+	d.dict = oldDict
+	return err
+}
+
+func (d *Decoder) ResetReader(r io.Reader) {
+	d.mapDecoder = nil
+	d.dict = nil
+
 	if br, ok := r.(bufReader); ok {
 		d.r = br
 		d.s = br
+	} else if r == nil {
+		d.r = nil
+		d.s = nil
 	} else {
 		br := bufio.NewReader(r)
 		d.r = br
@@ -155,6 +163,24 @@ func (d *Decoder) UseInternedStrings(on bool) {
 		d.flags |= useInternedStringsFlag
 	} else {
 		d.flags &= ^useInternedStringsFlag
+	}
+}
+
+// UsePreallocateValues enables preallocating values in chunks
+func (d *Decoder) UsePreallocateValues(on bool) {
+	if on {
+		d.flags |= usePreallocateValues
+	} else {
+		d.flags &= ^usePreallocateValues
+	}
+}
+
+// DisableAllocLimit enables fully allocating slices/maps when the size is known
+func (d *Decoder) DisableAllocLimit(on bool) {
+	if on {
+		d.flags |= disableAllocLimitFlag
+	} else {
+		d.flags &= ^disableAllocLimitFlag
 	}
 }
 
@@ -338,6 +364,9 @@ func (d *Decoder) DecodeBool() (bool, error) {
 }
 
 func (d *Decoder) bool(c byte) (bool, error) {
+	if c == msgpcode.Nil {
+		return false, nil
+	}
 	if c == msgpcode.False {
 		return false, nil
 	}
@@ -441,6 +470,7 @@ func (d *Decoder) DecodeInterface() (interface{}, error) {
 //   - int8, int16, and int32 are converted to int64,
 //   - uint8, uint16, and uint32 are converted to uint64,
 //   - float32 is converted to float64.
+//   - []byte is converted to string.
 func (d *Decoder) DecodeInterfaceLoose() (interface{}, error) {
 	c, err := d.readCode()
 	if err != nil {
@@ -475,9 +505,8 @@ func (d *Decoder) DecodeInterfaceLoose() (interface{}, error) {
 		return d.uint(c)
 	case msgpcode.Int8, msgpcode.Int16, msgpcode.Int32, msgpcode.Int64:
 		return d.int(c)
-	case msgpcode.Bin8, msgpcode.Bin16, msgpcode.Bin32:
-		return d.bytes(c, nil)
-	case msgpcode.Str8, msgpcode.Str16, msgpcode.Str32:
+	case msgpcode.Str8, msgpcode.Str16, msgpcode.Str32,
+		msgpcode.Bin8, msgpcode.Bin16, msgpcode.Bin32:
 		return d.string(c)
 	case msgpcode.Array16, msgpcode.Array32:
 		return d.decodeSlice(c)
@@ -597,7 +626,11 @@ func (d *Decoder) readFull(b []byte) error {
 
 func (d *Decoder) readN(n int) ([]byte, error) {
 	var err error
-	d.buf, err = readN(d.r, d.buf, n)
+	if d.flags&disableAllocLimitFlag != 0 {
+		d.buf, err = readN(d.r, d.buf, n)
+	} else {
+		d.buf, err = readNGrow(d.r, d.buf, n)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -609,6 +642,24 @@ func (d *Decoder) readN(n int) ([]byte, error) {
 }
 
 func readN(r io.Reader, b []byte, n int) ([]byte, error) {
+	if b == nil {
+		if n == 0 {
+			return make([]byte, 0), nil
+		}
+		b = make([]byte, 0, n)
+	}
+
+	if n > cap(b) {
+		b = append(b, make([]byte, n-len(b))...)
+	} else if n <= cap(b) {
+		b = b[:n]
+	}
+
+	_, err := io.ReadFull(r, b)
+	return b, err
+}
+
+func readNGrow(r io.Reader, b []byte, n int) ([]byte, error) {
 	if b == nil {
 		if n == 0 {
 			return make([]byte, 0), nil

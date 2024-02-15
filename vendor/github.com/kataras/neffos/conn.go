@@ -418,7 +418,7 @@ func (c *Conn) handleMessage(msg Message) error {
 		return ErrInvalidPayload
 	}
 
-	if msg.IsNative && c.allowNativeMessages {
+	if msg.IsNative && c.shouldHandleOnlyNativeMessages {
 		ns := c.Namespace("")
 		return ns.events.fireEvent(ns, msg)
 	}
@@ -950,6 +950,7 @@ func (c *Conn) ask(ctx context.Context, msg Message, mustWaitOnlyTheNextMessage 
 
 	if ctx == nil {
 		ctx = context.TODO()
+	} else if ctx == context.TODO() {
 	} else {
 		if deadline, has := ctx.Deadline(); has {
 			if deadline.Before(time.Now().Add(-1 * time.Second)) {

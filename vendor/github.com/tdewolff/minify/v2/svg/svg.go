@@ -18,10 +18,7 @@ var (
 	isBytes       = []byte("=")
 	spaceBytes    = []byte(" ")
 	cdataEndBytes = []byte("]]>")
-	pathBytes     = []byte("<path")
-	dBytes        = []byte("d")
 	zeroBytes     = []byte("0")
-	n100pBytes    = []byte("100%")
 	cssMimeBytes  = []byte("text/css")
 	noneBytes     = []byte("none")
 	urlBytes      = []byte("url(")
@@ -31,6 +28,7 @@ var (
 
 // Minifier is an SVG minifier.
 type Minifier struct {
+	KeepComments bool
 	Precision    int // number of significant digits
 	newPrecision int // precision for new numbers
 }
@@ -60,7 +58,7 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 	defer z.Restore()
 
 	l := xml.NewLexer(z)
-	tb := NewTokenBuffer(l)
+	tb := NewTokenBuffer(z, l)
 	for {
 		t := *tb.Shift()
 		switch t.TokenType {
@@ -72,6 +70,10 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 				return nil
 			}
 			return l.Err()
+		case xml.CommentToken:
+			if o.KeepComments {
+				w.Write(t.Data)
+			}
 		case xml.DOCTYPEToken:
 			if len(t.Text) > 0 && t.Text[len(t.Text)-1] == ']' {
 				w.Write(t.Data)
@@ -83,7 +85,7 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 			if tag == Style && len(t.Data) > 0 {
 				if err := m.MinifyMimetype(defaultStyleType, w, buffer.NewReader(t.Data), defaultStyleParams); err != nil {
 					if err != minify.ErrNotExist {
-						return err
+						return minify.UpdateErrorPosition(err, z, t.Offset)
 					}
 					w.Write(t.Data)
 				}
@@ -98,7 +100,7 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 					t.Text = t.Data[9:]
 					t.Data = append(t.Data, cdataEndBytes...)
 				} else if err != minify.ErrNotExist {
-					return err
+					return minify.UpdateErrorPosition(err, z, t.Offset)
 				}
 			}
 			var useText bool
@@ -119,8 +121,6 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 			tag = t.Hash
 			if tag == Metadata {
 				t.Data = nil
-			} else if tag == Rect {
-				o.shortenRect(tb, &t)
 			}
 
 			if t.Data == nil {
@@ -129,7 +129,7 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 				w.Write(t.Data)
 			}
 		case xml.AttributeToken:
-			if len(t.AttrVal) == 0 || t.Text == nil { // data is nil when attribute has been removed
+			if t.Text == nil { // data is nil when attribute has been removed
 				continue
 			}
 
@@ -142,8 +142,6 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 				tag == Svg && (attr == Version && bytes.Equal(val, []byte("1.1")) ||
 					attr == X && bytes.Equal(val, zeroBytes) ||
 					attr == Y && bytes.Equal(val, zeroBytes) ||
-					attr == Width && bytes.Equal(val, n100pBytes) ||
-					attr == Height && bytes.Equal(val, n100pBytes) ||
 					attr == PreserveAspectRatio && bytes.Equal(val, []byte("xMidYMid meet")) ||
 					attr == BaseProfile && bytes.Equal(val, noneBytes) ||
 					attr == ContentScriptType && bytes.Equal(val, []byte("application/ecmascript")) ||
@@ -164,7 +162,7 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 				if err := m.MinifyMimetype(defaultStyleType, minifyBuffer, buffer.NewReader(val), defaultInlineStyleParams); err == nil {
 					val = minifyBuffer.Bytes()
 				} else if err != minify.ErrNotExist {
-					return err
+					return minify.UpdateErrorPosition(err, z, t.Offset)
 				}
 			} else if attr == D {
 				val = p.ShortenPathData(val)
@@ -259,22 +257,6 @@ func (o *Minifier) shortenDimension(b []byte) ([]byte, int) {
 		return b, n + m
 	}
 	return b, 0
-}
-
-func (o *Minifier) shortenRect(tb *TokenBuffer, t *Token) {
-	w, h := zeroBytes, zeroBytes
-	attrs := tb.Attributes(Width, Height)
-	if attrs[0] != nil {
-		n, _ := parse.Dimension(attrs[0].AttrVal)
-		w = minify.Number(attrs[0].AttrVal[:n], o.Precision)
-	}
-	if attrs[1] != nil {
-		n, _ := parse.Dimension(attrs[1].AttrVal)
-		h = minify.Number(attrs[1].AttrVal[:n], o.Precision)
-	}
-	if len(w) == 0 || w[0] == '0' || len(h) == 0 || h[0] == '0' {
-		t.Data = nil
-	}
 }
 
 ////////////////////////////////////////////////////////////////

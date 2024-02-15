@@ -1,6 +1,10 @@
 package context
 
-import "github.com/kataras/iris/v12/core/netutil"
+import (
+	"time"
+
+	"github.com/kataras/iris/v12/core/netutil"
+)
 
 // ConfigurationReadOnly can be implemented
 // by Configuration, it's being used inside the Context.
@@ -14,6 +18,14 @@ type ConfigurationReadOnly interface {
 	GetLogLevel() string
 	// GetSocketSharding returns the SocketSharding field.
 	GetSocketSharding() bool
+	// GetKeepAlive returns the KeepAlive field.
+	GetKeepAlive() time.Duration
+	// GetTimeout returns the Timeout field.
+	GetTimeout() time.Duration
+	// GetTimeoutMessage returns the TimeoutMessage field.
+	GetTimeoutMessage() string
+	// GetNonBlocking returns the NonBlocking field.
+	GetNonBlocking() bool
 	// GetDisablePathCorrection returns the DisablePathCorrection field
 	GetDisablePathCorrection() bool
 	// GetDisablePathCorrectionRedirection returns the DisablePathCorrectionRedirection field.
@@ -24,15 +36,23 @@ type ConfigurationReadOnly interface {
 	GetEnablePathEscape() bool
 	// GetForceLowercaseRouting returns the ForceLowercaseRouting field.
 	GetForceLowercaseRouting() bool
+	// GetEnableOptimizations returns the EnableDynamicHandler field.
+	GetEnableDynamicHandler() bool
 	// GetFireMethodNotAllowed returns the FireMethodNotAllowed field.
 	GetFireMethodNotAllowed() bool
 	// GetDisableAutoFireStatusCode returns the DisableAutoFireStatusCode field.
 	GetDisableAutoFireStatusCode() bool
-	// ResetOnFireErrorCode retruns the ResetOnFireErrorCode field.
+	// GetResetOnFireErrorCode returns the ResetOnFireErrorCode field.
 	GetResetOnFireErrorCode() bool
-
+	// GetURLParamSeparator returns URLParamSeparator field.
+	GetURLParamSeparator() *string
 	// GetEnableOptimizations returns the EnableOptimizations field.
 	GetEnableOptimizations() bool
+	// GetEnableProtoJSON returns the EnableProtoJSON field.
+	GetEnableProtoJSON() bool
+	// GetEnableEasyJSON returns the EnableEasyJSON field.
+	GetEnableEasyJSON() bool
+
 	// GetDisableBodyConsumptionOnUnmarshal returns the DisableBodyConsumptionOnUnmarshal field.
 	GetDisableBodyConsumptionOnUnmarshal() bool
 	// GetFireEmptyFormError returns the FireEmptyFormError field.
@@ -45,7 +65,7 @@ type ConfigurationReadOnly interface {
 	// GetPostMaxMemory returns the PostMaxMemory field.
 	GetPostMaxMemory() int64
 
-	// GetTranslateLanguageContextKey returns the LocaleContextKey field.
+	// GetLocaleContextKey returns the LocaleContextKey field.
 	GetLocaleContextKey() string
 	// GetLanguageContextKey returns the LanguageContextKey field.
 	GetLanguageContextKey() string
@@ -62,6 +82,8 @@ type ConfigurationReadOnly interface {
 	GetViewLayoutContextKey() string
 	// GetViewDataContextKey returns the ViewDataContextKey field.
 	GetViewDataContextKey() string
+	// GetFallbackViewContextKey returns the FallbackViewContextKey field.
+	GetFallbackViewContextKey() string
 
 	// GetRemoteAddrHeaders returns RemoteAddrHeaders field.
 	GetRemoteAddrHeaders() []string

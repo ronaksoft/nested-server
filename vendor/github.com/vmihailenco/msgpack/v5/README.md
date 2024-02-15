@@ -5,10 +5,15 @@
 [![Documentation](https://img.shields.io/badge/msgpack-documentation-informational)](https://msgpack.uptrace.dev/)
 [![Chat](https://discordapp.com/api/guilds/752070105847955518/widget.png)](https://discord.gg/rWtp5Aj)
 
-> :heart: [**Uptrace.dev** - distributed traces, logs, and errors in one place](https://uptrace.dev)
+> msgpack is brought to you by :star: [**uptrace/uptrace**](https://github.com/uptrace/uptrace).
+> Uptrace is an [open source APM](https://uptrace.dev/get/open-source-apm.html) and blazingly fast
+> [distributed tracing tool](https://get.uptrace.dev/compare/distributed-tracing-tools.html) powered
+> by OpenTelemetry and ClickHouse. Give it a star as well!
 
-- Join [Discord](https://discord.gg/rWtp5Aj) to ask questions.
+## Resources
+
 - [Documentation](https://msgpack.uptrace.dev)
+- [Chat](https://discord.gg/rWtp5Aj)
 - [Reference](https://pkg.go.dev/github.com/vmihailenco/msgpack/v5)
 - [Examples](https://pkg.go.dev/github.com/vmihailenco/msgpack/v5#pkg-examples)
 
@@ -16,23 +21,28 @@
 
 - Primitives, arrays, maps, structs, time.Time and interface{}.
 - Appengine \*datastore.Key and datastore.Cursor.
-- [CustomEncoder](https://pkg.go.dev/github.com/vmihailenco/msgpack/v5#example-CustomEncoder)/CustomDecoder
-  interfaces for custom encoding.
+- [CustomEncoder]/[CustomDecoder] interfaces for custom encoding.
 - [Extensions](https://pkg.go.dev/github.com/vmihailenco/msgpack/v5#example-RegisterExt) to encode
   type information.
 - Renaming fields via `msgpack:"my_field_name"` and alias via `msgpack:"alias:another_name"`.
 - Omitting individual empty fields via `msgpack:",omitempty"` tag or all
-  [empty fields in a struct](https://pkg.go.dev/github.com/vmihailenco/msgpack/v5#example-Marshal--OmitEmpty).
-- [Map keys sorting](https://pkg.go.dev/github.com/vmihailenco/msgpack/v5#Encoder.SortMapKeys).
+  [empty fields in a struct](https://pkg.go.dev/github.com/vmihailenco/msgpack/v5#example-Marshal-OmitEmpty).
+- [Map keys sorting](https://pkg.go.dev/github.com/vmihailenco/msgpack/v5#Encoder.SetSortMapKeys).
 - Encoding/decoding all
-  [structs as arrays](https://pkg.go.dev/github.com/vmihailenco/msgpack/v5#Encoder.UseArrayForStructs)
+  [structs as arrays](https://pkg.go.dev/github.com/vmihailenco/msgpack/v5#Encoder.UseArrayEncodedStructs)
   or
-  [individual structs](https://pkg.go.dev/github.com/vmihailenco/msgpack/v5#example-Marshal--AsArray).
-- [Encoder.UseJSONTag](https://pkg.go.dev/github.com/vmihailenco/msgpack/v5#Encoder.UseJSONTag) with
-  [Decoder.UseJSONTag](https://pkg.go.dev/github.com/vmihailenco/msgpack/v5#Decoder.UseJSONTag) can
-  turn msgpack into drop-in replacement for JSON.
+  [individual structs](https://pkg.go.dev/github.com/vmihailenco/msgpack/v5#example-Marshal-AsArray).
+- [Encoder.SetCustomStructTag] with [Decoder.SetCustomStructTag] can turn msgpack into drop-in
+  replacement for any tag.
 - Simple but very fast and efficient
-  [queries](https://pkg.go.dev/github.com/vmihailenco/msgpack/v5#example-Decoder-Query).
+  [queries](https://pkg.go.dev/github.com/vmihailenco/msgpack/v5#example-Decoder.Query).
+
+[customencoder]: https://pkg.go.dev/github.com/vmihailenco/msgpack/v5#CustomEncoder
+[customdecoder]: https://pkg.go.dev/github.com/vmihailenco/msgpack/v5#CustomDecoder
+[encoder.setcustomstructtag]:
+  https://pkg.go.dev/github.com/vmihailenco/msgpack/v5#Encoder.SetCustomStructTag
+[decoder.setcustomstructtag]:
+  https://pkg.go.dev/github.com/vmihailenco/msgpack/v5#Decoder.SetCustomStructTag
 
 ## Installation
 
@@ -76,6 +86,15 @@ func ExampleMarshal() {
 
 ## See also
 
-- [Fast and flexible HTTP router](https://github.com/vmihailenco/treemux)
-- [Golang PostgreSQL ORM](https://github.com/go-pg/pg)
-- [Golang message task queue](https://github.com/vmihailenco/taskq)
+- [Golang ORM](https://github.com/uptrace/bun) for PostgreSQL, MySQL, MSSQL, and SQLite
+- [Golang PostgreSQL](https://bun.uptrace.dev/postgres/)
+- [Golang HTTP router](https://github.com/uptrace/bunrouter)
+- [Golang ClickHouse ORM](https://github.com/uptrace/go-clickhouse)
+
+## Contributors
+
+Thanks to all the people who already contributed!
+
+<a href="https://github.com/vmihailenco/msgpack/graphs/contributors">
+  <img src="https://contributors-img.web.app/image?repo=vmihailenco/msgpack" />
+</a>

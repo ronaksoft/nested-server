@@ -7,14 +7,16 @@ import (
 	"html"
 	"html/template"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
 	"path/filepath"
+	"reflect"
 	"regexp"
+	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -103,6 +105,9 @@ type DirOptions struct {
 	// See `DirListRich` package-level function too.
 	DirList DirListFunc
 
+	// Show hidden files or directories or not when `ShowList` is true.
+	ShowHidden bool
+
 	// Files downloaded and saved locally.
 	Attachments Attachments
 
@@ -156,7 +161,7 @@ var DefaultDirOptions = DirOptions{
 // The second parameter is the settings that the caller can use to customize the behavior.
 //
 // See `Party#HandleDir` too.
-// Examples can be found at: https://github.com/kataras/iris/tree/master/_examples/file-server
+// Examples can be found at: https://github.com/kataras/iris/tree/main/_examples/file-server
 func FileServer(fs http.FileSystem, options DirOptions) context.Handler {
 	if fs == nil {
 		panic("FileServer: fs is nil. The fs parameter should point to a file system of physical system directory or to an embedded one")
@@ -316,7 +321,7 @@ func FileServer(fs http.FileSystem, options DirOptions) context.Handler {
 				destName = nameFunc(destName)
 			}
 
-			ctx.ResponseWriter().Header().Set(context.ContentDispositionHeaderKey, "attachment;filename="+destName)
+			ctx.ResponseWriter().Header().Set(context.ContentDispositionHeaderKey, context.MakeDisposition(destName))
 		}
 
 		// the encoding saved from the negotiation.
@@ -367,7 +372,7 @@ func FileServer(fs http.FileSystem, options DirOptions) context.Handler {
 					}
 
 					prefixURL := strings.TrimSuffix(r.RequestURI, name)
-					names, err := findNames(fs, name)
+					names, err := context.FindNames(fs, name)
 					if err == nil {
 						for _, indexAsset := range names {
 							// it's an index file, do not pushed that.
@@ -378,7 +383,6 @@ func FileServer(fs http.FileSystem, options DirOptions) context.Handler {
 							// match using relative path (without the first '/' slash)
 							// to keep consistency between the `PushTargets` behavior
 							if regex.MatchString(indexAsset) {
-
 								// println("Regex Matched: " + indexAsset)
 								if err = pusher.Push(path.Join(prefixURL, indexAsset), pushOpts); err != nil {
 									break
@@ -526,6 +530,22 @@ func toBaseName(s string) string {
 	return s
 }
 
+// IsHidden checks a file is hidden or not
+func IsHidden(file os.FileInfo) bool {
+	isHidden := false
+	if runtime.GOOS == "windows" {
+		fa := reflect.ValueOf(file.Sys()).Elem().FieldByName("FileAttributes").Uint()
+		bytefa := []byte(strconv.FormatUint(fa, 2))
+		if bytefa[len(bytefa)-2] == '1' {
+			isHidden = true
+		}
+	} else {
+		isHidden = file.Name()[0] == '.'
+	}
+
+	return isHidden
+}
+
 // DirList is a `DirListFunc` which renders directories and files in html, but plain, mode.
 // See `DirListRich` for more.
 func DirList(ctx *context.Context, dirOptions DirOptions, dirName string, dir http.File) error {
@@ -537,16 +557,42 @@ func DirList(ctx *context.Context, dirOptions DirOptions, dirName string, dir ht
 	sort.Slice(dirs, func(i, j int) bool { return dirs[i].Name() < dirs[j].Name() })
 
 	ctx.ContentType(context.ContentHTMLHeaderValue)
-	_, err = ctx.WriteString("<pre>\n")
+	_, err = ctx.WriteString("<div>\n")
+	if err != nil {
+		return err
+	}
+
+	// show current directory
+	_, err = ctx.Writef("<h2>Current Directory: %s</h2>", ctx.Request().RequestURI)
+	if err != nil {
+		return err
+	}
+
+	_, err = ctx.WriteString("<ul style=\"list-style: none; padding-left: 20px\">")
+	if err != nil {
+		return err
+	}
+
+	// link to parent directory
+	_, err = ctx.WriteString("<li><span style=\"width: 150px; float: left; display: inline-block;\">drwxrwxrwx</span><a href=\"./\">../</a><li>")
 	if err != nil {
 		return err
 	}
 
 	for _, d := range dirs {
+		if !dirOptions.ShowHidden && IsHidden(d) {
+			continue
+		}
+
 		name := toBaseName(d.Name())
 
-		upath := path.Join(ctx.Request().RequestURI, name)
-		url := url.URL{Path: upath}
+		u, err := url.Parse(ctx.Request().RequestURI) // clone url and remove query (#1882).
+		if err != nil {
+			return fmt.Errorf("name: %s: error: %w", name, err)
+		}
+		u.RawQuery = ""
+
+		upath := url.URL{Path: path.Join(u.String(), name)}
 
 		downloadAttr := ""
 		if dirOptions.Attachments.Enable && !d.IsDir() {
@@ -561,12 +607,16 @@ func DirList(ctx *context.Context, dirOptions DirOptions, dirName string, dir ht
 		// name may contain '?' or '#', which must be escaped to remain
 		// part of the URL path, and not indicate the start of a query
 		// string or fragment.
-		_, err = ctx.Writef("<a href=\"%s\"%s>%s</a>\n", url.String(), downloadAttr, html.EscapeString(viewName))
+		_, err = ctx.Writef("<li>"+
+			"<span style=\"width: 150px; float: left; display: inline-block;\">%s</span>"+
+			"<a href=\"%s\"%s>%s</a>"+
+			"</li>",
+			d.Mode().String(), upath.String(), downloadAttr, html.EscapeString(viewName))
 		if err != nil {
 			return err
 		}
 	}
-	_, err = ctx.WriteString("</pre>\n")
+	_, err = ctx.WriteString("</ul></div>\n")
 	return err
 }
 
@@ -614,10 +664,19 @@ func DirListRich(opts ...DirListRichOptions) DirListFunc {
 		}
 
 		for _, d := range dirs {
+			if !dirOptions.ShowHidden && IsHidden(d) {
+				continue
+			}
+
 			name := toBaseName(d.Name())
 
-			upath := path.Join(ctx.Request().RequestURI, name)
-			url := url.URL{Path: upath}
+			u, err := url.Parse(ctx.Request().RequestURI) // clone url and remove query (#1882).
+			if err != nil {
+				return fmt.Errorf("name: %s: error: %w", name, err)
+			}
+			u.RawQuery = ""
+
+			upath := url.URL{Path: path.Join(u.String(), name)}
 
 			viewName := name
 			if d.IsDir() {
@@ -628,7 +687,7 @@ func DirListRich(opts ...DirListRichOptions) DirListFunc {
 			pageData.Files = append(pageData.Files, fileInfoData{
 				Info:     d,
 				ModTime:  d.ModTime().UTC().Format(http.TimeFormat),
-				Path:     url.String(),
+				Path:     upath.String(),
 				RelPath:  path.Join(ctx.Path(), name),
 				Name:     html.EscapeString(viewName),
 				Download: shouldDownload,
@@ -799,7 +858,7 @@ func fsOpener(fs http.FileSystem, options DirCacheOptions) func(name string, r *
 func cache(fs http.FileSystem, options DirCacheOptions) (*cacheFS, error) {
 	start := time.Now()
 
-	names, err := findNames(fs, "/")
+	names, err := context.FindNames(fs, "/")
 	if err != nil {
 		return nil, err
 	}
@@ -981,7 +1040,7 @@ func cacheFiles(ctx stdContext.Context, fs http.FileSystem, names []string, comp
 
 		fi := newFileInfo(path.Base(name), inf.Mode(), inf.ModTime())
 
-		contents, err := ioutil.ReadAll(f)
+		contents, err := io.ReadAll(f)
 		f.Close()
 		if err != nil {
 			return err
@@ -1008,12 +1067,10 @@ func cacheFiles(ctx stdContext.Context, fs http.FileSystem, names []string, comp
 		// so, unless requested keep it as it's.
 		buf := new(bytes.Buffer)
 		for _, alg := range compressAlgs {
-			// stop all compressions if at least one file failed to.
 			select {
 			case <-ctx.Done():
-				return ctx.Err()
+				return ctx.Err() // stop all compressions if at least one file failed to.
 			default:
-				break // lint:ignore
 			}
 
 			if alg == "brotli" {
@@ -1079,8 +1136,10 @@ type file struct {
 	info          os.FileInfo
 }
 
-var _ http.File = (*file)(nil)
-var _ cacheStoreFile = (*file)(nil)
+var (
+	_ http.File      = (*file)(nil)
+	_ cacheStoreFile = (*file)(nil)
+)
 
 func newFile(name string, fi os.FileInfo, algs map[string][]byte) *file {
 	return &file{
@@ -1114,49 +1173,6 @@ func (f *file) Get(alg string) (http.File, error) {
 	// When client accept compression but cached contents are not compressed,
 	// e.g. file too small or ignored one.
 	return f.Get("")
-}
-
-func findNames(fs http.FileSystem, name string) ([]string, error) {
-	f, err := fs.Open(name)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	fi, err := f.Stat()
-	if err != nil {
-		return nil, err
-	}
-
-	if !fi.IsDir() {
-		return []string{name}, nil
-	}
-
-	fileinfos, err := f.Readdir(-1)
-	if err != nil {
-		return nil, err
-	}
-
-	files := make([]string, 0)
-
-	for _, info := range fileinfos {
-		// Note:
-		// go-bindata has absolute names with os.Separator,
-		// http.Dir the basename.
-		filename := toBaseName(info.Name())
-		fullname := path.Join(name, filename)
-		if fullname == name { // prevent looping through itself when fs is cacheFS.
-			continue
-		}
-		rfiles, err := findNames(fs, fullname)
-		if err != nil {
-			return nil, err
-		}
-
-		files = append(files, rfiles...)
-	}
-
-	return files, nil
 }
 
 type fileInfo struct {
@@ -1194,8 +1210,10 @@ type dir struct {
 	children []os.FileInfo // a slice of *fileInfo
 }
 
-var _ os.FileInfo = (*dir)(nil)
-var _ http.File = (*dir)(nil)
+var (
+	_ os.FileInfo = (*dir)(nil)
+	_ http.File   = (*dir)(nil)
+)
 
 func (d *dir) Close() error               { return nil }
 func (d *dir) Name() string               { return d.baseName }

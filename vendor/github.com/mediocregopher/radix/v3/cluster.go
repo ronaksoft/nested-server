@@ -1,13 +1,14 @@
 package radix
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	errors "golang.org/x/xerrors"
+	"errors"
 
 	"github.com/mediocregopher/radix/v3/resp"
 	"github.com/mediocregopher/radix/v3/resp/resp2"
@@ -57,14 +58,15 @@ type ClusterCanRetryAction interface {
 ////////////////////////////////////////////////////////////////////////////////
 
 type clusterOpts struct {
-	pf              ClientFunc
-	clusterDownWait time.Duration
-	syncEvery       time.Duration
-	ct              trace.ClusterTrace
+	pf                   ClientFunc
+	clusterDownWait      time.Duration
+	syncEvery            time.Duration
+	ct                   trace.ClusterTrace
+	initAllowUnavailable bool
 }
 
 // ClusterOpt is an optional behavior which can be applied to the NewCluster
-// function to effect a Cluster's behavior
+// function to effect a Cluster's behavior.
 type ClusterOpt func(*clusterOpts)
 
 // ClusterPoolFunc tells the Cluster to use the given ClientFunc when creating
@@ -111,9 +113,18 @@ func ClusterWithTrace(ct trace.ClusterTrace) ClusterOpt {
 	}
 }
 
+// ClusterOnInitAllowUnavailable tells NewCluster to succeed
+// and not return an error as long as at least one redis instance
+// in the cluster can be successfully connected to.
+func ClusterOnInitAllowUnavailable(initAllowUnavailable bool) ClusterOpt {
+	return func(co *clusterOpts) {
+		co.initAllowUnavailable = initAllowUnavailable
+	}
+}
+
 // Cluster contains all information about a redis cluster needed to interact
 // with it, including a set of pools to each of its instances. All methods on
-// Cluster are thread-safe
+// Cluster are thread-safe.
 type Cluster struct {
 	// Atomic fields must be at the beginning of the struct since they must be
 	// correctly aligned or else access may cause panics on 32-bit architectures
@@ -190,17 +201,33 @@ func NewCluster(clusterAddrs []string, opts ...ClusterOpt) (*Cluster, error) {
 		}
 	}
 
+	var err error
+
 	// make a pool to base the cluster on
 	for _, addr := range clusterAddrs {
-		p, err := c.co.pf("tcp", addr)
-		if err != nil {
+
+		var p Client
+
+		if p, err = c.co.pf("tcp", addr); err != nil {
 			continue
 		}
 		c.pools[addr] = p
 		break
 	}
 
-	if err := c.Sync(); err != nil {
+	if len(c.pools) == 0 {
+		return nil, fmt.Errorf("could not connect to any redis instances, last error was: %w", err)
+	}
+
+	p, err := c.pool("")
+	if err != nil {
+		for _, p := range c.pools {
+			p.Close()
+		}
+		return nil, err
+	}
+
+	if err := c.sync(p, c.co.initAllowUnavailable); err != nil {
 		for _, p := range c.pools {
 			p.Close()
 		}
@@ -228,7 +255,7 @@ func assertKeysSlot(keys []string) error {
 		if !ok {
 			ok = true
 		} else if slot != thisSlot {
-			return errors.Errorf("keys %q and %q do not belong to the same slot", prevKey, key)
+			return fmt.Errorf("keys %q and %q do not belong to the same slot", prevKey, key)
 		}
 		prevKey = key
 		slot = thisSlot
@@ -236,7 +263,7 @@ func assertKeysSlot(keys []string) error {
 	return nil
 }
 
-// may return nil, nil if no pool for the addr
+// may return nil, nil if no pool for the addr.
 func (c *Cluster) rpool(addr string) (Client, error) {
 	c.l.RLock()
 	defer c.l.RUnlock()
@@ -277,7 +304,7 @@ func (c *Cluster) Client(addr string) (Client, error) {
 }
 
 // if addr is "" returns a random pool. If addr is given but there's no pool for
-// it one will be created on-the-fly
+// it one will be created on-the-fly.
 func (c *Cluster) pool(addr string) (Client, error) {
 	p, err := c.rpool(addr)
 	if p != nil || err != nil {
@@ -330,14 +357,14 @@ func (c *Cluster) getTopo(p Client) (ClusterTopo, error) {
 // Sync will synchronize the Cluster with the actual cluster, making new pools
 // to new instances and removing ones from instances no longer in the cluster.
 // This will be called periodically automatically, but you can manually call it
-// at any time as well
+// at any time as well.
 func (c *Cluster) Sync() error {
 	p, err := c.pool("")
 	if err != nil {
 		return err
 	}
 	c.syncDedupe.do(func() {
-		err = c.sync(p)
+		err = c.sync(p, false)
 	})
 	return err
 }
@@ -393,7 +420,7 @@ func (c *Cluster) traceTopoChanged(prevTopo ClusterTopo, newTopo ClusterTopo) {
 
 // while this method is normally deduplicated by the Sync method's use of
 // dedupe it is perfectly thread-safe on its own and can be used whenever.
-func (c *Cluster) sync(p Client) error {
+func (c *Cluster) sync(p Client, silenceFlag bool) error {
 	tt, err := c.getTopo(p)
 	if err != nil {
 		return err
@@ -402,7 +429,11 @@ func (c *Cluster) sync(p Client) error {
 	for _, t := range tt {
 		// call pool just to ensure one exists for this addr
 		if _, err := c.pool(t.Addr); err != nil {
-			return errors.Errorf("error connecting to %s: %w", t.Addr, err)
+			if silenceFlag {
+				continue
+			} else {
+				return fmt.Errorf("error connecting to %s: %w", t.Addr, err)
+			}
 		}
 	}
 
@@ -463,10 +494,9 @@ func (c *Cluster) syncEvery(d time.Duration) {
 	}()
 }
 
-func (c *Cluster) addrForKey(key string) string {
+// v3.8.5 add the getting master node without lock to fix the fix deadlock.
+func (c *Cluster) addrForKeyWithNoLock(key string) string {
 	s := ClusterSlot([]byte(key))
-	c.l.RLock()
-	defer c.l.RUnlock()
 	for _, t := range c.primTopo {
 		for _, slot := range t.Slots {
 			if s >= slot[0] && s < slot[1] {
@@ -477,10 +507,16 @@ func (c *Cluster) addrForKey(key string) string {
 	return ""
 }
 
+func (c *Cluster) addrForKey(key string) string {
+	c.l.RLock()
+	defer c.l.RUnlock()
+	return c.addrForKeyWithNoLock(key)
+}
+
 func (c *Cluster) secondaryAddrForKey(key string) string {
 	c.l.RLock()
 	defer c.l.RUnlock()
-	primAddr := c.addrForKey(key)
+	primAddr := c.addrForKeyWithNoLock(key)
 	for addr := range c.secondaries[primAddr] {
 		return addr
 	}
@@ -705,7 +741,7 @@ func (c *Cluster) doInner(a Action, addr, key string, ask bool, attempts int) er
 
 	msgParts := strings.Split(msg, " ")
 	if len(msgParts) < 3 {
-		return errors.Errorf("malformed MOVED/ASK error %q", msg)
+		return fmt.Errorf("malformed MOVED/ASK error %q", msg)
 	}
 	ogAddr, addr := addr, msgParts[2]
 

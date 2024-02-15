@@ -46,6 +46,9 @@ type (
 
 		// Expires the duration of which the cookie must expires (created_time.Add(Expires)).
 		// If you want to delete the cookie when the browser closes, set it to -1.
+		// However, if you use a database storage setting this value to -1 may
+		// cause you problems because of the fact that the database
+		// may has its own expiration mechanism and value will be expired and removed immediately.
 		//
 		// 0 means no expire, (24 years)
 		// -1 means when browser closes
@@ -78,8 +81,13 @@ func (c Config) Validate() Config {
 	}
 
 	if c.SessionIDGenerator == nil {
-		c.SessionIDGenerator = func(*context.Context) string {
-			id, _ := uuid.NewRandom()
+		c.SessionIDGenerator = func(ctx *context.Context) string {
+			id, err := uuid.NewRandom()
+			if err != nil {
+				ctx.StopWithError(400, err)
+				return ""
+			}
+
 			return id.String()
 		}
 	}

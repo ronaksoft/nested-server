@@ -1,3 +1,21 @@
+## Wed 11 November 2023 | v0.1.11
+
+- Add integration for `"log/slog"` package:
+
+```go
+import "log/slog"
+
+// [...]
+myLogger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+golog.Install(myLogger) // OR just  golog.Install(slog.Default())
+```
+
+- The `InstallStd` method was removed, use the `Install` method instead, it receives `any` instead of just `ExternalLogger` now.
+
+## Sat 29 October 2022 | v0.1.8
+
+Add `golog.Now` variable so 3rd-parties can customize the time.Now functionality used in golog.Log.Time and Timestamp.
+
 ## Wed 09 Decemember | v0.1.6
 
 Fix `Clone` not inherite the parent's formatters field (fixes `SetLevelFormat` on childs).
@@ -30,7 +48,7 @@ Introduce the [Formatter](https://github.com/kataras/golog/blob/master/formatter
 
 ## Sa 06 June 2020 | v0.0.16
 
-- New `Fields` map type that can be passed to `Logf/Debugf/Infof/Warnf/Errorf/Fatalf` functions and set the `Log.Fields` data field (which can be retrieved through a custom `LogHandler`).
+- New `Fields` type that can be passed to `Logf/Debugf/Infof/Warnf/Errorf/Fatalf` functions and set the `Log.Fields` data field (which can be retrieved through a custom `LogHandler`).
 - Add `Log.Stacktrace` of new `Frame` type which holds the callers stack trace when `Debug/Debugf`.
 - Add `json` struct fields to the `Log` structure.
 - Update the [customize-output](_examples/customize-output) example.

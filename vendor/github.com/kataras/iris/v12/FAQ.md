@@ -19,20 +19,20 @@ Add a `badge` to your open-source projects powered by [Iris](https://iris-go.com
 ## How to upgrade
 
 ```sh
-go get -u github.com/kataras/iris/v12@master
+go get github.com/kataras/iris/v12@latest
 ```
 
-Go version 1.13 and above is required.
+Go version 1.20 and above is required.
 
 ## Learning
 
-More than 180 practical examples, tutorials and articles at:
+More than 280 practical examples, tutorials and articles at:
 
-- https://iris-go.com/start
-- https://bit.ly/iris-req-book
-- https://github.com/kataras/iris/wiki/Starter-kits
-- https://github.com/kataras/iris/tree/master/_examples
-- https://godoc.org/github.com/kataras/iris <!--https://pkg.go.dev/github.com/kataras/iris/v12@v12.2.0-->
+- https://www.iris-go.com/docs
+- https://www.iris-go.com/#ebookDonateForm
+<!-- - https://github.com/kataras/iris/wiki/Starter-kits -->
+- https://github.com/kataras/iris/tree/main/_examples
+- https://pkg.go.dev/github.com/kataras/iris/v12@main
 
 ## Active development mode
 
@@ -53,4 +53,4 @@ Yes, https://chat.iris-go.com
 
 By people like you, who help us by donating small or large amounts of money.
 
-Help this project deliver awesome and unique features with the highest possible code quality by donating any amount via [PayPal](https://iris-go.com/donate). Your name will be published [here](https://iris-go.com) after your approval via e-mail.
+Help this project deliver awesome and unique features with the highest possible code quality by donating any amount via [PayPal or Stripe](https://iris-go.com/donate). Your name will be published [here](https://www.iris-go.com/#review) after your approval via e-mail.

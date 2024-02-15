@@ -43,6 +43,18 @@ type Struct struct {
 	Singleton bool
 }
 
+type singletonStruct interface {
+	Singleton() bool
+}
+
+func isMarkedAsSingleton(structPtr any) bool {
+	if sing, ok := structPtr.(singletonStruct); ok && sing.Singleton() {
+		return true
+	}
+
+	return false
+}
+
 func makeStruct(structPtr interface{}, c *Container, partyParamsCount int) *Struct {
 	v := valueOf(structPtr)
 	typ := v.Type()
@@ -50,14 +62,28 @@ func makeStruct(structPtr interface{}, c *Container, partyParamsCount int) *Stru
 		panic("binder: struct: should be a pointer to a struct value")
 	}
 
+	isSingleton := isMarkedAsSingleton(structPtr)
+
+	disablePayloadAutoBinding := c.DisablePayloadAutoBinding
+	enableStructDependents := c.EnableStructDependents
+	disableStructDynamicBindings := c.DisableStructDynamicBindings
+	if isSingleton {
+		disablePayloadAutoBinding = true
+		enableStructDependents = false
+		disableStructDynamicBindings = true
+	}
+
 	// get struct's fields bindings.
-	bindings := getBindingsForStruct(v, c.Dependencies, partyParamsCount, c.Sorter)
+	bindings := getBindingsForStruct(v, c.Dependencies, c.MarkExportedFieldsAsRequired, disablePayloadAutoBinding, enableStructDependents, c.DependencyMatcher, partyParamsCount, c.Sorter)
 
 	// length bindings of 0, means that it has no fields or all mapped deps are static.
 	// If static then Struct.Acquire will return the same "value" instance, otherwise it will create a new one.
 	singleton := true
 	elem := v.Elem()
+
+	// fmt.Printf("Service: %s, Bindings(%d):\n", typ, len(bindings))
 	for _, b := range bindings {
+		// fmt.Printf("* " + b.String() + "\n")
 		if b.Dependency.Static {
 			// Fill now.
 			input, err := b.Dependency.Handle(nil, b.Input)
@@ -71,8 +97,16 @@ func makeStruct(structPtr interface{}, c *Container, partyParamsCount int) *Stru
 
 			elem.FieldByIndex(b.Input.StructFieldIndex).Set(input)
 		} else if !b.Dependency.Static {
+			if disableStructDynamicBindings {
+				panic(fmt.Sprintf("binder: DisableStructDynamicBindings setting is set to true: dynamic binding found: %s", b.String()))
+			}
+
 			singleton = false
 		}
+	}
+
+	if isSingleton && !singleton {
+		panic(fmt.Sprintf("binder: Singleton setting is set to true but struct has dynamic bindings: %s", typ))
 	}
 
 	s := &Struct{

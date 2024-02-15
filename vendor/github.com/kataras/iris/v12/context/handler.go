@@ -12,7 +12,7 @@ import (
 
 var (
 	// PackageName is the Iris Go module package name.
-	PackageName = strings.TrimSuffix(reflect.TypeOf(Handlers{}).PkgPath(), "/context")
+	PackageName = strings.TrimSuffix(reflect.TypeOf(Context{}).PkgPath(), "/context")
 
 	// WorkingDir is the (initial) current directory.
 	WorkingDir, _ = os.Getwd()
@@ -21,6 +21,24 @@ var (
 var (
 	handlerNames   = make(map[*NameExpr]string)
 	handlerNamesMu sync.RWMutex
+
+	ignoreMainHandlerNames = [...]string{
+		"iris.cache",
+		"iris.basicauth",
+		"iris.hCaptcha",
+		"iris.reCAPTCHA",
+		"iris.profiling",
+		"iris.recover",
+		"iris.accesslog",
+		"iris.grpc",
+		"iris.requestid",
+		"iris.rewrite",
+		"iris.cors",
+		"iris.jwt",
+		"iris.logger",
+		"iris.rate",
+		"iris.methodoverride",
+	}
 )
 
 // SetHandlerName sets a handler name that could be
@@ -48,6 +66,7 @@ func SetHandlerName(original string, replacement string) {
 		literal: original,
 		regex:   regex,
 	}] = replacement
+
 	handlerNamesMu.Unlock()
 }
 
@@ -85,12 +104,12 @@ func (expr *NameExpr) MatchString(s string) bool {
 //
 // If Handler panics, the server (the caller of Handler) assumes that the effect of the panic was isolated to the active request.
 // It recovers the panic, logs a stack trace to the server error log, and hangs up the connection.
-type Handler func(*Context)
+type Handler = func(*Context)
 
 // Handlers is just a type of slice of []Handler.
 //
 // See `Handler` for more.
-type Handlers []Handler
+type Handlers = []Handler
 
 func valueOf(v interface{}) reflect.Value {
 	if val, ok := v.(reflect.Value); ok {
@@ -106,6 +125,7 @@ func valueOf(v interface{}) reflect.Value {
 func HandlerName(h interface{}) string {
 	pc := valueOf(h).Pointer()
 	name := runtime.FuncForPC(pc).Name()
+
 	handlerNamesMu.RLock()
 	for expr, newName := range handlerNames {
 		if expr.MatchString(name) {
@@ -113,7 +133,6 @@ func HandlerName(h interface{}) string {
 			break
 		}
 	}
-
 	handlerNamesMu.RUnlock()
 
 	return trimHandlerName(name)
@@ -207,7 +226,7 @@ func trimHandlerName(name string) string {
 		name = strings.Replace(name, internalName, "iris-contrib", 1)
 	}
 
-	name = strings.TrimSuffix(name, ".func1")
+	name = strings.TrimSuffix(name, "GRPC.Apply.func1")
 	return name
 }
 
@@ -217,6 +236,9 @@ var ignoreHandlerNames = [...]string{
 	"iris/core/router.ExecutionOptions.buildHandler",
 	"iris/core/router.(*APIBuilder).Favicon",
 	"iris/core/router.StripPrefix",
+	"iris/core/router.PrefixDir",
+	"iris/core/router.PrefixFS",
+	"iris/context.glob..func2.1",
 }
 
 // IgnoreHandlerName compares a static slice of Iris builtin
@@ -230,19 +252,6 @@ func IgnoreHandlerName(name string) bool {
 	}
 
 	return false
-}
-
-var ignoreMainHandlerNames = [...]string{
-	"iris.cache",
-	"iris.basicauth",
-	"iris.hCaptcha",
-	"iris.reCAPTCHA",
-	"iris.profiling",
-	"iris.recover",
-	"iris.accesslog",
-	"iris.grpc",
-	"iris.requestid",
-	"iris.rewrite",
 }
 
 // ingoreMainHandlerName reports whether a main handler of "name" should
@@ -274,7 +283,6 @@ type Filter func(*Context) bool
 // Filter is just a type of Handler which returns a boolean.
 // Handlers here should act like middleware, they should contain `ctx.Next` to proceed
 // to the next handler of the chain. Those "handlers" are registered to the per-request context.
-//
 //
 // It checks the "filter" and if passed then
 // it, correctly, executes the "handlers".

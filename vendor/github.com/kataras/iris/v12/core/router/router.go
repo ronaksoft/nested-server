@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/kataras/iris/v12/context"
 
@@ -48,13 +49,13 @@ func NewRouter() *Router {
 
 // RefreshRouter re-builds the router. Should be called when a route's state
 // changed (i.e Method changed at serve-time).
+//
+// Note that in order to use RefreshRouter while in serve-time,
+// you have to set the `EnableDynamicHandler` Iris Application setting to true,
+// e.g. `app.Listen(":8080", iris.WithEnableDynamicHandler)`
 func (router *Router) RefreshRouter() error {
 	return router.BuildRouter(router.cPool, router.requestHandler, router.routesProvider, true)
 }
-
-// ErrNotRouteAdder throws on `AddRouteUnsafe` when a registered `RequestHandler`
-// does not implements the optional `AddRoute(*Route) error` method.
-var ErrNotRouteAdder = errors.New("request handler does not implement AddRoute method")
 
 // AddRouteUnsafe adds a route directly to the router's request handler.
 // Works before or after Build state.
@@ -62,9 +63,7 @@ var ErrNotRouteAdder = errors.New("request handler does not implement AddRoute m
 // Do NOT use it on serve-time.
 func (router *Router) AddRouteUnsafe(routes ...*Route) error {
 	if h := router.requestHandler; h != nil {
-		if v, ok := h.(interface {
-			AddRoute(*Route) error
-		}); ok {
+		if v, ok := h.(RouteAdder); ok {
 			for _, r := range routes {
 				return v.AddRoute(r)
 			}
@@ -94,6 +93,14 @@ func (router *Router) FindClosestPaths(subdomain, searchPath string, n int) []st
 	}
 
 	return list
+}
+
+func (router *Router) buildMainHandler(cPool *context.Pool, requestHandler RequestHandler) {
+	router.mainHandler = func(w http.ResponseWriter, r *http.Request) {
+		ctx := cPool.Acquire(w, r)
+		router.requestHandler.HandleRequest(ctx)
+		cPool.Release(ctx)
+	}
 }
 
 func (router *Router) buildMainHandlerWithFilters(routerFilters map[Party]*Filter, cPool *context.Pool, requestHandler RequestHandler) {
@@ -214,11 +221,7 @@ func (router *Router) BuildRouter(cPool *context.Pool, requestHandler RequestHan
 	if routerFilters := routesProvider.GetRouterFilters(); len(routerFilters) > 0 {
 		router.buildMainHandlerWithFilters(routerFilters, cPool, requestHandler)
 	} else {
-		router.mainHandler = func(w http.ResponseWriter, r *http.Request) {
-			ctx := cPool.Acquire(w, r)
-			router.requestHandler.HandleRequest(ctx)
-			cPool.Release(ctx)
-		}
+		router.buildMainHandler(cPool, requestHandler)
 	}
 
 	for i := len(router.wrapperFuncs) - 1; i >= 0; i-- {
@@ -269,6 +272,25 @@ func (router *Router) Downgrade(newMainHandler http.HandlerFunc) {
 // Downgraded returns true if this router is downgraded.
 func (router *Router) Downgraded() bool {
 	return router.mainHandler != nil && router.requestHandler == nil
+}
+
+// SetTimeoutHandler overrides the main handler with a timeout handler.
+//
+// TimeoutHandler supports the Pusher interface but does not support
+// the Hijacker or Flusher interfaces.
+//
+// All previous registered wrappers and middlewares are still executed as expected.
+func (router *Router) SetTimeoutHandler(timeout time.Duration, msg string) {
+	if timeout <= 0 {
+		return
+	}
+
+	mainHandler := router.mainHandler
+	h := func(w http.ResponseWriter, r *http.Request) {
+		mainHandler(w, r)
+	}
+
+	router.mainHandler = http.TimeoutHandler(http.HandlerFunc(h), timeout, msg).ServeHTTP
 }
 
 // WrapRouter adds a wrapper on the top of the main router.

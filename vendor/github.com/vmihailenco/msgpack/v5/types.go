@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/vmihailenco/tagparser"
+	"github.com/vmihailenco/tagparser/v2"
 )
 
 var errorType = reflect.TypeOf((*error)(nil)).Elem()
@@ -66,8 +66,8 @@ type structCache struct {
 }
 
 type structCacheKey struct {
-	tag string
 	typ reflect.Type
+	tag string
 }
 
 func newStructCache() *structCache {
@@ -90,19 +90,20 @@ func (m *structCache) Fields(typ reflect.Type, tag string) *fields {
 //------------------------------------------------------------------------------
 
 type field struct {
+	encoder   encoderFunc
+	decoder   decoderFunc
 	name      string
 	index     []int
 	omitEmpty bool
-	encoder   encoderFunc
-	decoder   decoderFunc
 }
 
-func (f *field) Omit(strct reflect.Value) bool {
+func (f *field) Omit(e *Encoder, strct reflect.Value) bool {
 	v, ok := fieldByIndex(strct, f.index)
 	if !ok {
 		return true
 	}
-	return f.omitEmpty && isEmptyValue(v)
+	forced := e.flags&omitEmptyFlag != 0
+	return (f.omitEmpty || forced) && e.isEmptyValue(v)
 }
 
 func (f *field) EncodeValue(e *Encoder, strct reflect.Value) error {
@@ -152,15 +153,16 @@ func (fs *fields) warnIfFieldExists(name string) {
 	}
 }
 
-func (fs *fields) OmitEmpty(strct reflect.Value) []*field {
-	if !fs.hasOmitEmpty {
+func (fs *fields) OmitEmpty(e *Encoder, strct reflect.Value) []*field {
+	forced := e.flags&omitEmptyFlag != 0
+	if !fs.hasOmitEmpty && !forced {
 		return fs.List
 	}
 
 	fields := make([]*field, 0, len(fs.List))
 
 	for _, f := range fs.List {
-		if !f.Omit(strct) {
+		if !f.Omit(e, strct) {
 			fields = append(fields, f)
 		}
 	}
@@ -313,10 +315,32 @@ func shouldInline(fs *fields, typ reflect.Type, f *field, tag string) bool {
 	return true
 }
 
-func isEmptyValue(v reflect.Value) bool {
-	switch v.Kind() {
+type isZeroer interface {
+	IsZero() bool
+}
+
+func (e *Encoder) isEmptyValue(v reflect.Value) bool {
+	kind := v.Kind()
+
+	for kind == reflect.Interface {
+		if v.IsNil() {
+			return true
+		}
+		v = v.Elem()
+		kind = v.Kind()
+	}
+
+	if z, ok := v.Interface().(isZeroer); ok {
+		return nilable(kind) && v.IsNil() || z.IsZero()
+	}
+
+	switch kind {
 	case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
 		return v.Len() == 0
+	case reflect.Struct:
+		structFields := structs.Fields(v.Type(), e.structTag)
+		fields := structFields.OmitEmpty(e, v)
+		return len(fields) == 0
 	case reflect.Bool:
 		return !v.Bool()
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
@@ -325,10 +349,11 @@ func isEmptyValue(v reflect.Value) bool {
 		return v.Uint() == 0
 	case reflect.Float32, reflect.Float64:
 		return v.Float() == 0
-	case reflect.Interface, reflect.Ptr:
+	case reflect.Ptr:
 		return v.IsNil()
+	default:
+		return false
 	}
-	return false
 }
 
 func fieldByIndex(v reflect.Value, index []int) (_ reflect.Value, ok bool) {
@@ -380,7 +405,7 @@ func indirectNil(v reflect.Value) (reflect.Value, bool) {
 			if elemType.Kind() != reflect.Struct {
 				return v, false
 			}
-			v.Set(reflect.New(elemType))
+			v.Set(cachedValue(elemType))
 		}
 		v = v.Elem()
 	}

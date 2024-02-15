@@ -1,10 +1,51 @@
 Changelog from v3.0.1 and up. Prior changes don't have a changelog.
 
+# v3.8.1
+
+* Fixed `NewCluster` not returning an error if it can't connect to any of the
+  redis instances given. (#319)
+
+* Fix deadlock in `Cluster` when using `DoSecondary`. (#317)
+
+* Fix parsing for `CLUSTER SLOTS` command, which changed slightly with redis
+  7.0. (#322)
+
+# v3.8.0
+
+**New**
+
+* Add `PoolMaxLifetime` option for `Pool`. (PR #294)
+
+**Fixes And Improvements**
+
+* Switched to using `errors` package, rather than `golang.org/x/xerrors`. (PR
+  #300)
+
+* Switch to using Github Actions from travis. (PR #300)
+
+* Fixed IPv6 addresses breaking `Cluster`. (Issue #288)
+
+# v3.7.1
+
+* Release the RLock in `Sentinel`'s `Do`. (PR #272)
+
+# v3.7.0
+
+**New**
+
+* Add `FallbackToUndelivered` option to `StreamReaderOpts`. (PR #244)
+
+* Add `ClusterOnInitAllowUnavailable`. (PR #247)
+
+**Fixes and Improvements**
+
+* Fix reading a RESP error into a `*interface{}` panicking. (PR #240)
+
 # v3.6.0
 
 **New**
 
-* Add `Typle` type, which makes unmarshaling `EXEC` and `EVAL` results easier.
+* Add `Tuple` type, which makes unmarshaling `EXEC` and `EVAL` results easier.
 
 * Add `PersistentPubSubErrCh`, so that asynchronous errors within
   `PersistentPubSub` can be exposed to the user.

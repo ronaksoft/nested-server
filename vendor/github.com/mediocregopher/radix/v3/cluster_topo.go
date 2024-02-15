@@ -2,11 +2,11 @@ package radix
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"net"
 	"sort"
-
-	errors "golang.org/x/xerrors"
+	"strconv"
 
 	"github.com/mediocregopher/radix/v3/resp"
 	"github.com/mediocregopher/radix/v3/resp/resp2"
@@ -29,7 +29,7 @@ type ClusterNode struct {
 type ClusterTopo []ClusterNode
 
 // MarshalRESP implements the resp.Marshaler interface, and will marshal the
-// ClusterTopo in the same format as the return from CLUSTER SLOTS
+// ClusterTopo in the same format as the return from CLUSTER SLOTS.
 func (tt ClusterTopo) MarshalRESP(w io.Writer) error {
 	m := map[[2]uint16]topoSlotSet{}
 	for _, t := range tt {
@@ -65,7 +65,7 @@ func (tt ClusterTopo) MarshalRESP(w io.Writer) error {
 
 // UnmarshalRESP implements the resp.Unmarshaler interface, but only supports
 // unmarshaling the return from CLUSTER SLOTS. The unmarshaled nodes will be
-// sorted before they are returned
+// sorted before they are returned.
 func (tt *ClusterTopo) UnmarshalRESP(br *bufio.Reader) error {
 	var arrHead resp2.ArrayHeader
 	if err := arrHead.UnmarshalRESP(br); err != nil {
@@ -117,7 +117,7 @@ func (tt ClusterTopo) sort() {
 
 }
 
-// Map returns the topology as a mapping of node address to its ClusterNode
+// Map returns the topology as a mapping of node address to its ClusterNode.
 func (tt ClusterTopo) Map() map[string]ClusterNode {
 	m := make(map[string]ClusterNode, len(tt))
 	for _, t := range tt {
@@ -127,7 +127,7 @@ func (tt ClusterTopo) Map() map[string]ClusterNode {
 }
 
 // Primaries returns a ClusterTopo instance containing only the primary nodes
-// from the ClusterTopo being called on
+// from the ClusterTopo being called on.
 func (tt ClusterTopo) Primaries() ClusterTopo {
 	mtt := make(ClusterTopo, 0, len(tt))
 	for _, node := range tt {
@@ -139,7 +139,7 @@ func (tt ClusterTopo) Primaries() ClusterTopo {
 }
 
 // we only use this type during unmarshalling, the topo Unmarshal method will
-// convert these into ClusterNodes
+// convert these into ClusterNodes.
 type topoSlotSet struct {
 	slots [2]uint16
 	nodes []ClusterNode
@@ -158,8 +158,15 @@ func (tss topoSlotSet) MarshalRESP(w io.Writer) error {
 	marshal(resp2.Any{I: tss.slots[1] - 1})
 
 	for _, n := range tss.nodes {
-		host, port, _ := net.SplitHostPort(n.Addr)
-		node := []string{host, port}
+
+		host, portStr, _ := net.SplitHostPort(n.Addr)
+
+		port, err := strconv.Atoi(portStr)
+		if err != nil {
+			return err
+		}
+
+		node := []interface{}{host, port}
 		if n.ID != "" {
 			node = append(node, n.ID)
 		}
@@ -187,21 +194,44 @@ func (tss *topoSlotSet) UnmarshalRESP(br *bufio.Reader) error {
 
 	var primaryNode ClusterNode
 	for i := 0; i < arrHead.N; i++ {
-		var nodeStrs []string
-		if err := (resp2.Any{I: &nodeStrs}).UnmarshalRESP(br); err != nil {
+
+		var nodeArrHead resp2.ArrayHeader
+		if err := nodeArrHead.UnmarshalRESP(br); err != nil {
 			return err
-		} else if len(nodeStrs) < 2 {
-			return errors.Errorf("malformed node array: %#v", nodeStrs)
+		} else if nodeArrHead.N < 2 {
+			return fmt.Errorf("expected at least 2 array elements, got %d", nodeArrHead.N)
 		}
-		ip, port := nodeStrs[0], nodeStrs[1]
-		var id string
-		if len(nodeStrs) > 2 {
-			id = nodeStrs[2]
+
+		var ip resp2.BulkString
+		if err := ip.UnmarshalRESP(br); err != nil {
+			return err
+		}
+
+		var port resp2.Int
+		if err := port.UnmarshalRESP(br); err != nil {
+			return err
+		}
+
+		nodeArrHead.N -= 2
+
+		var id resp2.BulkString
+		if nodeArrHead.N > 0 {
+			if err := id.UnmarshalRESP(br); err != nil {
+				return err
+			}
+			nodeArrHead.N--
+		}
+
+		// discard anything after
+		for i := 0; i < nodeArrHead.N; i++ {
+			if err := (resp2.Any{}).UnmarshalRESP(br); err != nil {
+				return err
+			}
 		}
 
 		node := ClusterNode{
-			Addr:  ip + ":" + port,
-			ID:    id,
+			Addr:  net.JoinHostPort(ip.S, strconv.FormatInt(port.I, 10)),
+			ID:    id.S,
 			Slots: [][2]uint16{tss.slots},
 		}
 

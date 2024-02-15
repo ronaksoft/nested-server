@@ -319,12 +319,10 @@ func (w *responseWriter) CopyTo(to ResponseWriter) {
 	}
 
 	// append the headers
-	if w.Header() != nil {
-		for k, values := range w.Header() {
-			for _, v := range values {
-				if to.Header().Get(v) == "" {
-					to.Header().Add(k, v)
-				}
+	for k, values := range w.Header() {
+		for _, v := range values {
+			if to.Header().Get(v) == "" {
+				to.Header().Add(k, v)
 			}
 		}
 	}
@@ -373,6 +371,9 @@ func (w *responseWriter) Flusher() (http.Flusher, bool) {
 // Flush sends any buffered data to the client.
 func (w *responseWriter) Flush() {
 	if flusher, ok := w.Flusher(); ok {
+		// Flow: WriteHeader -> Flush -> Write -> Write -> Write....
+		w.tryWriteHeader()
+
 		flusher.Flush()
 	}
 }

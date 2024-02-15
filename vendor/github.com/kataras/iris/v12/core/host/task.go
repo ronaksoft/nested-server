@@ -9,8 +9,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
-	"runtime"
+	"strings"
 	"time"
 
 	"github.com/kataras/iris/v12/core/netutil"
@@ -27,14 +28,65 @@ func WriteStartupLogOnServe(w io.Writer) func(TaskHost) {
 		if addr == "" {
 			addr = h.Supervisor.Server.Addr
 		}
-		listeningURI := netutil.ResolveURL(guessScheme, addr)
-		interruptkey := "CTRL"
-		if runtime.GOOS == "darwin" {
-			interruptkey = "CMD"
+
+		var listeningURIs = make([]string, 0, 1)
+
+		if host, port, err := net.SplitHostPort(addr); err == nil { // Improve for the issue #2175.
+			if host == "" || host == "0.0.0.0" {
+				if ifaces, err := net.Interfaces(); err == nil {
+					var ips []string
+					for _, i := range ifaces {
+						addrs, err := i.Addrs()
+						if err != nil {
+							continue
+						}
+						for _, localAddr := range addrs {
+							var ip net.IP
+							switch v := localAddr.(type) {
+							case *net.IPNet:
+								ip = v.IP
+							case *net.IPAddr:
+								ip = v.IP
+							}
+							if ip != nil && ip.To4() != nil {
+								if !ip.IsPrivate() {
+									// let's don't print ips that are not accessible through browser.
+									continue
+								}
+								ips = append(ips, ip.String())
+							}
+						}
+					}
+
+					for _, ip := range ips {
+						listeningURI := netutil.ResolveURL(guessScheme, fmt.Sprintf("%s:%s", ip, port))
+
+						listeningURI = "> Network:  " + listeningURI
+						listeningURIs = append(listeningURIs, listeningURI)
+					}
+				}
+			}
 		}
 
-		_, _ = fmt.Fprintf(w, "Now listening on: %s\nApplication started. Press %s+C to shut down.\n",
-			listeningURI, interruptkey)
+		//	if len(listeningURIs) == 0 {
+		// ^ check no need, we want to print the virtual addr too.
+		listeningURI := netutil.ResolveURL(guessScheme, addr)
+		if len(listeningURIs) > 0 {
+			listeningURIs[0] = "\n" + listeningURIs[0]
+			listeningURI = "> Local:    " + listeningURI
+		}
+		listeningURIs = append(listeningURIs, listeningURI)
+		/*
+			Now listening on:
+				> Network:  http://192.168.1.109:8080
+				> Network:  http://172.25.224.1:8080
+				> Local:    http://localhost:8080
+
+			Otherwise:
+				Now listening on: http://192.168.1.109:8080
+		*/
+		_, _ = fmt.Fprintf(w, "Now listening on: %s\nApplication started. Press CTRL+C to shut down.\n",
+			strings.Join(listeningURIs, "\n"))
 	}
 }
 
@@ -42,10 +94,10 @@ func WriteStartupLogOnServe(w io.Writer) func(TaskHost) {
 // This function should be registered on Interrupt.
 func ShutdownOnInterrupt(su *Supervisor, shutdownTimeout time.Duration) func() {
 	return func() {
-		ctx, cancel := context.WithTimeout(context.TODO(), shutdownTimeout)
+		ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 		defer cancel()
+
 		su.shutdownOnInterrupt(ctx)
-		su.RestoreFlow()
 	}
 }
 

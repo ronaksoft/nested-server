@@ -1,6 +1,7 @@
 package wsutil
 
 import (
+	"encoding/binary"
 	"errors"
 	"io"
 	"io/ioutil"
@@ -11,6 +12,10 @@ import (
 // ErrNoFrameAdvance means that Reader's Read() method was called without
 // preceding NextFrame() call.
 var ErrNoFrameAdvance = errors.New("no frame advance")
+
+// ErrFrameTooLarge indicates that a message of length higher than
+// MaxFrameSize was being read.
+var ErrFrameTooLarge = errors.New("frame too large")
 
 // FrameHandlerFunc handles parsed frame header and its body represented by
 // io.Reader.
@@ -37,15 +42,27 @@ type Reader struct {
 	// bytes are not valid UTF-8 sequence, ErrInvalidUTF8 returned.
 	CheckUTF8 bool
 
-	// TODO(gobwas): add max frame size limit here.
+	// Extensions is a list of negotiated extensions for reader Source.
+	// It is used to meet the specs and clear appropriate bits in fragment
+	// header RSV segment.
+	Extensions []RecvExtension
+
+	// MaxFrameSize controls the maximum frame size in bytes
+	// that can be read. A message exceeding that size will return
+	// a ErrFrameTooLarge to the application.
+	//
+	// Not setting this field means there is no limit.
+	MaxFrameSize int64
 
 	OnContinuation FrameHandlerFunc
 	OnIntermediate FrameHandlerFunc
 
-	opCode ws.OpCode        // Used to store message op code on fragmentation.
-	frame  io.Reader        // Used to as frame reader.
-	raw    io.LimitedReader // Used to discard frames without cipher.
-	utf8   UTF8Reader       // Used to check UTF8 sequences if CheckUTF8 is true.
+	opCode ws.OpCode                  // Used to store message op code on fragmentation.
+	frame  io.Reader                  // Used to as frame reader.
+	raw    io.LimitedReader           // Used to discard frames without cipher.
+	utf8   UTF8Reader                 // Used to check UTF8 sequences if CheckUTF8 is true.
+	tmp    [ws.MaxHeaderSize - 2]byte // Used for reading headers.
+	cr     *CipherReader              // Used by NextFrame() to unmask frame payload.
 }
 
 // NewReader creates new frame reader that reads from r keeping given state to
@@ -97,12 +114,13 @@ func (r *Reader) Read(p []byte) (n int, err error) {
 
 	n, err = r.frame.Read(p)
 	if err != nil && err != io.EOF {
-		return
+		return n, err
 	}
 	if err == nil && r.raw.N != 0 {
-		return
+		return n, nil
 	}
 
+	// EOF condition (either err is io.EOF or r.raw.N is zero).
 	switch {
 	case r.raw.N != 0:
 		err = io.ErrUnexpectedEOF
@@ -112,6 +130,8 @@ func (r *Reader) Read(p []byte) (n int, err error) {
 		r.resetFragment()
 
 	case r.CheckUTF8 && !r.utf8.Valid():
+		// NOTE: check utf8 only when full message received, since partial
+		// reads may be invalid.
 		n = r.utf8.Accepted()
 		err = ErrInvalidUTF8
 
@@ -120,7 +140,7 @@ func (r *Reader) Read(p []byte) (n int, err error) {
 		err = io.EOF
 	}
 
-	return
+	return n, err
 }
 
 // Discard discards current message unread bytes.
@@ -148,7 +168,7 @@ func (r *Reader) Discard() (err error) {
 // Note that next NextFrame() call must be done after receiving or discarding
 // all current message bytes.
 func (r *Reader) NextFrame() (hdr ws.Header, err error) {
-	hdr, err = ws.ReadHeader(r.Source)
+	hdr, err = r.readHeader(r.Source)
 	if err == io.EOF && r.fragmented() {
 		// If we are in fragmented state EOF means that is was totally
 		// unexpected.
@@ -166,14 +186,34 @@ func (r *Reader) NextFrame() (hdr ws.Header, err error) {
 		return hdr, err
 	}
 
+	if n := r.MaxFrameSize; n > 0 && hdr.Length > n {
+		return hdr, ErrFrameTooLarge
+	}
+
 	// Save raw reader to use it on discarding frame without ciphering and
 	// other streaming checks.
-	r.raw = io.LimitedReader{r.Source, hdr.Length}
+	r.raw = io.LimitedReader{
+		R: r.Source,
+		N: hdr.Length,
+	}
 
 	frame := io.Reader(&r.raw)
 	if hdr.Masked {
-		frame = NewCipherReader(frame, hdr.Mask)
+		if r.cr == nil {
+			r.cr = NewCipherReader(frame, hdr.Mask)
+		} else {
+			r.cr.Reset(frame, hdr.Mask)
+		}
+		frame = r.cr
 	}
+
+	for _, x := range r.Extensions {
+		hdr, err = x.UnsetBits(hdr)
+		if err != nil {
+			return hdr, err
+		}
+	}
+
 	if r.fragmented() {
 		if hdr.OpCode.IsControl() {
 			if cb := r.OnIntermediate; cb != nil {
@@ -183,7 +223,7 @@ func (r *Reader) NextFrame() (hdr ws.Header, err error) {
 				// Ensure that src is empty.
 				_, err = io.Copy(ioutil.Discard, &r.raw)
 			}
-			return
+			return hdr, err
 		}
 	} else {
 		r.opCode = hdr.OpCode
@@ -208,7 +248,7 @@ func (r *Reader) NextFrame() (hdr ws.Header, err error) {
 		r.State = r.State.Set(ws.StateFragmented)
 	}
 
-	return
+	return hdr, err
 }
 
 func (r *Reader) fragmented() bool {
@@ -227,6 +267,82 @@ func (r *Reader) reset() {
 	r.frame = nil
 	r.utf8 = UTF8Reader{}
 	r.opCode = 0
+}
+
+// readHeader reads a frame header from in.
+func (r *Reader) readHeader(in io.Reader) (h ws.Header, err error) {
+	// Make slice of bytes with capacity 12 that could hold any header.
+	//
+	// The maximum header size is 14, but due to the 2 hop reads,
+	// after first hop that reads first 2 constant bytes, we could reuse 2 bytes.
+	// So 14 - 2 = 12.
+	bts := r.tmp[:2]
+
+	// Prepare to hold first 2 bytes to choose size of next read.
+	_, err = io.ReadFull(in, bts)
+	if err != nil {
+		return h, err
+	}
+	const bit0 = 0x80
+
+	h.Fin = bts[0]&bit0 != 0
+	h.Rsv = (bts[0] & 0x70) >> 4
+	h.OpCode = ws.OpCode(bts[0] & 0x0f)
+
+	var extra int
+
+	if bts[1]&bit0 != 0 {
+		h.Masked = true
+		extra += 4
+	}
+
+	length := bts[1] & 0x7f
+	switch {
+	case length < 126:
+		h.Length = int64(length)
+
+	case length == 126:
+		extra += 2
+
+	case length == 127:
+		extra += 8
+
+	default:
+		err = ws.ErrHeaderLengthUnexpected
+		return h, err
+	}
+
+	if extra == 0 {
+		return h, err
+	}
+
+	// Increase len of bts to extra bytes need to read.
+	// Overwrite first 2 bytes that was read before.
+	bts = bts[:extra]
+	_, err = io.ReadFull(in, bts)
+	if err != nil {
+		return h, err
+	}
+
+	switch {
+	case length == 126:
+		h.Length = int64(binary.BigEndian.Uint16(bts[:2]))
+		bts = bts[2:]
+
+	case length == 127:
+		if bts[0]&0x80 != 0 {
+			err = ws.ErrHeaderLengthMSB
+			return h, err
+		}
+		h.Length = int64(binary.BigEndian.Uint64(bts[:8]))
+		bts = bts[8:]
+	}
+
+	if h.Masked {
+		copy(h.Mask[:], bts)
+	}
+
+	return h, nil
 }
 
 // NextReader prepares next message read from r. It returns header that

@@ -24,6 +24,14 @@ const (
 	te7Bit transferEncoding = iota
 	teQuoted
 	teBase64
+	teRaw
+)
+
+const (
+	base64EncodedLineLen = 76
+	base64DecodedLineLen = base64EncodedLineLen * 3 / 4 // this is ok since lineLen is divisible by 4
+	linesPerChunk        = 128
+	readChunkSize        = base64DecodedLineLen * linesPerChunk
 )
 
 var crnl = []byte{'\r', '\n'}
@@ -33,12 +41,25 @@ func (p *Part) Encode(writer io.Writer) error {
 	if p.Header == nil {
 		p.Header = make(textproto.MIMEHeader)
 	}
+	if p.ContentReader != nil {
+		// read some data in order to check whether the content is empty
+		p.Content = make([]byte, readChunkSize)
+		n, err := p.ContentReader.Read(p.Content)
+		if err != nil && err != io.EOF {
+			return err
+		}
+		p.Content = p.Content[:n]
+	}
 	cte := p.setupMIMEHeaders()
 	// Encode this part.
 	b := bufio.NewWriter(writer)
-	p.encodeHeader(b)
+	if err := p.encodeHeader(b); err != nil {
+		return err
+	}
 	if len(p.Content) > 0 {
-		b.Write(crnl)
+		if _, err := b.Write(crnl); err != nil {
+			return err
+		}
 		if err := p.encodeContent(b, cte); err != nil {
 			return err
 		}
@@ -51,15 +72,23 @@ func (p *Part) Encode(writer io.Writer) error {
 	marker := endMarker[:len(endMarker)-2]
 	c := p.FirstChild
 	for c != nil {
-		b.Write(marker)
-		b.Write(crnl)
+		if _, err := b.Write(marker); err != nil {
+			return err
+		}
+		if _, err := b.Write(crnl); err != nil {
+			return err
+		}
 		if err := c.Encode(b); err != nil {
 			return err
 		}
 		c = c.NextSibling
 	}
-	b.Write(endMarker)
-	b.Write(crnl)
+	if _, err := b.Write(endMarker); err != nil {
+		return err
+	}
+	if _, err := b.Write(crnl); err != nil {
+		return err
+	}
 	return b.Flush()
 }
 
@@ -70,12 +99,14 @@ func (p *Part) setupMIMEHeaders() transferEncoding {
 
 	// If we are encoding a part that previously had content-transfer-encoding set, unset it so
 	// the correct encoding detection can be done below.
-	p.Header.Del(hnContentEncoding)
+	if p.parser != nil && !p.parser.rawContent {
+		p.Header.Del(hnContentEncoding)
+	}
 
 	cte := te7Bit
 	if len(p.Content) > 0 {
 		cte = teBase64
-		if p.TextContent() {
+		if p.TextContent() && p.ContentReader == nil {
 			cte = selectTransferEncoding(p.Content, false)
 			if p.Charset == "" {
 				p.Charset = utf8
@@ -92,7 +123,7 @@ func (p *Part) setupMIMEHeaders() transferEncoding {
 	// Setup headers.
 	if p.FirstChild != nil && p.Boundary == "" {
 		// Multipart, generate random boundary marker.
-		p.Boundary = "enmime-" + stringutil.UUID()
+		p.Boundary = "enmime-" + stringutil.UUID(p.randSource)
 	}
 	if p.ContentID != "" {
 		p.Header.Set(hnContentID, coding.ToIDHeader(p.ContentID))
@@ -123,7 +154,7 @@ func (p *Part) setupMIMEHeaders() transferEncoding {
 		param := make(map[string]string)
 		setParamValue(param, hpFilename, fileName)
 		if !p.FileModDate.IsZero() {
-			setParamValue(param, hpModDate, p.FileModDate.Format(time.RFC822))
+			setParamValue(param, hpModDate, p.FileModDate.UTC().Format(time.RFC822))
 		}
 		if mt := mime.FormatMediaType(p.Disposition, param); mt != "" {
 			p.Disposition = mt
@@ -134,36 +165,51 @@ func (p *Part) setupMIMEHeaders() transferEncoding {
 }
 
 // encodeHeader writes out a sorted list of headers.
-func (p *Part) encodeHeader(b *bufio.Writer) {
+func (p *Part) encodeHeader(b *bufio.Writer) error {
 	keys := make([]string, 0, len(p.Header))
 	for k := range p.Header {
 		keys = append(keys, k)
 	}
+	rawContent := p.parser != nil && p.parser.rawContent
+
 	sort.Strings(keys)
 	for _, k := range keys {
 		for _, v := range p.Header[k] {
 			encv := v
-			switch selectTransferEncoding([]byte(v), true) {
-			case teBase64:
-				encv = mime.BEncoding.Encode(utf8, v)
-			case teQuoted:
-				encv = mime.QEncoding.Encode(utf8, v)
+			if !rawContent {
+				switch selectTransferEncoding([]byte(v), true) {
+				case teBase64:
+					encv = mime.BEncoding.Encode(utf8, v)
+				case teQuoted:
+					encv = mime.QEncoding.Encode(utf8, v)
+				}
 			}
 			// _ used to prevent early wrapping
 			wb := stringutil.Wrap(76, k, ":_", encv, "\r\n")
 			wb[len(k)+1] = ' '
-			b.Write(wb)
+			if _, err := b.Write(wb); err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
 // encodeContent writes out the content in the selected encoding.
 func (p *Part) encodeContent(b *bufio.Writer, cte transferEncoding) (err error) {
+	if p.ContentReader != nil {
+		return p.encodeContentFromReader(b)
+	}
+
+	if p.parser != nil && p.parser.rawContent {
+		cte = teRaw
+	}
+
 	switch cte {
 	case teBase64:
 		enc := base64.StdEncoding
 		text := make([]byte, enc.EncodedLen(len(p.Content)))
-		base64.StdEncoding.Encode(text, p.Content)
+		enc.Encode(text, p.Content)
 		// Wrap lines.
 		lineLen := 76
 		for len(text) > 0 {
@@ -173,7 +219,9 @@ func (p *Part) encodeContent(b *bufio.Writer, cte transferEncoding) (err error) 
 			if _, err = b.Write(text[:lineLen]); err != nil {
 				return err
 			}
-			b.Write(crnl)
+			if _, err := b.Write(crnl); err != nil {
+				return err
+			}
 			text = text[lineLen:]
 		}
 	case teQuoted:
@@ -186,6 +234,54 @@ func (p *Part) encodeContent(b *bufio.Writer, cte transferEncoding) (err error) 
 		_, err = b.Write(p.Content)
 	}
 	return err
+}
+
+// encodeContentFromReader writes out the content read from the reader using base64 encoding.
+func (p *Part) encodeContentFromReader(b *bufio.Writer) error {
+	text := make([]byte, base64EncodedLineLen) // a single base64 encoded line
+	enc := base64.StdEncoding
+
+	chunk := make([]byte, readChunkSize) // contains a whole number of lines
+	copy(chunk, p.Content)               // copy the data of the initial read that was issued by `Encode`
+	n := len(p.Content)
+
+	for {
+		// call read until we get a full chunk / error
+		for n < len(chunk) {
+			c, err := p.ContentReader.Read(chunk[n:])
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				return err
+			}
+
+			n += c
+		}
+
+		for i := 0; i < n; i += base64DecodedLineLen {
+			size := n - i
+			if size > base64DecodedLineLen {
+				size = base64DecodedLineLen
+			}
+
+			enc.Encode(text, chunk[i:i+size])
+			if _, err := b.Write(text[:enc.EncodedLen(size)]); err != nil {
+				return err
+			}
+			if _, err := b.Write(crnl); err != nil {
+				return err
+			}
+		}
+
+		if n < len(chunk) {
+			break
+		}
+
+		n = 0
+	}
+
+	return nil
 }
 
 // selectTransferEncoding scans content for non-ASCII characters and selects 'b' or 'q' encoding.

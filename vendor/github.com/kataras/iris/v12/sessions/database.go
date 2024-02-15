@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/kataras/iris/v12/context"
 	"github.com/kataras/iris/v12/core/memstore"
 
 	"github.com/kataras/golog"
@@ -29,7 +30,7 @@ type Database interface {
 	SetLogger(*golog.Logger)
 	// Acquire receives a session's lifetime from the database,
 	// if the return value is LifeTime{} then the session manager sets the life time based on the expiration duration lives in configuration.
-	Acquire(sid string, expires time.Duration) LifeTime
+	Acquire(sid string, expires time.Duration) memstore.LifeTime
 	// OnUpdateExpiration should re-set the expiration (ttl) of the session entry inside the database,
 	// it is fired on `ShiftExpiration` and `UpdateExpiration`.
 	// If the database does not support change of ttl then the session entry will be cloned to another one
@@ -61,6 +62,14 @@ type Database interface {
 	Close() error
 }
 
+// DatabaseRequestHandler is an optional interface that a sessions database
+// can implement. It contains a single EndRequest method which is fired
+// on the very end of the request life cycle. It should be used to Flush
+// any local session's values to the client.
+type DatabaseRequestHandler interface {
+	EndRequest(ctx *context.Context, session *Session)
+}
+
 type mem struct {
 	values map[string]*memstore.Store
 	mu     sync.RWMutex
@@ -72,11 +81,11 @@ func newMemDB() Database { return &mem{values: make(map[string]*memstore.Store)}
 
 func (s *mem) SetLogger(*golog.Logger) {}
 
-func (s *mem) Acquire(sid string, expires time.Duration) LifeTime {
+func (s *mem) Acquire(sid string, expires time.Duration) memstore.LifeTime {
 	s.mu.Lock()
 	s.values[sid] = new(memstore.Store)
 	s.mu.Unlock()
-	return LifeTime{}
+	return memstore.LifeTime{}
 }
 
 // Do nothing, the `LifeTime` of the Session will be managed by the callers automatically on memory-based storage.
@@ -85,24 +94,28 @@ func (s *mem) OnUpdateExpiration(string, time.Duration) error { return nil }
 // immutable depends on the store, it may not implement it at all.
 func (s *mem) Set(sid string, key string, value interface{}, _ time.Duration, immutable bool) error {
 	s.mu.RLock()
-	s.values[sid].Save(key, value, immutable)
+	store, ok := s.values[sid]
 	s.mu.RUnlock()
+	if ok {
+		store.Save(key, value, immutable)
+	}
 
 	return nil
 }
 
 func (s *mem) Get(sid string, key string) interface{} {
 	s.mu.RLock()
-	v := s.values[sid].Get(key)
+	store, ok := s.values[sid]
 	s.mu.RUnlock()
+	if ok {
+		return store.Get(key)
+	}
 
-	return v
+	return nil
 }
 
 func (s *mem) Decode(sid string, key string, outPtr interface{}) error {
-	s.mu.RLock()
-	v := s.values[sid].Get(key)
-	s.mu.RUnlock()
+	v := s.Get(sid, key)
 	if v != nil {
 		reflect.ValueOf(outPtr).Set(reflect.ValueOf(v))
 	}
@@ -110,29 +123,45 @@ func (s *mem) Decode(sid string, key string, outPtr interface{}) error {
 }
 
 func (s *mem) Visit(sid string, cb func(key string, value interface{})) error {
-	s.values[sid].Visit(cb)
+	s.mu.RLock()
+	store, ok := s.values[sid]
+	s.mu.RUnlock()
+	if ok {
+		store.Visit(cb)
+	}
+
 	return nil
 }
 
 func (s *mem) Len(sid string) int {
 	s.mu.RLock()
-	n := s.values[sid].Len()
+	store, ok := s.values[sid]
 	s.mu.RUnlock()
+	if ok {
+		return store.Len()
+	}
 
-	return n
+	return 0
 }
 
 func (s *mem) Delete(sid string, key string) (deleted bool) {
 	s.mu.RLock()
-	deleted = s.values[sid].Remove(key)
+	store, ok := s.values[sid]
 	s.mu.RUnlock()
+	if ok {
+		deleted = store.Remove(key)
+	}
+
 	return
 }
 
 func (s *mem) Clear(sid string) error {
-	s.mu.Lock()
-	s.values[sid].Reset()
-	s.mu.Unlock()
+	s.mu.RLock()
+	store, ok := s.values[sid]
+	s.mu.RUnlock()
+	if ok {
+		store.Reset()
+	}
 
 	return nil
 }
@@ -141,7 +170,6 @@ func (s *mem) Release(sid string) error {
 	s.mu.Lock()
 	delete(s.values, sid)
 	s.mu.Unlock()
-
 	return nil
 }
 

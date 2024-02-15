@@ -3,7 +3,7 @@ package view
 import (
 	"fmt"
 	"io"
-	"net/http"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -12,14 +12,14 @@ import (
 
 	"github.com/kataras/iris/v12/context"
 
-	"github.com/CloudyKit/jet/v5"
+	"github.com/CloudyKit/jet/v6"
 )
 
 const jetEngineName = "jet"
 
 // JetEngine is the jet template parser's view engine.
 type JetEngine struct {
-	fs          http.FileSystem
+	fs          fs.FS
 	rootDir     string
 	extension   string
 	left, right string
@@ -59,8 +59,8 @@ var jetExtensions = [...]string{
 // Usage:
 // Jet("./views", ".jet") or
 // Jet(iris.Dir("./views"), ".jet") or
-// Jet(AssetFile(), ".jet") for embedded data.
-func Jet(fs interface{}, extension string) *JetEngine {
+// Jet(embed.FS, ".jet") or Jet(AssetFile(), ".jet") for embedded data.
+func Jet(dirOrFS interface{}, extension string) *JetEngine {
 	extOK := false
 	for _, ext := range jetExtensions {
 		if ext == extension {
@@ -74,10 +74,10 @@ func Jet(fs interface{}, extension string) *JetEngine {
 	}
 
 	s := &JetEngine{
-		fs:                getFS(fs),
+		fs:                getFS(dirOrFS),
 		rootDir:           "/",
 		extension:         extension,
-		loader:            &jetLoader{fs: getFS(fs)},
+		loader:            &jetLoader{fs: getFS(dirOrFS)},
 		jetDataContextKey: "_jet",
 	}
 
@@ -92,6 +92,15 @@ func (s *JetEngine) String() string {
 // RootDir sets the directory to be used as a starting point
 // to load templates from the provided file system.
 func (s *JetEngine) RootDir(root string) *JetEngine {
+	if s.fs != nil && root != "" && root != "/" && root != "." && root != s.rootDir {
+		sub, err := fs.Sub(s.fs, s.rootDir)
+		if err != nil {
+			panic(err)
+		}
+
+		s.fs = sub
+	}
+
 	s.rootDir = filepath.ToSlash(root)
 	return s
 }
@@ -199,29 +208,29 @@ func (s *JetEngine) SetLoader(loader jet.Loader) *JetEngine {
 }
 
 type jetLoader struct {
-	fs http.FileSystem
+	fs fs.FS
 }
 
 var _ jet.Loader = (*jetLoader)(nil)
 
 // Open opens a file from file system.
 func (l *jetLoader) Open(name string) (io.ReadCloser, error) {
+	name = strings.TrimPrefix(name, "/")
 	return l.fs.Open(name)
 }
 
-// Exists checks if the template name exists by walking the list of template paths
-// returns string with the full path of the template and bool true if the template file was found
-func (l *jetLoader) Exists(name string) (string, bool) {
-	if _, err := l.fs.Open(name); err == nil {
-		return name, true
-	}
-
-	return "", false
+// Exists checks if the template name exists by walking the list of template paths.
+func (l *jetLoader) Exists(name string) bool {
+	name = strings.TrimPrefix(name, "/")
+	_, err := l.fs.Open(name)
+	return err == nil
 }
 
 // Load should load the templates from a physical system directory or by an embedded one (assets/go-bindata).
 func (s *JetEngine) Load() error {
-	return walk(s.fs, s.rootDir, func(path string, info os.FileInfo, err error) error {
+	rootDirName := getRootDirName(s.fs)
+
+	return walk(s.fs, "", func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -234,6 +243,11 @@ func (s *JetEngine) Load() error {
 			if !strings.HasSuffix(path, s.extension) {
 				return nil
 			}
+		}
+
+		if s.rootDir == rootDirName {
+			path = strings.TrimPrefix(path, rootDirName)
+			path = strings.TrimPrefix(path, "/")
 		}
 
 		buf, err := asset(s.fs, path)
@@ -250,26 +264,26 @@ func (s *JetEngine) Load() error {
 func (s *JetEngine) ParseTemplate(name string, contents string) error {
 	s.initSet()
 
-	_, err := s.Set.LoadTemplate(name, contents)
+	_, err := s.Set.Parse(name, contents)
 	return err
 }
 
 func (s *JetEngine) initSet() {
 	s.mu.Lock()
 	if s.Set == nil {
-		s.Set = jet.NewHTMLSetLoader(s.loader)
-		s.Set.Delims(s.left, s.right)
-		if s.developmentMode && !isNoOpFS(s.fs) {
+		var opts = []jet.Option{
+			jet.WithDelims(s.left, s.right),
+		}
+		if s.developmentMode && !context.IsNoOpFS(s.fs) {
 			// this check is made to avoid jet's fs lookup on noOp fs (nil passed by the developer).
 			// This can be produced when nil fs passed
 			// and only `ParseTemplate` is used.
-			s.Set.SetDevelopmentMode(true)
+			opts = append(opts, jet.InDevelopmentMode())
 		}
 
-		if s.vars != nil {
-			for key, value := range s.vars {
-				s.Set.AddGlobal(key, value)
-			}
+		s.Set = jet.NewSet(s.loader, opts...)
+		for key, value := range s.vars {
+			s.Set.AddGlobal(key, value)
 		}
 	}
 	s.mu.Unlock()
@@ -336,6 +350,20 @@ func (s *JetEngine) ExecuteWriter(w io.Writer, filename string, layout string, b
 			}
 		}
 
+		if viewContextData := ctx.GetViewData(); len(viewContextData) > 0 { // fix #1876
+			if vars == nil {
+				vars = make(JetRuntimeVars)
+			}
+
+			for k, v := range viewContextData {
+				val, ok := v.(reflect.Value)
+				if !ok {
+					val = reflect.ValueOf(v)
+				}
+				vars[k] = val
+			}
+		}
+
 		if v := ctx.Values().Get(s.jetDataContextKey); v != nil {
 			if bindingData == nil {
 				// if bindingData is nil, try to fill them by context key (a middleware can set data).
@@ -350,6 +378,7 @@ func (s *JetEngine) ExecuteWriter(w io.Writer, filename string, layout string, b
 				}
 			}
 		}
+
 	}
 
 	if bindingData == nil {

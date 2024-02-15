@@ -39,6 +39,10 @@ const (
 
 	// Maximum number of users allowed to batch delete at a time.
 	maxDeleteAccountsBatchSize = 1000
+	createUserMethod           = "createUser"
+	updateUserMethod           = "updateUser"
+	phoneMultiFactorID         = "phone"
+	totpMultiFactorID          = "totp"
 )
 
 // 'REDACTED', encoded as a base64 string.
@@ -59,10 +63,26 @@ type UserInfo struct {
 
 // multiFactorInfoResponse describes the `mfaInfo` of the user record API response
 type multiFactorInfoResponse struct {
-	MFAEnrollmentID string `json:"mfaEnrollmentId,omitempty"`
-	DisplayName     string `json:"displayName,omitempty"`
-	PhoneInfo       string `json:"phoneInfo,omitempty"`
-	EnrolledAt      string `json:"enrolledAt,omitempty"`
+	MFAEnrollmentID string    `json:"mfaEnrollmentId,omitempty"`
+	DisplayName     string    `json:"displayName,omitempty"`
+	PhoneInfo       string    `json:"phoneInfo,omitempty"`
+	TOTPInfo        *TOTPInfo `json:"totpInfo,omitempty"`
+	EnrolledAt      string    `json:"enrolledAt,omitempty"`
+}
+
+// TOTPInfo describes a user enrolled second TOTP factor.
+type TOTPInfo struct{}
+
+// PhoneMultiFactorInfo describes a user enrolled in SMS second factor.
+type PhoneMultiFactorInfo struct {
+	PhoneNumber string
+}
+
+// TOTPMultiFactorInfo describes a user enrolled in TOTP second factor.
+type TOTPMultiFactorInfo struct{}
+
+type multiFactorEnrollments struct {
+	Enrollments []*multiFactorInfoResponse `json:"enrollments"`
 }
 
 // MultiFactorInfo describes a user enrolled second phone factor.
@@ -71,7 +91,9 @@ type MultiFactorInfo struct {
 	DisplayName         string
 	EnrollmentTimestamp int64
 	FactorID            string
-	PhoneNumber         string
+	PhoneNumber         string // Deprecated: Use PhoneMultiFactorInfo instead
+	Phone               *PhoneMultiFactorInfo
+	TOTP                *TOTPMultiFactorInfo
 }
 
 // MultiFactorSettings describes the multi-factor related user settings.
@@ -147,6 +169,11 @@ func (u *UserToCreate) UID(uid string) *UserToCreate {
 	return u.set("localId", uid)
 }
 
+// MFASettings setter.
+func (u *UserToCreate) MFASettings(mfaSettings MultiFactorSettings) *UserToCreate {
+	return u.set("mfaSettings", mfaSettings)
+}
+
 func (u *UserToCreate) set(key string, value interface{}) *UserToCreate {
 	if u.params == nil {
 		u.params = make(map[string]interface{})
@@ -155,10 +182,40 @@ func (u *UserToCreate) set(key string, value interface{}) *UserToCreate {
 	return u
 }
 
+// Converts a client format second factor object to server format.
+func convertMultiFactorInfoToServerFormat(mfaInfo MultiFactorInfo) (multiFactorInfoResponse, error) {
+	authFactorInfo := multiFactorInfoResponse{DisplayName: mfaInfo.DisplayName}
+	if mfaInfo.EnrollmentTimestamp != 0 {
+		authFactorInfo.EnrolledAt = time.Unix(mfaInfo.EnrollmentTimestamp, 0).Format("2006-01-02T15:04:05Z07:00Z")
+	}
+	if mfaInfo.UID != "" {
+		authFactorInfo.MFAEnrollmentID = mfaInfo.UID
+	}
+
+	switch mfaInfo.FactorID {
+	case phoneMultiFactorID:
+		authFactorInfo.PhoneInfo = mfaInfo.Phone.PhoneNumber
+	case totpMultiFactorID:
+		authFactorInfo.TOTPInfo = (*TOTPInfo)(mfaInfo.TOTP)
+	default:
+		out, _ := json.Marshal(mfaInfo)
+		return multiFactorInfoResponse{}, fmt.Errorf("unsupported second factor %s provided", string(out))
+	}
+	return authFactorInfo, nil
+}
+
 func (u *UserToCreate) validatedRequest() (map[string]interface{}, error) {
 	req := make(map[string]interface{})
 	for k, v := range u.params {
-		req[k] = v
+		if k == "mfaSettings" {
+			mfaInfo, err := validateAndFormatMfaSettings(v.(MultiFactorSettings), createUserMethod)
+			if err != nil {
+				return nil, err
+			}
+			req["mfaInfo"] = mfaInfo
+		} else {
+			req[k] = v
+		}
 	}
 
 	if uid, ok := req["localId"]; ok {
@@ -191,7 +248,6 @@ func (u *UserToCreate) validatedRequest() (map[string]interface{}, error) {
 			return nil, err
 		}
 	}
-
 	return req, nil
 }
 
@@ -239,6 +295,11 @@ func (u *UserToUpdate) PhoneNumber(phone string) *UserToUpdate {
 // PhotoURL setter. Set to empty string to remove the photo URL from the user account.
 func (u *UserToUpdate) PhotoURL(url string) *UserToUpdate {
 	return u.set("photoUrl", url)
+}
+
+// MFASettings setter.
+func (u *UserToUpdate) MFASettings(mfaSettings MultiFactorSettings) *UserToUpdate {
+	return u.set("mfaSettings", mfaSettings)
 }
 
 // ProviderToLink links this user to the specified provider.
@@ -291,7 +352,16 @@ func (u *UserToUpdate) validatedRequest() (map[string]interface{}, error) {
 
 	req := make(map[string]interface{})
 	for k, v := range u.params {
-		req[k] = v
+		if k == "mfaSettings" {
+			mfaInfo, err := validateAndFormatMfaSettings(v.(MultiFactorSettings), updateUserMethod)
+			if err != nil {
+				return nil, err
+			}
+			// Request body ref: https://cloud.google.com/identity-platform/docs/reference/rest/v1/accounts/update
+			req["mfa"] = multiFactorEnrollments{mfaInfo}
+		} else {
+			req[k] = v
+		}
 	}
 
 	if email, ok := req["email"]; ok {
@@ -476,7 +546,7 @@ func IsEmailNotFound(err error) bool {
 
 // IsInsufficientPermission checks if the given error was due to insufficient permissions.
 //
-// Deprecated. Always returns false.
+// Deprecated: Always returns false.
 func IsInsufficientPermission(err error) bool {
 	return false
 }
@@ -488,7 +558,7 @@ func IsInvalidDynamicLinkDomain(err error) bool {
 
 // IsInvalidEmail checks if the given error was due to an invalid email.
 //
-// Deprecated. Always returns false.
+// Deprecated: Always returns false.
 func IsInvalidEmail(err error) bool {
 	return false
 }
@@ -500,7 +570,7 @@ func IsPhoneNumberAlreadyExists(err error) bool {
 
 // IsProjectNotFound checks if the given error was due to a non-existing project.
 //
-// Deprecated. Always returns false.
+// Deprecated: Always returns false.
 func IsProjectNotFound(err error) bool {
 	return false
 }
@@ -522,7 +592,7 @@ func IsUnauthorizedContinueURI(err error) bool {
 
 // IsUnknown checks if the given error was due to a unknown server error.
 //
-// Deprecated. Always returns false.
+// Deprecated: Always returns false.
 func IsUnknown(err error) bool {
 	return false
 }
@@ -604,6 +674,58 @@ func validateProvider(providerID string, providerUID string) error {
 	return nil
 }
 
+func validateAndFormatMfaSettings(mfaSettings MultiFactorSettings, methodType string) ([]*multiFactorInfoResponse, error) {
+	var mfaInfo []*multiFactorInfoResponse
+	for _, multiFactorInfo := range mfaSettings.EnrolledFactors {
+		if multiFactorInfo.FactorID == "" {
+			return nil, fmt.Errorf("no factor id specified")
+		}
+		switch methodType {
+		case createUserMethod:
+			// Enrollment time and uid are not allowed for signupNewUser endpoint. They will automatically be provisioned server side.
+			if multiFactorInfo.EnrollmentTimestamp != 0 {
+				return nil, fmt.Errorf("\"EnrollmentTimeStamp\" is not supported when adding second factors via \"createUser()\"")
+			}
+			if multiFactorInfo.UID != "" {
+				return nil, fmt.Errorf("\"uid\" is not supported when adding second factors via \"createUser()\"")
+			}
+		case updateUserMethod:
+		default:
+			return nil, fmt.Errorf("unsupported methodType: %s", methodType)
+		}
+		if err := validateDisplayName(multiFactorInfo.DisplayName); err != nil {
+			return nil, fmt.Errorf("the second factor \"displayName\" for \"%s\" must be a valid non-empty string", multiFactorInfo.DisplayName)
+		}
+		if multiFactorInfo.FactorID == phoneMultiFactorID {
+			if multiFactorInfo.Phone != nil {
+				// If PhoneMultiFactorInfo is provided, validate its PhoneNumber field
+				if err := validatePhone(multiFactorInfo.Phone.PhoneNumber); err != nil {
+					return nil, fmt.Errorf("the second factor \"phoneNumber\" for \"%s\" must be a non-empty E.164 standard compliant identifier string", multiFactorInfo.Phone.PhoneNumber)
+				}
+				// No need for the else here since we are returning from the function
+			} else if multiFactorInfo.PhoneNumber != "" {
+				// PhoneMultiFactorInfo is nil, check the deprecated PhoneNumber field
+				if err := validatePhone(multiFactorInfo.PhoneNumber); err != nil {
+					return nil, fmt.Errorf("the second factor \"phoneNumber\" for \"%s\" must be a non-empty E.164 standard compliant identifier string", multiFactorInfo.PhoneNumber)
+				}
+				// The PhoneNumber field is deprecated, set it in PhoneMultiFactorInfo and inform about the deprecation.
+				multiFactorInfo.Phone = &PhoneMultiFactorInfo{
+					PhoneNumber: multiFactorInfo.PhoneNumber,
+				}
+			} else {
+				// Both PhoneMultiFactorInfo and deprecated PhoneNumber are missing.
+				return nil, fmt.Errorf("\"PhoneMultiFactorInfo\" must be defined")
+			}
+		}
+		obj, err := convertMultiFactorInfoToServerFormat(*multiFactorInfo)
+		if err != nil {
+			return nil, err
+		}
+		mfaInfo = append(mfaInfo, &obj)
+	}
+	return mfaInfo, nil
+}
+
 // End of validators
 
 // GetUser gets the user data corresponding to the specified user ID.
@@ -640,7 +762,7 @@ func (c *baseClient) GetUserByPhoneNumber(ctx context.Context, phone string) (*U
 
 // GetUserByProviderID is an alias for GetUserByProviderUID.
 //
-// Deprecated. Use GetUserByProviderUID instead.
+// Deprecated: Use GetUserByProviderUID instead.
 func (c *baseClient) GetUserByProviderID(ctx context.Context, providerID string, providerUID string) (*UserRecord, error) {
 	return c.GetUserByProviderUID(ctx, providerID, providerUID)
 }
@@ -991,17 +1113,28 @@ func (r *userQueryResponse) makeExportedUserRecord() (*ExportedUserRecord, error
 			enrollmentTimestamp = t.Unix() * 1000
 		}
 
-		if factor.PhoneInfo == "" {
+		if factor.PhoneInfo != "" {
+			enrolledFactors = append(enrolledFactors, &MultiFactorInfo{
+				UID:                 factor.MFAEnrollmentID,
+				DisplayName:         factor.DisplayName,
+				EnrollmentTimestamp: enrollmentTimestamp,
+				FactorID:            phoneMultiFactorID,
+				PhoneNumber:         factor.PhoneInfo,
+				Phone: &PhoneMultiFactorInfo{
+					PhoneNumber: factor.PhoneInfo,
+				},
+			})
+		} else if factor.TOTPInfo != nil {
+			enrolledFactors = append(enrolledFactors, &MultiFactorInfo{
+				UID:                 factor.MFAEnrollmentID,
+				DisplayName:         factor.DisplayName,
+				EnrollmentTimestamp: enrollmentTimestamp,
+				FactorID:            totpMultiFactorID,
+				TOTP:                &TOTPMultiFactorInfo{},
+			})
+		} else {
 			return nil, fmt.Errorf("unsupported multi-factor auth response: %#v", factor)
 		}
-
-		enrolledFactors = append(enrolledFactors, &MultiFactorInfo{
-			UID:                 factor.MFAEnrollmentID,
-			DisplayName:         factor.DisplayName,
-			EnrollmentTimestamp: enrollmentTimestamp,
-			FactorID:            "phone",
-			PhoneNumber:         factor.PhoneInfo,
-		})
 	}
 
 	return &ExportedUserRecord{

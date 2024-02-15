@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-docker build --pull -t nested-server:local .
+docker build -t nested-server -f ./devops/Dockerfile .
 

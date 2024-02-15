@@ -2,13 +2,13 @@ package context
 
 import (
 	"bytes"
-	stdContext "context"
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"mime"
 	"mime/multipart"
 	"net"
 	"net/http"
@@ -30,17 +30,27 @@ import (
 
 	"github.com/Shopify/goreferrer"
 	"github.com/fatih/structs"
+	"github.com/gomarkdown/markdown"
+	"github.com/gomarkdown/markdown/html"
 	"github.com/iris-contrib/schema"
-	jsoniter "github.com/json-iterator/go"
-	"github.com/kataras/golog"
+	"github.com/mailru/easyjson"
+	"github.com/mailru/easyjson/jwriter"
 	"github.com/microcosm-cc/bluemonday"
-	"github.com/russross/blackfriday/v2"
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/net/publicsuffix"
 	"golang.org/x/time/rate"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"gopkg.in/yaml.v3"
+)
+
+var (
+	// BuildRevision holds the vcs commit id information of the program's build.
+	// Available at go version 1.18+
+	BuildRevision string
+	// BuildTime holds the vcs commit time information of the program's build.
+	// Available at go version 1.18+
+	BuildTime string
 )
 
 type (
@@ -54,15 +64,21 @@ type (
 	//	  return json.Unmarshal(data, u)
 	// }
 	//
-	// the 'context.ReadJSON/ReadXML(&User{})' will call the User's
+	// the 'Context.ReadJSON/ReadXML(&User{})' will call the User's
 	// Decode option to decode the request body
 	//
 	// Note: This is totally optionally, the default decoders
 	// for ReadJSON is the encoding/json and for ReadXML is the encoding/xml.
 	//
-	// Example: https://github.com/kataras/iris/blob/master/_examples/request-body/read-custom-per-type/main.go
+	// Example: https://github.com/kataras/iris/blob/main/_examples/request-body/read-custom-per-type/main.go
 	BodyDecoder interface {
 		Decode(data []byte) error
+	}
+
+	// BodyDecoderWithContext same as BodyDecoder but it can accept a standard context,
+	// which is binded to the HTTP request's context.
+	BodyDecoderWithContext interface {
+		DecodeContext(ctx context.Context, data []byte) error
 	}
 
 	// Unmarshaler is the interface implemented by types that can unmarshal any raw data.
@@ -75,8 +91,15 @@ type (
 	//
 	// See 'Unmarshaler' and 'BodyDecoder' for more.
 	//
-	// Example: https://github.com/kataras/iris/blob/master/_examples/request-body/read-custom-via-unmarshaler/main.go
+	// Example: https://github.com/kataras/iris/blob/main/_examples/request-body/read-custom-via-unmarshaler/main.go
 	UnmarshalerFunc func(data []byte, outPtr interface{}) error
+
+	// DecodeFunc is a generic type of decoder function.
+	// When the returned error is not nil the decode operation
+	// is terminated and the error is received by the ReadJSONStream method,
+	// otherwise it continues to read the next available object.
+	// Look the `Context.ReadJSONStream` method.
+	DecodeFunc func(outPtr interface{}) error
 )
 
 // Unmarshal parses the X-encoded data and stores the result in the value pointed to by v.
@@ -128,7 +151,13 @@ type Context struct {
 	// to true on `Next` call when its called on the last handler in the chain.
 	// Reports whether a `Next` is called,
 	// even if the handler index remains the same (last handler).
-	proceeded uint32
+	//
+	// Also it's responsible to keep the old value of the last known handler index
+	// before StopExecution. See ResumeExecution.
+	proceeded int
+
+	// if true, caller is responsible to release the context (put the context to the pool).
+	manualRelease bool
 }
 
 // NewContext returns a new Context instance.
@@ -171,7 +200,8 @@ func (ctx *Context) Clone() *Context {
 		writer:              ctx.writer.Clone(),
 		request:             req,
 		currentHandlerIndex: stopExecutionIndex,
-		proceeded:           atomic.LoadUint32(&ctx.proceeded),
+		proceeded:           ctx.proceeded,
+		manualRelease:       ctx.manualRelease,
 		currentRoute:        ctx.currentRoute,
 	}
 }
@@ -195,6 +225,7 @@ func (ctx *Context) BeginRequest(w http.ResponseWriter, r *http.Request) {
 	ctx.request = r
 	ctx.currentHandlerIndex = 0
 	ctx.proceeded = 0
+	ctx.manualRelease = false
 	ctx.writer = AcquireResponseWriter()
 	ctx.writer.BeginResponse(w)
 }
@@ -215,19 +246,39 @@ func (ctx *Context) EndRequest() {
 	ctx.writer.EndResponse()
 }
 
+// DisablePoolRelease disables the auto context pool Put call.
+// Do NOT use it, unless you know what you are doing.
+func (ctx *Context) DisablePoolRelease() {
+	ctx.manualRelease = true
+}
+
 // IsCanceled reports whether the client canceled the request
 // or the underlying connection has gone.
 // Note that it will always return true
 // when called from a goroutine after the request-response lifecycle.
 func (ctx *Context) IsCanceled() bool {
+	var err error
 	if reqCtx := ctx.request.Context(); reqCtx != nil {
-		err := reqCtx.Err()
-		if err != nil && errors.Is(err, stdContext.Canceled) {
-			return true
-		}
+		err = reqCtx.Err()
+	} else {
+		err = ctx.GetErr()
 	}
 
-	return false
+	return IsErrCanceled(err)
+}
+
+// IsErrCanceled reports whether the "err" is caused by a cancellation or timeout.
+func IsErrCanceled(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	var netErr net.Error
+	return (errors.As(err, &netErr) && netErr.Timeout()) ||
+		errors.Is(err, context.Canceled) ||
+		errors.Is(err, context.DeadlineExceeded) ||
+		errors.Is(err, http.ErrHandlerTimeout) ||
+		err.Error() == "closed pool"
 }
 
 // OnConnectionClose registers the "cb" Handler
@@ -386,7 +437,7 @@ var acquireGoroutines = func() interface{} {
 	return &goroutines{wg: new(sync.WaitGroup)}
 }
 
-func (ctx *Context) Go(fn func(cancelCtx stdContext.Context)) (running int) {
+func (ctx *Context) Go(fn func(cancelCtx context.Context)) (running int) {
 	g := ctx.values.GetOrSet(goroutinesContextKey, acquireGoroutines).(*goroutines)
 	if fn != nil {
 		g.wg.Add(1)
@@ -397,7 +448,7 @@ func (ctx *Context) Go(fn func(cancelCtx stdContext.Context)) (running int) {
 
 		ctx.waitFunc = g.wg.Wait
 
-		go func(reqCtx stdContext.Context) {
+		go func(reqCtx context.Context) {
 			fn(reqCtx)
 			g.wg.Done()
 
@@ -422,8 +473,12 @@ func (ctx *Context) ResponseWriter() ResponseWriter {
 // ResetResponseWriter sets a new ResponseWriter implementation
 // to this Context to use as its writer.
 // Note, to change the underline http.ResponseWriter use
-// ctx.ResponseWriter().SetWriter(http.ResponseWRiter) instead.
+// ctx.ResponseWriter().SetWriter(http.ResponseWriter) instead.
 func (ctx *Context) ResetResponseWriter(newResponseWriter ResponseWriter) {
+	if rec, ok := ctx.IsRecording(); ok {
+		releaseResponseRecorder(rec)
+	}
+
 	ctx.writer = newResponseWriter
 }
 
@@ -483,7 +538,6 @@ func (ctx *Context) Do(handlers Handlers) {
 // Router is calling this function to add the route's handler.
 // If AddHandler called then the handlers will be inserted
 // to the end of the already-defined route's handler.
-//
 func (ctx *Context) AddHandler(handlers ...Handler) {
 	ctx.handlers = append(ctx.handlers, handlers...)
 }
@@ -534,43 +588,60 @@ func (ctx *Context) HandlerIndex(n int) (currentIndex int) {
 //
 // That said let's see an example of `ctx.Proceed`:
 //
-// var authMiddleware = basicauth.New(basicauth.Config{
-// 	Users: map[string]string{
-// 		"admin": "password",
-// 	},
-// })
+//	var authMiddleware = basicauth.New(basicauth.Config{
+//		Users: map[string]string{
+//			"admin": "password",
+//		},
+//	})
 //
-// func (c *UsersController) BeginRequest(ctx iris.Context) {
-// 	if !ctx.Proceed(authMiddleware) {
-// 		ctx.StopExecution()
-// 	}
-// }
+//	func (c *UsersController) BeginRequest(ctx iris.Context) {
+//		if !ctx.Proceed(authMiddleware) {
+//			ctx.StopExecution()
+//		}
+//	}
+//
 // This Get() will be executed in the same handler as `BeginRequest`,
 // internally controller checks for `ctx.StopExecution`.
 // So it will not be fired if BeginRequest called the `StopExecution`.
-// func(c *UsersController) Get() []models.User {
-//	  return c.Service.GetAll()
-//}
+//
+//	func(c *UsersController) Get() []models.User {
+//		  return c.Service.GetAll()
+//	}
+//
 // Alternative way is `!ctx.IsStopped()` if middleware make use of the `ctx.StopExecution()` on failure.
 func (ctx *Context) Proceed(h Handler) bool {
+	_, ok := ctx.ProceedAndReportIfStopped(h)
+	return ok
+}
+
+// ProceedAndReportIfStopped same as "Proceed" method
+// but the first output parameter reports whether the "h"
+// called "StopExecution" manually.
+func (ctx *Context) ProceedAndReportIfStopped(h Handler) (bool, bool) {
+	ctx.proceeded = internalPauseExecutionIndex
+
+	// Store the current index.
 	beforeIdx := ctx.currentHandlerIndex
-	atomic.StoreUint32(&ctx.proceeded, 0)
 	h(ctx)
+	// Retrieve the next one, if Next is called this is beforeIdx + 1 and so on.
+	afterIdx := ctx.currentHandlerIndex
+	// Restore prev index, no matter what.
+	ctx.currentHandlerIndex = beforeIdx
 
-	if ctx.currentHandlerIndex == stopExecutionIndex {
-		return false
+	proceededByNext := ctx.proceeded == internalProceededHandlerIndex
+	ctx.proceeded = beforeIdx
+
+	// Stop called, return false but keep the handlers index.
+	if afterIdx == stopExecutionIndex {
+		return true, false
 	}
 
-	if ctx.currentHandlerIndex <= beforeIdx {
-		// If "h" didn't call its Next
-		// or it doesn't have a next handler,
-		// that index will be the same,
-		// so we check if at least once the
-		// Next is called on the last handler.
-		return atomic.CompareAndSwapUint32(&ctx.proceeded, 1, 0)
+	if proceededByNext {
+		return false, true
 	}
 
-	return true
+	// Next called or not.
+	return false, afterIdx > beforeIdx
 }
 
 // HandlerName returns the current handler's name, helpful for debugging.
@@ -601,14 +672,15 @@ func (ctx *Context) Next() {
 		return
 	}
 
-	nextIndex := ctx.currentHandlerIndex + 1
-	handlers := ctx.handlers
+	if ctx.proceeded <= internalPauseExecutionIndex /* pause and proceeded */ {
+		ctx.proceeded = internalProceededHandlerIndex
+		return
+	}
 
-	if n := len(handlers); nextIndex == n {
-		atomic.StoreUint32(&ctx.proceeded, 1) // last handler but Next is called.
-	} else if nextIndex < n {
+	nextIndex, n := ctx.currentHandlerIndex+1, len(ctx.handlers)
+	if nextIndex < n {
 		ctx.currentHandlerIndex = nextIndex
-		handlers[nextIndex](ctx)
+		ctx.handlers[nextIndex](ctx)
 	}
 }
 
@@ -665,19 +737,45 @@ func (ctx *Context) Skip() {
 	ctx.HandlerIndex(ctx.currentHandlerIndex + 1)
 }
 
-const stopExecutionIndex = -1 // I don't set to a max value because we want to be able to reuse the handlers even if stopped with .Skip
+const (
+	stopExecutionIndex            = -1
+	internalPauseExecutionIndex   = -2
+	internalProceededHandlerIndex = -3
+)
 
 // StopExecution stops the handlers chain of this request.
 // Meaning that any following `Next` calls are ignored,
 // as a result the next handlers in the chain will not be fire.
+//
+// See ResumeExecution too.
 func (ctx *Context) StopExecution() {
-	ctx.currentHandlerIndex = stopExecutionIndex
+	if curIdx := ctx.currentHandlerIndex; curIdx != stopExecutionIndex {
+		// Protect against multiple calls of StopExecution.
+		// Resume should set the last proceeded handler index.
+		// Store the current index.
+		ctx.proceeded = curIdx
+		// And stop.
+		ctx.currentHandlerIndex = stopExecutionIndex
+	}
 }
 
 // IsStopped reports whether the current position of the context's handlers is -1,
 // means that the StopExecution() was called at least once.
 func (ctx *Context) IsStopped() bool {
 	return ctx.currentHandlerIndex == stopExecutionIndex
+}
+
+// ResumeExecution sets the current handler index to the last
+// index of the executed handler before StopExecution method was fired.
+//
+// Reports whether it's restored after a StopExecution call.
+func (ctx *Context) ResumeExecution() bool {
+	if ctx.IsStopped() {
+		ctx.currentHandlerIndex = ctx.proceeded
+		return true
+	}
+
+	return false
 }
 
 // StopWithStatus stops the handlers chain and writes the "statusCode".
@@ -742,9 +840,9 @@ func (ctx *Context) StopWithPlainError(statusCode int, err error) {
 //
 // If the status code is a failure one then
 // it will also fire the specified error code handler.
-func (ctx *Context) StopWithJSON(statusCode int, jsonObject interface{}) {
+func (ctx *Context) StopWithJSON(statusCode int, jsonObject interface{}) error {
 	ctx.StopWithStatus(statusCode)
-	ctx.JSON(jsonObject)
+	return ctx.writeJSON(jsonObject, &DefaultJSONOptions) // do not modify - see errors.DefaultContextErrorHandler.
 }
 
 // StopWithProblem stops the handlers chain, writes the status code
@@ -753,10 +851,10 @@ func (ctx *Context) StopWithJSON(statusCode int, jsonObject interface{}) {
 //
 // If the status code is a failure one then
 // it will also fire the specified error code handler.
-func (ctx *Context) StopWithProblem(statusCode int, problem Problem) {
+func (ctx *Context) StopWithProblem(statusCode int, problem Problem) error {
 	ctx.StopWithStatus(statusCode)
 	problem.Status(statusCode)
-	ctx.Problem(problem)
+	return ctx.Problem(problem)
 }
 
 //  +------------------------------------------------------------+
@@ -840,7 +938,7 @@ func (ctx *Context) RequestPath(escape bool) string {
 
 const sufscheme = "://"
 
-// GetScheme returns the full scheme of the request URL (https://, http:// or ws:// and e.t.c.``).
+// GetScheme returns the full scheme of the request URL (https://, http:// or ws:// and e.t.c.).
 func GetScheme(r *http.Request) string {
 	scheme := r.URL.Scheme
 
@@ -902,7 +1000,8 @@ func (ctx *Context) Host() string {
 }
 
 // GetDomain resolves and returns the server's domain.
-func GetDomain(hostport string) string {
+// To customize its behavior, developers can modify this package-level function at initialization.
+var GetDomain = func(hostport string) string {
 	host := hostport
 	if tmp, _, err := net.SplitHostPort(hostport); err == nil {
 		host = tmp
@@ -914,6 +1013,10 @@ func GetDomain(hostport string) string {
 		// loopback.
 		return "localhost"
 	default:
+		if net.ParseIP(host) != nil { // if it's an IP, see #1945.
+			return host
+		}
+
 		if domain, err := publicsuffix.EffectiveTLDPlusOne(host); err == nil {
 			host = domain
 		}
@@ -977,7 +1080,7 @@ func (ctx *Context) Subdomain() (subdomain string) {
 // this request based on subdomain and request path.
 //
 // Order may change.
-// Example: https://github.com/kataras/iris/tree/master/_examples/routing/intelligence/manual
+// Example: https://github.com/kataras/iris/tree/main/_examples/routing/intelligence/manual
 func (ctx *Context) FindClosest(n int) []string {
 	return ctx.app.FindClosestPaths(ctx.Subdomain(), ctx.Path(), n)
 }
@@ -1011,10 +1114,11 @@ func (ctx *Context) FullRequestURI() string {
 // even if it's part of a private network.
 //
 // Look `Configuration.RemoteAddrHeaders`,
-//		`Configuration.RemoteAddrHeadersForce`,
-//      `Configuration.WithRemoteAddrHeader(...)`,
-//      `Configuration.WithoutRemoteAddrHeader(...)` and
-//      `Configuration.RemoteAddrPrivateSubnets` for more.
+//
+//	Configuration.RemoteAddrHeadersForce,
+//	Configuration.WithRemoteAddrHeader(...),
+//	Configuration.WithoutRemoteAddrHeader(...) and
+//	Configuration.RemoteAddrPrivateSubnetsW for more.
 func (ctx *Context) RemoteAddr() string {
 	if remoteHeaders := ctx.app.ConfigurationReadOnly().GetRemoteAddrHeaders(); len(remoteHeaders) > 0 {
 		privateSubnets := ctx.app.ConfigurationReadOnly().GetRemoteAddrPrivateSubnets()
@@ -1076,7 +1180,7 @@ func (ctx *Context) GetHeader(name string) string {
 // try to find another way of detecting the type(i.e, content type),
 // there are many blogs that describe these problems and provide different kind of solutions,
 // it's always depending on the application you're building,
-// this is the reason why this `IsAjax`` is simple enough for general purpose use.
+// this is the reason why this `IsAjax` is simple enough for general purpose use.
 //
 // Read more at: https://developer.mozilla.org/en-US/docs/AJAX
 // and https://xhr.spec.whatwg.org/
@@ -1130,7 +1234,7 @@ func (ctx *Context) IsHTTP2() bool {
 
 // IsGRPC reports whether the request came from a gRPC client.
 func (ctx *Context) IsGRPC() bool {
-	return ctx.IsHTTP2() && ctx.GetContentTypeRequested() == ContentGRPCHeaderValue
+	return ctx.IsHTTP2() && strings.Contains(ctx.GetContentTypeRequested(), ContentGRPCHeaderValue)
 }
 
 type (
@@ -1254,7 +1358,7 @@ func (ctx *Context) GetLocale() Locale {
 // Tr returns a i18n localized message based on format with optional arguments.
 // See `GetLocale` too.
 //
-// Example: https://github.com/kataras/iris/tree/master/_examples/i18n
+// Example: https://github.com/kataras/iris/tree/main/_examples/i18n
 func (ctx *Context) Tr(key string, args ...interface{}) string {
 	return ctx.app.I18nReadOnly().TrContext(ctx, key, args...)
 }
@@ -1360,7 +1464,7 @@ func (ctx *Context) GetContentLength() int64 {
 // StatusCode sets the status code header to the response.
 // Look .GetStatusCode & .FireStatusCode too.
 //
-// Remember, the last one before .Write matters except recorder and transactions.
+// Note that you must set status code before write response body (except when recorder is used).
 func (ctx *Context) StatusCode(statusCode int) {
 	ctx.writer.WriteHeader(statusCode)
 }
@@ -1370,7 +1474,7 @@ func (ctx *Context) StatusCode(statusCode int) {
 // to be executed. Next handlers are being executed on iris because you can alt the
 // error code and change it to a more specific one, i.e
 // users := app.Party("/users")
-// users.Done(func(ctx iris.Context){ if ctx.StatusCode() == 400 { /*  custom error code for /users */ }})
+// users.Done(func(ctx iris.Context){ if ctx.GetStatusCode() == 400 { /*  custom error code for /users */ }})
 func (ctx *Context) NotFound() {
 	ctx.StatusCode(http.StatusNotFound)
 }
@@ -1416,11 +1520,39 @@ func (ctx *Context) URLParam(name string) string {
 // URLParamSlice a shortcut of ctx.Request().URL.Query()[name].
 // Like `URLParam` but it returns all values instead of a single string separated by commas.
 // Returns the values of a url query of the given "name" as string slice, e.g.
-// ?name=john&name=doe&name=kataras will return [ john doe kataras].
+// ?names=john&names=doe&names=kataras and ?names=john,doe,kataras will return [ john doe kataras].
+//
+// Note that, this method skips any empty entries.
 //
 // See `URLParamsSorted` for sorted values.
 func (ctx *Context) URLParamSlice(name string) []string {
-	return ctx.getQuery()[name]
+	values := ctx.getQuery()[name]
+	n := len(values)
+	if n == 0 {
+		return values
+	}
+
+	var sep string
+	if sepPtr := ctx.app.ConfigurationReadOnly().GetURLParamSeparator(); sepPtr != nil {
+		sep = *sepPtr
+	}
+
+	normalizedValues := make([]string, 0, n)
+	for _, v := range values {
+		if v == "" {
+			continue
+		}
+
+		if sep != "" {
+			values := strings.Split(v, sep)
+			normalizedValues = append(normalizedValues, values...)
+			continue
+		}
+
+		normalizedValues = append(normalizedValues, v)
+	}
+
+	return normalizedValues
 }
 
 // URLParamTrim returns the url query parameter with trailing white spaces removed from a request.
@@ -1439,9 +1571,11 @@ func (ctx *Context) URLParamEscape(name string) string {
 // Example:
 //
 // n, err := context.URLParamInt("url_query_param_name")
-// if errors.Is(err, context.ErrNotFound) {
-// 	// [handle error...]
-// }
+//
+//	if errors.Is(err, context.ErrNotFound) {
+//		// [handle error...]
+//	}
+//
 // Another usage would be `err == context.ErrNotFound`
 // HOWEVER prefer use the new `errors.Is` as API details may change in the future.
 var ErrNotFound = errors.New("not found")
@@ -1554,6 +1688,17 @@ func (ctx *Context) URLParamFloat64Default(name string, def float64) float64 {
 // returns an error if parse failed.
 func (ctx *Context) URLParamBool(name string) (bool, error) {
 	return strconv.ParseBool(ctx.URLParam(name))
+}
+
+// URLParamBoolDefault returns the url query parameter as boolean value from a request,
+// if not found or parse failed then "def" is returned.
+func (ctx *Context) URLParamBoolDefault(name string, def bool) bool {
+	v, err := ctx.URLParamBool(name)
+	if err != nil {
+		return def
+	}
+
+	return v
 }
 
 // URLParams returns a map of URL Query parameters.
@@ -1688,16 +1833,17 @@ func GetForm(r *http.Request, postMaxMemory int64, resetBody bool) (form map[str
 		}
 	}
 
-	var bodyCopy []byte
-
 	if resetBody {
 		// on POST, PUT and PATCH it will read the form values from request body otherwise from URL queries.
 		if m := r.Method; m == "POST" || m == "PUT" || m == "PATCH" {
-			bodyCopy, _ = GetBody(r, resetBody)
-			if len(bodyCopy) == 0 {
+			body, restoreBody, err := GetBody(r, resetBody)
+			if err != nil {
 				return nil, false
 			}
-			// r.Body = ioutil.NopCloser(io.TeeReader(r.Body, buf))
+			setBody(r, body)    // so the ctx.request.Body works
+			defer restoreBody() // so the next GetForm calls work.
+
+			// r.Body = io.NopCloser(io.TeeReader(r.Body, buf))
 		} else {
 			resetBody = false
 		}
@@ -1708,9 +1854,9 @@ func GetForm(r *http.Request, postMaxMemory int64, resetBody bool) (form map[str
 	// After one call to ParseMultipartForm or ParseForm,
 	// subsequent calls have no effect, are idempotent.
 	err := r.ParseMultipartForm(postMaxMemory)
-	if resetBody {
-		r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyCopy))
-	}
+	// if resetBody {
+	// 	r.Body = io.NopCloser(bytes.NewBuffer(bodyCopy))
+	// }
 	if err != nil && err != http.ErrNotMultipart {
 		return nil, false
 	}
@@ -1813,6 +1959,21 @@ func (ctx *Context) PostValueDefault(name string, def string) string {
 	return values[len(values)-1]
 }
 
+// PostValueString same as `PostValue` method but it reports
+// an error if the value with key equals to "name" does not exist.
+func (ctx *Context) PostValueString(name string) (string, error) {
+	values, err := ctx.PostValues(name)
+	if err != nil {
+		return "", err
+	}
+
+	if len(values) == 0 { // just in case.
+		return "", ErrEmptyForm
+	}
+
+	return values[len(values)-1], nil
+}
+
 // PostValue returns the last parsed form data from POST, PATCH,
 // or PUT body parameters based on a "name".
 //
@@ -1827,102 +1988,346 @@ func (ctx *Context) PostValueTrim(name string) string {
 	return strings.TrimSpace(ctx.PostValue(name))
 }
 
-// PostValueInt returns the last parsed form data from POST, PATCH,
-// or PUT body parameters based on a "name", as int.
+// PostValueUint returns the last parsed form data matches the given "name" key
+// from POST, PATCH, or PUT body request parameters as unassigned number.
+//
+// See ErrEmptyForm, ErrNotFound and ErrEmptyFormField respectfully.
+func (ctx *Context) PostValueUint(name string) (uint, error) {
+	value, err := ctx.PostValueString(name)
+	if err != nil {
+		return 0, err
+	}
+
+	return strParseUint(value)
+}
+
+// PostValueUint returns the last parsed form data matches the given "name" key
+// from POST, PATCH, or PUT body request parameters as unassigned number.
+//
+// See ErrEmptyForm, ErrNotFound and ErrEmptyFormField respectfully.
+func (ctx *Context) PostValueUint8(name string) (uint8, error) {
+	value, err := ctx.PostValueString(name)
+	if err != nil {
+		return 0, err
+	}
+
+	return strParseUint8(value)
+}
+
+// PostValueUint returns the last parsed form data matches the given "name" key
+// from POST, PATCH, or PUT body request parameters as unassigned number.
+//
+// See ErrEmptyForm, ErrNotFound and ErrEmptyFormField respectfully.
+func (ctx *Context) PostValueUint16(name string) (uint16, error) {
+	value, err := ctx.PostValueString(name)
+	if err != nil {
+		return 0, err
+	}
+
+	return strParseUint16(value)
+}
+
+// PostValueUint returns the last parsed form data matches the given "name" key
+// from POST, PATCH, or PUT body request parameters as unassigned number.
+//
+// See ErrEmptyForm, ErrNotFound and ErrEmptyFormField respectfully.
+func (ctx *Context) PostValueUint32(name string) (uint32, error) {
+	value, err := ctx.PostValueString(name)
+	if err != nil {
+		return 0, err
+	}
+
+	return strParseUint32(value)
+}
+
+// PostValueUint returns the last parsed form data matches the given "name" key
+// from POST, PATCH, or PUT body request parameters as unassigned number.
+//
+// See ErrEmptyForm, ErrNotFound and ErrEmptyFormField respectfully.
+func (ctx *Context) PostValueUint64(name string) (uint64, error) {
+	value, err := ctx.PostValueString(name)
+	if err != nil {
+		return 0, err
+	}
+
+	return strParseUint64(value)
+}
+
+// PostValueInt returns the last parsed form data matches the given "name" key
+// from POST, PATCH, or PUT body request parameters as signed number.
 //
 // See ErrEmptyForm, ErrNotFound and ErrEmptyFormField respectfully.
 func (ctx *Context) PostValueInt(name string) (int, error) {
-	values, err := ctx.PostValues(name)
-	if err != nil || len(values) == 0 {
+	value, err := ctx.PostValueString(name)
+	if err != nil {
 		return 0, err
 	}
 
-	return strconv.Atoi(values[len(values)-1])
+	return strParseInt(value)
 }
 
-// PostValueIntDefault returns the last parsed form data from POST, PATCH,
-// or PUT body parameters based on a "name", as int.
-//
-// If not found or parse errors returns the "def".
+// PostValueIntDefault same as PostValueInt but if errored it returns
+// the given "def" default value.
 func (ctx *Context) PostValueIntDefault(name string, def int) int {
-	if v, err := ctx.PostValueInt(name); err == nil {
-		return v
+	value, err := ctx.PostValueInt(name)
+	if err != nil {
+		return def
 	}
 
-	return def
+	return value
 }
 
-// PostValueInt64 returns the last parsed form data from POST, PATCH,
-// or PUT body parameters based on a "name", as float64.
+// PostValueInt8 returns the last parsed form data matches the given "name" key
+// from POST, PATCH, or PUT body request parameters as int8.
+//
+// See ErrEmptyForm, ErrNotFound and ErrEmptyFormField respectfully.
+func (ctx *Context) PostValueInt8(name string) (int8, error) {
+	value, err := ctx.PostValueString(name)
+	if err != nil {
+		return 0, err
+	}
+
+	return strParseInt8(value)
+}
+
+// PostValueInt8Default same as PostValueInt8 but if errored it returns
+// the given "def" default value.
+func (ctx *Context) PostValueInt8Default(name string, def int8) int8 {
+	value, err := ctx.PostValueInt8(name)
+	if err != nil {
+		return def
+	}
+
+	return value
+}
+
+// PostValueInt16 returns the last parsed form data matches the given "name" key
+// from POST, PATCH, or PUT body request parameters as int16.
+//
+// See ErrEmptyForm, ErrNotFound and ErrEmptyFormField respectfully.
+func (ctx *Context) PostValueInt16(name string) (int16, error) {
+	value, err := ctx.PostValueString(name)
+	if err != nil {
+		return 0, err
+	}
+
+	return strParseInt16(value)
+}
+
+// PostValueInt16Default same as PostValueInt16 but if errored it returns
+// the given "def" default value.
+func (ctx *Context) PostValueInt16Default(name string, def int16) int16 {
+	value, err := ctx.PostValueInt16(name)
+	if err != nil {
+		return def
+	}
+
+	return value
+}
+
+// PostValueInt32 returns the last parsed form data matches the given "name" key
+// from POST, PATCH, or PUT body request parameters as int32.
+//
+// See ErrEmptyForm, ErrNotFound and ErrEmptyFormField respectfully.
+func (ctx *Context) PostValueInt32(name string) (int32, error) {
+	value, err := ctx.PostValueString(name)
+	if err != nil {
+		return 0, err
+	}
+
+	return strParseInt32(value)
+}
+
+// PostValueInt32Default same as PostValueInt32 but if errored it returns
+// the given "def" default value.
+func (ctx *Context) PostValueInt32Default(name string, def int32) int32 {
+	value, err := ctx.PostValueInt32(name)
+	if err != nil {
+		return def
+	}
+
+	return value
+}
+
+// PostValueInt64 returns the last parsed form data matches the given "name" key
+// from POST, PATCH, or PUT body request parameters as int64.
 //
 // See ErrEmptyForm, ErrNotFound and ErrEmptyFormField respectfully.
 func (ctx *Context) PostValueInt64(name string) (int64, error) {
-	values, err := ctx.PostValues(name)
-	if err != nil || len(values) == 0 {
+	value, err := ctx.PostValueString(name)
+	if err != nil {
 		return 0, err
 	}
 
-	return strconv.ParseInt(values[len(values)-1], 10, 64)
+	return strParseInt64(value)
 }
 
-// PostValueInt64Default returns the last parsed form data from POST, PATCH,
-// or PUT body parameters based on a "name", as int64.
-//
-// If not found or parse errors returns the "def".
+// PostValueInt64Default same as PostValueInt64 but if errored it returns
+// the given "def" default value.
 func (ctx *Context) PostValueInt64Default(name string, def int64) int64 {
-	if v, err := ctx.PostValueInt64(name); err == nil {
-		return v
+	value, err := ctx.PostValueInt64(name)
+	if err != nil {
+		return def
 	}
 
-	return def
+	return value
 }
 
-// PostValueFloat64 returns the last parsed form data from POST, PATCH,
-// or PUT body parameters based on a "name", as float64.
+// PostValueFloat32 returns the last parsed form data matches the given "name" key
+// from POST, PATCH, or PUT body request parameters as float32.
+//
+// See ErrEmptyForm, ErrNotFound and ErrEmptyFormField respectfully.
+func (ctx *Context) PostValueFloat32(name string) (float32, error) {
+	value, err := ctx.PostValueString(name)
+	if err != nil {
+		return 0, err
+	}
+
+	return strParseFloat32(value)
+}
+
+// PostValueFloat32Default same as PostValueFloat32 but if errored it returns
+// the given "def" default value.
+func (ctx *Context) PostValueFloat32Default(name string, def float32) float32 {
+	value, err := ctx.PostValueFloat32(name)
+	if err != nil {
+		return def
+	}
+
+	return value
+}
+
+// PostValueFloat64 returns the last parsed form data matches the given "name" key
+// from POST, PATCH, or PUT body request parameters as float64.
 //
 // See ErrEmptyForm, ErrNotFound and ErrEmptyFormField respectfully.
 func (ctx *Context) PostValueFloat64(name string) (float64, error) {
-	values, err := ctx.PostValues(name)
-	if err != nil || len(values) == 0 {
+	value, err := ctx.PostValueString(name)
+	if err != nil {
 		return 0, err
 	}
 
-	return strconv.ParseFloat(values[len(values)-1], 64)
+	return strParseFloat64(value)
 }
 
-// PostValueFloat64Default returns the last parsed form data from POST, PATCH,
-// or PUT body parameters based on a "name", as float64.
-//
-// If not found or parse errors returns the "def".
+// PostValueFloat64Default same as PostValueFloat64 but if errored it returns
+// the given "def" default value.
 func (ctx *Context) PostValueFloat64Default(name string, def float64) float64 {
-	if v, err := ctx.PostValueFloat64(name); err == nil {
-		return v
+	value, err := ctx.PostValueFloat64(name)
+	if err != nil {
+		return def
 	}
 
-	return def
+	return value
 }
 
-// PostValueBool returns the last parsed form data from POST, PATCH,
-// or PUT body parameters based on a "name", as bool.
-// If more than one value was binded to "name", then it returns the last one.
+// PostValueComplex64 returns the last parsed form data matches the given "name" key
+// from POST, PATCH, or PUT body request parameters as complex64.
+//
+// See ErrEmptyForm, ErrNotFound and ErrEmptyFormField respectfully.
+func (ctx *Context) PostValueComplex64(name string) (complex64, error) {
+	value, err := ctx.PostValueString(name)
+	if err != nil {
+		return 0, err
+	}
+
+	return strParseComplex64(value)
+}
+
+// PostValueComplex64Default same as PostValueComplex64 but if errored it returns
+// the given "def" default value.
+func (ctx *Context) PostValueComplex64Default(name string, def complex64) complex64 {
+	value, err := ctx.PostValueComplex64(name)
+	if err != nil {
+		return def
+	}
+
+	return value
+}
+
+// PostValueComplex128 returns the last parsed form data matches the given "name" key
+// from POST, PATCH, or PUT body request parameters as complex128.
+//
+// See ErrEmptyForm, ErrNotFound and ErrEmptyFormField respectfully.
+func (ctx *Context) PostValueComplex128(name string) (complex128, error) {
+	value, err := ctx.PostValueString(name)
+	if err != nil {
+		return 0, err
+	}
+
+	return strParseComplex128(value)
+}
+
+// PostValueComplex128Default same as PostValueComplex128 but if errored it returns
+// the given "def" default value.
+func (ctx *Context) PostValueComplex128Default(name string, def complex128) complex128 {
+	value, err := ctx.PostValueComplex128(name)
+	if err != nil {
+		return def
+	}
+
+	return value
+}
+
+// PostValueBool returns the last parsed form data matches the given "name" key
+// from POST, PATCH, or PUT body request parameters as bool.
 //
 // See ErrEmptyForm, ErrNotFound and ErrEmptyFormField respectfully.
 func (ctx *Context) PostValueBool(name string) (bool, error) {
-	values, err := ctx.PostValues(name)
-	if err != nil || len(values) == 0 {
+	value, err := ctx.PostValueString(name)
+	if err != nil {
 		return false, err
 	}
 
-	return strconv.ParseBool(values[len(values)-1]) // values cannot be empty on this state.
+	return strParseBool(value)
+}
+
+// PostValueWeekday returns the last parsed form data matches the given "name" key
+// from POST, PATCH, or PUT body request parameters as time.Weekday.
+//
+// See ErrEmptyForm, ErrNotFound and ErrEmptyFormField respectfully.
+func (ctx *Context) PostValueWeekday(name string) (time.Weekday, error) {
+	value, err := ctx.PostValueString(name)
+	if err != nil {
+		return 0, err
+	}
+
+	return strParseWeekday(value)
+}
+
+// PostValueTime returns the last parsed form data matches the given "name" key
+// from POST, PATCH, or PUT body request parameters as time.Time with the given "layout".
+//
+// See ErrEmptyForm, ErrNotFound and ErrEmptyFormField respectfully.
+func (ctx *Context) PostValueTime(layout, name string) (time.Time, error) {
+	value, err := ctx.PostValueString(name)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return strParseTime(layout, value)
+}
+
+// PostValueSimpleDate returns the last parsed form data matches the given "name" key
+// from POST, PATCH, or PUT body request parameters as time.Time with "2006/01/02"
+// or "2006-01-02" time layout.
+//
+// See ErrEmptyForm, ErrNotFound and ErrEmptyFormField respectfully.
+func (ctx *Context) PostValueSimpleDate(name string) (time.Time, error) {
+	value, err := ctx.PostValueString(name)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return strParseSimpleDate(value)
 }
 
 // FormFile returns the first uploaded file that received from the client.
 //
-//
 // The default form's memory maximum size is 32MB, it can be changed by the
 // `iris#WithPostMaxMemory` configurator at main configuration passed on `app.Run`'s second argument.
 //
-// Example: https://github.com/kataras/iris/tree/master/_examples/file-server/upload-file
+// Example: https://github.com/kataras/iris/tree/main/_examples/file-server/upload-file
 func (ctx *Context) FormFile(key string) (multipart.File, *multipart.FileHeader, error) {
 	// we don't have access to see if the request is body stream
 	// and then the ParseMultipartForm can be useless
@@ -1935,6 +2340,54 @@ func (ctx *Context) FormFile(key string) (multipart.File, *multipart.FileHeader,
 
 	return ctx.request.FormFile(key)
 }
+
+// FormFiles same as FormFile but may return multiple file inputs based on a key, e.g. "files[]".
+func (ctx *Context) FormFiles(key string, before ...func(*Context, *multipart.FileHeader) bool) (files []multipart.File, headers []*multipart.FileHeader, err error) {
+	err = ctx.request.ParseMultipartForm(ctx.app.ConfigurationReadOnly().GetPostMaxMemory())
+	if err != nil {
+		return
+	}
+
+	if ctx.request.MultipartForm != nil {
+		fhs := ctx.request.MultipartForm.File
+		if n := len(fhs); n > 0 {
+			files = make([]multipart.File, 0, n)
+			headers = make([]*multipart.FileHeader, 0, n)
+
+		innerLoop:
+			for _, header := range fhs[key] {
+				header.Filename = filepath.Base(header.Filename)
+
+				for _, b := range before {
+					if !b(ctx, header) {
+						continue innerLoop
+					}
+				}
+
+				file, fErr := header.Open()
+				if fErr != nil { // exit on first error but return the succeed.
+					return files, headers, fErr
+				}
+
+				files = append(files, file)
+				headers = append(headers, header)
+			}
+		}
+
+		return
+	}
+
+	return nil, nil, http.ErrMissingFile
+}
+
+var (
+	// ValidFileNameRegexp is used to validate the user input by using a regular expression.
+	// See `Context.UploadFormFiles` method.
+	ValidFilenameRegexp = regexp.MustCompile(`^[a-zA-Z0-9_\-\.]+$`)
+	// ValidExtensionRegexp acts as an allowlist of valid extensions. It's optional. Defaults to nil (all file extensions are allowed to be uploaded).
+	// See `Context.UploadFormFiles` method.
+	ValidExtensionRegexp *regexp.Regexp
+)
 
 // UploadFormFiles uploads any received file(s) from the client
 // to the system physical location "destDirectory".
@@ -1960,9 +2413,9 @@ func (ctx *Context) FormFile(key string) (multipart.File, *multipart.FileHeader,
 // the `WithPostMaxMemory` configurator or by `SetMaxRequestBodySize` or
 // by the `LimitRequestBodySize` middleware (depends the use case).
 //
-// See `FormFile` to a more controlled way to receive a file.
+// See `FormFile` and `FormFiles` to a more controlled way to receive a file.
 //
-// Example: https://github.com/kataras/iris/tree/master/_examples/file-server/upload-files
+// Example: https://github.com/kataras/iris/tree/main/_examples/file-server/upload-files
 func (ctx *Context) UploadFormFiles(destDirectory string, before ...func(*Context, *multipart.FileHeader) bool) (uploaded []*multipart.FileHeader, n int64, err error) {
 	err = ctx.request.ParseMultipartForm(ctx.app.ConfigurationReadOnly().GetPostMaxMemory())
 	if err != nil {
@@ -1974,21 +2427,56 @@ func (ctx *Context) UploadFormFiles(destDirectory string, before ...func(*Contex
 			for _, files := range fhs {
 			innerLoop:
 				for _, file := range files {
-					// Fix an issue that net/http has,
-					// an attacker can push a filename
-					// which could lead to override existing system files
-					// by ../../$file.
-					// Reported by Frank through security reports.
-					file.Filename = strings.ReplaceAll(file.Filename, "../", "")
-					file.Filename = strings.ReplaceAll(file.Filename, "..\\", "")
-
 					for _, b := range before {
 						if !b(ctx, file) {
 							continue innerLoop
 						}
 					}
 
-					n0, err0 := ctx.SaveFormFile(file, filepath.Join(destDirectory, file.Filename))
+					// Security fix for go < 1.17.5:
+					// Reported by Kirill Efimov (snyk.io) through security reports.
+					filename := filepath.Base(filepath.ToSlash(file.Filename))
+
+					// CWE-99.
+
+					// Sanitize the user input by using a regular expression
+					// and an allowlist of valid extensions
+					isValidFilename := ValidFilenameRegexp.MatchString(filename)
+					if !isValidFilename {
+						// Reject the input as it is invalid or unsafe.
+						continue innerLoop
+					}
+
+					if ValidExtensionRegexp != nil && !ValidExtensionRegexp.MatchString(filename) {
+						// Reject the input as it is invalid or unsafe.
+						continue innerLoop
+					}
+
+					// Join the sanitized input with the destination directory.
+					destPath := filepath.Join(destDirectory, filename)
+
+					// Get the canonical path of the destination
+					// canonicalDestPath, err := filepath.EvalSymlinks(destPath)
+					// if err != nil {
+					// 	return nil, 0, fmt.Errorf("dest path: %s: eval symlinks: %w", destPath, err)
+					// }
+					// ^ No, it will try to find the file before uploaded.
+
+					// Get the canonical path of the destination directory.
+					canonicalDestDir, err := filepath.EvalSymlinks(destDirectory) // the destDirectory should exists.
+					if err != nil {
+						return nil, 0, fmt.Errorf("dest directory: %s: eval symlinks: %w", destDirectory, err)
+					}
+
+					// Check if the destination path is within the destination directory.
+					if !strings.HasPrefix(destPath, canonicalDestDir) {
+						// Reject the input as it is a path traversal attempt.
+						continue innerLoop
+					}
+
+					file.Filename = filename
+
+					n0, err0 := ctx.SaveFormFile(file, destPath)
 					if err0 != nil {
 						return nil, 0, err0
 					}
@@ -2028,6 +2516,15 @@ func (ctx *Context) AbsoluteURI(s string) string {
 		return ""
 	}
 
+	userInfo := ""
+	if s[0] == '@' {
+		endUserInfoIdx := strings.IndexByte(s, '/')
+		if endUserInfoIdx > 0 && len(s) > endUserInfoIdx {
+			userInfo = s[1:endUserInfoIdx] + "@"
+			s = s[endUserInfoIdx:]
+		}
+	}
+
 	if s[0] == '/' {
 		scheme := ctx.request.URL.Scheme
 		if scheme == "" {
@@ -2040,7 +2537,7 @@ func (ctx *Context) AbsoluteURI(s string) string {
 
 		host := ctx.Host()
 
-		return scheme + "//" + host + path.Clean(s)
+		return scheme + "//" + userInfo + host + path.Clean(s)
 	}
 
 	if u, err := url.Parse(s); err == nil {
@@ -2117,20 +2614,28 @@ func (ctx *Context) SetMaxRequestBodySize(limitOverBytes int64) {
 	ctx.request.Body = http.MaxBytesReader(ctx.writer, ctx.request.Body, limitOverBytes)
 }
 
+var emptyFunc = func() {}
+
 // GetBody reads and returns the request body.
-func GetBody(r *http.Request, resetBody bool) ([]byte, error) {
-	data, err := ioutil.ReadAll(r.Body)
+func GetBody(r *http.Request, resetBody bool) ([]byte, func(), error) {
+	data, err := io.ReadAll(r.Body)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if resetBody {
 		// * remember, Request.Body has no Bytes(), we have to consume them first
 		// and after re-set them to the body, this is the only solution.
-		r.Body = ioutil.NopCloser(bytes.NewBuffer(data))
+		return data, func() {
+			setBody(r, data)
+		}, nil
 	}
 
-	return data, nil
+	return data, emptyFunc, nil
+}
+
+func setBody(r *http.Request, data []byte) {
+	r.Body = io.NopCloser(bytes.NewBuffer(data))
 }
 
 const disableRequestBodyConsumptionContextKey = "iris.request.body.record"
@@ -2144,8 +2649,12 @@ func (ctx *Context) RecordRequestBody(b bool) {
 
 // IsRecordingBody reports whether the request body can be readen multiple times.
 func (ctx *Context) IsRecordingBody() bool {
-	return ctx.values.GetBoolDefault(disableRequestBodyConsumptionContextKey,
-		ctx.app.ConfigurationReadOnly().GetDisableBodyConsumptionOnUnmarshal())
+	if ctx.app.ConfigurationReadOnly().GetDisableBodyConsumptionOnUnmarshal() {
+		return true
+	}
+
+	value, _ := ctx.values.GetBool(disableRequestBodyConsumptionContextKey)
+	return value
 }
 
 // GetBody reads and returns the request body.
@@ -2155,7 +2664,12 @@ func (ctx *Context) IsRecordingBody() bool {
 //
 // However, whenever you can use the `ctx.Request().Body` instead.
 func (ctx *Context) GetBody() ([]byte, error) {
-	return GetBody(ctx.request, ctx.IsRecordingBody())
+	body, release, err := GetBody(ctx.request, ctx.IsRecordingBody())
+	if err != nil {
+		return nil, err
+	}
+	release()
+	return body, nil
 }
 
 // Validator is the validator for request body on Context methods such as
@@ -2170,7 +2684,7 @@ type Validator interface {
 // UnmarshalBody reads the request's body and binds it to a value or pointer of any type
 // Examples of usage: context.ReadJSON, context.ReadXML.
 //
-// Example: https://github.com/kataras/iris/blob/master/_examples/request-body/read-custom-via-unmarshaler/main.go
+// Example: https://github.com/kataras/iris/blob/main/_examples/request-body/read-custom-via-unmarshaler/main.go
 func (ctx *Context) UnmarshalBody(outPtr interface{}, unmarshaler Unmarshaler) error {
 	if ctx.request.Body == nil {
 		return fmt.Errorf("unmarshal: empty body: %w", ErrNotFound)
@@ -2179,6 +2693,10 @@ func (ctx *Context) UnmarshalBody(outPtr interface{}, unmarshaler Unmarshaler) e
 	rawData, err := ctx.GetBody()
 	if err != nil {
 		return err
+	}
+
+	if decoderWithCtx, ok := outPtr.(BodyDecoderWithContext); ok {
+		return decoderWithCtx.DecodeContext(ctx.request.Context(), rawData)
 	}
 
 	// check if the v contains its own decode
@@ -2205,36 +2723,146 @@ func (ctx *Context) UnmarshalBody(outPtr interface{}, unmarshaler Unmarshaler) e
 	return ctx.app.Validate(outPtr)
 }
 
-func (ctx *Context) shouldOptimize() bool {
-	return ctx.app.ConfigurationReadOnly().GetEnableOptimizations()
+// JSONReader holds the JSON decode options of the `Context.ReadJSON, ReadBody` methods.
+type JSONReader struct { // Note(@kataras): struct instead of optional funcs to keep consistently with the encoder options.
+	// DisallowUnknownFields causes the json decoder to return an error when the destination
+	// is a struct and the input contains object keys which do not match any
+	// non-ignored, exported fields in the destination.
+	DisallowUnknownFields bool
+	// If set to true then a bit faster json decoder is used instead,
+	// note that if this is true then it overrides
+	// the Application's EnableOptimizations configuration field.
+	Optimize bool
+	// This field only applies to the ReadJSONStream.
+	// The Optimize field has no effect when this is true.
+	// If set to true the request body stream MUST start with a `[`
+	// and end with `]` literals, example:
+	//  [
+	//   {"username":"john"},
+	//   {"username": "makis"},
+	//   {"username": "george"}
+	//  ]
+	// Defaults to false: decodes a json object one by one, example:
+	//  {"username":"john"}
+	//  {"username": "makis"}
+	//  {"username": "george"}
+	ArrayStream bool
+}
+
+var ReadJSON = func(ctx *Context, outPtr interface{}, opts ...JSONReader) error {
+	var body io.Reader
+
+	if ctx.IsRecordingBody() {
+		data, err := io.ReadAll(ctx.request.Body)
+		if err != nil {
+			return err
+		}
+		setBody(ctx.request, data)
+		body = bytes.NewReader(data)
+	} else {
+		body = ctx.request.Body
+	}
+
+	decoder := json.NewDecoder(body)
+	// decoder := gojson.NewDecoder(ctx.Request().Body)
+	if len(opts) > 0 {
+		options := opts[0]
+
+		if options.DisallowUnknownFields {
+			decoder.DisallowUnknownFields()
+		}
+	}
+
+	if err := decoder.Decode(&outPtr); err != nil {
+		return err
+	}
+
+	return ctx.app.Validate(outPtr)
 }
 
 // ReadJSON reads JSON from request's body and binds it to a value of any json-valid type.
 //
-// Example: https://github.com/kataras/iris/blob/master/_examples/request-body/read-json/main.go
-func (ctx *Context) ReadJSON(outPtr interface{}) error {
-	unmarshaler := json.Unmarshal
-	if ctx.shouldOptimize() {
-		unmarshaler = jsoniter.Unmarshal
+// Example: https://github.com/kataras/iris/blob/main/_examples/request-body/read-json/main.go
+func (ctx *Context) ReadJSON(outPtr interface{}, opts ...JSONReader) error {
+	return ReadJSON(ctx, outPtr, opts...)
+}
+
+// ReadJSONStream is an alternative of ReadJSON which can reduce the memory load
+// by reading only one json object every time.
+// It buffers just the content required for a single json object instead of the entire string,
+// and discards that once it reaches an end of value that can be decoded into the provided struct
+// inside the onDecode's DecodeFunc.
+//
+// It accepts a function which accepts the json Decode function and returns an error.
+// The second variadic argument is optional and can be used to customize the decoder even further.
+//
+// Example: https://github.com/kataras/iris/blob/main/_examples/request-body/read-json-stream/main.go
+func (ctx *Context) ReadJSONStream(onDecode func(DecodeFunc) error, opts ...JSONReader) error {
+	decoder := json.NewDecoder(ctx.request.Body)
+
+	if len(opts) > 0 && opts[0].ArrayStream {
+		_, err := decoder.Token() // read open bracket.
+		if err != nil {
+			return err
+		}
+
+		for decoder.More() { // hile the array contains values.
+			if err = onDecode(decoder.Decode); err != nil {
+				return err
+			}
+		}
+
+		_, err = decoder.Token() // read closing bracket.
+		return err
 	}
-	return ctx.UnmarshalBody(outPtr, UnmarshalerFunc(unmarshaler))
+
+	// while the array contains values
+	for decoder.More() {
+		if err := onDecode(decoder.Decode); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // ReadXML reads XML from request's body and binds it to a value of any xml-valid type.
 //
-// Example: https://github.com/kataras/iris/blob/master/_examples/request-body/read-xml/main.go
+// Example: https://github.com/kataras/iris/blob/main/_examples/request-body/read-xml/main.go
 func (ctx *Context) ReadXML(outPtr interface{}) error {
 	return ctx.UnmarshalBody(outPtr, UnmarshalerFunc(xml.Unmarshal))
 }
 
 // ReadYAML reads YAML from request's body and binds it to the "outPtr" value.
 //
-// Example: https://github.com/kataras/iris/blob/master/_examples/request-body/read-yaml/main.go
+// Example: https://github.com/kataras/iris/blob/main/_examples/request-body/read-yaml/main.go
 func (ctx *Context) ReadYAML(outPtr interface{}) error {
 	return ctx.UnmarshalBody(outPtr, UnmarshalerFunc(yaml.Unmarshal))
 }
 
 var (
+	// IsErrEmptyJSON reports whether the given "err" is caused by a
+	// Client.ReadJSON call when the request body was empty or
+	// didn't start with { or [.
+	IsErrEmptyJSON = func(err error) bool {
+		if err == nil {
+			return false
+		}
+
+		if errors.Is(err, io.EOF) {
+			return true
+		}
+
+		if v, ok := err.(*json.SyntaxError); ok {
+			// standard go json encoder error.
+			return v.Offset == 0 && v.Error() == "unexpected end of JSON input"
+		}
+
+		errMsg := err.Error()
+		// 3rd party pacakges:
+		return strings.Contains(errMsg, "readObjectStart: expect {") || strings.Contains(errMsg, "readArrayStart: expect [")
+	}
+
 	// IsErrPath can be used at `context#ReadForm` and `context#ReadQuery`.
 	// It reports whether the incoming error
 	// can be ignored when server allows unknown post values to be sent by the client.
@@ -2242,8 +2870,29 @@ var (
 	// A shortcut for the `schema#IsErrPath`.
 	IsErrPath = schema.IsErrPath
 
-	// ErrEmptyForm is returned by `context#ReadForm` and `context#ReadBody`
-	// when it should read data from a request form data but there is none.
+	// IsErrPathCRSFToken reports whether the given "err" is caused
+	// by unknown key error on "csrf.token". See `context#ReadForm` for more.
+	IsErrPathCRSFToken = func(err error) bool {
+		if err == nil || CSRFTokenFormKey == "" {
+			return false
+		}
+
+		if m, ok := err.(schema.MultiError); ok {
+			if csrfErr, hasCSRFToken := m[CSRFTokenFormKey]; hasCSRFToken {
+				_, is := csrfErr.(schema.UnknownKeyError)
+				return is
+
+			}
+		}
+
+		return false
+	}
+
+	// ErrEmptyForm is returned by
+	// - `context#ReadForm`
+	// - `context#ReadQuery`
+	// - `context#ReadBody`
+	// when the request data (form, query and body respectfully) is empty.
 	ErrEmptyForm = errors.New("empty form")
 
 	// ErrEmptyFormField reports whether a specific field exists but it's empty.
@@ -2281,6 +2930,11 @@ var (
 	}
 )
 
+// CSRFTokenFormKey the CSRF token key of the form data.
+//
+// See ReadForm method for more.
+const CSRFTokenFormKey = "csrf.token"
+
 // ReadForm binds the request body of a form to the "formObject".
 // It supports any kind of type, including custom structs.
 // It will return nothing if request data are empty.
@@ -2292,7 +2946,10 @@ var (
 // If a client sent an unknown field, this method will return an error,
 // in order to ignore that error use the `err != nil && !iris.IsErrPath(err)`.
 //
-// Example: https://github.com/kataras/iris/blob/master/_examples/request-body/read-form/main.go
+// As of 15 Aug 2022, ReadForm does not return an error over unknown CSRF token form key,
+// to change this behavior globally, set the `context.CSRFTokenFormKey` to an empty value.
+//
+// Example: https://github.com/kataras/iris/blob/main/_examples/request-body/read-form/main.go
 func (ctx *Context) ReadForm(formObject interface{}) error {
 	values := ctx.FormValues()
 	if len(values) == 0 {
@@ -2303,19 +2960,159 @@ func (ctx *Context) ReadForm(formObject interface{}) error {
 	}
 
 	err := schema.DecodeForm(values, formObject)
-	if err != nil {
+	if err != nil && !IsErrPathCRSFToken(err) {
 		return err
 	}
 
 	return ctx.app.Validate(formObject)
 }
 
+type (
+	// MultipartRelated is the result of the context.ReadMultipartRelated method.
+	MultipartRelated struct {
+		// ContentIDs keeps an ordered list of all the
+		// content-ids of the multipart related request.
+		ContentIDs []string
+		// Contents keeps each part's information by Content-ID.
+		// Contents holds each of the multipart/related part's data.
+		Contents map[string]MultipartRelatedContent
+	}
+
+	// MultipartRelatedContent holds a multipart/related part's id, header and body.
+	MultipartRelatedContent struct {
+		// ID holds the Content-ID.
+		ID string
+		// Headers holds the part's request headers.
+		Headers map[string][]string
+		// Body holds the part's body.
+		Body []byte
+	}
+)
+
+// ReadMultipartRelated returns a structure which contain
+// information about each part (id, headers, body).
+//
+// Read more at: https://www.ietf.org/rfc/rfc2387.txt.
+//
+// Example request (2387/5.2 Text/X-Okie):
+// Content-Type: Multipart/Related; boundary=example-2;
+// start="<950118.AEBH@XIson.com>"
+// type="Text/x-Okie"
+//
+// --example-2
+// Content-Type: Text/x-Okie; charset=iso-8859-1;
+// declaration="<950118.AEB0@XIson.com>"
+// Content-ID: <950118.AEBH@XIson.com>
+// Content-Description: Document
+//
+// {doc}
+// This picture was taken by an automatic camera mounted ...
+// {image file=cid:950118.AECB@XIson.com}
+// {para}
+// Now this is an enlargement of the area ...
+// {image file=cid:950118:AFDH@XIson.com}
+// {/doc}
+// --example-2
+// Content-Type: image/jpeg
+// Content-ID: <950118.AFDH@XIson.com>
+// Content-Transfer-Encoding: BASE64
+// Content-Description: Picture A
+//
+// [encoded jpeg image]
+// --example-2
+// Content-Type: image/jpeg
+// Content-ID: <950118.AECB@XIson.com>
+// Content-Transfer-Encoding: BASE64
+// Content-Description: Picture B
+//
+// [encoded jpeg image]
+// --example-2--
+func (ctx *Context) ReadMultipartRelated() (MultipartRelated, error) {
+	contentType, params, err := mime.ParseMediaType(ctx.GetHeader(ContentTypeHeaderKey))
+	if err != nil {
+		return MultipartRelated{}, err
+	}
+
+	if !strings.HasPrefix(contentType, ContentMultipartRelatedHeaderValue) {
+		return MultipartRelated{}, ErrEmptyForm
+	}
+
+	var (
+		contentIDs []string
+		contents   = make(map[string]MultipartRelatedContent)
+	)
+
+	if ctx.IsRecordingBody() {
+		// * remember, Request.Body has no Bytes(), we have to consume them first
+		// and after re-set them to the body, this is the only solution.
+		body, restoreBody, err := GetBody(ctx.request, true)
+		if err != nil {
+			return MultipartRelated{}, fmt.Errorf("multipart related: body copy because of iris.Configuration.DisableBodyConsumptionOnUnmarshal: %w", err)
+		}
+		setBody(ctx.request, body) // so the ctx.request.Body works
+		defer restoreBody()        // so the next ctx.GetBody calls work.
+	}
+
+	multipartReader := multipart.NewReader(ctx.request.Body, params["boundary"])
+	for {
+		part, err := multipartReader.NextPart()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			return MultipartRelated{}, fmt.Errorf("multipart related: next part: %w", err)
+		}
+		defer part.Close()
+
+		b, err := io.ReadAll(part)
+		if err != nil {
+			return MultipartRelated{}, fmt.Errorf("multipart related: next part: read: %w", err)
+		}
+
+		contentID := part.Header.Get("Content-ID")
+		contentIDs = append(contentIDs, contentID)
+		contents[contentID] = MultipartRelatedContent{ // replace if same Content-ID appears, which it shouldn't.
+			ID:      contentID,
+			Headers: http.Header(part.Header),
+			Body:    b,
+		}
+	}
+
+	if len(contents) != len(contentIDs) {
+		contentIDs = distinctStrings(contentIDs)
+	}
+
+	result := MultipartRelated{
+		ContentIDs: contentIDs,
+		Contents:   contents,
+	}
+	return result, nil
+}
+
+func distinctStrings(values []string) []string {
+	seen := make(map[string]struct{}, len(values))
+	result := make([]string, 0, len(values))
+
+	for _, val := range values {
+		if _, ok := seen[val]; !ok {
+			seen[val] = struct{}{}
+			result = append(result, val)
+		}
+	}
+
+	return result
+}
+
 // ReadQuery binds URL Query to "ptr". The struct field tag is "url".
 //
-// Example: https://github.com/kataras/iris/blob/master/_examples/request-body/read-query/main.go
+// Example: https://github.com/kataras/iris/blob/main/_examples/request-body/read-query/main.go
 func (ctx *Context) ReadQuery(ptr interface{}) error {
 	values := ctx.getQuery()
 	if len(values) == 0 {
+		if ctx.app.ConfigurationReadOnly().GetFireEmptyFormError() {
+			return ErrEmptyForm
+		}
 		return nil
 	}
 
@@ -2329,7 +3126,7 @@ func (ctx *Context) ReadQuery(ptr interface{}) error {
 
 // ReadHeaders binds request headers to "ptr". The struct field tag is "header".
 //
-// Example: https://github.com/kataras/iris/blob/master/_examples/request-body/read-headers/main.go
+// Example: https://github.com/kataras/iris/blob/main/_examples/request-body/read-headers/main.go
 func (ctx *Context) ReadHeaders(ptr interface{}) error {
 	err := schema.DecodeHeaders(ctx.request.Header, ptr)
 	if err != nil {
@@ -2341,7 +3138,7 @@ func (ctx *Context) ReadHeaders(ptr interface{}) error {
 
 // ReadParams binds URI Dynamic Path Parameters to "ptr". The struct field tag is "param".
 //
-// Example: https://github.com/kataras/iris/blob/master/_examples/request-body/read-params/main.go
+// Example: https://github.com/kataras/iris/blob/main/_examples/request-body/read-params/main.go
 func (ctx *Context) ReadParams(ptr interface{}) error {
 	n := ctx.params.Len()
 	if n == 0 {
@@ -2442,7 +3239,6 @@ func (ctx *Context) ReadMsgPack(ptr interface{}) error {
 // As a special case if the "ptr" was a pointer to string or []byte
 // then it will bind it to the request body as it is.
 func (ctx *Context) ReadBody(ptr interface{}) error {
-
 	// If the ptr is string or byte, read the body as it's.
 	switch v := ptr.(type) {
 	case *string:
@@ -2483,6 +3279,8 @@ func (ctx *Context) ReadBody(ptr interface{}) error {
 		return ctx.ReadYAML(ptr)
 	case ContentFormHeaderValue, ContentFormMultipartHeaderValue:
 		return ctx.ReadForm(ptr)
+	case ContentMultipartRelatedHeaderValue:
+		return fmt.Errorf("context: read body: cannot bind multipart/related: use ReadMultipartRelated instead")
 	case ContentJSONHeaderValue:
 		return ctx.ReadJSON(ptr)
 	case ContentProtobufHeaderValue:
@@ -2528,6 +3326,9 @@ func (ctx *Context) ReadBody(ptr interface{}) error {
 // writing the response. However, such behavior may not be supported
 // by all HTTP/2 clients. Handlers should read before writing if
 // possible to maximize compatibility.
+//
+// It reports any write errors back to the caller, Application.SetContentErrorHandler does NOT apply here
+// as this is a lower-level method which must be remain as it is.
 func (ctx *Context) Write(rawBody []byte) (int, error) {
 	return ctx.writer.Write(rawBody)
 }
@@ -2625,13 +3426,14 @@ func (ctx *Context) SetLastModified(modtime time.Time) {
 // that has to perform one or more client side preconditions before the actual check, e.g. `CheckIfModifiedSince`.
 // Usage:
 // ok, err := context.CheckIfModifiedSince(modTime)
-// if err != nil {
-//    if errors.Is(err, context.ErrPreconditionFailed) {
-//         [handle missing client conditions,such as not valid request method...]
-//     }else {
-//         [the error is probably a time parse error...]
-//    }
-// }
+//
+//	if err != nil {
+//	   if errors.Is(err, context.ErrPreconditionFailed) {
+//	        [handle missing client conditions,such as not valid request method...]
+//	    }else {
+//	        [the error is probably a time parse error...]
+//	   }
+//	}
 var ErrPreconditionFailed = errors.New("precondition failed")
 
 // CheckIfModifiedSince checks if the response is modified since the "modtime".
@@ -2708,9 +3510,9 @@ func (ctx *Context) WriteWithExpiration(body []byte, modtime time.Time) (int, er
 //
 // This function may be used in the following cases:
 //
-//     * if response body is too big (more than iris.LimitRequestBodySize(if set)).
-//     * if response body is streamed from slow external sources.
-//     * if response body must be streamed to the client in chunks.
+//   - if response body is too big (more than iris.LimitRequestBodySize(if set)).
+//   - if response body is streamed from slow external sources.
+//   - if response body must be streamed to the client in chunks.
 //     (aka `http server push`).
 func (ctx *Context) StreamWriter(writer func(w io.Writer) error) error {
 	cancelCtx := ctx.Request().Context()
@@ -2763,10 +3565,12 @@ func (ctx *Context) ClientSupportsEncoding(encodings ...string) bool {
 // will change the response writer to a compress writer instead.
 // All future write and rich write methods will respect this option.
 // Usage:
-// app.Use(func(ctx iris.Context){
-// 	err := ctx.CompressWriter(true)
-// 	ctx.Next()
-// })
+//
+//	app.Use(func(ctx iris.Context){
+//		err := ctx.CompressWriter(true)
+//		ctx.Next()
+//	})
+//
 // The recommendation is to compress data as much as possible and therefore to use this field,
 // but some types of resources, such as jpeg images, are already compressed.
 // Sometimes, using additional compression doesn't reduce payload size and
@@ -2826,15 +3630,18 @@ func (ctx *Context) CompressWriter(enable bool) error {
 // All future calls of `ctx.GetBody/ReadXXX/UnmarshalBody` methods will respect this option.
 //
 // Usage:
-// app.Use(func(ctx iris.Context){
-// 	err := ctx.CompressReader(true)
-// 	ctx.Next()
-// })
+//
+//	app.Use(func(ctx iris.Context){
+//		err := ctx.CompressReader(true)
+//		ctx.Next()
+//	})
+//
 // More:
-// if cr, ok := ctx.Request().Body.(*CompressReader); ok {
-// 	cr.Src // the original request body
-//  cr.Encoding // the compression algorithm.
-// }
+//
+//	if cr, ok := ctx.Request().Body.(*CompressReader); ok {
+//		cr.Src // the original request body
+//	 cr.Encoding // the compression algorithm.
+//	}
 //
 // It returns `ErrRequestNotCompressed` if client's request data are not compressed
 // (or empty)
@@ -2891,7 +3698,7 @@ func (ctx *Context) ViewEngine(engine ViewEngine) {
 //
 // Look .ViewData and .View too.
 //
-// Example: https://github.com/kataras/iris/tree/master/_examples/view/context-view-data/
+// Example: https://github.com/kataras/iris/tree/main/_examples/view/context-view-data/
 func (ctx *Context) ViewLayout(layoutTmplFile string) {
 	ctx.values.Set(ctx.app.ConfigurationReadOnly().GetViewLayoutContextKey(), layoutTmplFile)
 }
@@ -2913,7 +3720,7 @@ func (ctx *Context) ViewLayout(layoutTmplFile string) {
 //
 // Look .ViewLayout and .View too.
 //
-// Example: https://github.com/kataras/iris/tree/master/_examples/view/context-view-data/
+// Example: https://github.com/kataras/iris/tree/main/_examples/view/context-view-data/
 func (ctx *Context) ViewData(key string, value interface{}) {
 	viewDataContextKey := ctx.app.ConfigurationReadOnly().GetViewDataContextKey()
 	if key == "" {
@@ -2927,9 +3734,7 @@ func (ctx *Context) ViewData(key string, value interface{}) {
 		return
 	}
 
-	if data, ok := v.(map[string]interface{}); ok {
-		data[key] = value
-	} else if data, ok := v.(Map); ok {
+	if data, ok := v.(Map); ok {
 		data[key] = value
 	}
 }
@@ -2944,31 +3749,162 @@ func (ctx *Context) ViewData(key string, value interface{}) {
 // Similarly to `viewData := ctx.Values().Get("iris.view.data")` or
 // `viewData := ctx.Values().Get(ctx.Application().ConfigurationReadOnly().GetViewDataContextKey())`.
 func (ctx *Context) GetViewData() map[string]interface{} {
-	viewDataContextKey := ctx.app.ConfigurationReadOnly().GetViewDataContextKey()
-	v := ctx.values.Get(viewDataContextKey)
+	if v := ctx.values.Get(ctx.app.ConfigurationReadOnly().GetViewDataContextKey()); v != nil {
+		// if pure map[string]interface{}
+		if viewData, ok := v.(Map); ok {
+			return viewData
+		}
+
+		// if struct, convert it to map[string]interface{}
+		if structs.IsStruct(v) {
+			return structs.Map(v)
+		}
+	}
 
 	// if no values found, then return nil
-	if v == nil {
-		return nil
-	}
-
-	// if struct, convert it to map[string]interface{}
-	if structs.IsStruct(v) {
-		return structs.Map(v)
-	}
-
-	// if pure map[string]interface{}
-	if viewData, ok := v.(map[string]interface{}); ok {
-		return viewData
-	}
-
-	// if context#Map
-	if viewData, ok := v.(Map); ok {
-		return viewData
-	}
-
-	// if failure, then return nil
 	return nil
+}
+
+// FallbackViewProvider is an interface which can be registered to the `Party.FallbackView`
+// or `Context.FallbackView` methods to handle fallback views.
+// See FallbackView, FallbackViewLayout and FallbackViewFunc.
+type FallbackViewProvider interface {
+	FallbackView(ctx *Context, err ErrViewNotExist) error
+} /* Notes(@kataras): If ever requested, this fallback logic (of ctx, error) can go to all necessary methods.
+   I've designed with a bit more complexity here instead of a simple filename fallback in order to give
+   the freedom to the developer to do whatever he/she wants with that template/layout not exists error,
+   e.g. have a list of fallbacks views to loop through until succeed or fire a different error than the default.
+   We also provide some helpers for common fallback actions (FallbackView, FallbackViewLayout).
+   This naming was chosen in order to be easy to follow up with the previous view-relative context features.
+   Also note that here we catch a specific error, we want the developer
+   to be aware of the rest template errors (e.g. when a template having parsing issues).
+*/
+
+// FallbackViewFunc is a function that can be registered
+// to handle view fallbacks. It accepts the Context and
+// a special error which contains information about the previous template error.
+// It implements the FallbackViewProvider interface.
+//
+// See `Context.View` method.
+type FallbackViewFunc func(ctx *Context, err ErrViewNotExist) error
+
+// FallbackView completes the FallbackViewProvider interface.
+func (fn FallbackViewFunc) FallbackView(ctx *Context, err ErrViewNotExist) error {
+	return fn(ctx, err)
+}
+
+var (
+	_ FallbackViewProvider = FallbackView("")
+	_ FallbackViewProvider = FallbackViewLayout("")
+)
+
+// FallbackView is a helper to register a single template filename as a fallback
+// when the provided tempate filename was not found.
+type FallbackView string
+
+// FallbackView completes the FallbackViewProvider interface.
+func (f FallbackView) FallbackView(ctx *Context, err ErrViewNotExist) error {
+	if err.IsLayout { // Not responsible to render layouts.
+		return err
+	}
+
+	// ctx.StatusCode(200) // Let's keep the previous status code here, developer can change it anyways.
+	return ctx.View(string(f), err.Data)
+}
+
+// FallbackViewLayout is a helper to register a single template filename as a fallback
+// layout when the provided layout filename was not found.
+type FallbackViewLayout string
+
+// FallbackView completes the FallbackViewProvider interface.
+func (f FallbackViewLayout) FallbackView(ctx *Context, err ErrViewNotExist) error {
+	if !err.IsLayout {
+		// Responsible to render layouts only.
+		return err
+	}
+
+	ctx.ViewLayout(string(f))
+	return ctx.View(err.Name, err.Data)
+}
+
+const fallbackViewOnce = "iris.fallback.view.once"
+
+func (ctx *Context) fireFallbackViewOnce(err ErrViewNotExist) error {
+	// Note(@kataras): this is our way to keep the same View method for
+	// both fallback and normal views, remember, we export the whole
+	// Context functionality to the end-developer through the fallback view provider.
+	if ctx.values.Get(fallbackViewOnce) != nil {
+		return err
+	}
+
+	v := ctx.values.Get(ctx.app.ConfigurationReadOnly().GetFallbackViewContextKey())
+	if v == nil {
+		return err
+	}
+
+	providers, ok := v.([]FallbackViewProvider)
+	if !ok {
+		return err
+	}
+
+	ctx.values.Set(fallbackViewOnce, struct{}{})
+
+	var pErr error
+	for _, provider := range providers {
+		pErr = provider.FallbackView(ctx, err)
+		if pErr != nil {
+			if vErr, ok := pErr.(ErrViewNotExist); ok {
+				// This fallback view does not exist or it's not responsible to handle,
+				// try the next.
+				pErr = vErr
+				continue
+			}
+		}
+
+		// If OK then we found the correct fallback.
+		// If the error was a parse error and not a template not found
+		// then exit and report the pErr error.
+		break
+	}
+
+	return pErr
+}
+
+// FallbackView registers one or more fallback views for a template or a template layout.
+// When View cannot find the given filename to execute then this "provider"
+// is responsible to handle the error or render a different view.
+//
+// Usage:
+//
+//	FallbackView(iris.FallbackView("fallback.html"))
+//	FallbackView(iris.FallbackViewLayout("layouts/fallback.html"))
+//	OR
+//	FallbackView(iris.FallbackViewFunc(ctx iris.Context, err iris.ErrViewNotExist) error {
+//	  err.Name is the previous template name.
+//	  err.IsLayout reports whether the failure came from the layout template.
+//	  err.Data is the template data provided to the previous View call.
+//	  [...custom logic e.g. ctx.View("fallback", err.Data)]
+//	})
+func (ctx *Context) FallbackView(providers ...FallbackViewProvider) {
+	key := ctx.app.ConfigurationReadOnly().GetFallbackViewContextKey()
+	if key == "" {
+		return
+	}
+
+	v := ctx.values.Get(key)
+	if v == nil {
+		ctx.values.Set(key, providers)
+		return
+	}
+
+	// Can register more than one.
+	storedProviders, ok := v.([]FallbackViewProvider)
+	if !ok {
+		return
+	}
+
+	storedProviders = append(storedProviders, providers...)
+	ctx.values.Set(key, storedProviders)
 }
 
 // View renders a template based on the registered view engine(s).
@@ -2982,11 +3918,32 @@ func (ctx *Context) GetViewData() map[string]interface{} {
 //
 // Look .ViewData and .ViewLayout too.
 //
-// Examples: https://github.com/kataras/iris/tree/master/_examples/view
+// Examples: https://github.com/kataras/iris/tree/main/_examples/view
 func (ctx *Context) View(filename string, optionalViewModel ...interface{}) error {
 	ctx.ContentType(ContentHTMLHeaderValue)
-	cfg := ctx.app.ConfigurationReadOnly()
 
+	err := ctx.renderView(filename, optionalViewModel...)
+	if err != nil {
+		if errNotExists, ok := err.(ErrViewNotExist); ok {
+			err = ctx.fireFallbackViewOnce(errNotExists)
+		}
+	}
+
+	if err != nil {
+		if ctx.IsDebug() {
+			// send the error back to the client, when debug mode.
+			ctx.StopWithError(http.StatusInternalServerError, err)
+		} else {
+			ctx.SetErrPrivate(err)
+			ctx.StopWithStatus(http.StatusInternalServerError)
+		}
+	}
+
+	return err
+}
+
+func (ctx *Context) renderView(filename string, optionalViewModel ...interface{}) error {
+	cfg := ctx.app.ConfigurationReadOnly()
 	layout := ctx.values.GetString(cfg.GetViewLayoutContextKey())
 
 	var bindingData interface{}
@@ -3000,38 +3957,12 @@ func (ctx *Context) View(filename string, optionalViewModel ...interface{}) erro
 	if key := cfg.GetViewEngineContextKey(); key != "" {
 		if engineV := ctx.values.Get(key); engineV != nil {
 			if engine, ok := engineV.(ViewEngine); ok {
-				err := engine.ExecuteWriter(ctx, filename, layout, bindingData)
-				if err != nil {
-					ctx.app.Logger().Errorf("View [%v] [%T]: %v", ctx.getLogIdentifier(), engine, err)
-					return err
-				}
-
-				return nil
+				return engine.ExecuteWriter(ctx, filename, layout, bindingData)
 			}
 		}
 	}
 
-	err := ctx.app.View(ctx, filename, layout, bindingData) // if failed it logs the error.
-	if err != nil {
-		if ctx.app.Logger().Level == golog.DebugLevel {
-			// send the error back to the client, when debug mode.
-			ctx.StopWithError(http.StatusInternalServerError, err)
-		} else {
-			ctx.StopWithStatus(http.StatusInternalServerError)
-		}
-	}
-
-	return err
-}
-
-// getLogIdentifier returns the ID, or the client remote IP address,
-// useful for internal logging of context's method failure.
-func (ctx *Context) getLogIdentifier() interface{} {
-	if id := ctx.GetID(); id != nil {
-		return id
-	}
-
-	return ctx.RemoteAddr()
+	return ctx.app.View(ctx, filename, layout, bindingData)
 }
 
 const (
@@ -3073,6 +4004,8 @@ const (
 	ContentFormHeaderValue = "application/x-www-form-urlencoded"
 	// ContentFormMultipartHeaderValue header value for post multipart form data.
 	ContentFormMultipartHeaderValue = "multipart/form-data"
+	// ContentMultipartRelatedHeaderValue header value for multipart related data.
+	ContentMultipartRelatedHeaderValue = "multipart/related"
 	// ContentGRPCHeaderValue Content-Type header value for gRPC.
 	ContentGRPCHeaderValue = "application/grpc"
 )
@@ -3100,36 +4033,60 @@ type ProtoMarshalOptions = protojson.MarshalOptions
 
 // JSON contains the options for the JSON (Context's) Renderer.
 type JSON struct {
-	// http-specific
-	StreamingJSON bool
 	// content-specific
-	UnescapeHTML bool
-	Indent       string
-	Prefix       string
-	ASCII        bool // if true writes with unicode to ASCII content.
-	Secure       bool // if true then it prepends a "while(1);" when Go slice (to JSON Array) value.
+	UnescapeHTML bool   `yaml:"UnescapeHTML"`
+	Indent       string `yaml:"Indent"`
+	Prefix       string `yaml:"Prefix"`
+	ASCII        bool   `yaml:"ASCII"`  // if true writes with unicode to ASCII content.
+	Secure       bool   `yaml:"Secure"` // if true then it prepends a "while(1);" when Go slice (to JSON Array) value.
 	// proto.Message specific marshal options.
-	Proto ProtoMarshalOptions
+	Proto ProtoMarshalOptions `yaml:"ProtoMarshalOptions"`
+	// If true and json writing failed then the error handler is skipped
+	// and it just returns to the caller.
+	//
+	// See StopWithJSON and x/errors package.
+	OmitErrorHandler bool `yaml:"OmitErrorHandler"`
+}
+
+// DefaultJSONOptions is the optional settings that are being used
+// inside `Context.JSON`.
+var DefaultJSONOptions = JSON{}
+
+// IsDefault reports whether this JSON options structure holds the default values.
+func (j *JSON) IsDefault() bool {
+	return j.UnescapeHTML == DefaultJSONOptions.UnescapeHTML &&
+		j.Indent == DefaultJSONOptions.Indent &&
+		j.Prefix == DefaultJSONOptions.Prefix &&
+		j.ASCII == DefaultJSONOptions.ASCII &&
+		j.Secure == DefaultJSONOptions.Secure &&
+		j.Proto == DefaultJSONOptions.Proto
 }
 
 // JSONP contains the options for the JSONP (Context's) Renderer.
 type JSONP struct {
 	// content-specific
-	Indent   string
-	Callback string
+	Indent           string
+	Callback         string
+	OmitErrorHandler bool // See JSON.OmitErrorHandler.
 }
 
 // XML contains the options for the XML (Context's) Renderer.
 type XML struct {
 	// content-specific
-	Indent string
-	Prefix string
+	Indent           string
+	Prefix           string
+	OmitErrorHandler bool // See JSON.OmitErrorHandler.
 }
 
 // Markdown contains the options for the Markdown (Context's) Renderer.
 type Markdown struct {
 	// content-specific
-	Sanitize bool
+	Sanitize         bool
+	OmitErrorHandler bool // See JSON.OmitErrorHandler.
+	//
+	// Library-specific.
+	// E.g. Flags: html.CommonFlags | html.HrefTargetBlank
+	RenderOptions html.RendererOptions
 }
 
 var (
@@ -3150,46 +4107,76 @@ var (
 	secureJSONPrefix = []byte("while(1);")
 )
 
+func (ctx *Context) handleSpecialJSONResponseValue(v interface{}, options *JSON) (bool, int, error) {
+	if ctx.app.ConfigurationReadOnly().GetEnableProtoJSON() {
+		if m, ok := v.(proto.Message); ok {
+			protoJSON := ProtoMarshalOptions{}
+			if options != nil {
+				protoJSON = options.Proto
+			}
+
+			result, err := protoJSON.Marshal(m)
+			if err != nil {
+				return true, 0, err
+			}
+
+			n, err := ctx.writer.Write(result)
+			return true, n, err
+		}
+	}
+
+	if ctx.app.ConfigurationReadOnly().GetEnableEasyJSON() {
+		if easyObject, ok := v.(easyjson.Marshaler); ok {
+			noEscapeHTML := false
+			if options != nil {
+				noEscapeHTML = !options.UnescapeHTML
+			}
+			jw := jwriter.Writer{NoEscapeHTML: noEscapeHTML}
+			easyObject.MarshalEasyJSON(&jw)
+
+			n, err := jw.DumpTo(ctx.writer)
+			return true, n, err
+		}
+	}
+
+	return false, 0, nil
+}
+
 // WriteJSON marshals the given interface object and writes the JSON response to the 'writer'.
-// Ignores StatusCode and StreamingJSON options.
-func WriteJSON(writer io.Writer, v interface{}, options JSON, optimize bool) (int, error) {
+var WriteJSON = func(ctx *Context, v interface{}, options *JSON) error {
+	if !options.Secure && !options.ASCII && options.Prefix == "" {
+		// jsoniterConfig := jsoniter.Config{
+		// 	EscapeHTML:    !options.UnescapeHTML,
+		// 	IndentionStep: 4,
+		// }.Froze()
+		// enc := jsoniterConfig.NewEncoder(ctx.writer)
+		// err = enc.Encode(v)
+		//
+		// enc := gojson.NewEncoder(ctx.writer)
+		// enc.SetEscapeHTML(!options.UnescapeHTML)
+		// enc.SetIndent(options.Prefix, options.Indent)
+		// err = enc.EncodeContext(ctx, v)
+		enc := json.NewEncoder(ctx.writer)
+		enc.SetEscapeHTML(!options.UnescapeHTML)
+		enc.SetIndent(options.Prefix, options.Indent)
+
+		return enc.Encode(v)
+	}
+
 	var (
 		result []byte
 		err    error
 	)
 
-	if m, ok := v.(proto.Message); ok {
-		result, err = options.Proto.Marshal(m)
-		if err != nil {
-			return 0, err
-		}
-
-		return writer.Write(result)
-	}
-
-	if !optimize && options.Indent == "" {
-		options.Indent = "  "
-	}
-
 	if indent := options.Indent; indent != "" {
-		marshalIndent := json.MarshalIndent
-		if optimize {
-			marshalIndent = jsoniter.ConfigCompatibleWithStandardLibrary.MarshalIndent
-		}
-
-		result, err = marshalIndent(v, "", indent)
+		result, err = json.MarshalIndent(v, "", indent)
 		result = append(result, newLineB...)
 	} else {
-		marshal := json.Marshal
-		if optimize {
-			marshal = jsoniter.ConfigCompatibleWithStandardLibrary.Marshal
-		}
-
-		result, err = marshal(v)
+		result, err = json.Marshal(v)
 	}
 
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	prependSecure := false
@@ -3218,7 +4205,7 @@ func WriteJSON(writer io.Writer, v interface{}, options JSON, optimize bool) (in
 	if options.ASCII {
 		if len(result) > 0 {
 			buf := new(bytes.Buffer)
-			for _, s := range bytesToString(result) {
+			for _, s := range string(result) {
 				char := string(s)
 				if s >= 128 {
 					char = fmt.Sprintf("\\u%04x", int64(s))
@@ -3234,131 +4221,190 @@ func WriteJSON(writer io.Writer, v interface{}, options JSON, optimize bool) (in
 		result = append(stringToBytes(prefix), result...)
 	}
 
-	return writer.Write(result)
+	_, err = ctx.Write(result)
+	return err
 }
 
 // See https://golang.org/src/strings/builder.go#L45
-func bytesToString(b []byte) string {
-	return *(*string)(unsafe.Pointer(&b))
-}
+// func bytesToString(b []byte) string {
+// 	return unsafe.String(unsafe.SliceData(b), len(b))
+// }
 
 func stringToBytes(s string) []byte {
-	return *(*[]byte)(unsafe.Pointer(&s))
+	return unsafe.Slice(unsafe.StringData(s), len(s))
 }
 
-// DefaultJSONOptions is the optional settings that are being used
-// inside `ctx.JSON`.
-var DefaultJSONOptions = JSON{}
+type (
+	// ErrorHandler describes a context error handler which applies on
+	// JSON, JSONP, Protobuf, MsgPack, XML, YAML and Markdown write errors.
+	//
+	// It does NOT modify or handle the result of Context.GetErr at all,
+	// use a custom middleware instead if you want to handle the handler-provided custom errors (Context.SetErr)
+	//
+	// An ErrorHandler can be registered once via Application.SetErrorHandler method to override the default behavior.
+	// The default behavior is to simply send status internal code error
+	// without a body back to the client.
+	//
+	// See Application.SetContextErrorHandler for more.
+	ErrorHandler interface {
+		HandleContextError(ctx *Context, err error)
+	}
+	// ErrorHandlerFunc a function shortcut for ErrorHandler interface.
+	ErrorHandlerFunc func(ctx *Context, err error)
+)
 
-// JSON marshals the given interface object and writes the JSON response to the client.
-// If the value is a compatible `proto.Message` one
-// then it only uses the options.Proto settings to marshal.
-func (ctx *Context) JSON(v interface{}, opts ...JSON) (n int, err error) {
-	options := DefaultJSONOptions
+// HandleContextError completes the ErrorHandler interface.
+func (h ErrorHandlerFunc) HandleContextError(ctx *Context, err error) {
+	h(ctx, err)
+}
 
-	if len(opts) > 0 {
-		options = opts[0]
+func (ctx *Context) handleContextError(err error) {
+	if err == nil {
+		return
 	}
 
+	if errHandler := ctx.app.GetContextErrorHandler(); errHandler != nil {
+		errHandler.HandleContextError(ctx, err)
+	} else {
+		if ctx.IsDebug() {
+			ctx.app.Logger().Error(err)
+		}
+		ctx.StatusCode(http.StatusInternalServerError)
+	}
+
+	// keep the error non nil so the caller has control over further actions.
+}
+
+// Render writes the response headers and calls the given renderer "r" to render data.
+// This method can be used while migrating from other frameworks.
+func (ctx *Context) Render(statusCode int, r interface {
+	// Render should push data with custom content type to the client.
+	Render(http.ResponseWriter) error
+	// WriteContentType writes custom content type to the response.
+	WriteContentType(w http.ResponseWriter)
+}) {
+	ctx.StatusCode(statusCode)
+
+	if statusCode >= 100 && statusCode <= 199 || statusCode == http.StatusNoContent || statusCode == http.StatusNotModified {
+		r.WriteContentType(ctx.writer)
+		return
+	}
+
+	if err := r.Render(ctx.writer); err != nil {
+		ctx.StopWithError(http.StatusInternalServerError, err)
+	}
+}
+
+// Component is the interface which all components must implement.
+// A component is a struct which can be rendered to a writer.
+// It's being used by the `Context.RenderComponent` method.
+// An example of compatible Component is a templ.Component.
+type Component interface {
+	Render(context.Context, io.Writer) error
+}
+
+// RenderComponent renders a component to the client.
+// It sets the "Content-Type" header to "text/html; charset=utf-8".
+// It reports any component render errors back to the caller.
+// Look the Application.SetContextErrorHandler to override the
+// default status code 500 with a custom error response.
+func (ctx *Context) RenderComponent(component Component) error {
+	ctx.ContentType("text/html; charset=utf-8")
+	err := component.Render(ctx.Request().Context(), ctx.ResponseWriter())
+	if err != nil {
+		ctx.handleContextError(err)
+	}
+	return err
+}
+
+// JSON marshals the given "v" value to JSON and writes the response to the client.
+// Look the Configuration.EnableProtoJSON and EnableEasyJSON too.
+//
+// It reports any JSON parser or write errors back to the caller.
+// Look the Application.SetContextErrorHandler to override the
+// default status code 500 with a custom error response.
+//
+// Customize the behavior of every `Context.JSON“ can be achieved
+// by modifying the package-level `WriteJSON` function on program initilization.
+func (ctx *Context) JSON(v interface{}, opts ...JSON) (err error) {
+	var options *JSON
+	if len(opts) > 0 {
+		options = &opts[0]
+	} else {
+		// If no options are given safely read the already-initialized value.
+		options = &DefaultJSONOptions
+	}
+
+	if err = ctx.writeJSON(v, options); err != nil {
+		// if no options are given or OmitErrorHandler is false
+		// then call the error handler (which may lead to a cycle if the error handler fails to write JSON too).
+		if !options.OmitErrorHandler {
+			ctx.handleContextError(err)
+		}
+	}
+
+	return
+}
+
+func (ctx *Context) writeJSON(v interface{}, options *JSON) error {
 	ctx.ContentType(ContentJSONHeaderValue)
 
-	if options.StreamingJSON {
-		if ctx.shouldOptimize() {
-			jsoniterConfig := jsoniter.Config{
-				EscapeHTML:    !options.UnescapeHTML,
-				IndentionStep: 4,
-			}.Froze()
-			enc := jsoniterConfig.NewEncoder(ctx.writer)
-			err = enc.Encode(v)
-		} else {
-			enc := json.NewEncoder(ctx.writer)
-			enc.SetEscapeHTML(!options.UnescapeHTML)
-			enc.SetIndent(options.Prefix, options.Indent)
-			err = enc.Encode(v)
-		}
-
-		if err != nil {
-			ctx.app.Logger().Debugf("JSON: %v", err)
-			ctx.StatusCode(http.StatusInternalServerError) // it handles the fallback to normal mode here which also removes any compression headers.
-			return 0, err
-		}
-		return ctx.writer.Written(), err
+	// After content type given and before everything else, try handle proto or easyjson, no matter the performance mode.
+	if handled, _, err := ctx.handleSpecialJSONResponseValue(v, options); handled {
+		return err
 	}
 
-	n, err = WriteJSON(ctx.writer, v, options, ctx.shouldOptimize())
-	if err != nil {
-		ctx.app.Logger().Debugf("JSON: %v", err)
-		ctx.StatusCode(http.StatusInternalServerError)
-		return 0, err
-	}
-
-	return n, err
+	return WriteJSON(ctx, v, options)
 }
 
 var finishCallbackB = []byte(");")
 
-// WriteJSONP marshals the given interface object and writes the JSON response to the writer.
-func WriteJSONP(writer io.Writer, v interface{}, options JSONP, optimize bool) (int, error) {
+// WriteJSONP marshals the given interface object and writes the JSONP response to the writer.
+var WriteJSONP = func(ctx *Context, v interface{}, options *JSONP) (err error) {
 	if callback := options.Callback; callback != "" {
-		n, err := writer.Write(stringToBytes(callback + "("))
+		_, err = ctx.Write(stringToBytes(callback + "("))
 		if err != nil {
-			return n, err
+			return err
 		}
-		defer writer.Write(finishCallbackB)
+		defer func() {
+			if err == nil {
+				ctx.Write(finishCallbackB)
+			}
+		}()
 	}
 
-	if !optimize && options.Indent == "" {
-		options.Indent = "    "
-	}
-
-	if indent := options.Indent; indent != "" {
-		marshalIndent := json.MarshalIndent
-		if optimize {
-			marshalIndent = jsoniter.ConfigCompatibleWithStandardLibrary.MarshalIndent
-		}
-
-		result, err := marshalIndent(v, "", indent)
-		if err != nil {
-			return 0, err
-		}
-		result = append(result, newLineB...)
-		return writer.Write(result)
-	}
-
-	marshal := json.Marshal
-	if optimize {
-		marshal = jsoniter.ConfigCompatibleWithStandardLibrary.Marshal
-	}
-
-	result, err := marshal(v)
-	if err != nil {
-		return 0, err
-	}
-	return writer.Write(result)
+	err = WriteJSON(ctx, v, &JSON{
+		Indent:           options.Indent,
+		OmitErrorHandler: options.OmitErrorHandler,
+	})
+	return err
 }
 
 // DefaultJSONPOptions is the optional settings that are being used
 // inside `ctx.JSONP`.
 var DefaultJSONPOptions = JSONP{}
 
-// JSONP marshals the given interface object and writes the JSON response to the client.
-func (ctx *Context) JSONP(v interface{}, opts ...JSONP) (int, error) {
-	options := DefaultJSONPOptions
-
+// JSONP marshals the given "v" value to JSON and sends the response to the client.
+//
+// It reports any JSON parser or write errors back to the caller.
+// Look the Application.SetContextErrorHandler to override the
+// default status code 500 with a custom error response.
+func (ctx *Context) JSONP(v interface{}, opts ...JSONP) (err error) {
+	var options *JSONP
 	if len(opts) > 0 {
-		options = opts[0]
+		options = &opts[0]
+	} else {
+		options = &DefaultJSONPOptions
 	}
 
 	ctx.ContentType(ContentJavascriptHeaderValue)
-
-	n, err := WriteJSONP(ctx.writer, v, options, ctx.shouldOptimize())
-	if err != nil {
-		ctx.app.Logger().Debugf("JSONP: %v", err)
-		ctx.StatusCode(http.StatusInternalServerError)
-		return 0, err
+	if err = WriteJSONP(ctx, v, options); err != nil {
+		if !options.OmitErrorHandler {
+			ctx.handleContextError(err)
+		}
 	}
 
-	return n, err
+	return
 }
 
 type xmlMapEntry struct {
@@ -3405,32 +4451,21 @@ func (m xmlMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 }
 
 // WriteXML marshals the given interface object and writes the XML response to the writer.
-func WriteXML(writer io.Writer, v interface{}, options XML, optimize bool) (int, error) {
+var WriteXML = func(ctx *Context, v interface{}, options *XML) error {
 	if prefix := options.Prefix; prefix != "" {
-		n, err := writer.Write(stringToBytes(prefix))
+		_, err := ctx.Write(stringToBytes(prefix))
 		if err != nil {
-			return n, err
+			return err
 		}
 	}
 
-	if !optimize && options.Indent == "" {
-		options.Indent = "  " // Two spaces for XML is the default indentation when not optimized.
+	encoder := xml.NewEncoder(ctx.writer)
+	encoder.Indent("", options.Indent)
+	if err := encoder.Encode(v); err != nil {
+		return err
 	}
 
-	if indent := options.Indent; indent != "" {
-		result, err := xml.MarshalIndent(v, "", indent)
-		if err != nil {
-			return 0, err
-		}
-		result = append(result, newLineB...)
-		return writer.Write(result)
-	}
-
-	result, err := xml.Marshal(v)
-	if err != nil {
-		return 0, err
-	}
-	return writer.Write(result)
+	return encoder.Flush()
 }
 
 // DefaultXMLOptions is the optional settings that are being used
@@ -3439,37 +4474,40 @@ var DefaultXMLOptions = XML{}
 
 // XML marshals the given interface object and writes the XML response to the client.
 // To render maps as XML see the `XMLMap` package-level function.
-func (ctx *Context) XML(v interface{}, opts ...XML) (int, error) {
-	options := DefaultXMLOptions
-
+//
+// It reports any XML parser or write errors back to the caller.
+// Look the Application.SetContextErrorHandler to override the
+// default status code 500 with a custom error response.
+func (ctx *Context) XML(v interface{}, opts ...XML) (err error) {
+	var options *XML
 	if len(opts) > 0 {
-		options = opts[0]
+		options = &opts[0]
+	} else {
+		options = &DefaultXMLOptions
 	}
 
 	ctx.ContentType(ContentXMLHeaderValue)
-
-	n, err := WriteXML(ctx.writer, v, options, ctx.shouldOptimize())
-	if err != nil {
-		ctx.app.Logger().Debugf("XML: %v", err)
-		ctx.StatusCode(http.StatusInternalServerError)
-		return 0, err
+	if err = WriteXML(ctx, v, options); err != nil {
+		if !options.OmitErrorHandler {
+			ctx.handleContextError(err)
+		}
 	}
 
-	return n, err
+	return
 }
 
 // Problem writes a JSON or XML problem response.
 // Order of Problem fields are not always rendered the same.
 //
-// Behaves exactly like `Context.JSON`
+// Behaves exactly like the `Context.JSON` method
 // but with default ProblemOptions.JSON indent of " " and
 // a response content type of "application/problem+json" instead.
 //
 // Use the options.RenderXML and XML fields to change this behavior and
 // send a response of content type "application/problem+xml" instead.
 //
-// Read more at: https://github.com/kataras/iris/wiki/Routing-error-handlers
-func (ctx *Context) Problem(v interface{}, opts ...ProblemOptions) (int, error) {
+// Read more at: https://github.com/kataras/iris/blob/main/_examples/routing/http-errors.
+func (ctx *Context) Problem(v interface{}, opts ...ProblemOptions) error {
 	options := DefaultProblemOptions
 	if len(opts) > 0 {
 		options = opts[0]
@@ -3502,16 +4540,24 @@ func (ctx *Context) Problem(v interface{}, opts ...ProblemOptions) (int, error) 
 	}
 
 	ctx.contentTypeOnce(ContentJSONProblemHeaderValue, "")
-	return ctx.JSON(v, options.JSON)
+	return ctx.writeJSON(v, &options.JSON)
 }
 
+var sanitizer = bluemonday.UGCPolicy()
+
 // WriteMarkdown parses the markdown to html and writes these contents to the writer.
-func WriteMarkdown(writer io.Writer, markdownB []byte, options Markdown) (int, error) {
-	buf := blackfriday.Run(markdownB)
+var WriteMarkdown = func(ctx *Context, markdownB []byte, options *Markdown) error {
+	out := markdown.NormalizeNewlines(markdownB)
+
+	renderer := html.NewRenderer(options.RenderOptions)
+	doc := markdown.Parse(out, nil)
+	out = markdown.Render(doc, renderer)
 	if options.Sanitize {
-		buf = bluemonday.UGCPolicy().SanitizeBytes(buf)
+		out = sanitizer.SanitizeBytes(out)
 	}
-	return writer.Write(buf)
+
+	_, err := ctx.Write(out)
+	return err
 }
 
 // DefaultMarkdownOptions is the optional settings that are being used
@@ -3519,66 +4565,109 @@ func WriteMarkdown(writer io.Writer, markdownB []byte, options Markdown) (int, e
 var DefaultMarkdownOptions = Markdown{}
 
 // Markdown parses the markdown to html and renders its result to the client.
-func (ctx *Context) Markdown(markdownB []byte, opts ...Markdown) (int, error) {
-	options := DefaultMarkdownOptions
-
+//
+// It reports any Markdown parser or write errors back to the caller.
+// Look the Application.SetContextErrorHandler to override the
+// default status code 500 with a custom error response.
+func (ctx *Context) Markdown(markdownB []byte, opts ...Markdown) (err error) {
+	var options *Markdown
 	if len(opts) > 0 {
-		options = opts[0]
+		options = &opts[0]
+	} else {
+		options = &DefaultMarkdownOptions
 	}
 
 	ctx.ContentType(ContentHTMLHeaderValue)
+	if err = WriteMarkdown(ctx, markdownB, options); err != nil {
+		if !options.OmitErrorHandler {
+			ctx.handleContextError(err)
+		}
+	}
 
-	n, err := WriteMarkdown(ctx.writer, markdownB, options)
+	return
+}
+
+// WriteYAML sends YAML response to the client.
+var WriteYAML = func(ctx *Context, v interface{}, indentSpace int) error {
+	encoder := yaml.NewEncoder(ctx.writer)
+	encoder.SetIndent(indentSpace)
+
+	if err := encoder.Encode(v); err != nil {
+		return err
+	}
+
+	return encoder.Close()
+}
+
+// YAML marshals the given "v" value using the yaml marshaler and writes the result to the client.
+//
+// It reports any YAML parser or write errors back to the caller.
+// Look the Application.SetContextErrorHandler to override the
+// default status code 500 with a custom error response.
+func (ctx *Context) YAML(v interface{}) error {
+	ctx.ContentType(ContentYAMLHeaderValue)
+
+	err := WriteYAML(ctx, v, 0)
 	if err != nil {
-		ctx.app.Logger().Debugf("Markdown: %v", err)
-		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.handleContextError(err)
+		return err
+	}
+
+	return nil
+}
+
+// TextYAML calls the Context.YAML method but with the text/yaml content type instead.
+func (ctx *Context) TextYAML(v interface{}) error {
+	ctx.ContentType(ContentYAMLTextHeaderValue)
+
+	err := WriteYAML(ctx, v, 4)
+	if err != nil {
+		ctx.handleContextError(err)
+		return err
+	}
+
+	return nil
+}
+
+// Protobuf marshals the given "v" value of proto Message and writes its result to the client.
+//
+// It reports any protobuf parser or write errors back to the caller.
+// Look the Application.SetContextErrorHandler to override the
+// default status code 500 with a custom error response.
+func (ctx *Context) Protobuf(v proto.Message) (int, error) {
+	out, err := proto.Marshal(v)
+	if err != nil {
+		ctx.handleContextError(err)
 		return 0, err
+	}
+
+	ctx.ContentType(ContentProtobufHeaderValue)
+	n, err := ctx.Write(out)
+	if err != nil {
+		ctx.handleContextError(err)
 	}
 
 	return n, err
 }
 
-// YAML marshals the "v" using the yaml marshaler
-// and sends the result to the client.
-func (ctx *Context) YAML(v interface{}) (int, error) {
-	out, err := yaml.Marshal(v)
-	if err != nil {
-		ctx.app.Logger().Debugf("YAML: %v", err)
-		ctx.StatusCode(http.StatusInternalServerError)
-		return 0, err
-	}
-
-	ctx.ContentType(ContentYAMLHeaderValue)
-	return ctx.Write(out)
-}
-
-// TextYAML marshals the "v" using the yaml marshaler
-// and renders to the client.
-func (ctx *Context) TextYAML(v interface{}) (int, error) {
-	ctx.contentTypeOnce(ContentYAMLTextHeaderValue, "")
-	return ctx.YAML(v)
-}
-
-// Protobuf parses the "v" of proto Message and renders its result to the client.
-func (ctx *Context) Protobuf(v proto.Message) (int, error) {
-	out, err := proto.Marshal(v)
-	if err != nil {
-		return 0, err
-	}
-
-	ctx.ContentType(ContentProtobufHeaderValue)
-	return ctx.Write(out)
-}
-
-// MsgPack parses the "v" of msgpack format and renders its result to the client.
+// MsgPack marshals the given "v" value of msgpack format and writes its result to the client.
+//
+// It reports any message pack or write errors back to the caller.
+// Look the Application.SetContextErrorHandler to override the
+// default status code 500 with a custom error response.
 func (ctx *Context) MsgPack(v interface{}) (int, error) {
 	out, err := msgpack.Marshal(v)
 	if err != nil {
-		return 0, err
+		ctx.handleContextError(err)
 	}
 
 	ctx.ContentType(ContentMsgPackHeaderValue)
-	return ctx.Write(out)
+	n, err := ctx.Write(out)
+	if err != nil {
+		ctx.handleContextError(err)
+	}
+
+	return n, err
 }
 
 //  +-----------------------------------------------------------------------+
@@ -3735,7 +4824,7 @@ func parseHeader(headerValue string) []string {
 //
 // Supports the above without quality values.
 //
-// Read more at: https://github.com/kataras/iris/wiki/Content-negotiation
+// Read more at: https://github.com/kataras/iris/tree/main/_examples/response-writer/content-negotiation
 func (ctx *Context) Negotiate(v interface{}) (int, error) {
 	contentType, charset, encoding, content := ctx.Negotiation().Build()
 	if v == nil {
@@ -3786,19 +4875,54 @@ func (ctx *Context) Negotiate(v interface{}) (int, error) {
 	case ContentTextHeaderValue, ContentHTMLHeaderValue:
 		return ctx.WriteString(v.(string))
 	case ContentMarkdownHeaderValue:
-		return ctx.Markdown(v.([]byte))
+		err := ctx.Markdown(v.([]byte))
+		if err != nil {
+			return 0, err
+		}
+
+		return ctx.writer.Written(), nil
 	case ContentJSONHeaderValue:
-		return ctx.JSON(v)
+		err := ctx.JSON(v)
+		if err != nil {
+			return 0, err
+		}
+
+		return ctx.writer.Written(), nil
 	case ContentJSONProblemHeaderValue, ContentXMLProblemHeaderValue:
-		return ctx.Problem(v)
+		err := ctx.Problem(v)
+		if err != nil {
+			return 0, err
+		}
+
+		return ctx.writer.Written(), nil
 	case ContentJavascriptHeaderValue:
-		return ctx.JSONP(v)
+		err := ctx.JSONP(v)
+		if err != nil {
+			return 0, err
+		}
+
+		return ctx.writer.Written(), nil
 	case ContentXMLHeaderValue, ContentXMLUnreadableHeaderValue:
-		return ctx.XML(v)
+		err := ctx.XML(v)
+		if err != nil {
+			return 0, err
+		}
+
+		return ctx.writer.Written(), nil
 	case ContentYAMLHeaderValue:
-		return ctx.YAML(v)
+		err := ctx.YAML(v)
+		if err != nil {
+			return 0, err
+		}
+
+		return ctx.writer.Written(), nil
 	case ContentYAMLTextHeaderValue:
-		return ctx.TextYAML(v)
+		err := ctx.TextYAML(v)
+		if err != nil {
+			return 0, err
+		}
+
+		return ctx.writer.Written(), nil
 	case ContentProtobufHeaderValue:
 		msg, ok := v.(proto.Message)
 		if !ok {
@@ -4289,7 +5413,7 @@ func (ctx *Context) ServeContent(content io.ReadSeeker, filename string, modtime
 // represents one byte. See "golang.org/x/time/rate" package.
 type rateReadSeeker struct {
 	io.ReadSeeker
-	ctx     stdContext.Context
+	ctx     context.Context
 	limiter *rate.Limiter
 }
 
@@ -4311,10 +5435,6 @@ func (ctx *Context) ServeContentWithRate(content io.ReadSeeker, filename string,
 			ctx:        ctx.request.Context(),
 			limiter:    rate.NewLimiter(rate.Limit(limit), burst),
 		}
-	}
-
-	if ctx.GetContentType() == "" {
-		ctx.ContentType(filename)
 	}
 
 	http.ServeContent(ctx.writer, ctx.request, filename, modtime, content)
@@ -4384,9 +5504,33 @@ func (ctx *Context) SendFileWithRate(src, destName string, limit float64, burst 
 		destName = filepath.Base(src)
 	}
 
-	ctx.writer.Header().Set(ContentDispositionHeaderKey, "attachment;filename="+destName)
+	ctx.writer.Header().Set(ContentDispositionHeaderKey, MakeDisposition(destName))
 	return ctx.ServeFileWithRate(src, limit, burst)
 }
+
+// MakeDisposition generates an HTTP Content-Disposition field-value.
+// Similar solution followed by: Spring(Java), Symfony(PHP) and Ruby on Rails frameworks too.
+//
+// Fixes CVE-2020-5398. Reported by motoyasu-saburi.
+func MakeDisposition(filename string) string {
+	return `attachment; filename*=UTF-8''` + url.QueryEscape(filename)
+} /*
+// Found at: https://stackoverflow.com/questions/53069040/checking-a-string-contains-only-ascii-characters
+// A faster (better, more idiomatic) version, which avoids unnecessary rune conversions.
+func isASCII(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] > unicode.MaxASCII {
+			return false
+		}
+	}
+	return true
+}
+func isRFC5987AttrChar(c rune) bool {
+	return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+		c == '!' || c == '#' || c == '$' || c == '&' || c == '+' || c == '-' ||
+		c == '.' || c == '^' || c == '_' || c == '`' || c == '|' || c == '~'
+}
+*/
 
 //  +------------------------------------------------------------+
 //  | Cookies                                                    |
@@ -4428,10 +5572,39 @@ func CookieIncluded(cookie *http.Cookie, cookieNames []string) bool {
 	return true
 }
 
-var cookieNameSanitizer = strings.NewReplacer("\n", "-", "\r", "-")
+// var cookieNameSanitizer = strings.NewReplacer("\n", "-", "\r", "-")
+//
+// func sanitizeCookieName(n string) string {
+// 	return cookieNameSanitizer.Replace(n)
+// }
 
-func sanitizeCookieName(n string) string {
-	return cookieNameSanitizer.Replace(n)
+// CookieOverride is a CookieOption which overrides the cookie explicitly to the given "cookie".
+//
+// Usage:
+// ctx.RemoveCookie("the_cookie_name", iris.CookieOverride(&http.Cookie{Domain: "example.com"}))
+func CookieOverride(cookie *http.Cookie) CookieOption { // The "Cookie" word method name is reserved as it's used as an alias.
+	return func(_ *Context, c *http.Cookie, op uint8) {
+		if op == OpCookieGet {
+			return
+		}
+
+		*cookie = *c
+	}
+}
+
+// CookieDomain is a CookieOption which sets the cookie's Domain field.
+// If empty then the current domain is used.
+//
+// Usage:
+// ctx.RemoveCookie("the_cookie_name", iris.CookieDomain("example.com"))
+func CookieDomain(domain string) CookieOption {
+	return func(_ *Context, c *http.Cookie, op uint8) {
+		if op == OpCookieGet {
+			return
+		}
+
+		c.Domain = domain
+	}
 }
 
 // CookieAllowReclaim accepts the Context itself.
@@ -4452,32 +5625,15 @@ func CookieAllowReclaim(cookieNames ...string) CookieOption {
 			// perform upsert on request cookies or is it too much and not worth the cost?
 			ctx.Request().AddCookie(c)
 		case OpCookieDel:
-			header := ctx.Request().Header
-
-			if cookiesLine := header.Get("Cookie"); cookiesLine != "" {
-				if cookies := strings.Split(cookiesLine, "; "); len(cookies) > 1 {
-					// more than one cookie here.
-					// select that one and remove it.
-					name := sanitizeCookieName(c.Name)
-
-					for _, nameValue := range cookies {
-						if strings.HasPrefix(nameValue, name) {
-							cookiesLine = strings.Replace(cookiesLine, "; "+nameValue, "", 1)
-							// current cookiesLine: myapp_session_id=5ccf4e89-8d0e-4ed6-9f4c-6746d7c5e2ee; key1=value1
-							// found nameValue: key1=value1
-							// new cookiesLine: myapp_session_id=5ccf4e89-8d0e-4ed6-9f4c-6746d7c5e2ee
-							header.Set("Cookie", cookiesLine)
-							break
-						}
-					}
-					return
+			cookies := ctx.Request().Cookies()
+			ctx.Request().Header.Del("Cookie")
+			for i, v := range cookies {
+				if v.Name != c.Name {
+					ctx.Request().AddCookie(cookies[i])
 				}
 			}
-
-			header.Del("Cookie")
 		}
 	}
-
 }
 
 // CookieAllowSubdomains set to the Cookie Options
@@ -4602,9 +5758,13 @@ type SecureCookie interface {
 // with that `Name` will be encoded on set and decoded on get, that way you can encrypt
 // specific cookie names (like the session id) and let the rest of the cookies "insecure".
 //
-// Example: https://github.com/kataras/iris/tree/master/_examples/cookies/securecookie
+// Example: https://github.com/kataras/iris/tree/main/_examples/cookies/securecookie
 func CookieEncoding(encoding SecureCookie, cookieNames ...string) CookieOption {
-	return func(_ *Context, c *http.Cookie, op uint8) {
+	if encoding == nil {
+		return func(_ *Context, _ *http.Cookie, _ uint8) {}
+	}
+
+	return func(ctx *Context, c *http.Cookie, op uint8) {
 		if op == OpCookieDel {
 			return
 		}
@@ -4618,10 +5778,12 @@ func CookieEncoding(encoding SecureCookie, cookieNames ...string) CookieOption {
 			// Should encode, it's a write to the client operation.
 			newVal, err := encoding.Encode(c.Name, c.Value)
 			if err != nil {
+				ctx.Application().Logger().Error(err)
 				c.Value = ""
 			} else {
 				c.Value = newVal
 			}
+
 			return
 		case OpCookieGet:
 			// Should decode, it's a read from the client operation.
@@ -4640,17 +5802,19 @@ const cookieOptionsContextKey = "iris.cookie.options"
 // cookies sent or received from the next Handler in the chain.
 //
 // Available builtin Cookie options are:
-//  * CookieAllowReclaim
-//  * CookieAllowSubdomains
-//  * CookieSecure
-//  * CookieHTTPOnly
-//  * CookieSameSite
-//  * CookiePath
-//  * CookieCleanPath
-//  * CookieExpires
-//  * CookieEncoding
+//   - CookieOverride
+//   - CookieDomain
+//   - CookieAllowReclaim
+//   - CookieAllowSubdomains
+//   - CookieSecure
+//   - CookieHTTPOnly
+//   - CookieSameSite
+//   - CookiePath
+//   - CookieCleanPath
+//   - CookieExpires
+//   - CookieEncoding
 //
-// Example at: https://github.com/kataras/iris/tree/master/_examples/cookies/securecookie
+// Example at: https://github.com/kataras/iris/tree/main/_examples/cookies/securecookie
 func (ctx *Context) AddCookieOptions(options ...CookieOption) {
 	if len(options) == 0 {
 		return
@@ -4690,7 +5854,7 @@ func (ctx *Context) ClearCookieOptions() {
 // SetCookie adds a cookie.
 // Use of the "options" is not required, they can be used to amend the "cookie".
 //
-// Example: https://github.com/kataras/iris/tree/master/_examples/cookies/basic
+// Example: https://github.com/kataras/iris/tree/main/_examples/cookies/basic
 func (ctx *Context) SetCookie(cookie *http.Cookie, options ...CookieOption) {
 	ctx.applyCookieOptions(cookie, OpCookieSet, options)
 	http.SetCookie(ctx.writer, cookie)
@@ -4706,18 +5870,30 @@ func (ctx *Context) UpsertCookie(cookie *http.Cookie, options ...CookieOption) b
 	ctx.applyCookieOptions(cookie, OpCookieSet, options)
 
 	header := ctx.ResponseWriter().Header()
-
 	if cookies := header[setCookieHeaderKey]; len(cookies) > 0 {
 		s := cookie.Name + "=" // name=?value
+
+		existingUpdated := false
+
 		for i, c := range cookies {
 			if strings.HasPrefix(c, s) {
+				if existingUpdated { // fixes #1877
+					// remove any duplicated.
+					cookies[i] = ""
+					header[setCookieHeaderKey] = cookies
+					continue
+				}
 				// We need to update the Set-Cookie (to update the expiration or any other cookie's properties).
 				// Probably the cookie is set and then updated in the first session creation
 				// (e.g. UpdateExpiration, see https://github.com/kataras/iris/issues/1485).
 				cookies[i] = cookie.String()
 				header[setCookieHeaderKey] = cookies
-				return false
+				existingUpdated = true
 			}
+		}
+
+		if existingUpdated {
+			return false // existing one updated.
 		}
 	}
 
@@ -4744,10 +5920,11 @@ var SetCookieKVExpiration = 8760 * time.Hour
 // (note that client should be responsible for that if server sent an empty cookie's path, all browsers are compatible)
 // ctx.SetCookieKV(name, value, iris.CookieCleanPath/iris.CookiePath(""))
 // More:
-//                              iris.CookieExpires(time.Duration)
-//                              iris.CookieHTTPOnly(false)
 //
-// Examples: https://github.com/kataras/iris/tree/master/_examples/cookies/basic
+//	iris.CookieExpires(time.Duration)
+//	iris.CookieHTTPOnly(false)
+//
+// Examples: https://github.com/kataras/iris/tree/main/_examples/cookies/basic
 func (ctx *Context) SetCookieKV(name, value string, options ...CookieOption) {
 	c := &http.Cookie{}
 	c.Path = "/"
@@ -4768,45 +5945,61 @@ func (ctx *Context) SetCookieKV(name, value string, options ...CookieOption) {
 // returns empty string if nothing was found.
 //
 // If you want more than the value then:
-// cookie, err := ctx.Request().Cookie("name")
+// cookie, err := ctx.GetRequestCookie("name")
 //
-// Example: https://github.com/kataras/iris/tree/master/_examples/cookies/basic
+// Example: https://github.com/kataras/iris/tree/main/_examples/cookies/basic
 func (ctx *Context) GetCookie(name string, options ...CookieOption) string {
-	c, err := ctx.request.Cookie(name)
+	c, err := ctx.GetRequestCookie(name, options...)
 	if err != nil {
 		return ""
 	}
-
-	ctx.applyCookieOptions(c, OpCookieGet, options)
 
 	value, _ := url.QueryUnescape(c.Value)
 	return value
 }
 
+// GetRequestCookie returns the request cookie including any context's cookie options (stored or given by this method).
+func (ctx *Context) GetRequestCookie(name string, options ...CookieOption) (*http.Cookie, error) {
+	c, err := ctx.request.Cookie(name)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx.applyCookieOptions(c, OpCookieGet, options)
+	return c, nil
+}
+
 var (
 	// CookieExpireDelete may be set on Cookie.Expire for expiring the given cookie.
-	CookieExpireDelete = time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
+	CookieExpireDelete = memstore.ExpireDelete
 
 	// CookieExpireUnlimited indicates that does expires after 24 years.
 	CookieExpireUnlimited = time.Now().AddDate(24, 10, 10)
 )
 
 // RemoveCookie deletes a cookie by its name and path = "/".
-// Tip: change the cookie's path to the current one by: RemoveCookie("name", iris.CookieCleanPath)
+// Tip: change the cookie's path to the current one by: RemoveCookie("the_cookie_name", iris.CookieCleanPath)
 //
-// Example: https://github.com/kataras/iris/tree/master/_examples/cookies/basic
+// If you intend to remove a cookie with a specific domain and value, please ensure to pass these values explicitly:
+//
+//	ctx.RemoveCookie("the_cookie_name", iris.CookieDomain("example.com"), iris.CookiePath("/"))
+//
+// OR use a Cookie value instead:
+//
+//	ctx.RemoveCookie("the_cookie_name", iris.CookieOverride(&http.Cookie{Domain: "example.com", Path: "/"}))
+//
+// Example: https://github.com/kataras/iris/tree/main/_examples/cookies/basic
 func (ctx *Context) RemoveCookie(name string, options ...CookieOption) {
-	c := &http.Cookie{}
+	c := &http.Cookie{Path: "/"}
+	// Send the cookie back to the client
+	ctx.applyCookieOptions(c, OpCookieDel, options)
 	c.Name = name
 	c.Value = ""
-	c.Path = "/" // if user wants to change it, use of the CookieOption `CookiePath` is required if not `ctx.SetCookie`.
 	c.HttpOnly = true
-
-	// RFC says 1 second, but let's do it 1  to make sure is working
+	// Set the cookie expiration date to a past time
 	c.Expires = CookieExpireDelete
-	c.MaxAge = -1
+	c.MaxAge = -1 // RFC says 1 second, but let's do it -1  to make sure is working.
 
-	ctx.applyCookieOptions(c, OpCookieDel, options)
 	http.SetCookie(ctx.writer, c)
 }
 
@@ -4838,7 +6031,7 @@ func (ctx *Context) MaxAge() int64 {
 }
 
 //  +------------------------------------------------------------+
-//  | Advanced: Response Recorder and Transactions               |
+//  | Advanced: Response Recorder                                |
 //  +------------------------------------------------------------+
 
 // Record transforms the context's basic and direct responseWriter to a *ResponseRecorder
@@ -4873,72 +6066,6 @@ func (ctx *Context) IsRecording() (*ResponseRecorder, bool) {
 	return rr, ok
 }
 
-// ErrTransactionInterrupt can be used to manually force-complete a Context's transaction
-// and log(warn) the wrapped error's message.
-// Usage: `... return fmt.Errorf("my custom error message: %w", context.ErrTransactionInterrupt)`.
-var ErrTransactionInterrupt = errors.New("transaction interrupted")
-
-// BeginTransaction starts a scoped transaction.
-//
-// Can't say a lot here because it will take more than 200 lines to write about.
-// You can search third-party articles or books on how Business Transaction works (it's quite simple, especially here).
-//
-// Note that this is unique and new
-// (=I haver never seen any other examples or code in Golang on this subject, so far, as with the most of iris features...)
-// it's not covers all paths,
-// such as databases, this should be managed by the libraries you use to make your database connection,
-// this transaction scope is only for context's response.
-// Transactions have their own middleware ecosystem also.
-//
-// See https://github.com/kataras/iris/tree/master/_examples/ for more
-func (ctx *Context) BeginTransaction(pipe func(t *Transaction)) {
-	// do NOT begin a transaction when the previous transaction has been failed
-	// and it was requested scoped or SkipTransactions called manually.
-	if ctx.TransactionsSkipped() {
-		return
-	}
-
-	// start recording in order to be able to control the full response writer
-	ctx.Record()
-
-	t := newTransaction(ctx) // it calls this *context, so the overriding with a new pool's New of context.Context wil not work here.
-	defer func() {
-		if err := recover(); err != nil {
-			ctx.app.Logger().Warn(fmt.Errorf("recovery from panic: %w", ErrTransactionInterrupt))
-			// complete (again or not , doesn't matters) the scope without loud
-			t.Complete(nil)
-			// we continue as normal, no need to return here*
-		}
-
-		// write the temp contents to the original writer
-		t.Context().ResponseWriter().CopyTo(ctx.writer)
-		// give back to the transaction the original writer (SetBeforeFlush works this way and only this way)
-		// this is tricky but nessecery if we want ctx.FireStatusCode to work inside transactions
-		t.Context().ResetResponseWriter(ctx.writer)
-	}()
-
-	// run the worker with its context clone inside.
-	pipe(t)
-}
-
-// skipTransactionsContextKey set this to any value to stop executing next transactions
-// it's a context-key in order to be used from anywhere, set it by calling the SkipTransactions()
-const skipTransactionsContextKey = "iris.transactions.skip"
-
-// SkipTransactions if called then skip the rest of the transactions
-// or all of them if called before the first transaction
-func (ctx *Context) SkipTransactions() {
-	ctx.values.Set(skipTransactionsContextKey, 1)
-}
-
-// TransactionsSkipped returns true if the transactions skipped or canceled at all.
-func (ctx *Context) TransactionsSkipped() bool {
-	if n, err := ctx.values.GetInt(skipTransactionsContextKey); err == nil && n == 1 {
-		return true
-	}
-	return false
-}
-
 // Exec calls the framewrok's ServeHTTPC
 // based on this context but with a changed method and path
 // like it was requested by the user, but it is not.
@@ -4955,7 +6082,7 @@ func (ctx *Context) TransactionsSkipped() bool {
 //
 // app.None(...) and app.GetRoutes().Offline(route)/.Online(route, method)
 //
-// Example: https://github.com/kataras/iris/tree/master/_examples/routing/route-state
+// Example: https://github.com/kataras/iris/tree/main/_examples/routing/route-state
 //
 // User can get the response by simple using rec := ctx.Recorder(); rec.Body()/rec.StatusCode()/rec.Header().
 //
@@ -5242,7 +6369,7 @@ func IsErrPanicRecovery(err error) (*ErrPanicRecovery, bool) {
 // IsRecovered reports whether this handler has been recovered
 // by the Iris recover middleware.
 func (ctx *Context) IsRecovered() (*ErrPanicRecovery, bool) {
-	if ctx.GetStatusCode() == 500 {
+	if ctx.GetStatusCode() == http.StatusInternalServerError {
 		// Panic error from recovery middleware is private.
 		return IsErrPanicRecovery(ctx.GetErr())
 	}
@@ -5280,7 +6407,7 @@ const (
 // See its `CallFunc` to call the "fn" on the next handler.
 //
 // Example at:
-// https://github.com/kataras/iris/tree/master/_examples/routing/writing-a-middleware/share-funcs
+// https://github.com/kataras/iris/tree/main/_examples/routing/writing-a-middleware/share-funcs
 func (ctx *Context) SetFunc(name string, fn interface{}, persistenceArgs ...interface{}) {
 	f := newFunc(name, fn, persistenceArgs...)
 	ctx.values.Set(funcsContextPrefixKey+name, f)
@@ -5349,11 +6476,11 @@ const userContextKey = "iris.user"
 // next handlers in the chain.
 //
 // The "i" input argument can be:
-// - A value which completes the User interface
-// - A map[string]interface{}.
-// - A value which does not complete the whole User interface
-// - A value which does not complete the User interface at all
-//   (only its `User().GetRaw` method is available).
+//   - A value which completes the User interface
+//   - A map[string]interface{}.
+//   - A value which does not complete the whole User interface
+//   - A value which does not complete the User interface at all
+//     (only its `User().GetRaw` method is available).
 //
 // Look the `User` method to retrieve it.
 func (ctx *Context) SetUser(i interface{}) error {
@@ -5396,6 +6523,81 @@ func (ctx *Context) User() User {
 	return nil
 }
 
+// Ensure Iris Context implements the standard Context package, build-time.
+var _ context.Context = (*Context)(nil)
+
+// Deadline returns the time when work done on behalf of this context
+// should be canceled. Deadline returns ok==false when no deadline is
+// set. Successive calls to Deadline return the same results.
+//
+// Shortcut of Request().Context().Deadline().
+func (ctx *Context) Deadline() (deadline time.Time, ok bool) {
+	return ctx.request.Context().Deadline()
+}
+
+// Done returns a channel that's closed when work done on behalf of this
+// context should be canceled. Done may return nil if this context can
+// never be canceled. Successive calls to Done return the same value.
+// The close of the Done channel may happen asynchronously,
+// after the cancel function returns.
+//
+// WithCancel arranges for Done to be closed when cancel is called;
+// WithDeadline arranges for Done to be closed when the deadline
+// expires; WithTimeout arranges for Done to be closed when the timeout
+// elapses.
+//
+// Done is provided for use in select statements:
+//
+//	// Stream generates values with DoSomething and sends them to out
+//	// until DoSomething returns an error or ctx.Done is closed.
+//	func Stream(ctx context.Context, out chan<- Value) error {
+//		for {
+//			v, err := DoSomething(ctx)
+//			if err != nil {
+//				return err
+//			}
+//			select {
+//			case <-ctx.Done():
+//				return ctx.Err()
+//			case out <- v:
+//			}
+//		}
+//	}
+//
+// See https://blog.golang.org/pipelines for more examples of how to use
+// a Done channel for cancellation.
+//
+// Shortcut of Request().Context().Done().
+func (ctx *Context) Done() <-chan struct{} {
+	return ctx.request.Context().Done()
+}
+
+// If Done is not yet closed, Err returns nil.
+// If Done is closed, Err returns a non-nil error explaining why:
+// Canceled if the context was canceled
+// or DeadlineExceeded if the context's deadline passed.
+// After Err returns a non-nil error, successive calls to Err return the same error.
+//
+// Shortcut of Request().Context().Err().
+func (ctx *Context) Err() error {
+	return ctx.request.Context().Err()
+}
+
+// Value returns the value associated with this context for key, or nil
+// if no value is associated with key. Successive calls to Value with
+// the same key returns the same result.
+//
+// Shortcut of Request().Context().Value(key interface{}) interface{}.
+func (ctx *Context) Value(key interface{}) interface{} {
+	if keyStr, ok := key.(string); ok { // check if the key is a type of string, which can be retrieved by the mem store.
+		if entry, exists := ctx.values.GetEntry(keyStr); exists {
+			return entry.ValueRaw
+		}
+	}
+	// otherwise return the chained value.
+	return ctx.request.Context().Value(key)
+}
+
 const idContextKey = "iris.context.id"
 
 // SetID sets an ID, any value, to the Request Context.
@@ -5419,5 +6621,12 @@ func (ctx *Context) GetID() interface{} {
 // It returns the Context's ID given by a `SetID`call,
 // followed by the client's IP and the method:uri.
 func (ctx *Context) String() string {
-	return fmt.Sprintf("[%s] %s ▶ %s:%s", ctx.GetID(), ctx.RemoteAddr(), ctx.Method(), ctx.Request().RequestURI)
+	id := ctx.GetID()
+	if id != nil {
+		if stringer, ok := id.(fmt.Stringer); ok {
+			id = stringer.String()
+		}
+	}
+
+	return fmt.Sprintf("[%v] %s ▶ %s:%s", id, ctx.RemoteAddr(), ctx.Method(), ctx.Request().RequestURI)
 }

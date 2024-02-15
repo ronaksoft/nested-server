@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 // Configurator is an interface with a single `Apply` method.
@@ -88,7 +89,6 @@ type (
 		// "jp" forJapan
 		// "in" for India
 		Region string `ini:"region" json:"region,omitempty" yaml:"Region" toml:"Region"`
-
 		// Tunnels the collection of the tunnels.
 		// Most of the times you only need one.
 		Tunnels []Tunnel `ini:"tunnels" json:"tunnels" yaml:"Tunnels" toml:"Tunnels"`
@@ -103,6 +103,10 @@ type (
 		Name string `ini:"name" json:"name" yaml:"Name" toml:"Name"`
 		// Addr should be set of form 'hostname:port'.
 		Addr string `ini:"addr" json:"addr,omitempty" yaml:"Addr" toml:"Addr"`
+
+		// Hostname is a static subdomain that can be used instead of random URLs
+		// when paid account.
+		Hostname string `ini:"hostname" json:"hostname,omitempty" yaml:"Hostname" toml:"Hostname"`
 	}
 )
 
@@ -142,13 +146,15 @@ func (tc Configuration) isNgrokRunning() bool {
 	return true
 }
 
-// https://ngrok.com/docs
+// https://ngrok.com/docs/ngrok-agent/api
 type ngrokTunnel struct {
-	Name    string `json:"name"`
-	Addr    string `json:"addr"`
-	Proto   string `json:"proto"`
-	Auth    string `json:"auth"`
-	BindTLS bool   `json:"bind_tls"`
+	Name  string `json:"name"`
+	Addr  string `json:"addr"`
+	Proto string `json:"proto"`
+	Auth  string `json:"basic_auth,omitempty"`
+	//	BindTLS  bool   `json:"bind_tls"`
+	Schemes  []string `json:"schemes"`
+	Hostname string   `json:"hostname"`
 }
 
 // ErrExec returns when ngrok executable was not found in the PATH or NGROK environment variable.
@@ -159,10 +165,12 @@ var ErrExec = errors.New(`"ngrok" executable not found, please install it from: 
 // to the value of the ngrok's output public address.
 func (tc Configuration) StartTunnel(t Tunnel, publicAddr *string) error {
 	tunnelAPIRequest := ngrokTunnel{
-		Name:    t.Name,
-		Addr:    t.Addr,
-		Proto:   "http",
-		BindTLS: true,
+		Name:     t.Name,
+		Addr:     t.Addr,
+		Hostname: t.Hostname,
+		Proto:    "http",
+		Schemes:  []string{"https"},
+		// BindTLS:  true,
 	}
 
 	if !tc.isNgrokRunning() {
@@ -182,31 +190,43 @@ func (tc Configuration) StartTunnel(t Tunnel, publicAddr *string) error {
 			ngrokBin = tc.Bin
 		}
 
-		if tc.AuthToken != "" {
-			cmd := exec.Command(ngrokBin, "authtoken", tc.AuthToken)
-			err := cmd.Run()
-			if err != nil {
-				return err
-			}
-		}
+		// if tc.AuthToken != "" {
+		// 	cmd := exec.Command(ngrokBin, "config", "add-authtoken", tc.AuthToken)
+		// 	err := cmd.Run()
+		// 	if err != nil {
+		// 		return err
+		// 	}
+		// }
 
 		// start -none, start without tunnels.
 		//  and finally the -log stdout logs to the stdout otherwise the pipe will never be able to read from, spent a lot of time on this lol.
-		cmd := exec.Command(ngrokBin, "start", "-none", "-log", "stdout")
+		cmd := exec.Command(ngrokBin, "start", "--none", "--log", "stdout")
 
 		// if tc.Config != "" {
-		// 	cmd.Args = append(cmd.Args, []string{"-config", tc.Config}...)
+		// 	cmd.Args = append(cmd.Args, []string{"--config", tc.Config}...)
 		// }
-		if tc.Region != "" {
-			cmd.Args = append(cmd.Args, []string{"-region", tc.Region}...)
+		if tc.AuthToken != "" {
+			cmd.Args = append(cmd.Args, []string{"--authtoken", tc.AuthToken}...)
 		}
+
+		if tc.Region != "" {
+			cmd.Args = append(cmd.Args, []string{"--region", tc.Region}...)
+		}
+
+		// cmd.Stdout = os.Stdout
+		// cmd.Stderr = os.Stderr
 
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
 			return err
 		}
 
-		if err = cmd.Start(); err != nil {
+		// stderr, err := cmd.StderrPipe()
+		// if err != nil {
+		// 	return err
+		// }
+
+		if err := cmd.Start(); err != nil {
 			return err
 		}
 
@@ -215,6 +235,9 @@ func (tc Configuration) StartTunnel(t Tunnel, publicAddr *string) error {
 		for {
 			n, err := stdout.Read(p)
 			if err != nil {
+				// if errors.Is(err, io.EOF) {
+				// 	return nil
+				// }
 				return err
 			}
 
@@ -259,11 +282,7 @@ func (tc Configuration) createTunnel(tunnelAPIRequest ngrokTunnel, publicAddr *s
 		return err
 	}
 
-	if errText := apiResponse.ErrMsg; errText != "" {
-		return errors.New(errText)
-	}
-
-	if errText := apiResponse.Details.ErrorText; errText != "" {
+	if errText := strings.Join([]string{apiResponse.ErrMsg, apiResponse.Details.ErrorText}, ": "); len(errText) > 2 {
 		return errors.New(errText)
 	}
 

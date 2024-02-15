@@ -1,6 +1,7 @@
 package minify
 
 import (
+	"bytes"
 	"encoding/base64"
 
 	"github.com/tdewolff/parse/v2"
@@ -9,7 +10,7 @@ import (
 
 var (
 	textMimeBytes     = []byte("text/plain")
-	charsetAsciiBytes = []byte("charset=us-ascii")
+	charsetASCIIBytes = []byte("charset=us-ascii")
 	dataBytes         = []byte("data:")
 	base64Bytes       = []byte(";base64")
 )
@@ -17,11 +18,11 @@ var (
 // Epsilon is the closest number to zero that is not considered to be zero.
 var Epsilon = 0.00001
 
-// Mediatype minifies a given mediatype by removing all whitespace.
+// Mediatype minifies a given mediatype by removing all whitespace and lowercasing all parts except strings (which may be case sensitive).
 func Mediatype(b []byte) []byte {
 	j := 0
-	start := 0
 	inString := false
+	start, lastString := 0, 0
 	for i, c := range b {
 		if !inString && parse.IsWhitespace(c) {
 			if start != 0 {
@@ -32,13 +33,22 @@ func Mediatype(b []byte) []byte {
 			start = i + 1
 		} else if c == '"' {
 			inString = !inString
+			if inString {
+				if i-lastString < 1024 { // ToLower may otherwise slow down minification greatly
+					parse.ToLower(b[lastString:i])
+				}
+			} else {
+				lastString = j + (i + 1 - start)
+			}
 		}
 	}
 	if start != 0 {
 		j += copy(b[j:], b[start:])
-		return parse.ToLower(b[:j])
+		parse.ToLower(b[lastString:j])
+		return b[:j]
 	}
-	return parse.ToLower(b)
+	parse.ToLower(b[lastString:])
+	return b
 }
 
 // DataURI minifies a data URI and calls a minifier by the specified mediatype. Specifications: https://www.ietf.org/rfc/rfc2397.txt.
@@ -76,7 +86,7 @@ func DataURI(m *M, dataURI []byte) []byte {
 	}
 	for i := 0; i+len(";charset=us-ascii") <= len(mediatype); i++ {
 		// must start with semicolon and be followed by end of mediatype or semicolon
-		if mediatype[i] == ';' && parse.EqualFold(mediatype[i+1:i+len(";charset=us-ascii")], charsetAsciiBytes) && (i+len(";charset=us-ascii") >= len(mediatype) || mediatype[i+len(";charset=us-ascii")] == ';') {
+		if mediatype[i] == ';' && parse.EqualFold(mediatype[i+1:i+len(";charset=us-ascii")], charsetASCIIBytes) && (i+len(";charset=us-ascii") >= len(mediatype) || mediatype[i+len(";charset=us-ascii")] == ';') {
 			mediatype = append(mediatype[:i], mediatype[i+len(";charset=us-ascii"):]...)
 			break
 		}
@@ -500,4 +510,15 @@ func Number(num []byte, prec int) []byte {
 		num[start] = '-'
 	}
 	return num[start:end]
+}
+
+func UpdateErrorPosition(err error, input *parse.Input, offset int) error {
+	if perr, ok := err.(*parse.Error); ok {
+		r := bytes.NewBuffer(input.Bytes())
+		line, column, _ := parse.Position(r, offset)
+		perr.Line += line - 1
+		perr.Column += column - 1
+		return perr
+	}
+	return err
 }

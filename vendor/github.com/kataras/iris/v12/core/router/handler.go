@@ -1,11 +1,12 @@
 package router
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 	"sort"
 	"strings"
-	"time"
+	"sync"
+	"sync/atomic"
 
 	"github.com/kataras/iris/v12/context"
 	"github.com/kataras/iris/v12/core/errgroup"
@@ -13,7 +14,6 @@ import (
 	macroHandler "github.com/kataras/iris/v12/macro/handler"
 
 	"github.com/kataras/golog"
-	"github.com/kataras/pio"
 )
 
 type (
@@ -39,10 +39,26 @@ type (
 		// on the given context's response status code.
 		FireErrorCode(ctx *context.Context)
 	}
+
+	// RouteAdder is an optional interface that can be implemented by a `RequestHandler`.
+	RouteAdder interface {
+		// AddRoute should add a route to the request handler directly.
+		AddRoute(*Route) error
+	}
 )
 
+// ErrNotRouteAdder throws on `AddRouteUnsafe` when a registered `RequestHandler`
+// does not implements the optional `AddRoute(*Route) error` method.
+var ErrNotRouteAdder = errors.New("request handler does not implement AddRoute method")
+
 type routerHandler struct {
-	config context.ConfigurationReadOnly
+	// Config.
+	disablePathCorrection            bool
+	disablePathCorrectionRedirection bool
+	fireMethodNotAllowed             bool
+	enablePathIntelligence           bool
+	forceLowercaseRouting            bool
+	//
 	logger *golog.Logger
 
 	trees      []*trie
@@ -53,16 +69,139 @@ type routerHandler struct {
 	errorDefaultHandlers context.Handlers // the main handler(s) for default error code handlers, when not registered directly by the end-developer.
 }
 
-var _ RequestHandler = (*routerHandler)(nil)
-var _ HTTPErrorHandler = (*routerHandler)(nil)
+var (
+	_ RequestHandler   = (*routerHandler)(nil)
+	_ HTTPErrorHandler = (*routerHandler)(nil)
+)
+
+type routerHandlerDynamic struct {
+	RequestHandler
+	rw sync.RWMutex
+
+	locked uint32
+}
+
+// RouteExists reports whether a particular route exists.
+func (h *routerHandlerDynamic) RouteExists(ctx *context.Context, method, path string) (exists bool) {
+	h.lock(false, func() error {
+		exists = h.RequestHandler.RouteExists(ctx, method, path)
+		return nil
+	})
+
+	return
+}
+
+func (h *routerHandlerDynamic) AddRoute(r *Route) error {
+	if v, ok := h.RequestHandler.(RouteAdder); ok {
+		return h.lock(true, func() error {
+			return v.AddRoute(r)
+		})
+	}
+
+	return ErrNotRouteAdder
+}
+
+func (h *routerHandlerDynamic) lock(writeAccess bool, fn func() error) error {
+	if atomic.CompareAndSwapUint32(&h.locked, 0, 1) {
+		if writeAccess {
+			h.rw.Lock()
+		} else {
+			h.rw.RLock()
+		}
+
+		err := fn()
+
+		// check agan because fn may called the unlock method.
+		if atomic.CompareAndSwapUint32(&h.locked, 1, 0) {
+			if writeAccess {
+				h.rw.Unlock()
+			} else {
+				h.rw.RUnlock()
+			}
+		}
+
+		return err
+	}
+
+	return fn()
+}
+
+func (h *routerHandlerDynamic) Build(provider RoutesProvider) error {
+	// Build can be called inside HandleRequest if the route handler
+	// calls the RefreshRouter method, and it will stuck on the rw.Lock() call,
+	// so use a custom version of it.
+	// h.rw.Lock()
+	// defer h.rw.Unlock()
+
+	return h.lock(true, func() error {
+		return h.RequestHandler.Build(provider)
+	})
+}
+
+func (h *routerHandlerDynamic) HandleRequest(ctx *context.Context) {
+	h.lock(false, func() error {
+		h.RequestHandler.HandleRequest(ctx)
+		return nil
+	})
+}
+
+func (h *routerHandlerDynamic) FireErrorCode(ctx *context.Context) {
+	h.lock(false, func() error {
+		h.RequestHandler.FireErrorCode(ctx)
+		return nil
+	})
+}
+
+// NewDynamicHandler returns a new router handler which is responsible handle each request
+// with routes that can be added in serve-time.
+// It's a wrapper of the `NewDefaultHandler`.
+// It's being used when the `ConfigurationReadOnly.GetEnableDynamicHandler` is true.
+func NewDynamicHandler(config context.ConfigurationReadOnly, logger *golog.Logger) RequestHandler /* #2167 */ {
+	handler := NewDefaultHandler(config, logger)
+	return wrapDynamicHandler(handler)
+}
+
+func wrapDynamicHandler(handler RequestHandler) RequestHandler {
+	return &routerHandlerDynamic{
+		RequestHandler: handler,
+	}
+}
 
 // NewDefaultHandler returns the handler which is responsible
 // to map the request with a route (aka mux implementation).
 func NewDefaultHandler(config context.ConfigurationReadOnly, logger *golog.Logger) RequestHandler {
-	return &routerHandler{
-		config: config,
-		logger: logger,
+	var (
+		disablePathCorrection            bool
+		disablePathCorrectionRedirection bool
+		fireMethodNotAllowed             bool
+		enablePathIntelligence           bool
+		forceLowercaseRouting            bool
+		dynamicHandlerEnabled            bool
+	)
+
+	if config != nil { // #2147
+		disablePathCorrection = config.GetDisablePathCorrection()
+		disablePathCorrectionRedirection = config.GetDisablePathCorrectionRedirection()
+		fireMethodNotAllowed = config.GetFireMethodNotAllowed()
+		enablePathIntelligence = config.GetEnablePathIntelligence()
+		forceLowercaseRouting = config.GetForceLowercaseRouting()
+		dynamicHandlerEnabled = config.GetEnableDynamicHandler()
 	}
+
+	handler := &routerHandler{
+		disablePathCorrection:            disablePathCorrection,
+		disablePathCorrectionRedirection: disablePathCorrectionRedirection,
+		fireMethodNotAllowed:             fireMethodNotAllowed,
+		enablePathIntelligence:           enablePathIntelligence,
+		forceLowercaseRouting:            forceLowercaseRouting,
+		logger:                           logger,
+	}
+
+	if dynamicHandlerEnabled {
+		return wrapDynamicHandler(handler)
+	}
+
+	return handler
 }
 
 func (h *routerHandler) getTree(statusCode int, method, subdomain string) *trie {
@@ -200,7 +339,7 @@ func (h *routerHandler) Build(provider RoutesProvider) error {
 			noLogCount++
 		}
 
-		if h.config != nil && h.config.GetForceLowercaseRouting() {
+		if h.forceLowercaseRouting {
 			// only in that state, keep everything else as end-developer registered.
 			r.Path = strings.ToLower(r.Path)
 		}
@@ -229,87 +368,7 @@ func (h *routerHandler) Build(provider RoutesProvider) error {
 		}
 	}
 
-	// TODO: move this and make it easier to read when all cases are, visually, tested.
-	if logger := h.logger; logger != nil && logger.Level == golog.DebugLevel && noLogCount < len(registeredRoutes) {
-		// group routes by method and print them without the [DBUG] and time info,
-		// the route logs are colorful.
-		// Note: don't use map, we need to keep registered order, use
-		// different slices for each method.
-
-		collect := func(method string) (methodRoutes []*Route) {
-			for _, r := range registeredRoutes {
-				if r.NoLog {
-					continue
-				}
-				if r.Method == method {
-					methodRoutes = append(methodRoutes, r)
-				}
-			}
-
-			return
-		}
-
-		type MethodRoutes struct {
-			method string
-			routes []*Route
-		}
-
-		allMethods := append(AllMethods, []string{MethodNone, ""}...)
-		methodRoutes := make([]MethodRoutes, 0, len(allMethods))
-
-		for _, method := range allMethods {
-			routes := collect(method)
-			if len(routes) > 0 {
-				methodRoutes = append(methodRoutes, MethodRoutes{method, routes})
-			}
-		}
-
-		if n := len(methodRoutes); n > 0 {
-			tr := "routes"
-			if len(registeredRoutes) == 1 {
-				tr = tr[0 : len(tr)-1]
-			}
-
-			bckpNewLine := logger.NewLine
-			logger.NewLine = false
-			debugLevel := golog.Levels[golog.DebugLevel]
-			// Replace that in order to not transfer it to the log handler (e.g. json)
-			// logger.Debugf("API: %d registered %s (", len(registeredRoutes), tr)
-			// with:
-			pio.WriteRich(logger.Printer, debugLevel.Title, debugLevel.ColorCode, debugLevel.Style...)
-			fmt.Fprintf(logger.Printer, " %s %sAPI: %d registered %s (", time.Now().Format(logger.TimeFormat), logger.Prefix, len(registeredRoutes)-noLogCount, tr)
-			//
-			logger.NewLine = bckpNewLine
-
-			for i, m := range methodRoutes {
-				// @method: @count
-				if i > 0 {
-					if i == n-1 {
-						fmt.Fprint(logger.Printer, " and ")
-					} else {
-						fmt.Fprint(logger.Printer, ", ")
-					}
-				}
-				if m.method == "" {
-					m.method = "ERROR"
-				}
-				fmt.Fprintf(logger.Printer, "%d ", len(m.routes))
-				pio.WriteRich(logger.Printer, m.method, TraceTitleColorCode(m.method))
-			}
-
-			fmt.Fprint(logger.Printer, ")\n")
-		}
-
-		for i, m := range methodRoutes {
-			for _, r := range m.routes {
-				r.Trace(logger.Printer, -1)
-			}
-
-			if i != len(allMethods)-1 {
-				logger.Printer.Write(pio.NewLine)
-			}
-		}
-	}
+	printRoutesInfo(h.logger, registeredRoutes, noLogCount)
 
 	return errgroup.Check(rp)
 }
@@ -393,9 +452,8 @@ func canHandleSubdomain(ctx *context.Context, subdomain string) bool {
 func (h *routerHandler) HandleRequest(ctx *context.Context) {
 	method := ctx.Method()
 	path := ctx.Path()
-	config := h.config // ctx.Application().GetConfigurationReadOnly()
 
-	if !config.GetDisablePathCorrection() {
+	if !h.disablePathCorrection {
 		if len(path) > 1 && strings.HasSuffix(path, "/") {
 			// Remove trailing slash and client-permanent rule for redirection,
 			// if confgiuration allows that and path has an extra slash.
@@ -405,7 +463,7 @@ func (h *routerHandler) HandleRequest(ctx *context.Context) {
 			// use Trim to ensure there is no open redirect due to two leading slashes
 			path = "/" + strings.Trim(path, "/")
 			u.Path = path
-			if !config.GetDisablePathCorrectionRedirection() {
+			if !h.disablePathCorrectionRedirection {
 				// do redirect, else continue with the modified path without the last "/".
 				url := u.String()
 
@@ -445,7 +503,7 @@ func (h *routerHandler) HandleRequest(ctx *context.Context) {
 		break
 	}
 
-	if config.GetFireMethodNotAllowed() {
+	if h.fireMethodNotAllowed {
 		for i := range h.trees {
 			t := h.trees[i]
 			// if `Configuration#FireMethodNotAllowed` is kept as defaulted(false) then this function will not
@@ -460,7 +518,7 @@ func (h *routerHandler) HandleRequest(ctx *context.Context) {
 		}
 	}
 
-	if config.GetEnablePathIntelligence() && method == http.MethodGet {
+	if h.enablePathIntelligence && method == http.MethodGet {
 		closestPaths := ctx.FindClosest(1)
 		if len(closestPaths) > 0 {
 			u := ctx.Request().URL

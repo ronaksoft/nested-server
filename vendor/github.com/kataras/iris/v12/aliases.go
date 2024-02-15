@@ -1,9 +1,13 @@
 package iris
 
 import (
+	"io/fs"
 	"net/http"
+	"net/url"
 	"path"
 	"regexp"
+	"strings"
+	"time"
 
 	"github.com/kataras/iris/v12/cache"
 	"github.com/kataras/iris/v12/context"
@@ -12,6 +16,16 @@ import (
 	"github.com/kataras/iris/v12/core/router"
 	"github.com/kataras/iris/v12/hero"
 	"github.com/kataras/iris/v12/view"
+)
+
+var (
+	// BuildRevision holds the vcs commit id information of the program's build.
+	// To display the Iris' version please use the iris.Version constant instead.
+	// Available at go version 1.18+
+	BuildRevision = context.BuildRevision
+	// BuildTime holds the vcs commit time information of the program's build.
+	// Available at go version 1.18+
+	BuildTime = context.BuildTime
 )
 
 // SameSite attributes.
@@ -32,7 +46,7 @@ type (
 	// Developers get request information from the client's request by a Context.
 	Context = *context.Context
 	// ViewEngine is an alias of `context.ViewEngine`.
-	// See HTML, Blocks, Django, Jet, Pug, Ace, Handlebars, Amber and e.t.c.
+	// See HTML, Blocks, Django, Jet, Pug, Ace, Handlebars and e.t.c.
 	ViewEngine = context.ViewEngine
 	// UnmarshalerFunc a shortcut, an alias for the `context#UnmarshalerFunc` type
 	// which implements the `context#Unmarshaler` interface for reading request's body
@@ -42,8 +56,16 @@ type (
 	//
 	// See 'context#UnmarshalBody` for more.
 	//
-	// Example: https://github.com/kataras/iris/blob/master/_examples/request-body/read-custom-via-unmarshaler/main.go
+	// Example: https://github.com/kataras/iris/blob/main/_examples/request-body/read-custom-via-unmarshaler/main.go
 	UnmarshalerFunc = context.UnmarshalerFunc
+	// DecodeFunc is a generic type of decoder function.
+	// When the returned error is not nil the decode operation
+	// is terminated and the error is received by the ReadJSONStream method,
+	// otherwise it continues to read the next available object.
+	// Look the `Context.ReadJSONStream` method.
+	//
+	// Example: https://github.com/kataras/iris/blob/main/_examples/request-body/read-json-stream.
+	DecodeFunc = context.DecodeFunc
 	// A Handler responds to an HTTP request.
 	// It writes reply headers and data to the Context.ResponseWriter() and then return.
 	// Returning signals that the request is finished;
@@ -77,7 +99,7 @@ type (
 	// Pass a Problem value to `context.Problem` to
 	// write an "application/problem+json" response.
 	//
-	// Read more at: https://github.com/kataras/iris/wiki/Routing-error-handlers
+	// Read more at: https://github.com/kataras/iris/blob/main/_examples/routing/http-errors.
 	//
 	// It is an alias of the `context#Problem` type.
 	Problem = context.Problem
@@ -90,6 +112,10 @@ type (
 	//
 	// It is an alias of the `context#JSON` type.
 	JSON = context.JSON
+	// JSONReader holds the JSON decode options of the `Context.ReadJSON, ReadBody` methods.
+	//
+	// It is an alias of the `context#JSONReader` type.
+	JSONReader = context.JSONReader
 	// JSONP the optional settings for JSONP renderer.
 	//
 	// It is an alias of the `context#JSONP` type.
@@ -154,7 +180,7 @@ type (
 	// })
 	//
 	// See `core/router/Party#SetExecutionRules` for more.
-	// Example: https://github.com/kataras/iris/tree/master/_examples/mvc/middleware/without-ctx-next
+	// Example: https://github.com/kataras/iris/tree/main/_examples/mvc/middleware/without-ctx-next
 	ExecutionRules = router.ExecutionRules
 	// ExecutionOptions is a set of default behaviors that can be changed in order to customize the execution flow of the routes' handlers with ease.
 	//
@@ -241,9 +267,6 @@ var (
 	// Pug view engine.
 	// Shortcut of the view.Pug.
 	Pug = view.Pug
-	// Amber view engine.
-	// Shortcut of the view.Amber.
-	Amber = view.Amber
 	// Jet view engine.
 	// Shortcut of the view.Jet.
 	Jet = view.Jet
@@ -251,6 +274,32 @@ var (
 	// Shortcut of the view.Ace.
 	Ace = view.Ace
 )
+
+type (
+	// ErrViewNotExist reports whether a template was not found in the parsed templates tree.
+	ErrViewNotExist = context.ErrViewNotExist
+	// FallbackViewFunc is a function that can be registered
+	// to handle view fallbacks. It accepts the Context and
+	// a special error which contains information about the previous template error.
+	// It implements the FallbackViewProvider interface.
+	//
+	// See `Context.View` method.
+	FallbackViewFunc = context.FallbackViewFunc
+	// FallbackView is a helper to register a single template filename as a fallback
+	// when the provided tempate filename was not found.
+	FallbackView = context.FallbackView
+	// FallbackViewLayout is a helper to register a single template filename as a fallback
+	// layout when the provided layout filename was not found.
+	FallbackViewLayout = context.FallbackViewLayout
+)
+
+// Component returns a new Handler which can be registered as a main handler for a route.
+// It's a shortcut handler that renders the given component as HTML through Context.RenderComponent.
+func Component(component context.Component) Handler {
+	return func(ctx Context) {
+		ctx.RenderComponent(component)
+	}
+}
 
 // PrefixDir returns a new FileSystem that opens files
 // by adding the given "prefix" to the directory tree of "fs".
@@ -261,9 +310,14 @@ var (
 // All view engines have a `RootDir` method for that reason too
 // but alternatively, you can wrap the given file system with this `PrefixDir`.
 //
-// Example: https://github.com/kataras/iris/blob/master/_examples/file-server/single-page-application/embedded-single-page-application/main.go
+// Example: https://github.com/kataras/iris/blob/main/_examples/file-server/single-page-application/embedded-single-page-application/main.go
 func PrefixDir(prefix string, fs http.FileSystem) http.FileSystem {
 	return &prefixedDir{prefix, fs}
+}
+
+// PrefixFS same as "PrefixDir" but for `fs.FS` type.
+func PrefixFS(fileSystem fs.FS, dir string) (fs.FS, error) {
+	return fs.Sub(fileSystem, dir)
 }
 
 type prefixedDir struct {
@@ -276,15 +330,58 @@ func (p *prefixedDir) Open(name string) (http.File, error) {
 	return p.fs.Open(name)
 }
 
+type partyConfiguratorMiddleware struct {
+	handlers []Handler
+}
+
+func (p *partyConfiguratorMiddleware) Configure(r Party) {
+	r.Use(p.handlers...)
+}
+
+// ConfigureMiddleware is a PartyConfigurator which can be used
+// as a shortcut to add middlewares on Party.PartyConfigure("/path", WithMiddleware(handler), new(example.API)).
+func ConfigureMiddleware(handlers ...Handler) router.PartyConfigurator {
+	return &partyConfiguratorMiddleware{handlers: handlers}
+}
+
+// Compression is a middleware which enables
+// writing and reading using the best offered compression.
+// Usage:
+// app.Use (for matched routes)
+// app.UseRouter (for both matched and 404s or other HTTP errors).
+func Compression(ctx Context) {
+	ctx.CompressWriter(true)
+	ctx.CompressReader(true)
+	ctx.Next()
+}
+
 var (
-	// Compression is a middleware which enables
-	// writing and reading using the best offered compression.
-	// Usage:
-	// app.Use (for matched routes)
-	// app.UseRouter (for both matched and 404s or other HTTP errors).
-	Compression = func(ctx Context) {
-		ctx.CompressWriter(true)
-		ctx.CompressReader(true)
+	// AllowQuerySemicolons returns a middleware that serves requests by converting any
+	// unescaped semicolons(;) in the URL query to ampersands(&).
+	//
+	// This restores the pre-Go 1.17 behavior of splitting query parameters on both
+	// semicolons and ampersands.
+	// (See golang.org/issue/25192 and https://github.com/kataras/iris/issues/1875).
+	// Note that this behavior doesn't match that of many proxies,
+	// and the mismatch can lead to security issues.
+	//
+	// AllowQuerySemicolons should be invoked before any Context read query or
+	// form methods are called.
+	//
+	// To skip HTTP Server logging for this type of warning:
+	// app.Listen/Run(..., iris.WithoutServerError(iris.ErrURLQuerySemicolon)).
+	AllowQuerySemicolons = func(ctx Context) {
+		// clopy of net/http.AllowQuerySemicolons.
+		r := ctx.Request()
+		if s := r.URL.RawQuery; strings.Contains(s, ";") {
+			r2 := new(http.Request)
+			*r2 = *r
+			r2.URL = new(url.URL)
+			*r2.URL = *r.URL
+			r2.URL.RawQuery = strings.ReplaceAll(s, ";", "&")
+			ctx.ResetRequest(r2)
+		}
+
 		ctx.Next()
 	}
 
@@ -336,7 +433,7 @@ var (
 	// The second optional parameter is any optional settings that the caller can use.
 	//
 	// See `Party#HandleDir` too.
-	// Examples can be found at: https://github.com/kataras/iris/tree/master/_examples/file-server
+	// Examples can be found at: https://github.com/kataras/iris/tree/main/_examples/file-server
 	// A shortcut for the `router.FileServer`.
 	FileServer = router.FileServer
 	// DirList is the default `DirOptions.DirList` field.
@@ -372,7 +469,7 @@ var (
 	// It should be used after Static methods.
 	// See `iris#Cache304` for an alternative, faster way.
 	//
-	// Examples can be found at: https://github.com/kataras/iris/tree/master/_examples/#caching
+	// Examples can be found at: https://github.com/kataras/iris/tree/main/_examples/#caching
 	Cache = cache.Handler
 	// NoCache is a middleware which overrides the Cache-Control, Pragma and Expires headers
 	// in order to disable the cache during the browser's back and forward feature.
@@ -418,6 +515,15 @@ var (
 	// A shortcut of the `cache#Cache304`.
 	Cache304 = cache.Cache304
 
+	// CookieOverride is a CookieOption which overrides the cookie explicitly to the given "cookie".
+	//
+	// A shortcut for the `context#CookieOverride`.
+	CookieOverride = context.CookieOverride
+	// CookieDomain is a CookieOption which sets the cookie's Domain field.
+	// If empty then the current domain is used.
+	//
+	// A shortcut for the `context#CookieDomain`.
+	CookieDomain = context.CookieDomain
 	// CookieAllowReclaim accepts the Context itself.
 	// If set it will add the cookie to (on `CookieSet`, `CookieSetKV`, `CookieUpsert`)
 	// or remove the cookie from (on `CookieRemove`) the Request object too.
@@ -474,12 +580,20 @@ var (
 	// A shortcut for the `context#CookieEncoding`.
 	CookieEncoding = context.CookieEncoding
 
+	// IsErrEmptyJSON reports whether the given "err" is caused by a
+	// Context.ReadJSON call when the request body
+	// didn't start with { or it was totally empty.
+	IsErrEmptyJSON = context.IsErrEmptyJSON
 	// IsErrPath can be used at `context#ReadForm` and `context#ReadQuery`.
-	// It reports whether the incoming error is type of `formbinder.ErrPath`,
+	// It reports whether the incoming error is type of `schema.ErrPath`,
 	// which can be ignored when server allows unknown post values to be sent by the client.
 	//
 	// A shortcut for the `context#IsErrPath`.
 	IsErrPath = context.IsErrPath
+	// IsErrCanceled reports whether the "err" is caused by a cancellation or timeout.
+	//
+	// A shortcut for the `context#IsErrCanceled`.
+	IsErrCanceled = context.IsErrCanceled
 	// ErrEmptyForm is the type error which API users can make use of
 	// to check if a form was empty on `Context.ReadForm`.
 	//
@@ -518,8 +632,13 @@ var (
 	// A shortcut for the `context#ErrPushNotSupported`.
 	ErrPushNotSupported = context.ErrPushNotSupported
 	// PrivateError accepts an error and returns a wrapped private one.
-	// A shortcut for the `context#PrivateError`.
+	// A shortcut for the `context#PrivateError` function.
 	PrivateError = context.PrivateError
+
+	// TrimParamFilePart is a middleware which trims any last part after a dot (.) character
+	// of the current route's dynamic path parameters.
+	// A shortcut for the `context#TrimParamFilePart` function.
+	TrimParamFilePart Handler = context.TrimParamFilePart
 )
 
 // HTTP Methods copied from `net/http`.
@@ -542,78 +661,78 @@ const (
 // See: http://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml.
 // Raw Copy from the future(tip) net/http std package in order to recude the import path of "net/http" for the users.
 const (
-	StatusContinue             = http.StatusContinue
-	StatusSwitchingProtocols   = http.StatusSwitchingProtocols
-	StatusProcessing           = http.StatusProcessing
-	StatusEarlyHints           = http.StatusEarlyHints
-	StatusOK                   = http.StatusOK
-	StatusCreated              = http.StatusCreated
-	StatusAccepted             = http.StatusAccepted
-	StatusNonAuthoritativeInfo = http.StatusNonAuthoritativeInfo
-	StatusNoContent            = http.StatusNoContent
-	StatusResetContent         = http.StatusResetContent
-	StatusPartialContent       = http.StatusPartialContent
-	StatusMultiStatus          = http.StatusMultiStatus
-	StatusAlreadyReported      = http.StatusAlreadyReported
-	StatusIMUsed               = http.StatusIMUsed
+	StatusContinue           = http.StatusContinue           // RFC 7231, 6.2.1
+	StatusSwitchingProtocols = http.StatusSwitchingProtocols // RFC 7231, 6.2.2
+	StatusProcessing         = http.StatusProcessing         // RFC 2518, 10.1
+	StatusEarlyHints         = http.StatusEarlyHints         // RFC 8297
 
-	StatusMultipleChoices  = http.StatusMultipleChoices
-	StatusMovedPermanently = http.StatusMovedPermanently
-	StatusFound            = http.StatusFound
-	StatusSeeOther         = http.StatusSeeOther
-	StatusNotModified      = http.StatusNotModified
-	StatusUseProxy         = http.StatusUseProxy
+	StatusOK                   = http.StatusOK                   // RFC 7231, 6.3.1
+	StatusCreated              = http.StatusCreated              // RFC 7231, 6.3.2
+	StatusAccepted             = http.StatusAccepted             // RFC 7231, 6.3.3
+	StatusNonAuthoritativeInfo = http.StatusNonAuthoritativeInfo // RFC 7231, 6.3.4
+	StatusNoContent            = http.StatusNoContent            // RFC 7231, 6.3.5
+	StatusResetContent         = http.StatusResetContent         // RFC 7231, 6.3.6
+	StatusPartialContent       = http.StatusPartialContent       // RFC 7233, 4.1
+	StatusMultiStatus          = http.StatusMultiStatus          // RFC 4918, 11.1
+	StatusAlreadyReported      = http.StatusAlreadyReported      // RFC 5842, 7.1
+	StatusIMUsed               = http.StatusIMUsed               // RFC 3229, 10.4.1
 
-	StatusTemporaryRedirect = http.StatusTemporaryRedirect
-	StatusPermanentRedirect = http.StatusPermanentRedirect
+	StatusMultipleChoices   = http.StatusMultipleChoices   // RFC 7231, 6.4.1
+	StatusMovedPermanently  = http.StatusMovedPermanently  // RFC 7231, 6.4.2
+	StatusFound             = http.StatusFound             // RFC 7231, 6.4.3
+	StatusSeeOther          = http.StatusSeeOther          // RFC 7231, 6.4.4
+	StatusNotModified       = http.StatusNotModified       // RFC 7232, 4.1
+	StatusUseProxy          = http.StatusUseProxy          // RFC 7231, 6.4.5
+	_                       = 306                          // RFC 7231, 6.4.6 (Unused)
+	StatusTemporaryRedirect = http.StatusTemporaryRedirect // RFC 7231, 6.4.7
+	StatusPermanentRedirect = http.StatusPermanentRedirect // RFC 7538, 3
 
-	StatusBadRequest                   = http.StatusBadRequest
-	StatusUnauthorized                 = http.StatusUnauthorized
-	StatusPaymentRequired              = http.StatusPaymentRequired
-	StatusForbidden                    = http.StatusForbidden
-	StatusNotFound                     = http.StatusNotFound
-	StatusMethodNotAllowed             = http.StatusMethodNotAllowed
-	StatusNotAcceptable                = http.StatusNotAcceptable
-	StatusProxyAuthRequired            = http.StatusProxyAuthRequired
-	StatusRequestTimeout               = http.StatusRequestTimeout
-	StatusConflict                     = http.StatusConflict
-	StatusGone                         = http.StatusGone
-	StatusLengthRequired               = http.StatusLengthRequired
-	StatusPreconditionFailed           = http.StatusPreconditionFailed
-	StatusRequestEntityTooLarge        = http.StatusRequestEntityTooLarge
-	StatusPayloadTooRage               = StatusRequestEntityTooLarge
-	StatusRequestURITooLong            = http.StatusRequestURITooLong
-	StatusUnsupportedMediaType         = http.StatusUnsupportedMediaType
-	StatusRequestedRangeNotSatisfiable = http.StatusRequestedRangeNotSatisfiable
-	StatusExpectationFailed            = http.StatusExpectationFailed
-	StatusTeapot                       = http.StatusTeapot
-	StatusMisdirectedRequest           = http.StatusMisdirectedRequest
-	StatusUnprocessableEntity          = http.StatusUnprocessableEntity
-	StatusLocked                       = http.StatusLocked
-	StatusFailedDependency             = http.StatusFailedDependency
-	StatusTooEarly                     = http.StatusTooEarly
-	StatusUpgradeRequired              = http.StatusUpgradeRequired
-	StatusPreconditionRequired         = http.StatusPreconditionRequired
-	StatusTooManyRequests              = http.StatusTooManyRequests
-	StatusRequestHeaderFieldsTooLarge  = http.StatusRequestHeaderFieldsTooLarge
-	StatusUnavailableForLegalReasons   = http.StatusUnavailableForLegalReasons
+	StatusBadRequest                   = http.StatusBadRequest                   // RFC 7231, 6.5.1
+	StatusUnauthorized                 = http.StatusUnauthorized                 // RFC 7235, 3.1
+	StatusPaymentRequired              = http.StatusPaymentRequired              // RFC 7231, 6.5.2
+	StatusForbidden                    = http.StatusForbidden                    // RFC 7231, 6.5.3
+	StatusNotFound                     = http.StatusNotFound                     // RFC 7231, 6.5.4
+	StatusMethodNotAllowed             = http.StatusMethodNotAllowed             // RFC 7231, 6.5.5
+	StatusNotAcceptable                = http.StatusNotAcceptable                // RFC 7231, 6.5.6
+	StatusProxyAuthRequired            = http.StatusProxyAuthRequired            // RFC 7235, 3.2
+	StatusRequestTimeout               = http.StatusRequestTimeout               // RFC 7231, 6.5.7
+	StatusConflict                     = http.StatusConflict                     // RFC 7231, 6.5.8
+	StatusGone                         = http.StatusGone                         // RFC 7231, 6.5.9
+	StatusLengthRequired               = http.StatusLengthRequired               // RFC 7231, 6.5.10
+	StatusPreconditionFailed           = http.StatusPreconditionFailed           // RFC 7232, 4.2
+	StatusRequestEntityTooLarge        = http.StatusRequestEntityTooLarge        // RFC 7231, 6.5.11
+	StatusRequestURITooLong            = http.StatusRequestURITooLong            // RFC 7231, 6.5.12
+	StatusUnsupportedMediaType         = http.StatusUnsupportedMediaType         // RFC 7231, 6.5.13
+	StatusRequestedRangeNotSatisfiable = http.StatusRequestedRangeNotSatisfiable // RFC 7233, 4.4
+	StatusExpectationFailed            = http.StatusExpectationFailed            // RFC 7231, 6.5.14
+	StatusTeapot                       = http.StatusTeapot                       // RFC 7168, 2.3.3
+	StatusMisdirectedRequest           = http.StatusMisdirectedRequest           // RFC 7540, 9.1.2
+	StatusUnprocessableEntity          = http.StatusUnprocessableEntity          // RFC 4918, 11.2
+	StatusLocked                       = http.StatusLocked                       // RFC 4918, 11.3
+	StatusFailedDependency             = http.StatusFailedDependency             // RFC 4918, 11.4
+	StatusTooEarly                     = http.StatusTooEarly                     // RFC 8470, 5.2.
+	StatusUpgradeRequired              = http.StatusUpgradeRequired              // RFC 7231, 6.5.15
+	StatusPreconditionRequired         = http.StatusPreconditionRequired         // RFC 6585, 3
+	StatusTooManyRequests              = http.StatusTooManyRequests              // RFC 6585, 4
+	StatusRequestHeaderFieldsTooLarge  = http.StatusRequestHeaderFieldsTooLarge  // RFC 6585, 5
+	StatusUnavailableForLegalReasons   = http.StatusUnavailableForLegalReasons   // RFC 7725, 3
 	// Unofficial Client Errors.
 	StatusPageExpired                      = context.StatusPageExpired
 	StatusBlockedByWindowsParentalControls = context.StatusBlockedByWindowsParentalControls
 	StatusInvalidToken                     = context.StatusInvalidToken
 	StatusTokenRequired                    = context.StatusTokenRequired
 	//
-	StatusInternalServerError           = http.StatusInternalServerError
-	StatusNotImplemented                = http.StatusNotImplemented
-	StatusBadGateway                    = http.StatusBadGateway
-	StatusServiceUnavailable            = http.StatusServiceUnavailable
-	StatusGatewayTimeout                = http.StatusGatewayTimeout
-	StatusHTTPVersionNotSupported       = http.StatusHTTPVersionNotSupported
-	StatusVariantAlsoNegotiates         = http.StatusVariantAlsoNegotiates
-	StatusInsufficientStorage           = http.StatusInsufficientStorage
-	StatusLoopDetected                  = http.StatusLoopDetected
-	StatusNotExtended                   = http.StatusNotExtended
-	StatusNetworkAuthenticationRequired = http.StatusNetworkAuthenticationRequired
+	StatusInternalServerError           = http.StatusInternalServerError           // RFC 7231, 6.6.1
+	StatusNotImplemented                = http.StatusNotImplemented                // RFC 7231, 6.6.2
+	StatusBadGateway                    = http.StatusBadGateway                    // RFC 7231, 6.6.3
+	StatusServiceUnavailable            = http.StatusServiceUnavailable            // RFC 7231, 6.6.4
+	StatusGatewayTimeout                = http.StatusGatewayTimeout                // RFC 7231, 6.6.5
+	StatusHTTPVersionNotSupported       = http.StatusHTTPVersionNotSupported       // RFC 7231, 6.6.6
+	StatusVariantAlsoNegotiates         = http.StatusVariantAlsoNegotiates         // RFC 2295, 8.1
+	StatusInsufficientStorage           = http.StatusInsufficientStorage           // RFC 4918, 11.5
+	StatusLoopDetected                  = http.StatusLoopDetected                  // RFC 5842, 7.2
+	StatusNotExtended                   = http.StatusNotExtended                   // RFC 2774, 7
+	StatusNetworkAuthenticationRequired = http.StatusNetworkAuthenticationRequired // RFC 6585, 6
 	// Unofficial Server Errors.
 	StatusBandwidthLimitExceeded = context.StatusBandwidthLimitExceeded
 	StatusInvalidSSLCertificate  = context.StatusInvalidSSLCertificate
@@ -622,8 +741,138 @@ const (
 	StatusNetworkReadTimeout     = context.StatusNetworkReadTimeout
 )
 
-// StatusText returns a text for the HTTP status code. It returns the empty
-// string if the code is unknown.
+var (
+	// StatusText returns a text for the HTTP status code. It returns the empty
+	// string if the code is unknown.
+	//
+	// Shortcut for core/router#StatusText.
+	StatusText = context.StatusText
+	// RegisterMethods adds custom http methods to the "AllMethods" list.
+	// Use it on initialization of your program.
+	//
+	// Shortcut for core/router#RegisterMethods.
+	RegisterMethods = router.RegisterMethods
+
+	// WebDAVMethods contains a list of WebDAV HTTP Verbs.
+	// Register using RegiterMethods package-level function or
+	// through HandleMany party-level method.
+	WebDAVMethods = []string{
+		MethodGet,
+		MethodHead,
+		MethodPatch,
+		MethodPut,
+		MethodPost,
+		MethodDelete,
+		MethodOptions,
+		MethodConnect,
+		MethodTrace,
+		"MKCOL",
+		"COPY",
+		"MOVE",
+		"LOCK",
+		"UNLOCK",
+		"PROPFIND",
+		"PROPPATCH",
+		"LINK",
+		"UNLINK",
+		"PURGE",
+		"VIEW",
+	}
+)
+
+var globalPatches = &GlobalPatches{
+	contextPatches: &ContextPatches{
+		writers: &ContextWriterPatches{},
+	},
+}
+
+// GlobalPatches is a singleton features a uniform way to apply global/package-level modifications.
 //
-// Shortcut for core/router#StatusText.
-var StatusText = context.StatusText
+// See the `Patches` package-level function.
+type GlobalPatches struct {
+	contextPatches *ContextPatches
+}
+
+// Patches returns the singleton of GlobalPatches, an easy way to modify
+// global(package-level) configuration for Iris applications.
+//
+// See its `Context` method.
+//
+// Example: https://github.com/kataras/iris/blob/main/_examples/response-writer/json-third-party/main.go
+func Patches() *GlobalPatches { // singleton.
+	return globalPatches
+}
+
+// Context returns the available context patches.
+func (p *GlobalPatches) Context() *ContextPatches {
+	return p.contextPatches
+}
+
+// ContextPatches contains the available global Iris context modifications.
+type ContextPatches struct {
+	writers *ContextWriterPatches
+}
+
+// Writers returns the available global Iris context modifications for REST writers.
+func (cp *ContextPatches) Writers() *ContextWriterPatches {
+	return cp.writers
+}
+
+// GetDomain modifies the way a domain is fetched from `Context#Domain` method,
+// which is used on subdomain redirect feature, i18n's language cookie for subdomain sharing
+// and the rewrite middleware.
+func (cp *ContextPatches) GetDomain(patchFunc func(hostport string) string) {
+	context.GetDomain = patchFunc
+}
+
+// SetCookieKVExpiration modifies the default cookie expiration time on `Context#SetCookieKV` method.
+func (cp *ContextPatches) SetCookieKVExpiration(patch time.Duration) {
+	context.SetCookieKVExpiration = patch
+}
+
+// ResolveHTTPFS modifies the default way to resolve a filesystem by any type of value.
+// It affects the Application's API Builder's `HandleDir` method.
+func (cp *ContextPatches) ResolveHTTPFS(patchFunc func(fsOrDir interface{}) http.FileSystem) {
+	context.ResolveHTTPFS = patchFunc
+}
+
+// ResolveHTTPFS modifies the default way to resolve a filesystem by any type of value.
+// It affects the view engine's filesystem resolver.
+func (cp *ContextPatches) ResolveFS(patchFunc func(fsOrDir interface{}) fs.FS) {
+	context.ResolveFS = patchFunc
+}
+
+// ContextWriterPatches features the context's writers patches.
+type ContextWriterPatches struct{}
+
+// JSON sets a custom function which runs and overrides the default behavior of the `Context#JSON` method.
+func (cwp *ContextWriterPatches) JSON(patchFunc func(ctx Context, v interface{}, options *JSON) error) {
+	context.WriteJSON = patchFunc
+}
+
+// JSONP sets a custom function which runs and overrides the default behavior of the `Context#JSONP` method.
+func (cwp *ContextWriterPatches) JSONP(patchFunc func(ctx Context, v interface{}, options *JSONP) error) {
+	context.WriteJSONP = patchFunc
+}
+
+// XML sets a custom function which runs and overrides the default behavior of the `Context#XML` method.
+func (cwp *ContextWriterPatches) XML(patchFunc func(ctx Context, v interface{}, options *XML) error) {
+	context.WriteXML = patchFunc
+}
+
+// Markdown sets a custom function which runs and overrides the default behavior of the `Context#Markdown` method.
+func (cwp *ContextWriterPatches) Markdown(patchFunc func(ctx Context, v []byte, options *Markdown) error) {
+	context.WriteMarkdown = patchFunc
+}
+
+// YAML sets a custom function which runs and overrides the default behavior of the `Context#YAML` method.
+func (cwp *ContextWriterPatches) YAML(patchFunc func(ctx Context, v interface{}, indentSpace int) error) {
+	context.WriteYAML = patchFunc
+}
+
+// Singleton is a structure which can be used as an embedded field on
+// struct/controllers that should be marked as singletons on `PartyConfigure` or `MVC` Applications.
+type Singleton struct{}
+
+// Singleton returns true as this controller is a singleton.
+func (c Singleton) Singleton() bool { return true }

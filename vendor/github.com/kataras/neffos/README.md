@@ -2,11 +2,11 @@
 
 [![neffos chat example](https://github.com/neffos-contrib/bootstrap-chat/raw/master/screenshot.png)](https://github.com/neffos-contrib/bootstrap-chat)
 
-[![build status](https://img.shields.io/travis/kataras/neffos/master.svg?style=for-the-badge)](https://travis-ci.org/kataras/neffos) [![report card](https://img.shields.io/badge/report%20card-a%2B-ff3333.svg?style=for-the-badge)](https://goreportcard.com/report/github.com/kataras/neffos)<!--[![godocs](https://img.shields.io/badge/go-%20docs-488AC7.svg?style=for-the-badge)](https://godoc.org/github.com/kataras/neffos)--> [![view examples](https://img.shields.io/badge/learn%20by-examples-0077b3.svg?style=for-the-badge)](https://github.com/kataras/neffos/tree/master/_examples) [![chat](https://img.shields.io/gitter/room/neffos-framework/community.svg?color=blue&logo=gitter&style=for-the-badge)](https://gitter.im/neffos-framework/community) [![frontend pkg](https://img.shields.io/badge/JS%20-client-BDB76B.svg?style=for-the-badge)](https://github.com/kataras/neffos.js)
+[![build status](https://img.shields.io/github/actions/workflow/status/kataras/neffos/ci.yml?style=for-the-badge)](https://github.com/kataras/neffos/actions) [![report card](https://img.shields.io/badge/report%20card-a%2B-ff3333.svg?style=for-the-badge)](https://goreportcard.com/report/github.com/kataras/neffos)<!--[![godocs](https://img.shields.io/badge/go-%20docs-488AC7.svg?style=for-the-badge)](https://godoc.org/github.com/kataras/neffos)--> [![view examples](https://img.shields.io/badge/learn%20by-examples-0077b3.svg?style=for-the-badge)](https://github.com/kataras/neffos/tree/master/_examples) [![chat](https://img.shields.io/gitter/room/neffos-framework/community.svg?color=blue&logo=gitter&style=for-the-badge)](https://gitter.im/neffos-framework/community) [![frontend pkg](https://img.shields.io/badge/JS%20-client-BDB76B.svg?style=for-the-badge)](https://github.com/kataras/neffos.js)
 
 ## About neffos
 
-Neffos is a cross-platform real-time framework with expressive, elegant API written in [Go](https://golang.org). Neffos takes the pain out of development by easing common tasks used in real-time backend and frontend applications such as:
+Neffos is a cross-platform real-time framework with expressive, elegant API written in [Go](https://go.dev). Neffos takes the pain out of development by easing common tasks used in real-time backend and frontend applications such as:
 
 - Scale-out using redis or nats[*](_examples/scale-out)
 - Adaptive request upgradation and server dialing
@@ -26,7 +26,7 @@ Neffos is a cross-platform real-time framework with expressive, elegant API writ
 ## Learning neffos
 
 <details>
-<summary>Qick View</summary>
+<summary>Quick View</summary>
 
 ## Server
 
@@ -156,9 +156,9 @@ For a more detailed technical documentation you can head over to our [godocs](ht
 
 ### Do you like to read while traveling?
 
-You can [request](https://bit.ly/neffos-req-book) a PDF version of the **E-Book** today and be participated in the development of neffos.
+You can [download](https://www.iris-go.com/neffos-book.pdf) a PDF version of the **E-Book** today and be participated in the development of neffos.
 
-[![https://iris-go.com/images/neffos-book-overview.png](https://iris-go.com/images/neffos-book-overview.png)](https://bit.ly/neffos-req-book)
+[![https://iris-go.com/images/neffos-book-overview.png](https://iris-go.com/images/neffos-book-overview.png)](https://www.iris-go.com/neffos-book.pdf)
 
 ## Contributing
 

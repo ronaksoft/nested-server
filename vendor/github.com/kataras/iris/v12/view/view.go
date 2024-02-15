@@ -2,6 +2,7 @@ package view
 
 import (
 	"fmt"
+	"html/template"
 	"io"
 	"strings"
 
@@ -21,19 +22,7 @@ type (
 )
 
 // ErrNotExist reports whether a template was not found in the parsed templates tree.
-type ErrNotExist struct {
-	Name     string
-	IsLayout bool
-}
-
-// Error implements the `error` interface.
-func (e ErrNotExist) Error() string {
-	title := "template"
-	if e.IsLayout {
-		title = "layout"
-	}
-	return fmt.Sprintf("%s '%s' does not exist", title, e.Name)
-}
+type ErrNotExist = context.ErrViewNotExist
 
 // View is just a wrapper on top of the registered template engine.
 type View struct{ Engine }
@@ -88,10 +77,25 @@ func (v *View) AddFunc(funcName string, funcBody interface{}) {
 	}
 }
 
+// Funcs registers a template func map to the registered view engine(s).
+func (v *View) Funcs(m template.FuncMap) *View {
+	if !v.Registered() {
+		return v
+	}
+
+	if e, ok := v.Engine.(EngineFuncer); ok {
+		for k, v := range m {
+			e.AddFunc(k, v)
+		}
+	}
+
+	return v
+}
+
 // Load compiles all the registered engines.
 func (v *View) Load() error {
 	if !v.Registered() {
-		return fmt.Errorf("No engine is registered")
+		return fmt.Errorf("no engine was registered")
 	}
 	return v.Engine.Load()
 }

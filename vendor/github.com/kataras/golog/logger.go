@@ -6,7 +6,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/kataras/pio"
 )
@@ -73,7 +72,7 @@ func New() *Logger {
 	}
 }
 
-// Fields is just a custom type of the map type.
+// Fields is a map type.
 // One or more values of `Fields` type can be passed
 // on all Log methods except `Print/Printf/Println` to set the `Log.Fields` field,
 // which can be accessed through a custom LogHandler.
@@ -90,7 +89,7 @@ func (l *Logger) acquireLog(level Level, msg string, withPrintln bool, fields Fi
 
 	log.NewLine = withPrintln
 	if l.TimeFormat != "" {
-		log.Time = time.Now()
+		log.Time = Now()
 		log.Timestamp = log.Time.Unix()
 	}
 	log.Level = level
@@ -142,10 +141,14 @@ var logHijacker = func(ctx *pio.Ctx) {
 	}
 
 	if prefix := logger.Prefix; len(prefix) > 0 {
-		fmt.Fprintf(w, prefix)
+		fmt.Fprint(w, prefix)
 	}
 
 	fmt.Fprint(w, l.Message)
+
+	for k, v := range l.Fields {
+		fmt.Fprintf(w, " %s=%v", k, v)
+	}
 
 	if logger.NewLine {
 		fmt.Fprintln(w)
@@ -368,26 +371,26 @@ func (l *Logger) Println(v ...interface{}) {
 	l.print(DisableLevel, fmt.Sprint(v...), true, nil)
 }
 
-func splitArgsFields(v []interface{}) ([]interface{}, Fields) {
+func splitArgsFields(values []interface{}) ([]interface{}, Fields) {
 	var (
-		args   = v[:0]
+		args   = values[:0]
 		fields Fields
 	)
 
-	for _, val := range v {
-		f, ok := val.(Fields)
-		if ok {
-			if len(fields) > 0 { // upsert new values.
-				for k, v := range f {
-					fields[k] = v
-				}
-			} else {
-				fields = f // set fields.
+	for _, value := range values {
+		if f, ok := value.(Fields); ok {
+			if fields == nil {
+				fields = make(Fields)
 			}
+
+			for k, v := range f {
+				fields[k] = v
+			}
+
 			continue
 		}
 
-		args = append(args, val) // use it as fmt argument.
+		args = append(args, value) // use it as fmt argument.
 	}
 
 	return args, fields
@@ -408,8 +411,11 @@ func (l *Logger) Log(level Level, v ...interface{}) {
 // It adds a new line in the end.
 func (l *Logger) Logf(level Level, format string, args ...interface{}) {
 	if l.Level >= level {
-		args, fields := splitArgsFields(args)
-		msg := fmt.Sprintf(format, args...)
+		arguments, fields := splitArgsFields(args)
+		msg := format
+		if len(arguments) > 0 {
+			msg = fmt.Sprintf(msg, arguments...)
+		}
 		l.print(level, msg, l.NewLine, fields)
 	}
 }
@@ -483,27 +489,24 @@ func (l *Logger) Debugf(format string, args ...interface{}) {
 //
 // For example, if you want to print using a logrus
 // logger you can do the following:
-// `Install(logrus.StandardLogger())`
 //
-// Look `golog#Logger.Handle` for more.
-func (l *Logger) Install(logger ExternalLogger) {
-	l.Handle(integrateExternalLogger(logger))
-}
-
-// InstallStd receives  a standard logger
-// and automatically adapts its print functions.
+//	Install(logrus.StandardLogger())
 //
-// Install adds a golog handler to support third-party integrations,
-// it can be used only once per `golog#Logger` instance.
+// Or the standard log's Logger:
 //
-// Example Code:
 //	import "log"
 //	myLogger := log.New(os.Stdout, "", 0)
-//	InstallStd(myLogger)
+//	Install(myLogger)
+//
+// Or even the slog/log's Logger:
+//
+//	import "log/slog"
+//	myLogger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+//	Install(myLogger) OR Install(slog.Default())
 //
 // Look `golog#Logger.Handle` for more.
-func (l *Logger) InstallStd(logger StdLogger) {
-	l.Handle(integrateStdLogger(logger))
+func (l *Logger) Install(logger any) {
+	l.Handle(integrade(logger))
 }
 
 // Handle adds a log handler.
@@ -565,7 +568,7 @@ func (l *Logger) Scan(r io.Reader) (cancel func()) {
 			}
 
 			if l.TimeFormat != "" {
-				formattedTime := time.Now().Format(l.TimeFormat)
+				formattedTime := Now().Format(l.TimeFormat)
 				line = append([]byte(formattedTime+" "), line...)
 			}
 

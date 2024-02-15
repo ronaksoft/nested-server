@@ -27,11 +27,9 @@ func defaultResultHandler(ctx *context.Context, v interface{}) error {
 
 	switch context.TrimHeaderValue(ctx.GetContentType()) {
 	case context.ContentXMLHeaderValue, context.ContentXMLUnreadableHeaderValue:
-		_, err := ctx.XML(v)
-		return err
+		return ctx.XML(v)
 	case context.ContentYAMLHeaderValue:
-		_, err := ctx.YAML(v)
-		return err
+		return ctx.YAML(v)
 	case context.ContentProtobufHeaderValue:
 		msg, ok := v.(proto.Message)
 		if !ok {
@@ -45,8 +43,7 @@ func defaultResultHandler(ctx *context.Context, v interface{}) error {
 		return err
 	default:
 		// otherwise default to JSON.
-		_, err := ctx.JSON(v)
-		return err
+		return ctx.JSON(v)
 	}
 }
 
@@ -54,7 +51,7 @@ func defaultResultHandler(ctx *context.Context, v interface{}) error {
 // All types that complete this interface
 // can be returned as values from the method functions.
 //
-// Example at: https://github.com/kataras/iris/tree/master/_examples/dependency-injection/overview.
+// Example at: https://github.com/kataras/iris/tree/main/_examples/dependency-injection/overview.
 type Result interface {
 	// Dispatch should send a response to the client.
 	Dispatch(*context.Context)
@@ -87,7 +84,7 @@ var defaultFailureResponse = Response{Code: DefaultErrStatusCode}
 // otherwise it returns the "failure" response if any,
 // if not then a 400 bad request is being sent.
 //
-// Example usage at: https://github.com/kataras/iris/blob/master/hero/func_result_test.go.
+// Example usage at: https://github.com/kataras/iris/blob/main/hero/func_result_test.go.
 func Try(fn func() Result, failure ...Result) Result {
 	var failed bool
 	var actionResponse Result
@@ -454,10 +451,9 @@ func (r Response) Dispatch(ctx *context.Context) {
 
 			ctx.SetLanguage(r.Lang)
 			r.Content = []byte(ctx.Tr(r.Text, r.Object))
-			return
+		} else {
+			r.Content = []byte(r.Text)
 		}
-
-		r.Content = []byte(r.Text)
 	}
 
 	err := dispatchCommon(ctx, r.Code, r.ContentType, r.Content, r.Object, defaultResultHandler, true)
@@ -469,7 +465,7 @@ func (r Response) Dispatch(ctx *context.Context) {
 // wraps the template file name, layout, (any) view data, status code and error.
 // It's smart enough to complete the request and send the correct response to the client.
 //
-// Example at: https://github.com/kataras/iris/blob/master/_examples/dependency-injection/overview/web/routes/hello.go.
+// Example at: https://github.com/kataras/iris/blob/main/_examples/dependency-injection/overview/web/routes/hello.go.
 type View struct {
 	Name   string
 	Layout string

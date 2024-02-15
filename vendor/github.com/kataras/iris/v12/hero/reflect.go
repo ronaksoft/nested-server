@@ -42,6 +42,39 @@ func isFunc(kindable interface{ Kind() reflect.Kind }) bool {
 	return kindable.Kind() == reflect.Func
 }
 
+func isStructValue(v reflect.Value) bool {
+	return indirectType(v.Type()).Kind() == reflect.Struct
+}
+
+// isBuiltin reports whether a reflect.Value is a builtin type
+func isBuiltinValue(v reflect.Value) bool {
+	switch v.Type().Kind() {
+	case reflect.Bool,
+		reflect.Int,
+		reflect.Int8,
+		reflect.Int16,
+		reflect.Int32,
+		reflect.Int64,
+		reflect.Uint,
+		reflect.Uint8,
+		reflect.Uint16,
+		reflect.Uint32,
+		reflect.Uint64,
+		reflect.Float32,
+		reflect.Float64,
+		reflect.Complex64,
+		reflect.Complex128,
+		reflect.Array,
+		reflect.Chan,
+		reflect.Map,
+		reflect.Slice,
+		reflect.String:
+		return true
+	default:
+		return false
+	}
+}
+
 var (
 	inputTyp = reflect.TypeOf((*Input)(nil))
 	errTyp   = reflect.TypeOf((*error)(nil)).Elem()
@@ -121,6 +154,10 @@ func lookupFields(elem reflect.Value, skipUnexported bool, onlyZeros bool, paren
 	// Note: embedded pointers are not supported.
 	// elem = reflect.Indirect(elem)
 	elemTyp := elem.Type()
+	if elemTyp.Kind() == reflect.Pointer {
+		return
+	}
+
 	for i, n := 0, elem.NumField(); i < n; i++ {
 		field := elemTyp.Field(i)
 		fieldValue := elem.Field(i)
@@ -164,6 +201,9 @@ func lookupFields(elem reflect.Value, skipUnexported bool, onlyZeros bool, paren
 func lookupNonZeroFieldValues(elem reflect.Value) (nonZeroFields []reflect.StructField) {
 	fields, _ := lookupFields(elem, true, false, nil)
 	for _, f := range fields {
+		if structFieldIgnored(f) {
+			continue // re-check here for ignored struct fields so we don't include them on dependencies. Non-zeroes fields can be static, even if they are functions.
+		}
 		if fieldVal := elem.FieldByIndex(f.Index); goodVal(fieldVal) && !isZero(fieldVal) {
 			/* && f.Type.Kind() == reflect.Ptr &&*/
 			nonZeroFields = append(nonZeroFields, f)
@@ -231,8 +271,10 @@ func isZero(v reflect.Value) bool {
 		return len(v.Interface().(net.IP)) == 0
 	}
 
-	zero := reflect.Zero(v.Type())
-	return v.Interface() == zero.Interface()
+	// zero := reflect.Zero(v.Type())
+	// return v.Interface() == zero.Interface()
+
+	return v.IsZero()
 }
 
 // IsNil same as `reflect.IsNil` but a bit safer to use, returns false if not a correct type.

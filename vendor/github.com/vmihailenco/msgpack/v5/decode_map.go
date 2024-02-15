@@ -1,15 +1,20 @@
 package msgpack
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 
 	"github.com/vmihailenco/msgpack/v5/msgpcode"
 )
 
+var errArrayStruct = errors.New("msgpack: number of fields in array-encoded struct has changed")
+
 var (
 	mapStringStringPtrType = reflect.TypeOf((*map[string]string)(nil))
 	mapStringStringType    = mapStringStringPtrType.Elem()
+	mapStringBoolPtrType   = reflect.TypeOf((*map[string]bool)(nil))
+	mapStringBoolType      = mapStringBoolPtrType.Elem()
 )
 
 var (
@@ -30,7 +35,11 @@ func decodeMapValue(d *Decoder, v reflect.Value) error {
 	}
 
 	if v.IsNil() {
-		v.Set(reflect.MakeMap(typ))
+		ln := n
+		if d.flags&disableAllocLimitFlag == 0 {
+			ln = min(ln, maxMapSize)
+		}
+		v.Set(reflect.MakeMapWithSize(typ, ln))
 	}
 	if n == 0 {
 		return nil
@@ -101,7 +110,11 @@ func (d *Decoder) decodeMapStringStringPtr(ptr *map[string]string) error {
 
 	m := *ptr
 	if m == nil {
-		*ptr = make(map[string]string, min(size, maxMapSize))
+		ln := size
+		if d.flags&disableAllocLimitFlag == 0 {
+			ln = min(size, maxMapSize)
+		}
+		*ptr = make(map[string]string, ln)
 		m = *ptr
 	}
 
@@ -144,7 +157,7 @@ func (d *Decoder) DecodeMap() (map[string]interface{}, error) {
 		return nil, nil
 	}
 
-	m := make(map[string]interface{}, min(n, maxMapSize))
+	m := make(map[string]interface{}, n)
 
 	for i := 0; i < n; i++ {
 		mk, err := d.DecodeString()
@@ -171,7 +184,7 @@ func (d *Decoder) DecodeUntypedMap() (map[interface{}]interface{}, error) {
 		return nil, nil
 	}
 
-	m := make(map[interface{}]interface{}, min(n, maxMapSize))
+	m := make(map[interface{}]interface{}, n)
 
 	for i := 0; i < n; i++ {
 		mk, err := d.decodeInterfaceCond()
@@ -197,7 +210,7 @@ func (d *Decoder) DecodeTypedMap() (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	if n == -1 {
+	if n <= 0 {
 		return nil, nil
 	}
 
@@ -219,7 +232,13 @@ func (d *Decoder) DecodeTypedMap() (interface{}, error) {
 	}
 
 	mapType := reflect.MapOf(keyType, valueType)
-	mapValue := reflect.MakeMap(mapType)
+
+	ln := n
+	if d.flags&disableAllocLimitFlag == 0 {
+		ln = min(ln, maxMapSize)
+	}
+
+	mapValue := reflect.MakeMapWithSize(mapType, ln)
 	mapValue.SetMapIndex(reflect.ValueOf(key), reflect.ValueOf(value))
 
 	n--
@@ -231,17 +250,18 @@ func (d *Decoder) DecodeTypedMap() (interface{}, error) {
 }
 
 func (d *Decoder) decodeTypedMapValue(v reflect.Value, n int) error {
-	typ := v.Type()
-	keyType := typ.Key()
-	valueType := typ.Elem()
-
+	var (
+		typ       = v.Type()
+		keyType   = typ.Key()
+		valueType = typ.Elem()
+	)
 	for i := 0; i < n; i++ {
-		mk := reflect.New(keyType).Elem()
+		mk := d.newValue(keyType).Elem()
 		if err := d.DecodeValue(mk); err != nil {
 			return err
 		}
 
-		mv := reflect.New(valueType).Elem()
+		mv := d.newValue(valueType).Elem()
 		if err := d.DecodeValue(mv); err != nil {
 			return err
 		}
@@ -274,56 +294,60 @@ func decodeStructValue(d *Decoder, v reflect.Value) error {
 		return err
 	}
 
-	var isArray bool
-
 	n, err := d.mapLen(c)
-	if err != nil {
-		var err2 error
-		n, err2 = d.arrayLen(c)
-		if err2 != nil {
+	if err == nil {
+		return d.decodeStruct(v, n)
+	}
+
+	var err2 error
+	n, err2 = d.arrayLen(c)
+	if err2 != nil {
+		return err
+	}
+
+	if n <= 0 {
+		v.Set(reflect.Zero(v.Type()))
+		return nil
+	}
+
+	fields := structs.Fields(v.Type(), d.structTag)
+	if n != len(fields.List) {
+		return errArrayStruct
+	}
+
+	for _, f := range fields.List {
+		if err := f.DecodeValue(d, v); err != nil {
 			return err
 		}
-		isArray = true
 	}
+
+	return nil
+}
+
+func (d *Decoder) decodeStruct(v reflect.Value, n int) error {
 	if n == -1 {
 		v.Set(reflect.Zero(v.Type()))
 		return nil
 	}
 
 	fields := structs.Fields(v.Type(), d.structTag)
-	if isArray {
-		for i, f := range fields.List {
-			if i >= n {
-				break
-			}
-			if err := f.DecodeValue(d, v); err != nil {
-				return err
-			}
-		}
-
-		// Skip extra values.
-		for i := len(fields.List); i < n; i++ {
-			if err := d.Skip(); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	}
-
 	for i := 0; i < n; i++ {
-		name, err := d.bytesTemp()
+		name, err := d.decodeStringTemp()
 		if err != nil {
 			return err
 		}
 
-		if f := fields.Map[string(name)]; f != nil {
+		if f := fields.Map[name]; f != nil {
 			if err := f.DecodeValue(d, v); err != nil {
 				return err
 			}
-		} else if d.flags&disallowUnknownFieldsFlag != 0 {
+			continue
+		}
+
+		if d.flags&disallowUnknownFieldsFlag != 0 {
 			return fmt.Errorf("msgpack: unknown field %q", name)
-		} else if err := d.Skip(); err != nil {
+		}
+		if err := d.Skip(); err != nil {
 			return err
 		}
 	}
